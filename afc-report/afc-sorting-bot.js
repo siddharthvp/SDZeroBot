@@ -1,8 +1,8 @@
 process.chdir('./SDZeroBot/afc-report');
-// crontabs:
+// crontab:
 // 0 0 * * * jsub -N job-MIS ~/bin/node ~/SDZeroBot/afc-report/afc-sorting-bot.js
 
-const {bot, sql, utils, libApi, argv, log} = require('../botbase');
+const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
 (async function() {
 
@@ -15,14 +15,14 @@ const {bot, sql, utils, libApi, argv, log} = require('../botbase');
 		tableInfo = require('./tableInfo');
 	} else {
 		const result = await sql.queryBot(`
-			select page_title, page_latest, cl_sortkey_prefix, page_len, actor_name, rev_timestamp, user_editcount, user_registration
-			from categorylinks
-			join page on page_id = cl_from
-			join revision on page_id = rev_page and rev_parent_id = 0
-			join actor on rev_actor = actor_id
-			left join user on user_id = actor_user
-			where cl_to = 'Pending_AfC_submissions'
-			and page_namespace = 118;
+			SELECT page_title, page_latest, cl_sortkey_prefix, page_len, actor_name, rev_timestamp, user_editcount, user_registration
+			FROM categorylinks
+			JOIN page ON page_id = cl_from
+			JOIN revision ON page_id = rev_page AND rev_parent_id = 0
+			JOIN actor ON rev_actor = actor_id
+			LEFT JOIN user ON user_id = actor_user
+			WHERE cl_to = 'Pending_AfC_submissions'
+			AND page_namespace = 118;
 		`);
 		sql.end();
 		log('[S] Got DB query result');
@@ -67,9 +67,8 @@ const {bot, sql, utils, libApi, argv, log} = require('../botbase');
 	if (argv.noores) {
 		oresdata = require('./oresdata');
 	} else {
-		var apicallcount = 1;
 		var errors = [];
-		var queryOres = function(revids) {
+		var queryOres = function(revids, i) {
 
 			return bot.rawRequest({
 				method: 'GET',
@@ -80,7 +79,7 @@ const {bot, sql, utils, libApi, argv, log} = require('../botbase');
 				},
 				json: true
 			}).then(function(json) {
-				log(`[+][${apicallcount}/${chunks.length}] Ores API call ${apicallcount++} succeeded.`);
+				log(`[+][${i}/${chunks.length}] Ores API call ${i} succeeded.`);
 				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
 					if (data.articlequality.error) {
 						errors.push(revid);
@@ -97,7 +96,7 @@ const {bot, sql, utils, libApi, argv, log} = require('../botbase');
 		};
 
 		for (var i = 0; i < chunks.length; i++) {
-			await queryOres(chunks[i]); // sequential calls
+			await queryOres(chunks[i], i+1); // sequential calls
 		}
 
 		utils.saveObject('oresdata', oresdata);
@@ -118,11 +117,8 @@ const {bot, sql, utils, libApi, argv, log} = require('../botbase');
 	}).then(function(json) {
 		log('[S] Got User:SQL/AFC-Ores');
 		return json.query.pages[0].revisions[0].content;
-	}).catch(function() {
-		log('[E] Failed to get User:SQL/AFC-Ores');
-		console.log(arguments);
-	});
-	utils.saveObject('UserSQLReport', UserSQLReport);
+	}).catch(console.log);
+	fs.writeFileSync('./UserSQLReport.txt', UserSQLReport, console.log);
 
 	var entriesFound = 0;
 	var getCopyioPercent = function(title) {
