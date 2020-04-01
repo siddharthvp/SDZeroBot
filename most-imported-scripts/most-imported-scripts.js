@@ -97,12 +97,9 @@ bot.loginBot().then(() => {
 				return; // code below won't work
 			}
 
-			var scriptActiveUsers = jsons.reduce(function(users, json) {
+			table[title].active = jsons.reduce(function(users, json) {
 				return users.concat(json.query.search.map(e => e.title.split('/')[0].slice('User:'.length)).filter(e => activeusers[e]));
-			}, []);
-
-			table[title].active = scriptActiveUsers.length;
-			table[title].activeusers = scriptActiveUsers; // debugging
+			}, []).length;
 
 		}).catch(function() {
 			failures.push(title);
