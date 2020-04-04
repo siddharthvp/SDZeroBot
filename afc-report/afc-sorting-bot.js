@@ -15,7 +15,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		tableInfo = require('./tableInfo');
 	} else {
 		const result = await sql.queryBot(`
-			SELECT page_title, page_latest, cl_sortkey_prefix, page_len, actor_name, rev_timestamp, user_editcount, user_registration
+			SELECT page_title, page_latest, cl_sortkey_prefix, page_len, actor_name, rev_timestamp, user_editcount
 			FROM categorylinks
 			JOIN page ON page_id = cl_from
 			JOIN revision ON page_id = rev_page AND rev_parent_id = 0
@@ -43,7 +43,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 				bytecount: row.page_len,
 				creator: row.actor_name,
 				creatorEdits: row.user_editcount || '',
-				creatorRegn: row.user_registration ? new Date(formatDateString(row.user_registration) + ' UTC').toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : ''
+				//creatorRegn: row.user_registration ? new Date(formatDateString(row.user_registration) + ' UTC').toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : ''
 			};
 		});
 		utils.saveObject('revidsTitles', revidsTitles);
@@ -132,35 +132,64 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
 
 
+	/* GET DATA FOR NUMBER OF DECLINES */
+
+	var numDeclines = {};
+
+	var doSearch = async function(count) {
+		var dec = '\\{\\{AFC submission\\|d\\|.*'.repeat(count).slice(0, -2);
+		var searchQuery = `incategory:"Declined AfC submissions" insource:/${dec}/`;
+		await libApi.ApiQueryContinuous(bot, {
+			"action": "query",
+			"list": "search",
+			"srsearch": searchQuery,
+			"srnamespace": "118",
+			"srlimit": "max",
+			"srinfo": "",
+			"srprop": ""
+		}).then(function(jsons) {
+			var pages = jsons.reduce((pages, json) => pages.concat(json.query.search.map(e => e.title)), []);
+			pages.forEach(page => {
+				numDeclines[page] = count;
+			});
+			log(`[+][${count}/10] Fetched drafts declined ${count} or more times`);
+		});
+	}
+	for (let i = 1; i <= 10; i++) {
+		await doSearch(i);
+	}
+	utils.saveObject('numDeclines', numDeclines);
+
+
+
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
 
 	var sorter = {
 		"Unsorted/Unsorted*": []
 	};
 
-	Object.entries(oresdata).forEach(function([revid, data]) {
+	Object.entries(oresdata).forEach(function([revid, ores]) {
 
-		var topics = data.drafttopic; // Array of topics
-		var quality = data.articlequality; // FA / GA / B / C / Start / Stub
-		var issues = data.draftquality; // OK / vandalism / spam / attack
-		if (issues !== 'OK') {
-			issues = 'Possible ' + issues;
-		} else {
-			issues = '';
-		}
-		if (UserSQLReport && getCopyioPercent(revidsTitles[revid]) > 50) {
-			issues += (issues ? '<br>' : '') + 'Possible copyvio';
-		}
-
-		if (!revidsTitles[revid]) {
+		var title = revidsTitles[revid];
+		if (!title) {
 			log(`[E] revid ${revid} couldn't be matched to title`);
 		}
-		var toInsert = {
-			title: revidsTitles[revid],
-			revid: revid,
-			quality: quality,
-			issues: issues
-		};
+
+		var topics = ores.drafttopic; // Array of topics
+		var quality = ores.articlequality; // FA / GA / B / C / Start / Stub
+		var issues = [];
+		if (numDeclines[title]) {
+			issues.push(numDeclines[title] + ' past declines');
+		}
+		if (ores.draftquality !== 'OK') { // OK / vandalism / spam / attack
+			issues.push('Possible ' + issues);
+		}
+		if (UserSQLReport && getCopyioPercent(title) > 50) {
+			issues.push('Possible copyvio');
+		}
+		issues = issues.join('<br>');
+
+		var toInsert = { title, revid, quality, issues };
 
 		if (topics.length) {
 
@@ -200,7 +229,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	// copied form mw.util.isIPv6Address
+	// copied from https://doc.wikimedia.org/mediawiki-core/REL1_29/js/source/mediawiki.util.html#mw-util-method-isIPv6Address
 	var isIPv6Address = function(address) {
 		var RE_IPV6_ADD = '(?:' + ':(?::|(?::' + '[0-9A-Fa-f]{1,4}' + '){1,7})' + '|' + '[0-9A-Fa-f]{1,4}' + '(?::' + '[0-9A-Fa-f]{1,4}' + '){0,6}::' + '|' + '[0-9A-Fa-f]{1,4}' + '(?::' + '[0-9A-Fa-f]{1,4}' + '){7}' + ')';
 		if (new RegExp('^' + RE_IPV6_ADD + '$').test(address)) {
@@ -210,79 +239,13 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		return (new RegExp('^' + RE_IPV6_ADD + '$').test(address) && /::/.test(address) && !/::.*::/.test(address));
 	};
 
-
-
-	/* TOPICAL SUBPAGES */
-	var createSubpage = function(topic) {
-		var pagetitle = topic;
-		var content = `<templatestyles src="User:SD0001/AfC sorting/styles.css"/>\n`;
-		if (isStarred(topic)) {
-			pagetitle = meta(topic);
-			if (pagetitle !== 'Unsorted') {
-				content += `<div style="font-size:18px">See also the subpages:</div>\n` +
-				`{{Special:PrefixIndex/User:SDZeroBot/AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
-			}
-		}
-		content += `<div style="font-size:18px">${sorter[topic].length} pending AfC submission${sorter[topic].length > 1 ? 's' : ''} as of ${accessdate}</div>
-{| class="wikitable sortable"
-|-
-! Page
-! Class
-! Submission date
-! Creation date
-! Creator (# edits)
-! Length
-! Notes
-`;
-
-		sorter[topic].forEach(function(page) {
-			var tabledata = tableInfo[page.title];
-			var editorString;
-			if (tabledata.creatorEdits) {
-				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
-			} else {
-				// lowercase IPv6 address and split to 2 lines to reduce column width
-				if (isIPv6Address(tabledata.creator)) {
-					var ip = tabledata.creator.toLowerCase();
-					var idx = Math.round(ip.length / 2);
-					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);
-					editorString = `[[Special:Contribs/${tabledata.creator}|${ip}]]`;
-				} else {
-					editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]]`;
-				}
-			}
-			var classString = page.quality;
-			// fix sort values: put FA, GA at the top in sorted order
-			if (classString === 'FA') {
-				classString = `data-sort-value="A0"|FA`;
-			} else if (classString === 'GA') {
-				classString = `data-sort-value="A1"|GA`;
-			}
-
-			content += `|-
-| [[${page.title}]]
-| ${classString}
-| ${tabledata.submit_date}
-| ${tabledata.creation_date}
-| ${editorString}
-| ${tabledata.bytecount}
-| ${page.issues}
-`;
-		});
-
-		content += '|}';
-
-		return bot.edit('User:SDZeroBot/AfC sorting/' + pagetitle, content, 'Updating report');
-	};
-
-
-
 	/* MAIN-PAGE REPORT */
+
 	var makeSinglePageReport = function() {
 		var pagetext = `<templatestyles src="User:SD0001/AfC sorting/styles.css"/>
 {{TOC right}}
 <div style="font-size:24px">Pending AfC submissions as of ${accessdate}</div>
-{{hatnote|A single page may appear in multiple sections. Pages now in mainspace appear in green. Count of entries in each section is indicated in the section header.}}
+{{hatnote|A single page may appear in multiple sections. Pages now in mainspace appear in <span style="color:green">green</span>. Count of entries in each section is indicated in the section header.}}
 `;
 
 		Object.keys(sorter).sort(function(a, b) {
@@ -314,18 +277,88 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		return bot.edit('User:SDZeroBot/AfC sorting', pagetext, 'Updating report');
 	};
 
-	makeSinglePageReport();
-	libApi.ApiBatchOperation(Object.keys(sorter), createSubpage, 10);
+	await makeSinglePageReport();
+
+
+
+	/* TOPICAL SUBPAGES */
+
+	var createSubpage = function(topic) {
+		var pagetitle = topic;
+		var content = `<templatestyles src="User:SD0001/AfC sorting/styles.css"/>\n`;
+		if (isStarred(topic)) {
+			pagetitle = meta(topic);
+			if (pagetitle !== 'Unsorted') {
+				content += `<div style="font-size:18px">See also the subpages:</div>\n` +
+				`{{Special:PrefixIndex/User:SDZeroBot/AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
+			}
+		}
+		content += `<div style="font-size:18px">${sorter[topic].length} pending AfC submission${sorter[topic].length > 1 ? 's' : ''} as of ${accessdate}</div>
+{| class="wikitable sortable"
+|-
+! Page
+! Class
+! Submission date
+! Creation date
+! Creator (# edits)
+! Length
+! Notes
+`;
+
+		sorter[topic].forEach(function(page) {
+			var tabledata = tableInfo[page.title];
+
+			var editorString;
+			if (tabledata.creatorEdits) {
+				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
+			} else {
+				// lowercase IPv6 address and split to 2 lines to reduce column width
+				if (isIPv6Address(tabledata.creator)) {
+					var ip = tabledata.creator.toLowerCase();
+					var idx = Math.round(ip.length / 2);
+					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);
+					editorString = `[[Special:Contribs/${tabledata.creator}|${ip}]]`;
+				} else {
+					editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]]`;
+				}
+			}
+
+			var classString = page.quality;
+			// fix sort values: put FA, GA at the top in sorted order
+			if (classString === 'FA') {
+				classString = `data-sort-value="A0"|FA`;
+			} else if (classString === 'GA') {
+				classString = `data-sort-value="A1"|GA`;
+			}
+
+			// prevent pages with long titles from messing up the table formatting
+			// split title into multiple lines - keeps the column width in check
+			var titleString = `[[${page.title}]]`;
+			if (page.title.length > 30) {
+				var chars = page.title.split('');
+				var lines = utils.arrayChunk(chars, 30).map(e => e.join(''));
+				var displaytitle = lines.join('<br>');
+				titleString = `[[${page.title}|${displaytitle}]]`;
+			}
+
+			content += `|-
+| ${titleString}
+| ${classString}
+| ${tabledata.submit_date}
+| ${tabledata.creation_date}
+| ${editorString}
+| ${tabledata.bytecount}
+| ${page.issues}
+`;
+		});
+
+		content += '|}';
+
+		return bot.edit('User:SDZeroBot/AfC sorting/' + pagetitle, content, 'Updating report');
+	};
+
+	libApi.ApiBatchOperation(Object.keys(sorter), createSubpage, 10).then(() => {
+		log('[i] Finished');
+	});
 
 })();
-
-
-
-// TemplateStyles:
-// mw.util.addCSS(`
-// .mw-redirect { color: green }
-// .wikitable tbody tr td:nth-child(2),
-// .wikitable tbody tr td:nth-child(3) {
-//     font-size: 13px;
-// }
-// `);
