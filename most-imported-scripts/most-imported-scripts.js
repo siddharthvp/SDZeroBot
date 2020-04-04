@@ -61,58 +61,72 @@ bot.loginBot().then(() => {
 
 	table = {};
 	failures = [];
-	return libApi.ApiBatchOperation(scriptList, function(title, idx) {
-		log(`[i][${idx}/${scriptList.length}] Processing ${title}`);
-		var subpagename = title.slice(title.indexOf('/') + 1);
 
-		// ignore these, skipping the api calls
-		if (['common.js', 'vector.js', 'monobook.js', 'timeless.js', 'modern.js',
-		'cologneblue.js', 'twinkleoptions.js'].includes(subpagename)) {
-			table[title] = {
-				total: -1,
-				active: -1
-			};
-			return Promise.resolve();
-		}
+	var getCountsForScripts = function(scriptList, retryCount) {
+		failures.push([]);
+		return libApi.ApiBatchOperation(scriptList, function(title, idx) {
+			log(`[i][${idx}/${scriptList.length}] Processing ${title}`);
+			var subpagename = title.slice(title.indexOf('/') + 1);
 
-		return libApi.ApiQueryContinuous(bot, {  // only 1 or 2
-			"action": "query",
-			"format": "json",
-			"list": "search",
-			"srsearch": '"' + title + '" intitle:/(common|vector|monobook|modern|timeless|cologneblue)\\.js/',
-			"srnamespace": "2",
-			"srlimit": "max",
-			"srinfo": "totalhits",
-			"srprop": ""
-
-		}, 10, true).then(function(jsons) {
-
-			var installCount = jsons[0].query.searchinfo.totalhits;
-			table[title] = {
-				total: installCount
-			};
-			if (installCount === 0) {
-				table[title].active = 0;
-				table[title].activeusers = [];
-				return; // code below won't work
+			// ignore these, skipping the api calls
+			if (['common.js', 'vector.js', 'monobook.js', 'timeless.js', 'modern.js',
+			'cologneblue.js', 'twinkleoptions.js'].includes(subpagename)) {
+				table[title] = {
+					total: -1,
+					active: -1
+				};
+				return Promise.resolve();
 			}
 
-			table[title].active = jsons.reduce(function(users, json) {
-				return users.concat(json.query.search.map(e => e.title.split('/')[0].slice('User:'.length)).filter(e => activeusers[e]));
-			}, []).length;
+			return libApi.ApiQueryContinuous(bot, {  // only 1 or 2
+				"action": "query",
+				"format": "json",
+				"list": "search",
+				"srsearch": '"' + title + '" intitle:/(common|vector|monobook|modern|timeless|cologneblue)\\.js/',
+				"srnamespace": "2",
+				"srlimit": "max",
+				"srinfo": "totalhits",
+				"srprop": ""
 
-		}).catch(function() {
-			failures.push(title);
-			return Promise.reject();
+			}, 10, true).then(function(jsons) {
+
+				var installCount = jsons[0].query.searchinfo.totalhits;
+				table[title] = {
+					total: installCount
+				};
+				if (installCount === 0) {
+					table[title].active = 0;
+					table[title].activeusers = [];
+					return; // code below won't work
+				}
+
+				table[title].active = jsons.reduce(function(users, json) {
+					return users.concat(json.query.search.map(e => e.title.split('/')[0].slice('User:'.length)).filter(e => activeusers[e]));
+				}, []).length;
+
+			}).catch(function() {
+				failures[retryCount].push(title);
+				return Promise.reject();
+			});
+
+		}, 1).then(function() {
+
+			if (!failures[retryCount].length) {
+				return;
+			} else if (retryCount === 10) {
+				utils.saveObject('failures', failures[retryCount]);
+				return;
+			}
+			return getCountsForScripts(failures[retryCount], retryCount + 1);
+
 		});
+	};
 
-	}, 1);
+	return getCountsForScripts(scriptList, 0);
 
 }).then(function() {
 	if (argv.tabulate) return;
-	if (failures.length) {
-		log(`[E] Fetched search results with ${failures.length} errors`);
-	}
+
 	// Read old JSON file and compute deltas
 
 	// var oldcounts = require('./importCounts');
@@ -154,7 +168,9 @@ bot.loginBot().then(() => {
 	var dateString = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 	wikitable =
-`The number of installations of a script is taken as the number of userspace common.js or skin js pages that contain the script's name ([https://en.wikipedia.org/w/index.php?search=%22User%3ALupin%2Fpopups.js%22+intitle%3A%2F%28common%7Cvector%7Cmonobook%7Cmodern%7Ctimeless%7Ccologneblue%29%5C.js%2F&title=Special%3ASearch&ns2=1 example search query]). Commented-out installations also get counted, but the over-counting because of this should be negligible.
+`<templatestyles src="Wikipedia:User scripts/Most imported scripts/styles.css"/>
+{{Shortcut|WP:MOSTIMPORTED}}
+The number of installations of a script is taken as the number of userspace common.js or skin js pages that contain the script's name ([https://en.wikipedia.org/w/index.php?search=%22User%3ALupin%2Fpopups.js%22+intitle%3A%2F%28common%7Cvector%7Cmonobook%7Cmodern%7Ctimeless%7Ccologneblue%29%5C.js%2F&title=Special%3ASearch&ns2=1 example search query]). Commented-out installations also get counted, but the over-counting because of this should be negligible.
 
 Note that a few scripts may have redirects, which indicates that they are also getting loaded for users who have installed the redirect version instead.
 
@@ -169,8 +185,7 @@ Note that a few scripts may have redirects, which indicates that they are also g
 // ! Position !! Script !! Total users !! data-sort-type=number | Change !! Active users !! data-sort-type=number | Change
 // `;
 
-	var pos = 1;
-	Object.entries(tableSorted).forEach(function([name, count]) {
+	Object.entries(tableSorted).forEach(function([name, count], idx) {
 		// count.deltaTotal = count.deltaTotal || count.total;
 		// count.deltaActive = count.deltaActive || count.active;
 
@@ -182,13 +197,15 @@ Note that a few scripts may have redirects, which indicates that they are also g
 		}
 		wikitable +=
 		'|-\n' +
-		`| ${(pos++).toString()} || style="text-align:left;" | [[${name}]] || ${count.total} || ${count.active}\n`;
+		`| ${idx} || style="text-align:left;" | [[${name}]] || ${count.total} || ${count.active}\n`;
 
 	});
 
 	wikitable += '|}';
 
 	fs.writeFileSync('./wikitable.txt', wikitable, console.log);
-	return bot.edit('Wikipedia:User scripts/Most imported scripts', wikitable, 'Updating');
+	if (!argv.dry) {
+		return bot.edit('Wikipedia:User scripts/Most imported scripts', wikitable, 'Updating');
+	}
 
 }).catch(console.log);
