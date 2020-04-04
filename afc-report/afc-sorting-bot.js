@@ -242,9 +242,11 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
 	var makeSinglePageReport = function() {
 		var pagetext = `<templatestyles src="User:SD0001/AfC sorting/styles.css"/>
+{{Shortcut|WP:AFCS}}
 {{TOC right}}
 <div style="font-size:24px">Pending AfC submissions as of ${accessdate}</div>
 {{hatnote|1=A single page may appear in multiple sections. Pages now in mainspace appear in <span style="color:green">green</span>. Count of entries in each section is indicated in the section header.}}
+<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>
 `;
 
 		Object.keys(sorter).sort(function(a, b) {
@@ -266,14 +268,14 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 			var size = ` <small>(${sorter[rawtopic].length})</small>`;
 
 			pagetext += `\n== ${topic} ${size} ==\n` +
-				`{{main page|User:SDZeroBot/AfC sorting/${isStarred(topic) ? meta(topic) : topic}}}\n{{div col|colwidth=20em}}\n`;
+				`{{main page|Wikipedia:AfC sorting/${isStarred(topic) ? meta(topic) : topic}}}\n{{div col|colwidth=20em}}\n`;
 			sorter[rawtopic].forEach(function(page) {
 				pagetext += '* [[' + page.title + ']]: <small>' + page.quality + '-class' +
 				(!page.issues ? '' : ', ' + page.issues.replace(/<br>/g, ', ')) + '</small>\n';
 			});
 			pagetext += '{{div col end}}\n';
 		});
-		return bot.edit('User:SDZeroBot/AfC sorting', pagetext, 'Updating report');
+		return bot.edit('Wikipedia:AfC sorting', pagetext, 'Updating report');
 	};
 
 	await makeSinglePageReport();
@@ -289,7 +291,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 			pagetitle = meta(topic);
 			if (pagetitle !== 'Unsorted') {
 				content += `<div style="font-size:18px">See also the subpages:</div>\n` +
-				`{{Special:PrefixIndex/User:SDZeroBot/AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
+				`{{Special:PrefixIndex/Wikipedia:AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
 			}
 		}
 		content += `<div style="font-size:18px">${sorter[topic].length} pending AfC submission${sorter[topic].length > 1 ? 's' : ''} as of ${accessdate}</div>
@@ -351,9 +353,9 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 `;
 		});
 
-		content += '|}';
+		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
-		return bot.edit('User:SDZeroBot/AfC sorting/' + pagetitle, content, 'Updating report');
+		return bot.edit('Wikipedia:AfC sorting/' + pagetitle, content, 'Updating report');
 	};
 
 	libApi.ApiBatchOperation(Object.keys(sorter), createSubpage, 10).then(() => {
