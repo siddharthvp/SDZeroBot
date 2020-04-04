@@ -179,10 +179,10 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		var quality = ores.articlequality; // FA / GA / B / C / Start / Stub
 		var issues = [];
 		if (numDeclines[title]) {
-			issues.push(numDeclines[title] + ' past declines');
+			issues.push(`${numDeclines[title]} past decline${numDeclines[title] > 1 ? 's' : ''}`);
 		}
 		if (ores.draftquality !== 'OK') { // OK / vandalism / spam / attack
-			issues.push('Possible ' + issues);
+			issues.push('Possible ' + ores.draftquality);
 		}
 		if (UserSQLReport && getCopyioPercent(title) > 50) {
 			issues.push('Possible copyvio');
@@ -245,7 +245,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		var pagetext = `<templatestyles src="User:SD0001/AfC sorting/styles.css"/>
 {{TOC right}}
 <div style="font-size:24px">Pending AfC submissions as of ${accessdate}</div>
-{{hatnote|A single page may appear in multiple sections. Pages now in mainspace appear in <span style="color:green">green</span>. Count of entries in each section is indicated in the section header.}}
+{{hatnote|1=A single page may appear in multiple sections. Pages now in mainspace appear in <span style="color:green">green</span>. Count of entries in each section is indicated in the section header.}}
 `;
 
 		Object.keys(sorter).sort(function(a, b) {
@@ -270,7 +270,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 				`{{main page|User:SDZeroBot/AfC sorting/${isStarred(topic) ? meta(topic) : topic}}}\n{{div col|colwidth=20em}}\n`;
 			sorter[rawtopic].forEach(function(page) {
 				pagetext += '* [[' + page.title + ']]: <small>' + page.quality + '-class' +
-				(!page.issues ? '' : ', ' + page.issues) + '</small>\n';
+				(!page.issues ? '' : ', ' + page.issues.replace(/<br>/g, ', ')) + '</small>\n';
 			});
 			pagetext += '{{div col end}}\n';
 		});
