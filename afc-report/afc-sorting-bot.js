@@ -1,6 +1,6 @@
 process.chdir('./SDZeroBot/afc-report');
 // crontab:
-// 0 0 * * * jsub -N job-MIS ~/bin/node ~/SDZeroBot/afc-report/afc-sorting-bot.js
+// 0 0 * * * jsub -N job-AFC ~/bin/node ~/SDZeroBot/afc-report/afc-sorting-bot.js
 
 const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
@@ -28,8 +28,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		log('[S] Got DB query result');
 
 		var formatDateString = function(str) {
-			return str.slice(0, 4) + '-' + str.slice(4, 6) + '-' + str.slice(6, 8) +
-				' ' + str.slice(8, 10) + ':' + str.slice(10, 12);
+			return str.slice(0, 4) + '-' + str.slice(4, 6) + '-' + str.slice(6, 8);
 		};
 
 		revidsTitles = {};
