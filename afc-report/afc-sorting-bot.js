@@ -295,11 +295,11 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		content += `<div style="font-size:18px">${sorter[topic].length} pending AfC submission${sorter[topic].length > 1 ? 's' : ''} as of ${accessdate}</div>
 {| class="wikitable sortable"
 |-
-! scope="col" style="width: 200px;" | Page
+! scope="col" style="width: 14em;" | Page
 ! Class
-! Submission date
-! Creation date
-! Creator (# edits)
+! scope="col" style="width: 5em;" | Submitted
+! scope="col" style="width: 5em;" | Created
+! scope="col" style="max-width: 14em;" | Creator (# edits)
 ! Length
 ! Notes
 `;
