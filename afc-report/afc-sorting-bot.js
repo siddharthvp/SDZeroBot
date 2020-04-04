@@ -246,7 +246,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 {{TOC right}}
 <div style="font-size:24px">Pending AfC submissions as of ${accessdate}</div>
 {{hatnote|1=A single page may appear in multiple sections. Pages now in mainspace appear in <span style="color:green">green</span>. Count of entries in each section is indicated in the section header.}}
-<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>
+:<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>
 `;
 
 		Object.keys(sorter).sort(function(a, b) {
@@ -358,7 +358,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		return bot.edit('Wikipedia:AfC sorting/' + pagetitle, content, 'Updating report');
 	};
 
-	libApi.ApiBatchOperation(Object.keys(sorter), createSubpage, 10).then(() => {
+	libApi.ApiBatchOperation(Object.keys(sorter), createSubpage, 1).then(() => {
 		log('[i] Finished');
 	});
 
