@@ -296,7 +296,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		content += `<div style="font-size:18px">${sorter[topic].length} pending AfC submission${sorter[topic].length > 1 ? 's' : ''} as of ${accessdate}</div>
 {| class="wikitable sortable"
 |-
-! Page
+! scope="col" style="width: 200px;" | Page
 ! Class
 ! Submission date
 ! Creation date
@@ -334,12 +334,12 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 			// prevent pages with long titles from messing up the table formatting
 			// split title into multiple lines - keeps the column width in check
 			var titleString = `[[${page.title}]]`;
-			if (page.title.length > 30) {
-				var chars = page.title.split('');
-				var lines = utils.arrayChunk(chars, 30).map(e => e.join(''));
-				var displaytitle = lines.join('<br>');
-				titleString = `[[${page.title}|${displaytitle}]]`;
-			}
+			// if (page.title.length > 30) {
+			// 	var chars = page.title.split('');
+			// 	var lines = utils.arrayChunk(chars, 30).map(e => e.join(''));
+			// 	var displaytitle = lines.join('<br>');
+			// 	titleString = `[[${page.title}|${displaytitle}]]`;
+			// }
 
 			content += `|-
 | ${titleString}
