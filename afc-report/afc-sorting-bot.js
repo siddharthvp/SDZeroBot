@@ -241,13 +241,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 	/* MAIN-PAGE REPORT */
 
 	var makeSinglePageReport = function() {
-		var pagetext = `<templatestyles src="User:SD0001/AfC sorting/styles.css"/>
-{{Shortcut|WP:AFCS}}
-{{TOC right}}
-<div style="font-size:24px">Pending AfC submissions as of ${accessdate}</div>
-{{hatnote|1=A single page may appear in multiple sections. Pages now in mainspace appear in <span style="color:green">green</span>. Count of entries in each section is indicated in the section header.}}
-:<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>
-`;
+		var pagetext = `{{Wikipedia:AfC sorting/header|count=${Object.keys(revidsTitles).length}|date=${accessdate}|ts=~~~~~}}\n`;
 
 		Object.keys(sorter).sort(function(a, b) {
 			if (isStarred(a) && isStarred(b)) {
@@ -286,7 +280,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
 	var createSubpage = function(topic) {
 		var pagetitle = topic;
-		var content = `<templatestyles src="User:SD0001/AfC sorting/styles.css"/>\n`;
+		var content = '';
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 			if (pagetitle !== 'Unsorted') {
@@ -294,7 +288,8 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 				`{{Special:PrefixIndex/Wikipedia:AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
 			}
 		}
-		content += `<div style="font-size:18px">${sorter[topic].length} pending AfC submission${sorter[topic].length > 1 ? 's' : ''} as of ${accessdate}</div>
+		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
+		content += `
 {| class="wikitable sortable"
 |-
 ! scope="col" style="width: 14em;" | Page
