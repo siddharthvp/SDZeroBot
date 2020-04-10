@@ -241,7 +241,19 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 	/* MAIN-PAGE REPORT */
 
 	var makeSinglePageReport = function() {
-		var pagetext = `{{Wikipedia:AfC sorting/header|count=${Object.keys(revidsTitles).length}|date=${accessdate}|ts=~~~~~}}\n`;
+		var count = Object.keys(revidsTitles).length;
+		var prevCount = parseInt(fs.readFileSync('./previousRunCount.txt').toString());
+		var diff = count - prevCount;
+		if (diff < 0) {
+			diff = `{{DecreasePositive}} ${-diff} from yesterday`;
+		} else if (diff > 0) {
+			diff = `{{IncreaseNegative}} ${diff} from yesterday`;
+		} else {
+			diff = `{{Steady}} no change from yesterday`;
+		}
+		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}\n`;
+
+		fs.writeFileSync('./previousRunCount.txt', count);
 
 		Object.keys(sorter).sort(function(a, b) {
 			if (isStarred(a) && isStarred(b)) {
