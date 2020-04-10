@@ -136,7 +136,6 @@ bot.loginBot().then(() => {
 	// 		return;
 	// 	}
 	// 	table[page].deltaTotal = table[page].total - oldjson[page].total;
-	// 	table[page].deltaActive = table[page].active - oldjson[page].active;
 	// });
 
 }).then(function() {
@@ -187,17 +186,14 @@ Note that a few scripts may have redirects, which indicates that they are also g
 
 	Object.entries(tableSorted).forEach(function([name, count], idx) {
 		// count.deltaTotal = count.deltaTotal || count.total;
-		// count.deltaActive = count.deltaActive || count.active;
-
 		// var deltaTotal = count.deltaTotal + ' &nbsp; ' + (count.deltaTotal >= 0 ? '{{up}}' : '{{down}}');
-		// var deltaActive = count.deltaActive + ' &nbsp; ' + (count.deltaActive >= 0 ? '{{up}}' : '{{down}}');
 
 		if (count.total <= 0) {
 			return;
 		}
 		wikitable +=
 		'|-\n' +
-		`| ${idx} || style="text-align:left;" | [[${name}]] || ${count.total} || ${count.active}\n`;
+		`| ${idx+1} || [[${name}]] || ${count.total} || ${count.active}\n`;
 
 	});
 
