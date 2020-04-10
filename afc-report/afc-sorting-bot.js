@@ -263,6 +263,14 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 			} else if (isStarred(b) && meta(a) === meta(b)) {
 				return 1;
 			} else {
+				// don't put the BIG biography section at the top
+				if (a.startsWith('Culture/Biography') &&
+					(b.startsWith('Culture/F') || b.startsWith('Culture/I') || b.startsWith('Culture/L'))) {
+					return 1;
+				} else if (b.startsWith('Culture/Biography') &&
+					(a.startsWith('Culture/F') || a.startsWith('Culture/I') || a.startsWith('Culture/L'))) {
+					return -1;
+				}
 				return a > b ? 1 : -1;
 			}
 		}).forEach(function(topic) {
