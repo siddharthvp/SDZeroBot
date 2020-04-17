@@ -17,7 +17,7 @@ const district = argv.district;
 0 1 20 4 * jsub -N gurdaspur-recat ~/bin/node ~/SDZeroBot/stub-resort/punjab-recat.js --district=Gurdaspur
 **/
 
-bot.login().then(function() {
+bot.loginGetToken().then(function() {
 	return getPetscanList(`https://petscan.wmflabs.org/?min_sitelink_count=&edits%5Bbots%5D=both&cb_labels_any_l=1&sortby=title&cb_labels_yes_l=1&templates_yes=asbox&cb_labels_no_l=1&project=wikipedia&search_max_results=500&edits%5Bflagged%5D=both&language=en&interface_language=en&categories=Punjab,%20India%20geography%20stubs%0A${district}%20district%7C5&edits%5Banons%5D=both&search_wiki=&doit=`);
 
 }).then(pagelist => {

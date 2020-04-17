@@ -11,7 +11,7 @@ sql.queryBot(`
 	sql.end();
 	var map = {};
 	result.forEach(row => {
-		map[row.page_title] = row.rd_from;
+		map[row.page_title] = row.rd_title;
 	});
 
 	utils.saveObject('redirect-stub-templates', map);
