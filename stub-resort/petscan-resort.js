@@ -24,12 +24,12 @@ bot.loginGetToken().then(function() {
 			var stm = new StubTagManager(text);
 
 			if (Array.isArray(argv.remove)) {
-				argv.remove.forEach(stm.removeTag);
+				argv.remove.forEach(tag => stm.removeTag(tag));
 			} else {
 				stm.removeTag(argv.remove);
 			}
 			if (Array.isArray(argv.add)) {
-				argv.add.forEach(stm.addTag);
+				argv.add.forEach(tag => stm.removeTag(tag));
 			} else {
 				stm.addTag(argv.add);
 			}
