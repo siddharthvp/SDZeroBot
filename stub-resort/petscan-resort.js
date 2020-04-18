@@ -23,14 +23,25 @@ bot.loginGetToken().then(function() {
 			var text = rev.content;
 			var stm = new StubTagManager(text);
 
-			argv.remove.forEach(stm.removeTag);
-			argv.add.forEach(stm.addTag);
+			if (Array.isArray(argv.remove)) {
+				argv.remove.forEach(stm.removeTag);
+			} else {
+				stm.removeTag(argv.remove);
+			}
+			if (Array.isArray(argv.add)) {
+				argv.add.forEach(stm.addTag);
+			} else {
+				stm.addTag(argv.add);
+			}
 
 			return {
 				text: stm.getText(),
 				summary: `Stub sorting: replacing ${utils.makeSentence(stm.removedTags)} with ${utils.makeSentence(stm.addedTags)}`,
 				minor: 1
 			};
+		}).catch(err => {
+			console.log(err);
+			return Promise.reject(err);
 		});
 
 	}, 3000).then(console.log);
