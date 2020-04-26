@@ -167,11 +167,7 @@ bot.loginBot().then(() => {
 	var dateString = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 	wikitable =
-`<templatestyles src="Wikipedia:User scripts/Most imported scripts/styles.css"/>
-{{Shortcut|WP:MOSTIMPORTED}}
-The number of installations of a script is taken as the number of userspace common.js or skin js pages that contain the script's name ([https://en.wikipedia.org/w/index.php?search=%22User%3ALupin%2Fpopups.js%22+intitle%3A%2F%28common%7Cvector%7Cmonobook%7Cmodern%7Ctimeless%7Ccologneblue%29%5C.js%2F&title=Special%3ASearch&ns2=1 example search query]). Commented-out installations also get counted, but the over-counting because of this should be negligible.
-
-Note that a few scripts may have redirects, which indicates that they are also getting loaded for users who have installed the redirect version instead.
+`{{Wikipedia:User scripts/Most imported scripts/header}}
 
 :''Last updated on ${dateString} by [[User:SDZeroBot|SDZeroBot]]
 {| class="wikitable sortable"  style="text-align: center"
