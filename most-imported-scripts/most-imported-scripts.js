@@ -40,14 +40,14 @@ bot.loginBot().then(() => {
 }).then(function() {
 	if (argv.tabulate) return;
 
-	/** Get the first 3000 JS pages sorted by number of backlinks
+	/** Get the first 5000 JS pages sorted by number of backlinks
 	 * Should cover every script that has at least 2 backlinks, and many others. */
 	return bot.request({
 		"action": "query",
 		"list": "search",
 		"srsearch": "contentmodel:javascript",
 		"srnamespace": "2",
-		"srlimit": "3000",
+		"srlimit": "5000",
 		"srprop": "",
 		"srsort": "incoming_links_desc"
 	}).then(json => {
@@ -184,7 +184,7 @@ bot.loginBot().then(() => {
 		// count.deltaTotal = count.deltaTotal || count.total;
 		// var deltaTotal = count.deltaTotal + ' &nbsp; ' + (count.deltaTotal >= 0 ? '{{up}}' : '{{down}}');
 
-		if (count.total <= 0) {
+		if (count.total < 3) {
 			return;
 		}
 		wikitable +=
