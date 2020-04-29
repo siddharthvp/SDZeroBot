@@ -192,8 +192,10 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
 		if (topics.length) {
 
+			topics = topics.map(t => t.replace(/\./g, '/'));
+
 			topics.forEach(function(topic) {
-				topic = topic.replace(/\./g, '/');
+
 				// Remove Asia.Asia* if Asia.South-Asia is present (example)
 				if (topic.endsWith('*')) {
 					var metatopic = topic.split('/').slice(0, -1).join('/');
