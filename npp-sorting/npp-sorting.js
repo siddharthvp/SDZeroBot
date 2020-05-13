@@ -159,7 +159,7 @@ const utils = {
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {
-					models: 'articlequality|draftquality|articletopic',
+					models: 'articlequality|draftquality|drafttopic',
 					revids: revids.join('|')
 				},
 				responseType: 'json'
@@ -173,7 +173,7 @@ const utils = {
 					oresdata[revid] = {
 						articlequality: data.articlequality.score.prediction,
 						draftquality: data.draftquality.score.prediction,
-						articletopic: data.articletopic.score.prediction,
+						drafttopic: data.drafttopic.score.prediction,
 					}
 				});
 			});
@@ -202,7 +202,7 @@ const utils = {
 			log(`[E] revid ${revid} couldn't be matched to title`);
 		}
 
-		var topics = ores.articletopic; // Array of topics
+		var topics = ores.drafttopic; // Array of topics
 		var quality = ores.articlequality; // FA / GA / B / C / Start / Stub
 		var issues = [];
 		if (ores.draftquality !== 'OK') { // OK / vandalism / spam / attack
