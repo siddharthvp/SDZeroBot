@@ -15,7 +15,7 @@ const argv = require('minimist')(process.argv.slice(2));
 const log = require('semlog').log;
 
 /** bot account and databse access credentials */
-const auth = require('./.auth');
+const auth = require('../.auth');
 
 const bot = new mwn({
 	apiUrl: 'https://en.wikipedia.org/w/api.php',
