@@ -290,7 +290,7 @@ const utils = {
 		content += `
 {| class="wikitable sortable"
 |-
-! scope="col" style="width: 14em;" | Article
+! scope="col" style="width: 17em;" | Article
 ! Class
 ! scope="col" style="width: 5em;" | Created
 ! scope="col" style="max-width: 14em;" | Creator (# edits)
