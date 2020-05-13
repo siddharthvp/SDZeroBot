@@ -1,6 +1,6 @@
 process.chdir('./SDZeroBot/npp-sorting');
 // crontab:
-// 0 0 * * * jsub -N job-AFC ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
+// 0 0 * * * jsub -N job-NPP ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
 
 const fs = require('fs');
 const util = require('util');
@@ -327,6 +327,7 @@ const utils = {
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
 
+	await bot.loginGetToken();
 	bot.batchOperation(Object.keys(sorter), createSubpage, 1).then(() => {
 		log('[i] Finished');
 	});
