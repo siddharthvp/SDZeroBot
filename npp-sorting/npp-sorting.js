@@ -260,6 +260,19 @@ const utils = {
 		return (new RegExp('^' + RE_IPV6_ADD + '$').test(address) && /::/.test(address) && !/::.*::/.test(address));
 	};
 
+	var makeMainPage = function() {
+		var count = Object.keys(revidsTitles).length;
+		return bot.edit('User:SDZeroBot/NPP sorting', function(rev) {
+			var text = rev.content.replace(/\{\{\/header.*\}\}/, 
+				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}`);
+			return {
+				text: text, 
+				summary: 'Updating report'
+			};
+		});
+	}
+	await makeMainPage();
+
 
 	/* TOPICAL SUBPAGES */
 
