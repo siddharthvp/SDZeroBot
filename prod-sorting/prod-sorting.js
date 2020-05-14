@@ -157,8 +157,8 @@ const {bot, log, argv, utils} = require('../botbase');
 		var content = `
 {| class="wikitable sortable"
 |-
+! scope="col" style="width: 7em;" | PROD date
 ! scope="col" style="width: 17em;" | Article
-! scope="col" style="width: 7em;" | PROD Date
 ! Concern
 `;
 
