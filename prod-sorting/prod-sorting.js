@@ -10,7 +10,7 @@ const {bot, log, argv, utils} = require('../botbase');
 
 	log('[i] Started');
 	await bot.loginGetToken();
-	
+
 	var revidsTitles, tableInfo;
 	if (argv.nodb) {
 		revidsTitles = require('./revidsTitles');
@@ -33,10 +33,10 @@ const {bot, log, argv, utils} = require('../botbase');
 			};
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var wkt = new bot.wikitext(pg.revisions[0].content).parseTemplates();
-				var prod_template = wkt.templates.find(t => t.name === 'Proposed deletion/dated');
+				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
+				var prod_template = templates.find(t => t.name === 'Proposed deletion/dated');
 				if (!prod_template) {
-					var prod_blp_template = wkt.templates.find(t => t.name === 'Prod blp/dated');
+					var prod_blp_template = templates.find(t => t.name === 'Prod blp/dated');
 				}
 				tableInfo[pg.title] = {
 					concern: prod_template ? prod_template.getParam('concern').value : '[BLP]',
