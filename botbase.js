@@ -1,41 +1,28 @@
+/** Base file to reduce the amount of boilerplate code in each file */
+
 const fs = require('fs');
 const util = require('util');
 
-const mwbot = require('mwbot');
+const mwn = require('mwn');
 const mysql = require('mysql');
 
 /** Parsed console arguments */
 const argv = require('minimist')(process.argv.slice(2));
 
-/** Colorised and dated console logging. Semlog is a dependency of mwbot */
+/** Colorised and dated console logging. Semlog is a dependency of mwn */
 const log = require('semlog').log;
-
-/** library of methods for bulk API processing */
-const libApi = require('./libApiNode');
 
 /** bot account and databse access credentials */
 const auth = require('./.auth');
 
-const bot = new mwbot();
-bot.setGlobalRequestOptions({
-	qs: {
-		format: 'json',
-		formatversion: '2'
-	},
-	headers: {
-		'User-Agent': 'w:en:User:SDZeroBot'
-	},
-	json: true
+const bot = new mwn({
+	apiUrl: 'https://en.wikipedia.org/w/api.php',
+	username: auth.bot_username,
+	password: auth.bot_password,
+	hasApiHighLimit: true,
 });
-bot.loginBot = function() {
-	return bot.loginGetEditToken({
-		apiUrl: 'https://en.wikipedia.org/w/api.php',
-		username: auth.bot_username,
-		password: auth.bot_password
-	}).then(() => {
-		bot.globalRequestOptions.qs.assert = 'bot';
-	});
-};
+bot.setDefaultParams({ assert: 'bot' });
+bot.setUserAgent('w:en:User:SDZeroBot');
 
 const sql = mysql.createConnection({
 	host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
@@ -67,6 +54,11 @@ const utils = {
 	saveObject: function(filename, obj) {
 		fs.writeFileSync('./' + filename + '.json', JSON.stringify(obj, null, 2), console.log);
 	},
+
+	logObject: function(obj) {
+		return console.log(JSON.stringify(obj, null, 2));
+	},
+
 	// copied from https://en.wikipedia.org/wiki/MediaWiki:Gadget-twinkleblock.js
 	makeSentence: function(arr) {
 		if (arr.length < 3) {
@@ -87,12 +79,8 @@ const utils = {
 			current.push(arr[i]);
 		}
 		return result;
-	},
-	// copied from https://doc.wikimedia.org/mediawiki-core/master/js/source/util.html#mw-util-method-escapeRegExp
-	escapeRegExp: function(str) {
-		// eslint-disable-next-line no-useless-escape
-		return str.replace( /([\\{}()|.?*+\-^$\[\]])/g, '\\$1' );
 	}
 };
 
-module.exports = { bot, mwbot, sql, mysql, fs, util, argv, log, libApi, utils };
+// export everything
+module.exports = { bot, mwn, sql, mysql, fs, util, argv, log, utils };

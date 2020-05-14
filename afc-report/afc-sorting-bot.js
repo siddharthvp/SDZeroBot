@@ -1,8 +1,8 @@
 process.chdir('./SDZeroBot/afc-report');
 // crontab:
-// 0 0 * * * jsub -N job-AFC ~/bin/node ~/SDZeroBot/afc-report/afc-sorting-bot.js
+// 0 0 * * * jsub -N job-AFC -mem 900m ~/bin/node ~/SDZeroBot/afc-report/afc-sorting-bot.js
 
-const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
+const {fs, bot, sql, utils, argv, log} = require('../botbase');
 
 (async function() {
 
@@ -70,13 +70,13 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 		var queryOres = function(revids, i) {
 
 			return bot.rawRequest({
-				method: 'GET',
-				uri: 'https://ores.wikimedia.org/v3/scores/enwiki/',
-				qs: {
+				method: 'get',
+				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
+				params: {
 					models: 'articlequality|draftquality|drafttopic',
 					revids: revids.join('|')
 				},
-				json: true
+				responseType: 'json'
 			}).then(function(json) {
 				log(`[+][${i}/${chunks.length}] Ores API call ${i} succeeded.`);
 				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
@@ -107,7 +107,8 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
 	/* GET COPYVIOS REPORT */
 
-	await bot.loginBot();
+	await bot.loginGetToken();
+
 	var UserSQLReport = await bot.request({
 		"action": "query",
 		"prop": "revisions",
@@ -121,7 +122,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
 	var entriesFound = 0;
 	var getCopyioPercent = function(title) {
-		var re = new RegExp(`${utils.escapeRegExp(title).replace(/ /g, '_')}(?:\\s|\\S)*?tools\\.wmflabs\\.org\\/copyvios\\/.*? (.*?)\\]%`).exec(UserSQLReport);
+		var re = new RegExp(`${bot.util.escapeRegExp(title).replace(/ /g, '_')}(?:\\s|\\S)*?tools\\.wmflabs\\.org\\/copyvios\\/.*? (.*?)\\]%`).exec(UserSQLReport);
 		if (!re || !re[1]) {
 			return null;
 		}
@@ -138,7 +139,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 	var doSearch = async function(count) {
 		var dec = '\\{\\{AFC submission\\|d\\|.*'.repeat(count).slice(0, -2);
 		var searchQuery = `incategory:"Declined AfC submissions" insource:/${dec}/`;
-		await libApi.ApiQueryContinuous(bot, {
+		await bot.continuedQuery({
 			"action": "query",
 			"list": "search",
 			"srsearch": searchQuery,
@@ -230,16 +231,6 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	// copied from https://doc.wikimedia.org/mediawiki-core/REL1_29/js/source/mediawiki.util.html#mw-util-method-isIPv6Address
-	var isIPv6Address = function(address) {
-		var RE_IPV6_ADD = '(?:' + ':(?::|(?::' + '[0-9A-Fa-f]{1,4}' + '){1,7})' + '|' + '[0-9A-Fa-f]{1,4}' + '(?::' + '[0-9A-Fa-f]{1,4}' + '){0,6}::' + '|' + '[0-9A-Fa-f]{1,4}' + '(?::' + '[0-9A-Fa-f]{1,4}' + '){7}' + ')';
-		if (new RegExp('^' + RE_IPV6_ADD + '$').test(address)) {
-			return true;
-		}
-		RE_IPV6_ADD = '[0-9A-Fa-f]{1,4}' + '(?:::?' + '[0-9A-Fa-f]{1,4}' + '){1,6}';
-		return (new RegExp('^' + RE_IPV6_ADD + '$').test(address) && /::/.test(address) && !/::.*::/.test(address));
-	};
-
 	/* MAIN-PAGE REPORT */
 
 	var makeSinglePageReport = function() {
@@ -291,7 +282,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 			});
 			pagetext += '{{div col end}}\n';
 		});
-		return bot.edit('Wikipedia:AfC sorting', pagetext, 'Updating report');
+		return bot.save('Wikipedia:AfC sorting', pagetext, 'Updating report');
 	};
 
 	await makeSinglePageReport();
@@ -331,7 +322,7 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
 			} else {
 				// lowercase IPv6 address and split to 2 lines to reduce column width
-				if (isIPv6Address(tabledata.creator)) {
+				if (bot.util.isIPv6Address(tabledata.creator)) {
 					var ip = tabledata.creator.toLowerCase();
 					var idx = Math.round(ip.length / 2);
 					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);
@@ -349,18 +340,8 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 				classString = `data-sort-value="A1"|GA`;
 			}
 
-			// prevent pages with long titles from messing up the table formatting
-			// split title into multiple lines - keeps the column width in check
-			var titleString = `[[${page.title}]]`;
-			// if (page.title.length > 30) {
-			// 	var chars = page.title.split('');
-			// 	var lines = utils.arrayChunk(chars, 30).map(e => e.join(''));
-			// 	var displaytitle = lines.join('<br>');
-			// 	titleString = `[[${page.title}|${displaytitle}]]`;
-			// }
-
 			content += `|-
-| ${titleString}
+| [[${page.title}]]
 | ${classString}
 | ${tabledata.submit_date}
 | ${tabledata.creation_date}
@@ -372,10 +353,10 @@ const {fs, bot, sql, utils, libApi, argv, log} = require('../botbase');
 
 		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
-		return bot.edit('Wikipedia:AfC sorting/' + pagetitle, content, 'Updating report');
+		return bot.save('Wikipedia:AfC sorting/' + pagetitle, content, 'Updating report');
 	};
 
-	libApi.ApiBatchOperation(Object.keys(sorter), createSubpage, 1).then(() => {
+	bot.batchOperation(Object.keys(sorter), createSubpage, 1, 2).then(() => {
 		log('[i] Finished');
 	});
 

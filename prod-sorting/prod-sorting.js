@@ -1,6 +1,6 @@
 process.chdir('./SDZeroBot/npp-sorting');
 // crontab:
-// 0 0 * * * jsub -N job-NPP -mem 2g ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
+// 0 0 * * * jsub -N job-NPP ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
 
 const fs = require('fs');
 const util = require('util');
@@ -101,36 +101,28 @@ const utils = {
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
-		const result = await sql.queryBot(`
-			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
-			FROM pagetriage_page
-			JOIN page on page_id = ptrp_page_id
-			JOIN revision ON page_id = rev_page AND rev_parent_id = 0
-			JOIN actor ON rev_actor = actor_id
-			LEFT JOIN user ON user_id = actor_user
-			WHERE page_namespace = 0
-			AND page_is_redirect = 0
-			AND ptrp_reviewed = 0
-		`);
-		sql.end();
-		log('[S] Got DB query result');
-
-		var formatDateString = function(str) {
-			return str.slice(0, 4) + '-' + str.slice(4, 6) + '-' + str.slice(6, 8);
-		};
-
-		revidsTitles = {};
-		tableInfo = {};
-		result.forEach(row => {
-			var pagename = row.page_title.replace(/_/g, ' ');
-			revidsTitles[row.page_latest] = pagename
-			tableInfo[pagename] = {
-				creation_date: formatDateString(row.rev_timestamp),
-				bytecount: row.page_len,
-				creator: row.actor_name,
-				creatorEdits: row.user_editcount || '',
-			};
+		await bot.continuedQuery({
+			"action": "query",
+			"prop": "revisions",
+			"generator": "categorymembers",
+			"rvprop": "ids|content",
+			"gcmtitle": "Category:All_articles_proposed_for_deletion",
+			"gcmtype": "page",
+			"gcmlimit": "500"
+		}).then(jsons => {
+			revidsTitles = {};
+			tableInfo = {};
+			var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+			pages.forEach(pg => {
+				revidsTitles[pg.revisions[0].revid] = pg.title;
+				var wkt = new bot.wikitext(pg.revisions[0].content).parseTemplates();
+				tableInfo[title] = {
+					concern: wkt.templates.find(t => t.getName() === 'Proposed deletion/dated').getParam('concern') 
+				}
+			});
 		});
+		log('[S] Got API result');
+
 		utils.saveObject('revidsTitles', revidsTitles);
 		utils.saveObject('tableInfo', tableInfo);
 	}
@@ -159,20 +151,14 @@ const utils = {
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {
-					models: 'articlequality|draftquality|drafttopic',
+					models: 'drafttopic',
 					revids: revids.join('|')
 				},
 				responseType: 'json'
 			}).then(function(json) {
 				log(`[+][${i}/${chunks.length}] Ores API call ${i} succeeded.`);
 				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
-					if (data.articlequality.error) {
-						errors.push(revid);
-						return;
-					}
 					oresdata[revid] = {
-						articlequality: data.articlequality.score.prediction,
-						draftquality: data.draftquality.score.prediction,
 						drafttopic: data.drafttopic.score.prediction,
 					}
 				});
@@ -188,30 +174,6 @@ const utils = {
 		utils.saveObject('errors', errors);
 	}
 
-
-	/* GET DATA ABOUT PRIOR AFD */
-	var afds = {};
-
-	// Get existing AfDs to filter them out
-	var currentAfds = new Set(await new bot.category('AfD debates').pages().then(pages => {
-		return pages.map(pg => pg.title); 
-	}));
-
-	await bot.massQuery({
-		action: 'query',
-		titles: Object.values(revidsTitles).map(e => 'Wikipedia:Articles for deletion/' + e)
-	}).then(jsons => {
-		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
-		pages.forEach(page => {
-			if (!page.missing && !currentAfds.has(page)) {
-				afds[page.title.slice('Wikipedia:Articles for deletion/'.length)] = 1;
-			}
-		});
-		log(`[S] Fetched list of prior AfDs. Found ${Object.keys(afds).length} articles with AfDs`);
-	});	
-
-
-
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
 
 	var sorter = {
@@ -226,17 +188,7 @@ const utils = {
 		}
 
 		var topics = ores.drafttopic; // Array of topics
-		var quality = ores.articlequality; // FA / GA / B / C / Start / Stub
-		var issues = [];
-		if (ores.draftquality !== 'OK') { // OK / vandalism / spam / attack
-			issues.push('Possible ' + ores.draftquality);
-		}
-		if (afds[title]) {
-			issues.push(`[[Wikipedia:Articles for deletion/${title}|Past AfD]]`);
-		}
-		issues = issues.join('<br>');
-
-		var toInsert = { title, revid, quality, issues };
+		var toInsert = { title, revid };
 
 		if (topics.length) {
 
@@ -278,7 +230,7 @@ const utils = {
 
 	var makeMainPage = function() {
 		var count = Object.keys(revidsTitles).length;
-		return bot.edit('User:SDZeroBot/NPP sorting', function(rev) {
+		return bot.edit('User:SDZeroBot/PROD sorting', function(rev) {
 			var text = rev.content.replace(/\{\{\/header.*\}\}/, 
 				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}`);
 			return {
@@ -322,7 +274,7 @@ const utils = {
 				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
 			} else {
 				// lowercase IPv6 address and split to 2 lines to reduce column width
-				if (bot.util.isIPv6Address(tabledata.creator)) {
+				if (isIPv6Address(tabledata.creator)) {
 					var ip = tabledata.creator.toLowerCase();
 					var idx = Math.round(ip.length / 2);
 					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);
