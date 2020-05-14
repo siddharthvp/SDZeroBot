@@ -158,9 +158,8 @@ const {bot, log, argv, utils} = require('../botbase');
 {| class="wikitable sortable"
 |-
 ! scope="col" style="width: 17em;" | Article
-! scope="col" style="width: 5em;" | PROD Date
+! scope="col" style="width: 7em;" | PROD Date
 ! Concern
-! Notes
 `;
 
 		sorter[topic].forEach(function(page) {
@@ -173,7 +172,7 @@ const {bot, log, argv, utils} = require('../botbase');
 `;
 		});
 
-		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
+		content += `|}`;
 
 		return [pagetitle, content];
 	};
@@ -181,9 +180,26 @@ const {bot, log, argv, utils} = require('../botbase');
 	var makeMainPage = function() {
 		var count = Object.keys(revidsTitles).length;
 
-		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}}\n`;
-		var topics = Object.keys(sorter);
-		topics.forEach(topic => {
+		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
+		Object.keys(sorter).sort(function(a, b) {
+			if (isStarred(a) && isStarred(b)) {
+				return a > b ? 1 : -1;
+			} else if (isStarred(a) && meta(a) === meta(b)) {
+				return -1;
+			} else if (isStarred(b) && meta(a) === meta(b)) {
+				return 1;
+			} else {
+				// don't put the big biography section at the top
+				if (a.startsWith('Culture/Biography') &&
+					(b.startsWith('Culture/F') || b.startsWith('Culture/I') || b.startsWith('Culture/L'))) {
+					return 1;
+				} else if (b.startsWith('Culture/Biography') &&
+					(a.startsWith('Culture/F') || a.startsWith('Culture/I') || a.startsWith('Culture/L'))) {
+					return -1;
+				}
+				return a > b ? 1 : -1;
+			}
+		}).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';
