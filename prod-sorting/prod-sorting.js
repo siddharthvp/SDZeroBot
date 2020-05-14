@@ -166,8 +166,8 @@ const {bot, log, argv, utils} = require('../botbase');
 			var tabledata = tableInfo[page.title];
 
 			content += `|-
-| [[${page.title}]]
 | ${tabledata.prod_date}
+| [[${page.title}]]
 | ${tabledata.concern}
 `;
 		});
