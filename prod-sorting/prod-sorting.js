@@ -1,95 +1,8 @@
-process.chdir('./SDZeroBot/npp-sorting');
+process.chdir('./SDZeroBot/prod-sorting');
 // crontab:
-// 0 0 * * * jsub -N job-NPP ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
+// 0 16 * * * jsub -N job-NPP ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
 
-const fs = require('fs');
-const util = require('util');
-
-const mwn = require('mwn');
-const mysql = require('mysql');
-
-/** Parsed console arguments */
-const argv = require('minimist')(process.argv.slice(2));
-
-/** Colorised and dated console logging. Semlog is a dependency of mwn */
-const log = require('semlog').log;
-
-/** bot account and databse access credentials */
-const auth = require('../.auth');
-
-const bot = new mwn({
-	apiUrl: 'https://en.wikipedia.org/w/api.php',
-	username: auth.bot_username,
-	password: auth.bot_password,
-	hasApiHighLimit: true,
-});
-bot.setDefaultParams({ assert: 'bot' });
-bot.setUserAgent('w:en:User:SDZeroBot');
-
-const sql = mysql.createConnection({
-	host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
-	port: 3306,
-	user: auth.db_user,
-	password: auth.db_password,
-	database: 'enwiki_p'
-});
-
-/**
- * Wrapper around sql.query that returns a promise
- * and stringifies non-null items in output.
- */
-sql.queryBot = function(query) {
-	const promisifiedfn = util.promisify(sql.query).bind(sql);
-	return promisifiedfn(query).then(results => {
-		return results.map(row => {
-			Object.keys(row).forEach(prop => {
-				if (row[prop]) { // not null
-					row[prop] = row[prop].toString();
-				}
-			});
-			return row;
-		});
-	});
-};
-
-const utils = {
-	saveObject: function(filename, obj) {
-		fs.writeFileSync('./' + filename + '.json', JSON.stringify(obj, null, 2), console.log);
-	},
-
-	logObject: function(obj) {
-		return console.log(JSON.stringify(obj, null, 2));
-	},
-
-	// copied from https://en.wikipedia.org/wiki/MediaWiki:Gadget-twinkleblock.js
-	makeSentence: function(arr) {
-		if (arr.length < 3) {
-			return arr.join(' and ');
-		}
-		var last = arr.pop();
-		return arr.join(', ') + ' and ' + last;
-	},
-	// copied from https://en.wikipedia.org/wiki/MediaWiki:Gadget-morebits.js
-	arrayChunk: function(arr, size) {
-		var result = [];
-		var current;
-		for (var i = 0; i < arr.length; ++i) {
-			if (i % size === 0) { // when 'i' is 0, this is always true, so we start by creating one.
-				current = [];
-				result.push(current);
-			}
-			current.push(arr[i]);
-		}
-		return result;
-	},
-	// copied from https://doc.wikimedia.org/mediawiki-core/master/js/source/util.html#mw-util-method-escapeRegExp
-	escapeRegExp: function(str) {
-		// eslint-disable-next-line no-useless-escape
-		return str.replace( /([\\{}()|.?*+\-^$\[\]])/g, '\\$1' );
-	}
-};
-
-
+const {bot, log, argv, utils} = require('../botbase');
 
 (async function() {
 
@@ -113,12 +26,20 @@ const utils = {
 			revidsTitles = {};
 			tableInfo = {};
 			var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+			var formatTimeStamp = function(ts) {
+				return `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)} ${ts.slice(8, 10)}:${ts.slice(10, 12)}`;
+			};
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
 				var wkt = new bot.wikitext(pg.revisions[0].content).parseTemplates();
-				tableInfo[title] = {
-					concern: wkt.templates.find(t => t.getName() === 'Proposed deletion/dated').getParam('concern') 
+				var prod_template = wkt.templates.find(t => t.name === 'Proposed deletion/dated');
+				if (!prod_template) {
+					var prod_blp_template = wkt.templates.find(t => t.name === 'Prod blp/dated');
 				}
+				tableInfo[pg.title] = {
+					concern: prod_template ? prod_template.getParam('concern').value : '[BLP]',
+					prod_date: formatTimeStamp((prod_template || prod_blp_template).getParam('timestamp').value)
+				};
 			});
 		});
 		log('[S] Got API result');
@@ -228,87 +149,50 @@ const utils = {
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	var makeMainPage = function() {
-		var count = Object.keys(revidsTitles).length;
-		return bot.edit('User:SDZeroBot/PROD sorting', function(rev) {
-			var text = rev.content.replace(/\{\{\/header.*\}\}/, 
-				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}`);
-			return {
-				text: text, 
-				summary: 'Updating report'
-			};
-		});
-	}
-	await makeMainPage();
-
-
-	/* TOPICAL SUBPAGES */
-
-	var createSubpage = function(topic) {
+	var createSection = function(topic) {
 		var pagetitle = topic;
-		var content = '';
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
-			if (pagetitle !== 'Unsorted') {
-				content += `<div style="font-size:18px">See also the subpages:</div>\n` +
-				`{{Special:PrefixIndex/User:SDZeroBot/NPP sorting/${pagetitle}/|stripprefix=1}}\n\n`;
-			}
 		}
-		content += `{{User:SDZeroBot/NPP sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
-		content += `
+		var content = `
 {| class="wikitable sortable"
 |-
 ! scope="col" style="width: 17em;" | Article
-! Class
-! scope="col" style="width: 5em;" | Created
-! scope="col" style="max-width: 14em;" | Creator (# edits)
-! Length
+! scope="col" style="width: 5em;" | PROD Date
+! Concern
 ! Notes
 `;
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
 
-			var editorString;
-			if (tabledata.creatorEdits) {
-				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
-			} else {
-				// lowercase IPv6 address and split to 2 lines to reduce column width
-				if (isIPv6Address(tabledata.creator)) {
-					var ip = tabledata.creator.toLowerCase();
-					var idx = Math.round(ip.length / 2);
-					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);
-					editorString = `[[Special:Contribs/${tabledata.creator}|${ip}]]`;
-				} else {
-					editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]]`;
-				}
-			}
-
-			var classString = page.quality;
-			// fix sort values: put FA, GA at the top in sorted order
-			if (classString === 'FA') {
-				classString = `data-sort-value="A0"|FA`;
-			} else if (classString === 'GA') {
-				classString = `data-sort-value="A1"|GA`;
-			}
-
 			content += `|-
 | [[${page.title}]]
-| ${classString}
-| ${tabledata.creation_date}
-| ${editorString}
-| ${tabledata.bytecount}
-| ${page.issues}
+| ${tabledata.prod_date}
+| ${tabledata.concern}
 `;
 		});
 
 		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
-		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
+		return [pagetitle, content];
 	};
 
-	bot.batchOperation(Object.keys(sorter), createSubpage, 1).then(() => {
-		log('[i] Finished');
-	});
+	var makeMainPage = function() {
+		var count = Object.keys(revidsTitles).length;
+
+		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}}\n`;
+		var topics = Object.keys(sorter);
+		topics.forEach(topic => {
+			var [sectionTitle, sectionText] = createSection(topic);
+			content += `\n==${sectionTitle}==\n`;
+			content += sectionText + '\n';
+		});
+
+		return bot.save('User:SDZeroBot/PROD sorting', content, 'Updating report');
+
+	}
+	await makeMainPage();
+
 
 })();
