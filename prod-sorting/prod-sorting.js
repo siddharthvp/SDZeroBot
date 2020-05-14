@@ -9,6 +9,8 @@ const {bot, log, argv, utils} = require('../botbase');
 	/* GET DATA FROM DATABASE */
 
 	log('[i] Started');
+	await bot.loginGetToken();
+	
 	var revidsTitles, tableInfo;
 	if (argv.nodb) {
 		revidsTitles = require('./revidsTitles');
@@ -50,8 +52,6 @@ const {bot, log, argv, utils} = require('../botbase');
 
 	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-
-	await bot.loginGetToken();
 
 	/* GET DATA FROM ORES */
 
