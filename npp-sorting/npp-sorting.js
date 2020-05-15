@@ -235,7 +235,7 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		content += `
 {| class="wikitable sortable"
 |-
-! scope="col" style="width: 17em;" | Article
+! scope="col" style="width: 22em;" | Article
 ! Class
 ! scope="col" style="width: 5em;" | Created
 ! scope="col" style="max-width: 14em;" | Creator (# edits)
