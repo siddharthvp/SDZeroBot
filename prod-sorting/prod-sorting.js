@@ -50,7 +50,7 @@ const {bot, log, argv, utils} = require('../botbase');
 				tableInfo[pg.title] = {
 					concern: prod_concern || '[Failed to parse]',
 					prod_date: prod_date || '[Failed to parse]',
-					description: pg.description 
+					shortdesc: pg.description 
 				};
 			});
 		});
