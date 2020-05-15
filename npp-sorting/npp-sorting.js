@@ -101,6 +101,21 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 		utils.saveObject('errors', errors);
 	}
 
+	/* GET SHORT DESCRIPTIONS */
+	await bot.massQuery({
+		action: 'query',
+		titles: Object.values(revidsTitles),
+		prop: 'description'
+	}).then(jsons => {
+		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+		pages.forEach(page => {
+			if (page.description) {
+				tableInfo[page.title].shortdesc = page.description;
+			}
+		});
+		log(`[S] Found ${pages.filter(page => page.description).length} pages with short descriptions`);
+	});
+
 
 	/* GET DATA ABOUT PRIOR AFD */
 	var afds = {};
@@ -253,8 +268,13 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 				classString = `data-sort-value="A1"|GA`;
 			}
 
+			var articleString = `[[${page.title}]]`;
+			if (tabledata.shortdesc) {
+				articleString += `<small>(${tabledata.shortdesc})</small>`;
+			}
+
 			content += `|-
-| [[${page.title}]]
+| ${articleString}
 | ${classString}
 | ${tabledata.creation_date}
 | ${editorString}
