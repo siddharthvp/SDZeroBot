@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const util = require('util');
+const assert = require('assert'); 
 
 const mwn = require('mwn');
 const mysql = require('mysql');
@@ -83,4 +84,4 @@ const utils = {
 };
 
 // export everything
-module.exports = { bot, mwn, sql, mysql, fs, util, argv, log, utils };
+module.exports = { bot, mwn, sql, mysql, fs, util, assert, argv, log, utils };

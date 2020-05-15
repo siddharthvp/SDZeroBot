@@ -2,7 +2,7 @@ process.chdir('./SDZeroBot/npp-sorting');
 // crontab:
 // 0 0 * * * jsub -N job-NPP -mem 2g ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
 
-const {log, argv, bot, sql, utils} = require('../botbase');
+const {log, argv, bot, sql, utils, assert} = require('../botbase');
 
 (async function() {
 
@@ -108,6 +108,7 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 		prop: 'description'
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+		assert(pages.length === Object.values(revidsTitles).length);
 		pages.forEach(page => {
 			if (page.description) {
 				tableInfo[page.title].shortdesc = page.description;
@@ -270,7 +271,7 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 
 			var articleString = `[[${page.title}]]`;
 			if (tabledata.shortdesc) {
-				articleString += `<small>(${tabledata.shortdesc})</small>`;
+				articleString += ` <small>(${tabledata.shortdesc})</small>`;
 			}
 
 			content += `|-
