@@ -33,15 +33,22 @@ const {bot, log, argv, utils} = require('../botbase');
 			};
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
-				var prod_template = templates.find(t => t.name === 'Proposed deletion/dated');
-				if (!prod_template) {
-					var prod_blp_template = templates.find(t => t.name === 'Prod blp/dated');
+				try {
+					var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
+					var prod_template = templates.find(t => t.name === 'Proposed deletion/dated');
+					if (!prod_template) {
+						var prod_blp_template = templates.find(t => t.name === 'Prod blp/dated');
+					}
+					tableInfo[pg.title] = {
+						concern: prod_template ? prod_template.getParam('concern').value : '[BLP]',
+						prod_date: formatTimeStamp((prod_template || prod_blp_template).getParam('timestamp').value)
+					};
+				} catch (e) {
+					tableInfo[pg.title] = {
+						concern: '[Failed to parse]',
+						prod_date: '[Failed to parse]'
+					};
 				}
-				tableInfo[pg.title] = {
-					concern: prod_template ? prod_template.getParam('concern').value : '[BLP]',
-					prod_date: formatTimeStamp((prod_template || prod_blp_template).getParam('timestamp').value)
-				};
 			});
 		});
 		log('[S] Got API result');
@@ -144,6 +151,23 @@ const {bot, log, argv, utils} = require('../botbase');
 
 
 
+	/* GET SHORT DESCRIPTIONS */
+	await bot.massQuery({
+		action: 'query',
+		titles: Object.values(revidsTitles),
+		prop: 'description'
+	}).then(jsons => {
+		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+		pages.forEach(page => {
+			if (page.description) {
+				tableInfo[page.title].shortdesc = page.description;
+			}
+		});
+		log(`[S] Found ${pages.filter(page => page.description).length} pages with short descriptions`);
+	});
+
+
+
 	/* FORMAT DATA TO BE SAVED ON THE WIKI */
 
 	var isStarred = x => x.endsWith('*');
@@ -167,7 +191,7 @@ const {bot, log, argv, utils} = require('../botbase');
 
 			content += `|-
 | ${tabledata.prod_date}
-| [[${page.title}]]
+| [[${page.title}]] ${tabledata.shortdesc ? `<small>${tabledata.shortdesc}</small>` : ''}
 | ${tabledata.concern}
 `;
 		});
