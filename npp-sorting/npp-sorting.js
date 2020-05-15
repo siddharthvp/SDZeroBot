@@ -32,10 +32,16 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 			return str.slice(0, 4) + '-' + str.slice(4, 6) + '-' + str.slice(6, 8);
 		};
 
+		var rfdRedirects = new Set(await new bot.category('All redirects for discussion').pages()
+			.then(pages => pages.map(pg => pg.title)));
+
 		revidsTitles = {};
 		tableInfo = {};
 		result.forEach(row => {
 			var pagename = row.page_title.replace(/_/g, ' ');
+			if (rfdRedirects.has(pagename)) { // exclude RfD'd redirects 
+				return;
+			}
 			revidsTitles[row.page_latest] = pagename
 			tableInfo[pagename] = {
 				creation_date: formatDateString(row.rev_timestamp),
