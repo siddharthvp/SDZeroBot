@@ -10,47 +10,74 @@ const {bot, log, argv, utils} = require('../botbase');
 	await bot.loginGetToken();
 
 	var revidsTitles, tableInfo;
-	if (argv.nodb) {
-		revidsTitles = require('./revidsTitles');
-		tableInfo = require('./tableInfo');
-	} else {
-		await bot.continuedQuery({
-			"action": "query",
-			"prop": "revisions|description",
-			"generator": "categorymembers",
-			"rvprop": "ids|content",
-			"gcmtitle": "Category:AfD debates",
-			"gcmtype": "page",
-			"gcmlimit": "500"
-		}).then(jsons => {
-			revidsTitles = {};
-			tableInfo = {};
-			var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
-			var formatTimeStamp = function(ts) {
-				return `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}`;
+
+	await bot.continuedQuery({
+		"action": "query",
+		"prop": "revisions|description",
+		"generator": "categorymembers",
+		"rvprop": "ids|content",
+		"gcmtitle": "Category:Articles for deletion",
+		"gcmnamespace": "0",
+		"gcmtype": "page",
+		"gcmlimit": "500"
+	}).then(jsons => {
+		revidsTitles = {};
+		tableInfo = {};
+		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+		var months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+		var pad = num => num < 10 ? '0' + num : num;
+		pages.forEach(pg => {
+			revidsTitles[pg.revisions[0].revid] = pg.title;
+			var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
+			var afd_template, afd_date, afd_page;
+			afd_template = templates.find(t => t.name === 'Article for deletion/dated' || t.name === 'AfDM');
+			if (afd_template) {
+				afd_date = `${afd_template.getValue('year')}-${pad(months.indexOf(afd_template.getValue('month')))}-${pad(afd_template.getValue('day'))}`;
+				afd_page = afd_template.getValue('page')
+			}
+			tableInfo[pg.title] = {
+				afd_date: afd_date || '[Failed to parse]',
+				afd_page: afd_page || '[Failed to parse]',
+				shortdesc: pg.description 
 			};
-			pages.forEach(pg => {
-				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
-				var afd_template, afd_date;
-				afd_template = templates.find(t => t.name === 'Article for deletion/dated' || t.name === 'AfDM');
-				if (afd_template) {
-					afd_date = formatTimeStamp(afd_template.getValue('timestamp') || '');
-					if (!afd_date) {
-						afd_date = `${afd_template.getValue('year')}-${afd_template.getValue('month')}-${afd_template.getValue('day')}`;
-					}
-				}
-				tableInfo[pg.title] = {
-					afd_date: afd_date || '[Failed to parse]',
-					shortdesc: pg.description 
-				};
-			});
 		});
+	
 		log('[S] Got API result');
 
 		utils.saveObject('revidsTitles', revidsTitles);
 		utils.saveObject('tableInfo', tableInfo);
-	}
+	});
+
+	var afd_data = {};
+	await bot.massQuery({
+		action: 'query',
+		titles: Object.values(tableInfo).map(e => {
+			if (e.afd_page !== '[Failed to parse]') {
+				return 'Wikipedia:Articles for deletion/' + e.afd_page;
+			}
+		}).filter(e => e), // filter out undefineds
+		prop: 'revisions', 
+		rvprop: 'content'
+	}).then(jsons => {
+		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+		pages.forEach(pg => {
+			if (pg.missing) {
+				return;
+			}
+			var text = pg.revisions[0].content;
+			var concern = text.replace(/^[:*{=<].*$/mg, '').replace(/^\s*$/mg, '').trim();
+			var keeps = 0, deletes = 0;
+			var boldedTexts = (text.match(/'''.*?'''/g) || []).map(e => e.slice(3, -3));
+			boldedTexts.forEach(text => {
+				if (/^(strong |weak )?keep$/i.test(text)) {
+					keeps++;
+				} else if (/^(strong |weak )?delete$/i.test(text)) {
+					deletes++;
+				}
+			});
+			afd_data[pg.title] = { concern, keeps, deletes };
+		});
+	});
 
 	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
@@ -156,16 +183,24 @@ const {bot, log, argv, utils} = require('../botbase');
 		var content = `
 {| class="wikitable sortable"
 |-
-! scope="col" style="width: 7em;" | AFD date
-! Article
+! scope="col" style="width: 5em;" | AfD date
+! scope="col" style="width: 19em;" | Article
+! AfD nomination
 `;
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
+			var afd_title = `Wikipedia:Articles for deletion/${tabledata.afd_page}`;
+			var afd_line = '';
+			if (afd_data[afd_title]) {
+				var {concern, keeps, deletes} = afd_data[afd_title];
+				afd_line = `(${keeps} k, ${deletes} d) (<small>${concern}</small>)`;
+			}
 
 			content += `|-
 | ${tabledata.afd_date}
 | [[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}
+| [[${afd_title}|AfD]] ${afd_line}
 `;
 		});
 
@@ -202,7 +237,9 @@ const {bot, log, argv, utils} = require('../botbase');
 			content += sectionText + '\n';
 		});
 
-		return bot.save('User:SDZeroBot/AfD sorting', content, 'Updating report');
+		if (!argv.dry) {
+			return bot.save('User:SDZeroBot/AfD sorting', content, 'Updating report');
+		}
 
 	}
 	await makeMainPage();
