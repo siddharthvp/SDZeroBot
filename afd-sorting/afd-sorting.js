@@ -65,7 +65,7 @@ const {bot, log, argv, utils} = require('../botbase');
 				return;
 			}
 			var text = pg.revisions[0].content;
-			var concern = text.replace(/^[:*{=<].*$/mg, '').replace(/^\s*$/mg, '').trim();
+			var concern = text.replace(/^[:*{}|=<].*$/mg, '').replace(/^\s*$/mg, '').trim();
 			var keeps = 0, deletes = 0;
 			var boldedTexts = (text.match(/'''.*?'''/g) || []).map(e => e.slice(3, -3));
 			boldedTexts.forEach(text => {
