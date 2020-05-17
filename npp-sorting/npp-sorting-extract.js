@@ -207,7 +207,7 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 
 	bot.massQuery({
 		action: 'query',
-		titles: sorter['Culture/Media'].map(e => e.title),
+		titles: sorter['Culture/Media/Media*'].map(e => e.title),
 		prop: 'revisions',
 		rvprop: 'content'
 	}).then(jsons => {
@@ -317,7 +317,7 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report (testing)');
 	};
 
-	bot.batchOperation(['Culture/Media'], createSubpage, 1).then(() => {
+	bot.batchOperation(['Culture/Media/Media*'], createSubpage, 1).then(() => {
 		log('[i] Finished');
 	});
 
