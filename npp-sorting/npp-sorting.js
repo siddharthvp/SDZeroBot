@@ -241,14 +241,30 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 	var makeMainPage = function() {
 		var count = Object.keys(revidsTitles).length;
 		return bot.edit('User:SDZeroBot/NPP sorting', function(rev) {
-			var text = rev.content.replace(/\{\{\/header.*\}\}/, 
+			var text = rev.content;
+			text = text.replace(/\{\{\/header.*\}\}/, 
 				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}`);
+
+			var sorterKeys = Object.keys(sorter);
+
+			// update category counts
+			text.split('\n').forEach(line => {
+				var match = line.match(/\[\[\/(.*?)\|.*?\]\]/);
+				if (!match || !match[1]) {
+					return;
+				}
+				var topic = match[1];
+				var sorterKey = sorterKeys.find(e => e === topic || (isStarred(e) && meta(e) === topic));
+				var count = sorter[sorterKey].length;
+				text = text.replace(line, line.replace(/\(\d+\)/, `(${count})`));
+			});
+
 			return {
 				text: text, 
 				summary: 'Updating report'
 			};
 		});
-	}
+	};
 	await makeMainPage();
 
 
@@ -327,9 +343,10 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 
 		// Do away with some of the more bizarre stuff from page extracts that aren't worth
 		// checking for on a per-page basis
-		content = content.replace(/\[\[[cC]ategory:.*?\]\]/g, '')
+		content = content.replace(/\[\[Category:.*?\]\]/gi, '')
 			.replace(/\[\[Image:.*?\]\]/gi, '')
-			.replace(/\{\{[sS]fn\|.*?\}\}/g, '');
+			.replace(/\{\{[sS]fn\|.*?\}\}/g, '')
+			.replace(/\{\{[Rr]\|.*?\}\}/g, '');
 
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
