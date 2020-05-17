@@ -205,7 +205,7 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 	utils.saveObject('sorter', sorter);
 
 
-	bot.massQuery({
+	await bot.massQuery({
 		action: 'query',
 		titles: sorter['Culture/Media/Media*'].map(e => e.title),
 		prop: 'revisions',
@@ -226,9 +226,9 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 				.replace(/<ref name=.*?\/>/, '')
 				.replace(/\[\[File:.*\]\]/, '')
 				.trim();
-			tableInfo[pg.title] = extract;
+			tableInfo[pg.title].extract = extract;
 		});
-	})
+	});
 
 
 	/* FORMAT DATA TO BE SAVED ON THE WIKI */
@@ -269,7 +269,7 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 ! scope="col" style="width: 5em;" | Created
 ! scope="col" style="width: 20em;" | Article
 ! scope="col" style="max-width: 28em;" | Extract 
-! scope="col" style="width: 3em;" Class
+! scope="col" style="width: 3em;" | Class
 ! scope="col" style="max-width: 14em;" | Creator (# edits)
 ! Notes
 `;
