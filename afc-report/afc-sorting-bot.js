@@ -1,6 +1,4 @@
 process.chdir('./SDZeroBot/afc-report');
-// crontab:
-// 0 0 * * * jsub -N job-AFC -mem 900m ~/bin/node ~/SDZeroBot/afc-report/afc-sorting-bot.js
 
 const {fs, bot, sql, utils, argv, log} = require('../botbase');
 

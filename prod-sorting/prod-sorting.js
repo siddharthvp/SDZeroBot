@@ -1,6 +1,4 @@
 process.chdir('./SDZeroBot/prod-sorting');
-// crontab:
-// 0 16 * * * jsub -N job-NPP ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
 
 const {bot, log, argv, utils} = require('../botbase');
 

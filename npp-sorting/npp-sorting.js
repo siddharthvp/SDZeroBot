@@ -1,8 +1,6 @@
 process.chdir('./SDZeroBot/npp-sorting');
-// crontab:
-// 0 0 * * * jsub -N job-NPP -mem 2g ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
 
-const {log, argv, bot, sql, utils, assert} = require('../botbase');
+const {log, argv, bot, sql, utils} = require('../botbase');
 
 (async function() {
 
@@ -115,8 +113,24 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		rvprop: 'content'
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
-		assert(pages.length === Object.values(revidsTitles).length);
 		pages.forEach(page => {
+			if (page.missing) {
+				return;
+			}
+			var text = page.revisions[0].content;
+			var extract = text
+				.replace(/<!--.*?-->/sg, '')
+				.replace(/<ref name=.*?\/>/g, '')
+				.replace(/<ref.*?<\/ref>/sg, '')
+				.replace(/\[\[File:.*\]\]/, '')
+				.replace(/^\s*[{|}=*#:].*$/mg, '')
+				.trimLeft()
+				.replace(/\n\n.*/s, '')
+				.replace(/'''(.*?)'''/g, '$1')
+				.replace(/\(\{\{lang-.*?\}\}\)/, '')
+				.trim();
+			tableInfo[page.title].extract = extract;
+
 			if (page.description) {
 				tableInfo[page.title].shortdesc = page.description;
 				// cut out noise
@@ -249,11 +263,11 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		content += `
 {| class="wikitable sortable"
 |-
-! scope="col" style="width: 22em;" | Article
-! Class
 ! scope="col" style="width: 5em;" | Created
+! scope="col" style="width: 20em;" | Article
+! scope="col" style="max-width: 28em;" | Extract 
+! scope="col" style="width: 3em;" | Class
 ! scope="col" style="max-width: 14em;" | Creator (# edits)
-! Length
 ! Notes
 `;
 
@@ -289,16 +303,19 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 			}
 
 			content += `|-
-| ${articleString}
-| ${classString}
 | ${tabledata.creation_date}
+| ${articleString}
+| <small>${tabledata.extract || ''}</small>
+| ${classString}
 | ${editorString}
-| ${tabledata.bytecount}
 | ${page.issues}
 `;
 		});
 
 		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
+
+		// strip any categories from page text extracts
+		content = content.replace(/\[\[[cC]ategory:.*?\]\]/g, '');
 
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};

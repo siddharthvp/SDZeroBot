@@ -209,8 +209,7 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		action: 'query',
 		titles: sorter['Culture/Media/Media*'].map(e => e.title),
 		prop: 'revisions',
-		rvprop: 'content',
-		rvsection: '0'
+		rvprop: 'content'
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(pg => {
