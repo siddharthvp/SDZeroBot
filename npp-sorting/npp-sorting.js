@@ -121,9 +121,9 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 			var extract = text
 				.replace(/<!--.*?-->/sg, '')
 				// remove refs, including named ref definitions and named ref invocations
-				.replace(/<ref.*?(?:\/>|<\/ref>)/sg, '')
+				.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
 				// remove files: no ? to handle wikilinks in captions. No s flag to go along with that.
-				.replace(/\[\[File:.*\]\]/g, '') 
+				.replace(/\[\[File:.*\]\]/gi, '') 
 				// the magic
 				.replace(/^\s*[{|}=*#:<!].*$/mg, '')
 				// trim left to prepare for next step
@@ -134,6 +134,7 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 				.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
 				.trim();
 			tableInfo[page.title].extract = extract;
+			// NOTE: additional processing of extracts at the end of createSubpage() function
 
 			if (page.description) {
 				tableInfo[page.title].shortdesc = page.description;
@@ -324,8 +325,11 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 
 		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
-		// strip any categories from page text extracts
-		content = content.replace(/\[\[[cC]ategory:.*?\]\]/g, '');
+		// Do away with some of the more bizarre stuff from page extracts that aren't worth
+		// checking for on a per-page basis
+		content = content.replace(/\[\[[cC]ategory:.*?\]\]/g, '')
+			.replace(/\[\[Image:.*?\]\]/gi, '')
+			.replace(/\{\{[sS]fn\|.*?\}\}/g, '');
 
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
