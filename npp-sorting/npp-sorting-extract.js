@@ -214,6 +214,9 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		console.log(pages.length);
 		pages.forEach(pg => {
+			if (pg.missing) {
+				return true;
+			}
 			var text = pg.revisions[0].content;
 			var extract = text
 				.replace(/^\s*[{|}=*:].*$/mg, '')
