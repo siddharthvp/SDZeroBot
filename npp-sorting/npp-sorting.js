@@ -118,10 +118,17 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		pages.forEach(page => {
 			if (page.description) {
 				tableInfo[page.title].shortdesc = page.description;
+				// cut out noise
+				if (page.description === 'Wikimedia list article') {
+					tableInfo[page.title].shortdesc = '';
+				} else if (page.description === 'Disambiguation page providing links to topics that could be referred to by the same search term') {
+					tableInfo[page.title].shortdesc = 'Disambiguation page';
+				}
 			}
 		});
 		log(`[S] Found ${pages.filter(page => page.description).length} pages with short descriptions`);
 	});
+	
 
 
 	/* GET DATA ABOUT PRIOR AFD */

@@ -52,6 +52,12 @@ const {bot, log, argv, utils} = require('../botbase');
 					prod_date: prod_date || '[Failed to parse]',
 					shortdesc: pg.description 
 				};
+				// cut out noise
+				if (pg.description === 'Wikimedia list article') {
+					tableInfo[pg.title].shortdesc = '';
+				} else if (pg.description === 'Disambiguation page providing links to topics that could be referred to by the same search term') {
+					tableInfo[pg.title].shortdesc = 'Disambiguation page';
+				}
 			});
 		});
 		log('[S] Got API result');
