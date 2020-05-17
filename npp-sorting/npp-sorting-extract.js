@@ -219,12 +219,14 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 			}
 			var text = pg.revisions[0].content;
 			var extract = text
+				.replace(/<!--.*?-->/sg, '')
 				.replace(/^\s*[{|}=*:].*$/mg, '')
+				.trimLeft()
 				.replace(/\n\n.*/s, '')
 				.replace(/'{2,}(.*?)'{2,}/g, '$1')
 				.replace(/<ref.*?<\/ref>/sg, '')
 				.replace(/<ref name=.*?\/>/, '')
-				.replace(/\[\[File:.*\]\]/, '')
+				.replace(/\[\[File:.*\]\]/, '')				
 				.trim();
 			tableInfo[pg.title].extract = extract;
 		});
