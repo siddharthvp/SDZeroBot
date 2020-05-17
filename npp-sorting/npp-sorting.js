@@ -120,14 +120,18 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 			var text = page.revisions[0].content;
 			var extract = text
 				.replace(/<!--.*?-->/sg, '')
-				.replace(/<ref name=.*?\/>/g, '')
-				.replace(/<ref.*?<\/ref>/sg, '')
-				.replace(/\[\[File:.*\]\]/, '')
-				.replace(/^\s*[{|}=*#:].*$/mg, '')
+				// remove refs, including named ref definitions and named ref invocations
+				.replace(/<ref.*?(?:\/>|<\/ref>)/sg, '')
+				// remove files: no ? to handle wikilinks in captions. No s flag to go along with that.
+				.replace(/\[\[File:.*\]\]/g, '') 
+				// the magic
+				.replace(/^\s*[{|}=*#:<!].*$/mg, '')
+				// trim left to prepare for next step
 				.trimLeft()
+				// keep only the first paragraph
 				.replace(/\n\n.*/s, '')
 				.replace(/'''(.*?)'''/g, '$1')
-				.replace(/\(\{\{lang-.*?\}\}\)/, '')
+				.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
 				.trim();
 			tableInfo[page.title].extract = extract;
 
@@ -264,15 +268,21 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 {| class="wikitable sortable"
 |-
 ! scope="col" style="width: 5em;" | Created
-! scope="col" style="width: 20em;" | Article
+! scope="col" style="width: 18em;" | Article
 ! scope="col" style="max-width: 28em;" | Extract 
 ! scope="col" style="width: 3em;" | Class
 ! scope="col" style="max-width: 14em;" | Creator (# edits)
 ! Notes
 `;
 
+		// Can't afford to include full extracts for very large lists
+		var trimExtracts = sorter[topic].length > 1000;
+
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
+			if (trimExtracts && typeof tabledata.extract === 'string' && tabledata.extract.length > 250) {
+				tabledata.extract = tabledata.extract.slice(0, 250) + ' ...';
+			}
 
 			var editorString;
 			if (tabledata.creatorEdits) {
