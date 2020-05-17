@@ -207,11 +207,12 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 
 	bot.massQuery({
 		action: 'query',
-		titles: sorter['Culture/Media/Media*'].map(e => e.title),
+		titles: sorter['Culture/Media'].map(e => e.title),
 		prop: 'revisions',
 		rvprop: 'content'
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+		console.log(pages.length);
 		pages.forEach(pg => {
 			var text = pg.revisions[0].content;
 			var extract = text
