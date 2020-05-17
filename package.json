@@ -1,0 +1,24 @@
+{
+  "name": "sdzerobot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Siddharth VP",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "github.com/siddharthvp/SDZeroBot"
+  },
+  "dependencies": {
+    "jsdom": "^16.2.1",
+    "minimist": "^1.2.5",
+    "mwn": "^0.2.0",
+    "mysql": "^2.18.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0"
+  }
+}
