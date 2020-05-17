@@ -214,18 +214,19 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(pg => {
 			if (pg.missing) {
-				return true;
+				return;
 			}
 			var text = pg.revisions[0].content;
 			var extract = text
 				.replace(/<!--.*?-->/sg, '')
+				.replace(/<ref name=.*?\/>/g, '')
 				.replace(/<ref.*?<\/ref>/sg, '')
-				.replace(/<ref name=.*?\/>/, '')
 				.replace(/\[\[File:.*\]\]/, '')
 				.replace(/^\s*[{|}=*#:].*$/mg, '')
 				.trimLeft()
 				.replace(/\n\n.*/s, '')
 				.replace(/'''(.*?)'''/g, '$1')
+				.replace(/\(\{\{lang-.*?\}\}\)/, '')
 				.trim();
 			tableInfo[pg.title].extract = extract;
 		});
@@ -309,7 +310,7 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 			content += `|-
 | ${tabledata.creation_date}
 | ${articleString}
-| <small>${tabledata.extract}</small>
+| <small>${tabledata.extract || ''}</small>
 | ${classString}
 | ${editorString}
 | ${page.issues}
@@ -317,6 +318,9 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		});
 
 		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
+
+		// strip any categories from page text extracts
+		content = content.replace(/\[\[[cC]ategory:.*?\]\]/g, '');
 
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report (testing)');
 	};
