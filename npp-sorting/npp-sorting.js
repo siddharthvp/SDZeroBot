@@ -107,11 +107,12 @@ const {log, argv, bot, sql, utils, assert} = require('../botbase');
 		utils.saveObject('errors', errors);
 	}
 
-	/* GET SHORT DESCRIPTIONS */
+	/* GET SHORT DESCRIPTIONS AND PAGE CONTENT */
 	await bot.massQuery({
 		action: 'query',
 		titles: Object.values(revidsTitles),
-		prop: 'description'
+		prop: 'revisions|description',
+		rvprop: 'content'
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		assert(pages.length === Object.values(revidsTitles).length);
