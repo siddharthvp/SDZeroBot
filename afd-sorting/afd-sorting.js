@@ -55,21 +55,19 @@ const {bot, log, argv, utils} = require('../botbase');
 	});
 
 	var afd_data = {};
-	await bot.massQuery({
+
+	await bot.continuedQuery({
 		action: 'query',
-		titles: Object.values(tableInfo).map(e => {
-			if (e.afd_page !== '[Failed to parse]') {
-				return 'Wikipedia:Articles for deletion/' + e.afd_page;
-			}
-		}).filter(e => e), // filter out undefineds
-		prop: 'revisions', 
+		generator: 'categorymembers',
+		gcmtitle: 'Category:AfD debates',
+		gcmlimit: '500',
+		gcmtype: 'page',	
+		prop: 'revisions',
 		rvprop: 'content'
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(pg => {
-			if (pg.missing) {
-				return;
-			}
+			if (pg.missing) return; // should never happen
 			var text = pg.revisions[0].content;
 			var concern = text.replace(/^\s*[:*#'{}|=<].*$/mg, '').replace(/^\s*$/mg, '').trim();
 			var keeps = 0, deletes = 0;
@@ -196,7 +194,9 @@ const {bot, log, argv, utils} = require('../botbase');
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
-			var afd_title = `Wikipedia:Articles for deletion/${tabledata.afd_page}`;
+			var afd_title = `Wikipedia:Articles for deletion/${tabledata.afd_page
+				// decode XML entities (Twinkle ugliness)
+				.replace(/&#(\d+);/g, (_, numStr) => String.fromCharCode(parseInt(numStr, 10)))}`; 
 			var afd_line = '';
 			if (afd_data[afd_title]) {
 				var {concern, keeps, deletes} = afd_data[afd_title];
