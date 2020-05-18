@@ -13,9 +13,9 @@
 30  16  *   *   *   jsub -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js                     > /dev/null
 30  20  *   *   *   jsub -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js                     > /dev/null
 
-30  1   *   *   *   jsub -N job-PROD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
-30  5   *   *   *   jsub -N job-PROD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
-30  9   *   *   *   jsub -N job-PROD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
-30  13  *   *   *   jsub -N job-PROD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
-30  17  *   *   *   jsub -N job-PROD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
-30  21  *   *   *   jsub -N job-PROD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
+30  1   *   *   *   jsub -N job-AFD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
+30  5   *   *   *   jsub -N job-AFD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
+30  9   *   *   *   jsub -N job-AFD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
+30  13  *   *   *   jsub -N job-AFD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
+30  17  *   *   *   jsub -N job-AFD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
+30  21  *   *   *   jsub -N job-AFD -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js                       > /dev/null
