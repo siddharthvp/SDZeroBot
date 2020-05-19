@@ -36,12 +36,14 @@ const {bot, log, argv, utils} = require('../botbase');
 				var afd_template, afd_date, afd_page;
 				afd_template = templates.find(t => t.name === 'Article for deletion/dated' || t.name === 'AfDM');
 				if (afd_template) {
-					afd_date = `${afd_template.getValue('year')}-${pad(months.indexOf(afd_template.getValue('month')))}-${pad(afd_template.getValue('day'))}`;
-					afd_page = afd_template.getValue('page')
+					if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
+						afd_date = `${afd_template.getValue('year')}-${pad(months.indexOf(afd_template.getValue('month')))}-${pad(afd_template.getValue('day'))}`;
+					}
+					afd_page = afd_template.getValue('page');
 				}
 				tableInfo[pg.title] = {
-					afd_date: afd_date || '[Failed to parse]',
-					afd_page: afd_page || '[Failed to parse]',
+					afd_date: afd_date,
+					afd_page: afd_page,
 					shortdesc: pg.description 
 				};
 				// cut out noise
@@ -52,7 +54,7 @@ const {bot, log, argv, utils} = require('../botbase');
 				}
 			});
 		
-			log('[S] Got API result');
+			log('[S] Got articles');
 	
 			utils.saveObject('revidsTitles', revidsTitles);
 			utils.saveObject('tableInfo', tableInfo);
@@ -90,6 +92,7 @@ const {bot, log, argv, utils} = require('../botbase');
 			});
 			afd_data[pg.title] = { concern, keeps, deletes };
 		});
+		log('[S] Got AfDs');
 	});
 
 	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
@@ -203,19 +206,34 @@ const {bot, log, argv, utils} = require('../botbase');
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
-			var afd_title = `Wikipedia:Articles for deletion/${tabledata.afd_page
-				// decode XML entities (Twinkle ugliness)
-				.replace(/&#(\d+);/g, (_, numStr) => String.fromCharCode(parseInt(numStr, 10)))}`; 
-			var afd_line = '';
-			if (afd_data[afd_title]) {
-				var {concern, keeps, deletes} = afd_data[afd_title];
-				afd_line = `(${keeps} k, ${deletes} d) (<small>${concern}</small>)`;
+			var afd_cell;
+			if (tabledata.afd_page) {
+				var afd_title = `Wikipedia:Articles for deletion/${tabledata.afd_page
+					// decode XML entities (Twinkle ugliness)
+					.replace(/&#(\d+);/g, (_, numStr) => String.fromCharCode(parseInt(numStr, 10)))}`; 
+				
+				afd_cell = `[[${afd_title}|AfD]]`;
+				if (afd_data[afd_title]) {
+					var {concern, keeps, deletes} = afd_data[afd_title];
+					afd_cell += ` (${keeps} k, ${deletes} d) (<small>${concern}</small>)`;
+
+					// parse the date if it hadn't been parsed from the template earlier
+					if (!tabledata.afd_date) {
+						var datematch = concern.match(/(\d{2}:\d{2}),( \d{1,2} \w+ \d{4} )\(UTC\)/);
+						if (datematch) {
+							var dateobj = new Date(datematch[1] + datematch[2] + 'UTC');
+							if (!isNaN(dateobj.getTime())) {
+								tabledata.afd_date = dateobj.toISOString().slice(0, 10);
+							}
+						}
+					}
+				}
 			}
 
 			content += `|-
-| ${tabledata.afd_date}
+| ${tabledata.afd_date || '[Failed to parse]'}
 | [[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}
-| [[${afd_title}|AfD]] ${afd_line}
+| ${afd_cell || `[Couldn't find open AfD]`}
 `;
 		});
 
