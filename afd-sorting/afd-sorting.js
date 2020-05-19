@@ -74,7 +74,7 @@ const {bot, log, argv, utils} = require('../botbase');
 		pages.forEach(pg => {
 			if (pg.missing) return; // should never happen
 			var text = pg.revisions[0].content;
-			var concern = text.replace(/^\s*[:*#'{}|!=<].*$/mg, '').replace(/^\s*$/mg, '').trim();
+			var concern = text.replace(/^\s*[:*#{}|!=<].*$/mg, '').replace(/^\s*$/mg, '').trim();
 			
 			// cut at the first newline coming after the first timestamp
 			concern = concern.replace(/(\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\)[^\n]*).*/s, '$1');
