@@ -1,6 +1,7 @@
 process.chdir('./SDZeroBot/npp-sorting');
 
 const {log, argv, bot, sql, utils} = require('../botbase');
+const TextExtractor = require('./TextExtractor')(bot);
 
 (async function() {
 
@@ -320,7 +321,7 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 
 		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
-		content = TextExtractor.sanitise(content);
+		content = TextExtractor.finalSanitise(content);
 
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
@@ -330,82 +331,3 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 	});
 
 })();
-
-class TextExtractor {
-
-	/** 
-	 * Get extract 
-	 * @param {string} pagetext - full page text 
-	 * @param {number} charLimit - cut off the extract at this many readable characters, or wherever 
-	 * the sentence ends after this limit
-	 * @param {number} hardUpperLimit - cut off the extract at this many readable characters even if 
-	 * the sentence hasn't ended
-	 */
-	static getExtract(pagetext, charLimit, hardUpperLimit) {
-
-		// remove any infoboxes - they occasionally contain text on a line not beginning with a | or *
-		// thus not being adequately handled by the magic down below
-		var wkt = new bot.wikitext(pagetext);
-		wkt.parseTemplates();
-		var infoboxes = wkt.templates.filter(t => /^[Ii]nfobox /.test(t.name));
-		infoboxes.forEach(infobox => {
-			pagetext = pagetext.replace(infobox.wikitext, '');
-		});
-
-		var extract = pagetext
-			.replace(/<!--.*?-->/sg, '')
-			// remove refs, including named ref definitions and named ref invocations
-			.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
-			// remove files: no ? to handle wikilinks in captions. No s flag to go along with that.
-			.replace(/\[\[File:.*\]\]/gi, '') 
-			// the magic
-			.replace(/^\s*[{|}=*#:<!].*$/mg, '')
-			// trim left to prepare for next step
-			.trimLeft()
-			// keep only the first paragraph
-			.replace(/\n\n.*/s, '')
-			.replace(/'''(.*?)'''/g, '$1')
-			.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
-			.trim();
-
-		// We consider a period followed by a space or newline NOT followed by a lowercase char
-		// as a sentence ending. Lowercase chars after period+space is generally use of an abbreviation
-		var sentenceEnd = /\.\s(?![a-z])/g;
-
-		if (extract.length > charLimit) {
-			var match = sentenceEnd.exec(extract);
-			while (match) {
-				if (TextExtractor.effCharCount(extract.slice(0, match.index)) > charLimit) {
-					extract = extract.slice(0, match.index + 1);
-					break;
-				} else {
-					match = sentenceEnd.exec(extract);
-				}
-			}
-		}
-
-		if (TextExtractor.effCharCount(extract) > hardUpperLimit) {
-			extract = extract.slice(0, hardUpperLimit) + ' ...';
-		}
-
-		return extract;
-	}
-
-	static effCharCount(text) {
-		return text
-			.replace(/\[\[:?(?:[^|\]]+?\|)?([^\]|]+?)\]\]/g, '$1')
-			.replace(/''/g, '')
-			.length;
-	}
-
-	/**
-	 * Do away with some of the more bizarre stuff from page extracts that aren't worth 
-	 * checking for on a per-page basis @param {string} content
-	 */
-	static sanitise(content) {
-		return content.replace(/\[\[Category:.*?\]\]/gi, '')
-			.replace(/\[\[Image:.*?\]\]/gi, '')
-			.replace(/\{\{[sS]fn\|.*?\}\}/g, '')
-			.replace(/\{\{r\|.*?\}\}/gi, '');
-	}
-}
