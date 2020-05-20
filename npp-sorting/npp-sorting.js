@@ -277,14 +277,8 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 ! Notes
 `;
 
-		// Can't afford to include full extracts for very large lists
-		// var trimExtracts = sorter[topic].length > 1000;
-
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
-			// if (trimExtracts && typeof tabledata.extract === 'string' && tabledata.extract.length > 250) {
-			// 	tabledata.extract = tabledata.extract.slice(0, 250) + ' ...';
-			// }
 
 			var editorString;
 			if (tabledata.creatorEdits) {
@@ -342,13 +336,22 @@ class TextExtractor {
 	/** 
 	 * Get extract 
 	 * @param {string} pagetext - full page text 
-	 * @param {number} charLimit - cut off the extract at this many characters, or wherever the
-	 * sentence ends after this limit
-	 * @param {number} hardUpperLimit - cut off the extract at this many characters even if the
-	 * sentence hasn't ended
+	 * @param {number} charLimit - cut off the extract at this many readable characters, or wherever 
+	 * the sentence ends after this limit
+	 * @param {number} hardUpperLimit - cut off the extract at this many readable characters even if 
+	 * the sentence hasn't ended
 	 */
 	static getExtract(pagetext, charLimit, hardUpperLimit) {
-		
+
+		// remove any infoboxes - they occasionally contain text on a line not beginning with a | or *
+		// thus not being adequately handled by the magic down below
+		var wkt = new bot.wikitext(pagetext);
+		wkt.parseTemplates();
+		var infoboxes = wkt.templates.filter(t => /^[Ii]nfobox /.test(t.name));
+		infoboxes.forEach(infobox => {
+			pagetext = pagetext.replace(infobox.wikitext, '');
+		});
+
 		var extract = pagetext
 			.replace(/<!--.*?-->/sg, '')
 			// remove refs, including named ref definitions and named ref invocations
@@ -365,7 +368,10 @@ class TextExtractor {
 			.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
 			.trim();
 
-		var sentenceEnd = /\.\s/g;
+		// We consider a period followed by a space or newline NOT followed by a lowercase char
+		// as a sentence ending. Lowercase chars after period+space is generally use of an abbreviation
+		var sentenceEnd = /\.\s(?![a-z])/g;
+
 		if (extract.length > charLimit) {
 			var match = sentenceEnd.exec(extract);
 			while (match) {
@@ -378,7 +384,7 @@ class TextExtractor {
 			}
 		}
 
-		if (extract.length > hardUpperLimit) {
+		if (TextExtractor.effCharCount(extract) > hardUpperLimit) {
 			extract = extract.slice(0, hardUpperLimit) + ' ...';
 		}
 
