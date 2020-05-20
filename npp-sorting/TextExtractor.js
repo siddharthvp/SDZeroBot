@@ -30,7 +30,9 @@ module.exports = function(bot) {
 			// eslint-disable-next-line no-cond-assign
 			while (match = templateOnNewline.exec(pagetext)) {	
 				var template = wkt.templates.find(t => t.dsr[0] === match.index);
-				wkt.removeEntity(template);
+				if (template) {
+					wkt.removeEntity(template);
+				}
 			}
 	
 			var extract = wkt.getText();
