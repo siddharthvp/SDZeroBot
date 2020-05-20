@@ -118,22 +118,7 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 				return;
 			}
 			var text = page.revisions[0].content;
-			var extract = text
-				.replace(/<!--.*?-->/sg, '')
-				// remove refs, including named ref definitions and named ref invocations
-				.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
-				// remove files: no ? to handle wikilinks in captions. No s flag to go along with that.
-				.replace(/\[\[File:.*\]\]/gi, '') 
-				// the magic
-				.replace(/^\s*[{|}=*#:<!].*$/mg, '')
-				// trim left to prepare for next step
-				.trimLeft()
-				// keep only the first paragraph
-				.replace(/\n\n.*/s, '')
-				.replace(/'''(.*?)'''/g, '$1')
-				.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
-				.trim();
-			tableInfo[page.title].extract = extract;
+			tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
 			// NOTE: additional processing of extracts at the end of createSubpage() function
 
 			if (page.description) {
@@ -293,13 +278,13 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 `;
 
 		// Can't afford to include full extracts for very large lists
-		var trimExtracts = sorter[topic].length > 1000;
+		// var trimExtracts = sorter[topic].length > 1000;
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
-			if (trimExtracts && typeof tabledata.extract === 'string' && tabledata.extract.length > 250) {
-				tabledata.extract = tabledata.extract.slice(0, 250) + ' ...';
-			}
+			// if (trimExtracts && typeof tabledata.extract === 'string' && tabledata.extract.length > 250) {
+			// 	tabledata.extract = tabledata.extract.slice(0, 250) + ' ...';
+			// }
 
 			var editorString;
 			if (tabledata.creatorEdits) {
@@ -341,12 +326,7 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 
 		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
-		// Do away with some of the more bizarre stuff from page extracts that aren't worth
-		// checking for on a per-page basis
-		content = content.replace(/\[\[Category:.*?\]\]/gi, '')
-			.replace(/\[\[Image:.*?\]\]/gi, '')
-			.replace(/\{\{[sS]fn\|.*?\}\}/g, '')
-			.replace(/\{\{[Rr]\|.*?\}\}/g, '');
+		content = TextExtractor.sanitise(content);
 
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
@@ -356,3 +336,70 @@ const {log, argv, bot, sql, utils} = require('../botbase');
 	});
 
 })();
+
+class TextExtractor {
+
+	/** 
+	 * Get extract 
+	 * @param {string} pagetext - full page text 
+	 * @param {number} charLimit - cut off the extract at this many characters, or wherever the
+	 * sentence ends after this limit
+	 * @param {number} hardUpperLimit - cut off the extract at this many characters even if the
+	 * sentence hasn't ended
+	 */
+	static getExtract(pagetext, charLimit, hardUpperLimit) {
+		
+		var extract = pagetext
+			.replace(/<!--.*?-->/sg, '')
+			// remove refs, including named ref definitions and named ref invocations
+			.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
+			// remove files: no ? to handle wikilinks in captions. No s flag to go along with that.
+			.replace(/\[\[File:.*\]\]/gi, '') 
+			// the magic
+			.replace(/^\s*[{|}=*#:<!].*$/mg, '')
+			// trim left to prepare for next step
+			.trimLeft()
+			// keep only the first paragraph
+			.replace(/\n\n.*/s, '')
+			.replace(/'''(.*?)'''/g, '$1')
+			.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
+			.trim();
+
+		var sentenceEnd = /\.\s/g;
+		if (extract.length > charLimit) {
+			var match = sentenceEnd.exec(extract);
+			while (match) {
+				if (TextExtractor.effCharCount(extract.slice(0, match.index)) > charLimit) {
+					extract = extract.slice(0, match.index + 1);
+					break;
+				} else {
+					match = sentenceEnd.exec(extract);
+				}
+			}
+		}
+
+		if (extract.length > hardUpperLimit) {
+			extract = extract.slice(0, hardUpperLimit) + ' ...';
+		}
+
+		return extract;
+	}
+
+	static effCharCount(text) {
+		return text
+			.replace(/\[\[:?(?:[^|\]]+?\|)?([^\]|]+?)\]\]/g, '$1')
+			.replace(/''/g, '')
+			.length;
+	}
+
+	/**
+	 * Do away with some of the more bizarre stuff from page extracts that aren't worth 
+	 * checking for on a per-page basis @param {string} content
+	 */
+	static sanitise(content) {
+		return content.replace(/\[\[Category:.*?\]\]/gi, '')
+			.replace(/\[\[Image:.*?\]\]/gi, '')
+			.replace(/\{\{[sS]fn\|.*?\}\}/g, '')
+			.replace(/\{\{r\|.*?\}\}/gi, '');
+	}
+}
