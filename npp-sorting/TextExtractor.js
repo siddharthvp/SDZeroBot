@@ -51,7 +51,11 @@ module.exports = function(bot) {
 	
 			// We consider a period followed by a space or newline NOT followed by a lowercase char
 			// as a sentence ending. Lowercase chars after period+space is generally use of an abbreviation
-			var sentenceEnd = /\.\s(?![a-z])/g;
+			// XXX: this still results in issues with name like Arthur A. Kempod.
+			//  (?![^[]*?\]\]) so that this is not a period within a link
+			//  (?![^{*]?\}\}) so that this is not a period within a template - doesn't work if there 
+			//      is a nested templates after the period.
+			var sentenceEnd = /\.\s(?![a-z])(?![^[]*?\]\])(?![^{]*?\}\})/g;
 	
 			if (extract.length > charLimit) {
 				match = sentenceEnd.exec(extract);
