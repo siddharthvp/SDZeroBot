@@ -4,7 +4,8 @@
   "description": "",
   "main": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "update": "git pull && cd node_modules/mwn && git pull"
   },
   "author": "Siddharth VP",
   "license": "MIT",
