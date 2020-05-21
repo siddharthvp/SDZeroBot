@@ -19,23 +19,21 @@ module.exports = function(bot) {
 			wkt.files.forEach(file => {
 				wkt.removeEntity(file);
 			});
+			var extract = wkt.getText();
 	
 			// Remove templates beginning on a new line, such as infoboxes.	
 			// These ocassionally contain parameters with part of the content 
 			// beginning on a newline not starting with a | or * or # or !
 			// thus can't be handled with the line regex.
-			wkt.parseTemplates();
 			var templateOnNewline = /^\{\{/mg;
 			var match;
 			// eslint-disable-next-line no-cond-assign
 			while (match = templateOnNewline.exec(pagetext)) {	
-				var template = wkt.templates.find(t => t.dsr[0] === match.index);
+				var template = new bot.wikitext(extract.slice(match.index)).parseTemplates(1)[0];
 				if (template) {
-					wkt.removeEntity(template);
+					extract = extract.replace(template.wikitext, '');
 				}
 			}
-	
-			var extract = wkt.getText();
 	
 			extract = extract
 				.replace(/<!--.*?-->/sg, '')
