@@ -77,14 +77,14 @@ module.exports = function(bot) {
 		}
 
 		static removeTemplatesOnNewlines(text) {
-			var templateOnNewline = /^\{\{/mg;
-			var match;
-			// eslint-disable-next-line no-cond-assign
-			while (match = templateOnNewline.exec(text)) {	
+			var templateOnNewline = /^\{\{/m; // g is omitted for a reason, the text is changing.
+			var match = templateOnNewline.exec(text);
+			while (match) {	
 				var template = new bot.wikitext(text.slice(match.index)).parseTemplates(1)[0];
 				if (template) {
 					text = text.replace(template.wikitext, '');
 				}
+				match = templateOnNewline.exec(text);
 			}
 			return text;
 		}
