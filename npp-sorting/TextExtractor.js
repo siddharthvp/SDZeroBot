@@ -28,6 +28,8 @@ module.exports = function(bot) {
 				.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
 				// the magic
 				.replace(/^\s*[{|}=*#:<!].*$/mg, '')
+				// these are just bad
+				.replace(/__[A-Z]+__/g, '')
 				// trim left to prepare for next step
 				.trimLeft()
 				// keep only the first paragraph
