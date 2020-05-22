@@ -1,6 +1,6 @@
-process.chdir('./SDZeroBot/afc-report');
-
 const {fs, bot, sql, utils, argv, log} = require('../botbase');
+
+
 
 (async function() {
 

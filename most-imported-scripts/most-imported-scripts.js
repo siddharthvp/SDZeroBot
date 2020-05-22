@@ -1,9 +1,6 @@
-process.chdir('./SDZeroBot/most-imported-scripts');
-// crontabs:
-// 0 12 1  * * jsub -N job-MIS -mem 900m ~/bin/node ~/SDZeroBot/most-imported-scripts/most-imported-scripts.js
-// 0 12 15 * * jsub -N job-MIS -mem 900m ~/bin/node ~/SDZeroBot/most-imported-scripts/most-imported-scripts.js
-
 const {fs, bot, utils, log, argv} = require('../botbase');
+
+process.chdir(__dirname);
 
 /** globals */
 var table, activeusers, scriptList, tableList, tableSorted, wikitable;

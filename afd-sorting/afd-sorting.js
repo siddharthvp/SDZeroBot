@@ -1,6 +1,6 @@
-process.chdir('./SDZeroBot/afd-sorting');
-
 const {bot, log, argv, utils} = require('../botbase');
+
+process.chdir(__dirname);
 
 (async function() {
 
