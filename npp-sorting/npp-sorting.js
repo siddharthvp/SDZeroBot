@@ -41,7 +41,7 @@ const TextExtractor = require('./TextExtractor')(bot);
 		tableInfo = {};
 		result.forEach(row => {
 			var pagename = row.page_title.replace(/_/g, ' ');
-			if (rfdRedirects.has(pagename)) { // exclude RfD'd redirects 
+			if (rfdRedirects.has(pagename)) { // exclude RfD'd redirects
 				return;
 			}
 			revidsTitles[row.page_latest] = pagename
@@ -113,6 +113,7 @@ const TextExtractor = require('./TextExtractor')(bot);
 		prop: 'revisions|description',
 		rvprop: 'content'
 	}).then(jsons => {
+		log('[S] Fetched API result for article content and shortdescs');
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(page => {
 			if (page.missing) {
@@ -134,7 +135,7 @@ const TextExtractor = require('./TextExtractor')(bot);
 		});
 		log(`[S] Found ${pages.filter(page => page.description).length} pages with short descriptions`);
 	});
-	
+
 
 
 	/* GET DATA ABOUT PRIOR AFD */
@@ -142,7 +143,7 @@ const TextExtractor = require('./TextExtractor')(bot);
 
 	// Get existing AfDs to filter them out
 	var currentAfds = new Set(await new bot.category('AfD debates').pages().then(pages => {
-		return pages.map(pg => pg.title); 
+		return pages.map(pg => pg.title);
 	}));
 
 	await bot.massQuery({
@@ -156,7 +157,7 @@ const TextExtractor = require('./TextExtractor')(bot);
 			}
 		});
 		log(`[S] Fetched list of prior AfDs. Found ${Object.keys(afds).length} articles with AfDs`);
-	});	
+	});
 
 
 
@@ -228,7 +229,7 @@ const TextExtractor = require('./TextExtractor')(bot);
 		var count = Object.keys(revidsTitles).length;
 		return bot.edit('User:SDZeroBot/NPP sorting', function(rev) {
 			var text = rev.content;
-			text = text.replace(/\{\{\/header.*\}\}/, 
+			text = text.replace(/\{\{\/header.*\}\}/,
 				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}`);
 
 			var sorterKeys = Object.keys(sorter);
@@ -246,7 +247,7 @@ const TextExtractor = require('./TextExtractor')(bot);
 			});
 
 			return {
-				text: text, 
+				text: text,
 				summary: 'Updating report'
 			};
 		});
@@ -272,7 +273,7 @@ const TextExtractor = require('./TextExtractor')(bot);
 |-
 ! scope="col" style="width: 5em;" | Created
 ! scope="col" style="width: 18em;" | Article
-! scope="col" style="max-width: 28em;" | Extract 
+! scope="col" style="max-width: 28em;" | Extract
 ! scope="col" style="width: 3em;" | Class
 ! scope="col" style="max-width: 14em;" | Creator (# edits)
 ! Notes

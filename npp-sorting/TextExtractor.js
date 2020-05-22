@@ -83,6 +83,8 @@ module.exports = function(bot) {
 				var template = new bot.wikitext(text.slice(match.index)).parseTemplates(1)[0];
 				if (template) {
 					text = text.replace(template.wikitext, '');
+				} else { // just get rid of that line, otherwise we'd enter an infinite loop
+					text = text.replace(/^\{\{.*$/m, '');
 				}
 				match = templateOnNewline.exec(text);
 			}

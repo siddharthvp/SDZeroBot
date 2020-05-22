@@ -4,7 +4,12 @@ const fs = require('fs');
 const util = require('util');
 const assert = require('assert'); 
 
-const mwn = require('mwn');
+var mwn; // kludge: so that this works well on both toolforge and my local
+try {
+	mwn = require('mwn');
+} catch(e) {
+	mwn = require('../mwn/src/bot');
+}
 const mysql = require('mysql');
 
 /** Parsed console arguments */
