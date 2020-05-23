@@ -117,12 +117,19 @@ process.chdir(__dirname);
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(page => {
 			if (page.missing) {
+				tableInfo[page.title].skip = true; // skip it and return
 				return;
 			}
 			var text = page.revisions[0].content;
 			tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
 			// NOTE: additional processing of extracts at the end of createSubpage() function
-
+			if (tableInfo[page.title].extract === '') { // empty extract is suspicious
+				if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
+					// the db query should omit redirects, this happens only because of db lag
+					// or if the page was converted to redirect after the db fetch
+					tableInfo[page.title].skip = true; // skip it
+				}
+			}
 			if (page.description) {
 				tableInfo[page.title].shortdesc = page.description;
 				// cut out noise
@@ -152,7 +159,7 @@ process.chdir(__dirname);
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(page => {
-			if (!page.missing && !currentAfds.has(page)) {
+			if (!page.missing && !currentAfds.has(page.title)) {
 				afds[page.title.slice('Wikipedia:Articles for deletion/'.length)] = 1;
 			}
 		});
@@ -281,6 +288,9 @@ process.chdir(__dirname);
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
+			if (tabledata.skip) {
+				return;
+			}
 
 			var editorString;
 			if (tabledata.creatorEdits) {
