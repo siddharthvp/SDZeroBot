@@ -2,9 +2,10 @@
 0   2  1   *   *   jsub -N  job-MIS  -mem 900m ~/bin/node ~/SDZeroBot/most-imported-scripts/most-imported-scripts.js   > /dev/null
 0   2  15  *   *   jsub -N  job-MIS  -mem 900m ~/bin/node ~/SDZeroBot/most-imported-scripts/most-imported-scripts.js   > /dev/null
 
-0   0  *   *   *   jsub -N  job-AFC  -mem 900m ~/bin/node ~/SDZeroBot/afc-report/afc-sorting-bot.js                    > /dev/null
+0   0  *   *   *   jsub -N  job-AFC  -mem 900m ~/bin/node ~/SDZeroBot/afc-sorting/afc-sorting.js                       > /dev/null
 
-0  12  *   *   *   jsub -N  job-NPP  -mem 4g   ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js                       > /dev/null 
+0   1   *   *   *   jsub -N  job-NPP  -mem 4g   ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js                      > /dev/null 
+0   13  *   *   *   jsub -N  job-NPP  -mem 4g   ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js                      > /dev/null 
 
 30  0   *   *   *   jsub -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js                     > /dev/null
 30  4   *   *   *   jsub -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js                     > /dev/null

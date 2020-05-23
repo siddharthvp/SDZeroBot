@@ -1,6 +1,5 @@
 const {fs, bot, sql, utils, argv, log} = require('../botbase');
-
-
+process.chdir(__dirname);
 
 (async function() {
 
