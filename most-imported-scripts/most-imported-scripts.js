@@ -1,4 +1,4 @@
-const {fs, bot, utils, log, argv} = require('../botbase');
+const {fs, bot, utils, log, argv, emailOnError} = require('../botbase');
 
 process.chdir(__dirname);
 
@@ -179,4 +179,6 @@ bot.loginGetToken().then(() => {
 		return bot.save('Wikipedia:User scripts/Most imported scripts', wikitable, 'Updating');
 	}
 
-}).catch(console.log);
+}).catch(err => {
+	emailOnError(err, 'npp-sorting');
+});

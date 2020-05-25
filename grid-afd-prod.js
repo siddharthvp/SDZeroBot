@@ -1,4 +1,4 @@
-const {mwn, bot} = require('./botbase');
+const {mwn, bot, emailOnError} = require('./botbase');
 const TextExtractor = require('./TextExtractor')(bot);
 
 process.chdir(__dirname);
@@ -121,4 +121,6 @@ function parseArticleForPROD(pagetext) {
 	await bot.save('User:SDZeroBot/AfD grid', fnMakeTableAfD(afdtable), 'Updating');
 	await bot.save('User:SDZeroBot/PROD grid', fnMakeTablePROD(prodtable), 'Updating');
 
-})();
+})().catch(err => {
+	emailOnError(err, 'grid-afd-prod');
+});

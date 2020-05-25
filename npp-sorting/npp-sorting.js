@@ -1,4 +1,4 @@
-const {log, argv, bot, sql, utils} = require('../botbase');
+const {log, argv, bot, sql, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 process.chdir(__dirname);
@@ -341,4 +341,6 @@ process.chdir(__dirname);
 		log('[i] Finished');
 	});
 
-})();
+})().catch(err => {
+	emailOnError(err, 'npp-sorting');
+});

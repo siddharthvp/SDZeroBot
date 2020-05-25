@@ -1,4 +1,4 @@
-const {fs, bot, sql, utils, argv, log} = require('../botbase');
+const {fs, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
 process.chdir(__dirname);
 
 (async function() {
@@ -357,4 +357,6 @@ process.chdir(__dirname);
 		log('[i] Finished');
 	});
 
-})();
+})().catch(err => {
+	emailOnError(err, 'afc-sorting');
+});

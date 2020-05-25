@@ -1,4 +1,4 @@
-const {bot, log, argv, utils} = require('../botbase');
+const {bot, log, argv, utils, emailOnError} = require('../botbase');
 
 process.chdir(__dirname);
 
@@ -279,4 +279,6 @@ process.chdir(__dirname);
 	await makeMainPage();
 
 
-})();
+})().catch(err => {
+	emailOnError(err, 'npp-sorting');
+});
