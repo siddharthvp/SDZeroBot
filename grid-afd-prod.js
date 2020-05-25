@@ -99,7 +99,7 @@ function parseArticleForPROD(pagetext) {
 			table.addRow([datefield, articlefield, data.extract ]);
 		});
 		return `<templatestyles src="User:SD0001/grid-styles.css" />\n` + 
-			`:${Object.keys(afdtable).length} articles at AfD as of {{subst:#time:j F Y}} ~~~\n\n` + 
+			`:${Object.keys(afdtable).length} articles at AfD as of {{subst:#time:j F Y}} — [[User:SDZeroBot|SDZeroBot]]\n\n` + 
 			TextExtractor.finalSanitise(table.getText());
 	};
 	var fnMakeTablePROD = function(prodtable) {
@@ -114,7 +114,7 @@ function parseArticleForPROD(pagetext) {
 			table.addRow([data.prod_date, articlefield, data.extract ]);
 		});
 		return `<templatestyles src="User:SD0001/grid-styles.css" />\n` + 
-			`:${Object.keys(prodtable).length} articles proposed for deletion as of {{subst:#time:j F Y}} ~~~\n\n` + 
+			`:${Object.keys(prodtable).length} articles proposed for deletion as of {{subst:#time:j F Y}} — [[User:SDZeroBot|SDZeroBot]]\n\n` + 
 			TextExtractor.finalSanitise(table.getText());
 	};
 
