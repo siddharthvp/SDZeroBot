@@ -8,7 +8,7 @@ function pad(num) {
 	return num < 10 ? '0' + num : num;
 }
 function formatTimeStamp(ts) {
-	return `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)} ${ts.slice(8, 10)}:${ts.slice(10, 12)}`;
+	return `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)}`;
 }
 
 function parseArticleForAfD(pagetext) {
@@ -21,7 +21,7 @@ function parseArticleForAfD(pagetext) {
 		}
 		afd_page = afd_template.getValue('page');
 	}
-	return [afd_page, afd_date];
+	return [afd_page, afd_date || '[Failed to parse]'];
 }
 
 function parseArticleForPROD(pagetext) {
@@ -86,19 +86,29 @@ function parseArticleForPROD(pagetext) {
 
 	var fnMakeTableAfD = function(afdtable) {
 		var table = new mwn.table({ sortable: true });
-		table.addHeaders(['Date', 'Article', 'Extract']);
+		table.addHeaders([
+			'scope="col" style="width: 5em" | Date', 
+			'scope="col" style="width: 15em" | Article', 
+			'Extract'
+		]);
 		Object.entries(afdtable).forEach(([title, data]) => {
-			var datefield = `[[Wikipedia:Articles for deletion/${data.afd_page}|${data.afd_date}]]`;
-			var articlefield = title + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
+			var datefield = data.afd_page ? 
+				`[[Wikipedia:Articles for deletion/${data.afd_page}|${data.afd_date}]]` :
+				data.afd_date;
+			var articlefield = `[[${title}]]` + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
 			table.addRow([datefield, articlefield, data.extract ]);
 		});
 		return table.getText();
 	};
 	var fnMakeTablePROD = function(prodtable) {
 		var table = new mwn.table({ sortable: true });
-		table.addHeaders(['Date', 'Article', 'Extract']);
+		table.addHeaders([
+			'scope="col" style="width: 5em" | Date', 
+			'scope="col" style="width: 15em" | Article', 
+			'Extract'
+		]);
 		Object.entries(prodtable).forEach(([title, data]) => {
-			var articlefield = title + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
+			var articlefield = `[[${title}]]` + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
 			table.addRow([data.prod_date, articlefield, data.extract ]);
 		});
 		return table.getText();
