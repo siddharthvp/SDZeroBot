@@ -1,7 +1,7 @@
 /* globals it, before */
 
 const assert = require('assert');
-const {bot} = require('../botbase');
+const {bot} = require('./botbase');
 const TE = require('./TextExtractor')(bot);
 
 before(function() {
