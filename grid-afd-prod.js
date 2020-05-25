@@ -88,7 +88,7 @@ function parseArticleForPROD(pagetext) {
 		var table = new mwn.table({ sortable: true });
 		table.addHeaders([
 			'scope="col" style="width: 5em" | Date', 
-			'scope="col" style="width: 15em" | Article', 
+			'scope="col" style="width: 18em" | Article', 
 			'Extract'
 		]);
 		Object.entries(afdtable).forEach(([title, data]) => {
@@ -98,23 +98,27 @@ function parseArticleForPROD(pagetext) {
 			var articlefield = `[[${title}]]` + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
 			table.addRow([datefield, articlefield, data.extract ]);
 		});
-		return table.getText();
+		return `<templatestyles src="User:SD0001/grid-styles.css" />\n` + 
+			`:${Object.keys(afdtable).length} articles at AfD as of {{subst:#time:j F Y}} ~~~\n\n` + 
+			TextExtractor.finalSanitise(table.getText());
 	};
 	var fnMakeTablePROD = function(prodtable) {
 		var table = new mwn.table({ sortable: true });
 		table.addHeaders([
 			'scope="col" style="width: 5em" | Date', 
-			'scope="col" style="width: 15em" | Article', 
+			'scope="col" style="width: 18em" | Article', 
 			'Extract'
 		]);
 		Object.entries(prodtable).forEach(([title, data]) => {
 			var articlefield = `[[${title}]]` + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
 			table.addRow([data.prod_date, articlefield, data.extract ]);
 		});
-		return table.getText();
+		return `<templatestyles src="User:SD0001/grid-styles.css" />\n` + 
+			`:${Object.keys(prodtable).length} articles proposed for deletion as of {{subst:#time:j F Y}} ~~~\n\n` + 
+			TextExtractor.finalSanitise(table.getText());
 	};
 
-	await bot.save('User:SDZeroBot/AfD log', fnMakeTableAfD(afdtable), 'Updating');
-	await bot.save('User:SDZeroBot/PROD log', fnMakeTablePROD(prodtable), 'Updating');
+	await bot.save('User:SDZeroBot/AfD grid', fnMakeTableAfD(afdtable), 'Updating');
+	await bot.save('User:SDZeroBot/PROD grid', fnMakeTablePROD(prodtable), 'Updating');
 
 })();
