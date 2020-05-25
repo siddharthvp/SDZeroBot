@@ -53,7 +53,7 @@ function parseArticleForPROD(pagetext) {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(pg => {
 			var text = pg.revisions[0].content;
-			var [afd_date, afd_page] = parseArticleForAfD(text)
+			var [afd_page, afd_date] = parseArticleForAfD(text)
 			afdtable[pg.title] = {
 				afd_date,
 				afd_page, 
@@ -89,7 +89,7 @@ function parseArticleForPROD(pagetext) {
 		table.addHeaders(['Date', 'Article', 'Extract']);
 		Object.entries(afdtable).forEach(([title, data]) => {
 			var datefield = `[[Wikipedia:Articles for deletion/${data.afd_page}|${data.afd_date}]]`;
-			var articlefield = title + (data.shortdesc ? ` (${data.shortdesc})` : '');
+			var articlefield = title + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
 			table.addRow([datefield, articlefield, data.extract ]);
 		});
 		return table.getText();
@@ -98,8 +98,8 @@ function parseArticleForPROD(pagetext) {
 		var table = new mwn.table({ sortable: true });
 		table.addHeaders(['Date', 'Article', 'Extract']);
 		Object.entries(prodtable).forEach(([title, data]) => {
-			var articlefield = title + (data.shortdesc ? ` (${data.shortdesc})` : '');
-			table.addRow([data.afd_date, articlefield, data.extract ]);
+			var articlefield = title + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
+			table.addRow([data.prod_date, articlefield, data.extract ]);
 		});
 		return table.getText();
 	};
