@@ -280,5 +280,5 @@ process.chdir(__dirname);
 
 
 })().catch(err => {
-	emailOnError(err, 'npp-sorting');
+	emailOnError(err, 'afd-sorting');
 });

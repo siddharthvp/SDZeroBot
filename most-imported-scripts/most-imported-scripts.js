@@ -180,5 +180,5 @@ bot.loginGetToken().then(() => {
 	}
 
 }).catch(err => {
-	emailOnError(err, 'npp-sorting');
+	emailOnError(err, 'most-imported-scripts');
 });
