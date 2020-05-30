@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const util = require('util');
-const assert = require('assert'); 
+const assert = require('assert');
 
 var mwn; // kludge: so that this works well on both toolforge and my local
 try {
@@ -56,6 +56,14 @@ sql.queryBot = function(query) {
 	});
 };
 
+/** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
+const emailOnError = function(err, taskname) {
+	require('child_process').exec(
+		`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
+		err => console.log(err)
+	);
+};
+
 const utils = {
 	saveObject: function(filename, obj) {
 		fs.writeFileSync('./' + filename + '.json', JSON.stringify(obj, null, 2), console.log);
@@ -89,4 +97,4 @@ const utils = {
 };
 
 // export everything
-module.exports = { bot, mwn, sql, mysql, fs, util, assert, argv, log, utils };
+module.exports = { bot, mwn, sql, mysql, fs, util, assert, argv, log, utils, emailOnError };

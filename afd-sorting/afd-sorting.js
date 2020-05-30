@@ -1,4 +1,4 @@
-const {bot, log, argv, utils, emailOnError} = require('../botbase');
+const {mwn, bot, log, argv, utils, emailOnError} = require('../botbase');
 
 process.chdir(__dirname);
 
