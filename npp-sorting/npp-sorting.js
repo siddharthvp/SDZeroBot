@@ -323,7 +323,7 @@ process.chdir(__dirname);
 			content += `|-
 | ${tabledata.creation_date}
 | ${articleString}
-| <small>${tabledata.extract || ''}</small>
+| ${tabledata.extract || ''}
 | ${classString}
 | ${editorString}
 | ${page.issues}
