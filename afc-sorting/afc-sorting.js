@@ -1,4 +1,4 @@
-const {fs, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
+const {fs, mwn, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
 process.chdir(__dirname);
 
 (async function() {
@@ -66,7 +66,7 @@ process.chdir(__dirname);
 		var errors = [];
 		var queryOres = function(revids, i) {
 
-			return bot.rawRequest({
+			return mwn.rawRequest({
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {
@@ -119,7 +119,7 @@ process.chdir(__dirname);
 
 	var entriesFound = 0;
 	var getCopyioPercent = function(title) {
-		var re = new RegExp(`${bot.util.escapeRegExp(title).replace(/ /g, '_')}(?:\\s|\\S)*?tools\\.wmflabs\\.org\\/copyvios\\/.*? (.*?)\\]%`).exec(UserSQLReport);
+		var re = new RegExp(`${mwn.util.escapeRegExp(title).replace(/ /g, '_')}(?:\\s|\\S)*?tools\\.wmflabs\\.org\\/copyvios\\/.*? (.*?)\\]%`).exec(UserSQLReport);
 		if (!re || !re[1]) {
 			return null;
 		}
@@ -319,7 +319,7 @@ process.chdir(__dirname);
 				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
 			} else {
 				// lowercase IPv6 address and split to 2 lines to reduce column width
-				if (bot.util.isIPv6Address(tabledata.creator)) {
+				if (mwn.util.isIPv6Address(tabledata.creator)) {
 					var ip = tabledata.creator.toLowerCase();
 					var idx = Math.round(ip.length / 2);
 					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);

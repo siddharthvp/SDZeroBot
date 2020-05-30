@@ -44,7 +44,7 @@ process.chdir(__dirname);
 				tableInfo[pg.title] = {
 					afd_date: afd_date,
 					afd_page: afd_page,
-					shortdesc: pg.description 
+					shortdesc: pg.description
 				};
 				// cut out noise
 				if (pg.description === 'Wikimedia list article') {
@@ -53,14 +53,14 @@ process.chdir(__dirname);
 					tableInfo[pg.title].shortdesc = 'Disambiguation page';
 				}
 			});
-		
+
 			log('[S] Got articles');
-	
+
 			utils.saveObject('revidsTitles', revidsTitles);
 			utils.saveObject('tableInfo', tableInfo);
-		});	
+		});
 	}
-	
+
 	var afd_data = {};
 
 	await bot.continuedQuery({
@@ -77,7 +77,7 @@ process.chdir(__dirname);
 			if (pg.missing) return; // should never happen
 			var text = pg.revisions[0].content;
 			var concern = text.replace(/^\s*[:*#{}|!=<].*$/mg, '').replace(/^\s*$/mg, '').trim();
-			
+
 			// cut at the first newline coming after the first timestamp
 			concern = concern.replace(/(\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\)[^\n]*).*/s, '$1');
 
@@ -112,7 +112,7 @@ process.chdir(__dirname);
 	} else {
 		var queryOres = function(revids, i) {
 
-			return bot.rawRequest({
+			return mwn.rawRequest({
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {
@@ -210,8 +210,8 @@ process.chdir(__dirname);
 			if (tabledata.afd_page) {
 				var afd_title = `Wikipedia:Articles for deletion/${tabledata.afd_page
 					// decode XML entities (Twinkle ugliness)
-					.replace(/&#(\d+);/g, (_, numStr) => String.fromCharCode(parseInt(numStr, 10)))}`; 
-				
+					.replace(/&#(\d+);/g, (_, numStr) => String.fromCharCode(parseInt(numStr, 10)))}`;
+
 				afd_cell = `[[${afd_title}|AfD]]`;
 				if (afd_data[afd_title]) {
 					var {concern, keeps, deletes} = afd_data[afd_title];

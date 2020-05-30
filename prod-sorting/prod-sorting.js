@@ -1,4 +1,4 @@
-const {bot, log, argv, utils, emailOnError} = require('../botbase');
+const {bot, mwn, log, argv, utils, emailOnError} = require('../botbase');
 
 process.chdir(__dirname);
 
@@ -48,7 +48,7 @@ process.chdir(__dirname);
 				tableInfo[pg.title] = {
 					concern: prod_concern || '[Failed to parse]',
 					prod_date: prod_date || '[Failed to parse]',
-					shortdesc: pg.description 
+					shortdesc: pg.description
 				};
 				// cut out noise
 				if (pg.description === 'Wikimedia list article') {
@@ -81,7 +81,7 @@ process.chdir(__dirname);
 	} else {
 		var queryOres = function(revids, i) {
 
-			return bot.rawRequest({
+			return mwn.rawRequest({
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {

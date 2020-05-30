@@ -1,11 +1,11 @@
 
-const {bot} = require('../botbase');
+const {mwn} = require('../botbase');
 
 module.exports = function(url) {
 	if (url.indexOf('&format=json') === -1) {
 		url += '&format=json';
 	}
-	return bot.rawRequest({
+	return mwn.rawRequest({
 		method: 'GET',
 		uri: url,
 		json: true

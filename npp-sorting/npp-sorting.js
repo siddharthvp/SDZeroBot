@@ -1,4 +1,4 @@
-const {log, argv, bot, sql, utils, emailOnError} = require('../botbase');
+const {log, argv, mwn, bot, sql, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 process.chdir(__dirname);
@@ -73,7 +73,7 @@ process.chdir(__dirname);
 		var errors = [];
 		var queryOres = function(revids, i) {
 
-			return bot.rawRequest({
+			return mwn.rawRequest({
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {
@@ -297,7 +297,7 @@ process.chdir(__dirname);
 				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
 			} else {
 				// lowercase IPv6 address and split to 2 lines to reduce column width
-				if (bot.util.isIPv6Address(tabledata.creator)) {
+				if (mwn.util.isIPv6Address(tabledata.creator)) {
 					var ip = tabledata.creator.toLowerCase();
 					var idx = Math.round(ip.length / 2);
 					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);
