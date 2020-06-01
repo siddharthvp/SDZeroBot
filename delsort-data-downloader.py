@@ -30,10 +30,18 @@ for archive in pagegenerators.SearchPageGenerator('intitle:archive prefix:"Wikip
 		print('Processing ' + p.title())
 		match = articleRe.search(p.text)
 		if match:
-			article = match.group(1)
-			articlePg = pwb.Page(site, article)
+			articleName = match.group(1)
+			article = pwb.Page(site, articleName)
+
+			articleText = None
+			if article.exists():
+				articleText = article.text
+			else:
+				for rev in article.loadDeletedRevisions(total=1):
+					articleText = article.getDeletedRevision(rev, content=True)['text']
+
 			# TODO: preprocess the text before storing in file
-			data.append((articlePg.title(), articlePg.text))
+			data.append((article.title(), article.text))
 		else:
 			articlesNotParsed.append(p.title())
 

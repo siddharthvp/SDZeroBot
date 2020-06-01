@@ -6,9 +6,9 @@ module.exports = function(url) {
 		url += '&format=json';
 	}
 	return mwn.rawRequest({
-		method: 'GET',
-		uri: url,
-		json: true
+		method: 'get',
+		url: url,
+		responseType: 'json'
 	}).then(res => {
 		return res['*'][0].a['*'];
 	});

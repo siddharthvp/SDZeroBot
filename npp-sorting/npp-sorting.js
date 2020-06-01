@@ -3,6 +3,8 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 process.chdir(__dirname);
 
+const BASEPAGE = 'User:SDZeroBot/NPP sorting';
+
 (async function() {
 
 	/* GET DATA FROM DATABASE */
@@ -16,6 +18,7 @@ process.chdir(__dirname);
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
+
 		const result = await sql.queryBot(`
 			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
 			FROM pagetriage_page
@@ -34,6 +37,8 @@ process.chdir(__dirname);
 			return str.slice(0, 4) + '-' + str.slice(4, 6) + '-' + str.slice(6, 8);
 		};
 
+		// Redirects nominated at RfD are technically articles not redirects and are thus not
+		// filtered out in the database query
 		var rfdRedirects = new Set(await new bot.category('All redirects for discussion').pages()
 			.then(pages => pages.map(pg => pg.title)));
 
@@ -123,6 +128,7 @@ process.chdir(__dirname);
 			var text = page.revisions[0].content;
 			tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
 			// NOTE: additional processing of extracts at the end of createSubpage() function
+
 			if (tableInfo[page.title].extract === '') { // empty extract is suspicious
 				if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
 					// the db query should omit redirects, this happens only because of db lag
@@ -130,6 +136,7 @@ process.chdir(__dirname);
 					tableInfo[page.title].skip = true; // skip it
 				}
 			}
+
 			if (page.description) {
 				tableInfo[page.title].shortdesc = page.description;
 				// cut out noise
@@ -170,6 +177,16 @@ process.chdir(__dirname);
 
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
 
+	/**
+	 * sorter: Object with topic names as keys,
+	 * array of page objects as values, each page object being
+	 * {
+	 * 	title: 'title of the page ,
+	 *	revid: '972384329',
+	 *	quality: 'C',
+	 *	issues: 'Possible vandalism<br>Past AfD',
+	 * }
+	 */
 	var sorter = {
 		"Unsorted/Unsorted*": []
 	};
@@ -195,11 +212,8 @@ process.chdir(__dirname);
 		var toInsert = { title, revid, quality, issues };
 
 		if (topics.length) {
-
 			topics = topics.map(t => t.replace(/\./g, '/'));
-
 			topics.forEach(function(topic) {
-
 				// Remove Asia.Asia* if Asia.South-Asia is present (example)
 				if (topic.endsWith('*')) {
 					var metatopic = topic.split('/').slice(0, -1).join('/');
@@ -209,22 +223,20 @@ process.chdir(__dirname);
 						}
 					}
 				}
-
 				if (sorter[topic]) {
 					sorter[topic].push(toInsert);
 				} else {
 					sorter[topic] = [ toInsert ];
 				}
-
 			});
 		} else {
 			sorter["Unsorted/Unsorted*"].push(toInsert);
 		}
 	});
 
-	// sorter: object mapping topic names to array of objects with page name and other ORES data
 	utils.saveObject('sorter', sorter);
 
+	var topicsList = Object.keys(sorter);
 
 
 	/* FORMAT DATA TO BE SAVED ON THE WIKI */
@@ -234,12 +246,10 @@ process.chdir(__dirname);
 
 	var makeMainPage = function() {
 		var count = Object.keys(revidsTitles).length;
-		return bot.edit('User:SDZeroBot/NPP sorting', function(rev) {
+		return bot.edit(BASEPAGE, function(rev) {
 			var text = rev.content;
 			text = text.replace(/\{\{\/header.*\}\}/,
 				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}`);
-
-			var sorterKeys = Object.keys(sorter);
 
 			// update category counts
 			text.split('\n').forEach(line => {
@@ -248,7 +258,7 @@ process.chdir(__dirname);
 					return;
 				}
 				var topic = match[1];
-				var sorterKey = sorterKeys.find(e => e === topic || (isStarred(e) && meta(e) === topic));
+				var sorterKey = topicsList.find(e => e === topic || (isStarred(e) && meta(e) === topic));
 				var count = sorter[sorterKey].length;
 				text = text.replace(line, line.replace(/\(\d+\)/, `(${count})`));
 			});
@@ -271,20 +281,20 @@ process.chdir(__dirname);
 			pagetitle = meta(topic);
 			if (pagetitle !== 'Unsorted') {
 				content += `<div style="font-size:18px">See also the subpages:</div>\n` +
-				`{{Special:PrefixIndex/User:SDZeroBot/NPP sorting/${pagetitle}/|stripprefix=1}}\n\n`;
+				`{{Special:PrefixIndex/${BASEPAGE}/${pagetitle}/|stripprefix=1}}\n\n`;
 			}
 		}
-		content += `{{User:SDZeroBot/NPP sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
-		content += `
-{| class="wikitable sortable"
-|-
-! scope="col" style="width: 5em;" | Created
-! scope="col" style="width: 18em;" | Article
-! scope="col" style="max-width: 28em;" | Extract
-! scope="col" style="width: 3em;" | Class
-! scope="col" style="max-width: 14em;" | Creator (# edits)
-! Notes
-`;
+		content += `{{${BASEPAGE}/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
+
+		var table = new mwn.table({ sortable: true });
+		table.addHeaders([
+			`scope="col" style="width: 5em;" | Created`,
+			`scope="col" style="width: 18em;" | Article`,
+			`scope="col" style="max-width: 28em;" | Extract`,
+			`scope="col" style="width: 3em;" | Class`,
+			`scope="col" style="max-width: 14em;" | Creator (# edits)`,
+			`Notes`,
+		]);
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
@@ -320,24 +330,25 @@ process.chdir(__dirname);
 				articleString += ` <small>(${tabledata.shortdesc})</small>`;
 			}
 
-			content += `|-
-| ${tabledata.creation_date}
-| ${articleString}
-| ${tabledata.extract || ''}
-| ${classString}
-| ${editorString}
-| ${page.issues}
-`;
+			table.addRow([
+				tabledata.creation_date,
+				articleString,
+				tabledata.extract || '',
+				classString,
+				editorString,
+				page.issues
+			]);
+
 		});
 
-		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
+		content += table.getText() + `\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
 		content = TextExtractor.finalSanitise(content);
 
-		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
+		return bot.save(`${BASEPAGE}/${pagetitle}`, content, 'Updating report');
 	};
 
-	bot.batchOperation(Object.keys(sorter), createSubpage, 1).then(() => {
+	bot.batchOperation(topicsList, createSubpage, 1).then(() => {
 		log('[i] Finished');
 	});
 

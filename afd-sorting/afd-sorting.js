@@ -196,13 +196,12 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var content = `
-{| class="wikitable sortable"
-|-
-! scope="col" style="width: 5em;" | AfD date
-! scope="col" style="width: 19em;" | Article
-! AfD nomination
-`;
+		var table = new mwn.table({ sortable: true });
+		table.addHeaders([
+			`scope="col" style="width: 5em;" | AfD date`,
+			`scope="col" style="width: 19em;" | Article`,
+			`AfD nomination`
+		]);
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
@@ -230,16 +229,14 @@ process.chdir(__dirname);
 				}
 			}
 
-			content += `|-
-| ${tabledata.afd_date || '[Failed to parse]'}
-| [[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}
-| ${afd_cell || `[Couldn't find open AfD]`}
-`;
+			table.addRow([
+				tabledata.afd_date || '[Failed to parse]',
+				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
+				afd_cell || `[Couldn't find open AfD]`
+			]);
 		});
 
-		content += `|}`;
-
-		return [pagetitle, content];
+		return [pagetitle, table.getText()];
 	};
 
 	var makeMainPage = function() {
