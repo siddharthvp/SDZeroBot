@@ -299,17 +299,17 @@ process.chdir(__dirname);
 			}
 		}
 		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
-		content += `
-{| class="wikitable sortable"
-|-
-! scope="col" style="width: 14em;" | Page
-! Class
-! scope="col" style="width: 5em;" | Submitted
-! scope="col" style="width: 5em;" | Created
-! scope="col" style="max-width: 14em;" | Creator (# edits)
-! Length
-! Notes
-`;
+
+		var table = new mwn.table({ sortable: true });
+		table.addHeaders([
+			`scope="col" style="width: 14em;" | Page`,
+			`Class`,
+			`scope="col" style="width: 5em;" | Submitted`,
+			`scope="col" style="width: 5em;" | Created`,
+			`scope="col" style="max-width: 14em;" | Creator (# edits)`,
+			`Length`,
+			`Notes`
+		]);
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
@@ -337,18 +337,18 @@ process.chdir(__dirname);
 				classString = `data-sort-value="A1"|GA`;
 			}
 
-			content += `|-
-| [[${page.title}]]
-| ${classString}
-| ${tabledata.submit_date}
-| ${tabledata.creation_date}
-| ${editorString}
-| ${tabledata.bytecount}
-| ${page.issues}
-`;
+			table.addRow([
+				`[[${page.title}]]`,
+				classString,
+				tabledata.submit_date,
+				tabledata.creation_date,
+				editorString,
+				tabledata.bytecount,
+				page.issues
+			]);
 		});
 
-		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
+		content += table.getText() + `\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
 		return bot.save('Wikipedia:AfC sorting/' + pagetitle, content, 'Updating report');
 	};

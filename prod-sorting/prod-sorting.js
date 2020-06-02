@@ -165,27 +165,25 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var content = `
-{| class="wikitable sortable"
-|-
-! scope="col" style="width: 7em;" | PROD date
-! scope="col" style="width: 21em;" | Article
-! Concern
-`;
+		var table = new mwn.table({ sortable: true });
+		table.addHeaders([
+			`scope="col" style="width: 7em;" | PROD date`,
+			`scope="col" style="width: 21em;" | Article`,
+			`Concern`
+		]);
 
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
 
-			content += `|-
-| ${tabledata.prod_date}
-| [[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}
-| ${tabledata.concern}
-`;
+			table.addRow([
+				tabledata.prod_date,
+				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
+				tabledata.concern
+			]);
+
 		});
 
-		content += `|}`;
-
-		return [pagetitle, content];
+		return [pagetitle, table.getText()];
 	};
 
 	var makeMainPage = function() {

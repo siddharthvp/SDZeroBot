@@ -1,9 +1,9 @@
-const {fs, bot, utils, log, argv, emailOnError} = require('../botbase');
+const {fs, mwn, bot, utils, log, argv, emailOnError} = require('../botbase');
 
 process.chdir(__dirname);
 
 /** globals */
-var table, activeusers, scriptList, tableList, tableSorted, wikitable;
+var table, activeusers, scriptList, tableList, tableSorted;
 
 bot.loginGetToken().then(() => {
 
@@ -145,13 +145,16 @@ bot.loginGetToken().then(() => {
 	// Create wikitable:
 	var dateString = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-	wikitable =
-`{{Wikipedia:User scripts/Most imported scripts/header}}
+	var table = new mwn.table({ sortable: true, style: 'text-align: center' });
+	table.addHeaders([
+		'Position',
+		'Script',
+		'Total users',
+		'Active users'
+	]);
 
-:''Last updated on ${dateString} by [[User:SDZeroBot|SDZeroBot]]
-{| class="wikitable sortable"  style="text-align: center"
-! Position !! Script !! Total users !! Active users
-`;
+	var wikitext = `{{Wikipedia:User scripts/Most imported scripts/header}}\n\n` +
+		`:''Last updated on ${dateString} by [[User:SDZeroBot|SDZeroBot]]\n`;
 
 // 	wikitable =
 // 	`:''Last updated on ${dateString} by [[User:SDZeroBot|SDZeroBot]]
@@ -166,17 +169,14 @@ bot.loginGetToken().then(() => {
 		if (count.total < 3) {
 			return;
 		}
-		wikitable +=
-		'|-\n' +
-		`| ${idx+1} || [[${name}]] || ${count.total} || ${count.active}\n`;
+		table.addRow([ idx+1, `[[${name}]]`, count.total, count.active ]);
 
 	});
 
-	wikitable += '|}';
+	wikitext += table.getText();
 
-	fs.writeFileSync('./wikitable.txt', wikitable, console.log);
 	if (!argv.dry) {
-		return bot.save('Wikipedia:User scripts/Most imported scripts', wikitable, 'Updating');
+		return bot.save('Wikipedia:User scripts/Most imported scripts', wikitext, 'Updating');
 	}
 
 }).catch(err => {

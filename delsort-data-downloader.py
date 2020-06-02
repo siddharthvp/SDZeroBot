@@ -6,6 +6,7 @@ import pywikibot as pwb
 from pywikibot import pagegenerators
 import re
 import json
+import html
 
 site = pwb.Site('en', 'wikipedia')
 
@@ -40,8 +41,12 @@ for archive in pagegenerators.SearchPageGenerator('intitle:archive prefix:"Wikip
 				for rev in article.loadDeletedRevisions(total=1):
 					articleText = article.getDeletedRevision(rev, content=True)['text']
 
-			# TODO: preprocess the text before storing in file
-			data.append((article.title(), article.text))
+			# TODO: better preprocess the text before storing in file
+			articleText = html.unescape(articleText)
+			articleText = re.sub('<br ?/?>', ' ', articleText, flags=re.I)
+			articleText = re.sub("''+", "", articleText)
+
+			data.append((article.title(), articleText))
 		else:
 			articlesNotParsed.append(p.title())
 
