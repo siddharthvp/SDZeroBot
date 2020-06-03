@@ -1,4 +1,5 @@
 const {fs, mwn, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
+const OresUtils = require('../OresUtils');
 process.chdir(__dirname);
 
 (async function() {
@@ -57,43 +58,13 @@ process.chdir(__dirname);
 	if (argv.size) {
 		pagelist = pagelist.slice(0, argv.size);
 	}
-	var chunks = utils.arrayChunk(pagelist, 50);
 	var oresdata = {};
 
 	if (argv.noores) {
 		oresdata = require('./oresdata');
 	} else {
 		var errors = [];
-		var queryOres = function(revids, i) {
-
-			return mwn.rawRequest({
-				method: 'get',
-				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
-				params: {
-					models: 'articlequality|draftquality|drafttopic',
-					revids: revids.join('|')
-				},
-				responseType: 'json'
-			}).then(function(json) {
-				log(`[+][${i}/${chunks.length}] Ores API call ${i} succeeded.`);
-				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
-					if (data.articlequality.error) {
-						errors.push(revid);
-						return;
-					}
-					oresdata[revid] = {
-						articlequality: data.articlequality.score.prediction,
-						draftquality: data.draftquality.score.prediction,
-						drafttopic: data.drafttopic.score.prediction,
-					}
-				});
-			});
-
-		};
-
-		for (var i = 0; i < chunks.length; i++) {
-			await queryOres(chunks[i], i+1); // sequential calls
-		}
+		oresdata = await OresUtils.queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
 
 		utils.saveObject('oresdata', oresdata);
 		utils.saveObject('errors', errors);
@@ -161,6 +132,17 @@ process.chdir(__dirname);
 
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
 
+	/**
+	 * sorter: Object with topic names as keys,
+	 * array of page objects as values, each page object being
+	 * {
+	 * 	title: 'title of the page ,
+	 *	revid: '972384329',
+	 *	quality: 'C',
+	 *	issues: 'Possible vandalism<br>Past AfD',
+	 * }
+	 * Populated through OresUtils.processTopicsForPage
+	 */
 	var sorter = {
 		"Unsorted/Unsorted*": []
 	};
@@ -188,32 +170,7 @@ process.chdir(__dirname);
 
 		var toInsert = { title, revid, quality, issues };
 
-		if (topics.length) {
-
-			topics = topics.map(t => t.replace(/\./g, '/'));
-
-			topics.forEach(function(topic) {
-
-				// Remove Asia.Asia* if Asia.South-Asia is present (example)
-				if (topic.endsWith('*')) {
-					var metatopic = topic.split('/').slice(0, -1).join('/');
-					for (var i = 0; i < topics.length; i++) {
-						if (topics[i] !== topic && topics[i].startsWith(metatopic)) {
-							return;
-						}
-					}
-				}
-
-				if (sorter[topic]) {
-					sorter[topic].push(toInsert);
-				} else {
-					sorter[topic] = [ toInsert ];
-				}
-
-			});
-		} else {
-			sorter["Unsorted/Unsorted*"].push(toInsert);
-		}
+		OresUtils.processTopicsForPage(topics, sorter, toInsert);
 	});
 
 	// sorter: object mapping topic names to array of objects with page name and other ORES data
@@ -245,25 +202,7 @@ process.chdir(__dirname);
 
 		fs.writeFileSync('./previousRunCount.txt', count);
 
-		Object.keys(sorter).sort(function(a, b) {
-			if (isStarred(a) && isStarred(b)) {
-				return a > b ? 1 : -1;
-			} else if (isStarred(a) && meta(a) === meta(b)) {
-				return -1;
-			} else if (isStarred(b) && meta(a) === meta(b)) {
-				return 1;
-			} else {
-				// don't put the BIG biography section at the top
-				if (a.startsWith('Culture/Biography') &&
-					(b.startsWith('Culture/F') || b.startsWith('Culture/I') || b.startsWith('Culture/L'))) {
-					return 1;
-				} else if (b.startsWith('Culture/Biography') &&
-					(a.startsWith('Culture/F') || a.startsWith('Culture/I') || a.startsWith('Culture/L'))) {
-					return -1;
-				}
-				return a > b ? 1 : -1;
-			}
-		}).forEach(function(topic) {
+		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
 
 			var rawtopic = topic;
 			if (isStarred(topic)) {

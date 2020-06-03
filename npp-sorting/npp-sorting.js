@@ -1,5 +1,6 @@
 const {log, argv, mwn, bot, sql, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
+const OresUtils = require('./OresUtils');
 
 process.chdir(__dirname);
 
@@ -69,43 +70,15 @@ const BASEPAGE = 'User:SDZeroBot/NPP sorting';
 	if (argv.size) {
 		pagelist = pagelist.slice(0, argv.size);
 	}
-	var chunks = utils.arrayChunk(pagelist, 50);
-	var oresdata = {};
+
+	var oresdata;
 
 	if (argv.noores) {
 		oresdata = require('./oresdata');
 	} else {
 		var errors = [];
-		var queryOres = function(revids, i) {
 
-			return mwn.rawRequest({
-				method: 'get',
-				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
-				params: {
-					models: 'articlequality|draftquality|drafttopic',
-					revids: revids.join('|')
-				},
-				responseType: 'json'
-			}).then(function(json) {
-				log(`[+][${i}/${chunks.length}] Ores API call ${i} succeeded.`);
-				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
-					if (data.articlequality.error) {
-						errors.push(revid);
-						return;
-					}
-					oresdata[revid] = {
-						articlequality: data.articlequality.score.prediction,
-						draftquality: data.draftquality.score.prediction,
-						drafttopic: data.drafttopic.score.prediction,
-					}
-				});
-			});
-
-		};
-
-		for (var i = 0; i < chunks.length; i++) {
-			await queryOres(chunks[i], i+1); // sequential calls
-		}
+		oresdata = await OresUtils.queryRevisions(pagelist, ['articlequality', 'draftquality', 'drafttopic'], errors);
 
 		utils.saveObject('oresdata', oresdata);
 		utils.saveObject('errors', errors);
@@ -186,6 +159,7 @@ const BASEPAGE = 'User:SDZeroBot/NPP sorting';
 	 *	quality: 'C',
 	 *	issues: 'Possible vandalism<br>Past AfD',
 	 * }
+	 * Populated through OresUtils.processTopicsForPage
 	 */
 	var sorter = {
 		"Unsorted/Unsorted*": []
@@ -194,9 +168,6 @@ const BASEPAGE = 'User:SDZeroBot/NPP sorting';
 	Object.entries(oresdata).forEach(function([revid, ores]) {
 
 		var title = revidsTitles[revid];
-		if (!title) {
-			log(`[E] revid ${revid} couldn't be matched to title`);
-		}
 
 		var topics = ores.drafttopic; // Array of topics
 		var quality = ores.articlequality; // FA / GA / B / C / Start / Stub
@@ -211,27 +182,8 @@ const BASEPAGE = 'User:SDZeroBot/NPP sorting';
 
 		var toInsert = { title, revid, quality, issues };
 
-		if (topics.length) {
-			topics = topics.map(t => t.replace(/\./g, '/'));
-			topics.forEach(function(topic) {
-				// Remove Asia.Asia* if Asia.South-Asia is present (example)
-				if (topic.endsWith('*')) {
-					var metatopic = topic.split('/').slice(0, -1).join('/');
-					for (var i = 0; i < topics.length; i++) {
-						if (topics[i] !== topic && topics[i].startsWith(metatopic)) {
-							return;
-						}
-					}
-				}
-				if (sorter[topic]) {
-					sorter[topic].push(toInsert);
-				} else {
-					sorter[topic] = [ toInsert ];
-				}
-			});
-		} else {
-			sorter["Unsorted/Unsorted*"].push(toInsert);
-		}
+		OresUtils.processTopicsForPage(topics, sorter, toInsert);
+
 	});
 
 	utils.saveObject('sorter', sorter);
