@@ -45,6 +45,9 @@ process.chdir(__dirname);
 					prod_concern = prod_blp ? '[BLP]' : prod_template.getValue('concern') ;
 					prod_date = formatTimeStamp(prod_template.getValue('timestamp') || '');
 				}
+				if (prod_concern === '') {
+					prod_concern = '<span class=error>[No reason given]</span>';
+				}
 				tableInfo[pg.title] = {
 					concern: prod_concern || '[Failed to parse]',
 					prod_date: prod_date || '[Failed to parse]',
