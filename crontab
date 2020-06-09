@@ -37,12 +37,12 @@
 0   1   *   *   *  jsub -quiet -N job-NPP  -mem 4g   ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
 0   13  *   *   *  jsub -quiet -N job-NPP  -mem 4g   ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
 
-30  0   *   *   *  jsub -quiet -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
-30  4   *   *   *  jsub -quiet -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
-30  8   *   *   *  jsub -quiet -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
-30  12  *   *   *  jsub -quiet -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
-30  16  *   *   *  jsub -quiet -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
-30  20  *   *   *  jsub -quiet -N job-PROD -mem 800m ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
+30  0   *   *   *  jsub -quiet -N job-PROD -mem 2g ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
+30  4   *   *   *  jsub -quiet -N job-PROD -mem 2g ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
+30  8   *   *   *  jsub -quiet -N job-PROD -mem 2g ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
+30  12  *   *   *  jsub -quiet -N job-PROD -mem 2g ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
+30  16  *   *   *  jsub -quiet -N job-PROD -mem 2g ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
+30  20  *   *   *  jsub -quiet -N job-PROD -mem 2g ~/bin/node ~/SDZeroBot/prod-sorting/prod-sorting.js
 
 30  1   *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
 30  5   *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
