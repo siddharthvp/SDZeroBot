@@ -1,6 +1,6 @@
 const {log, argv, mwn, bot, sql, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
-const OresUtils = require('./OresUtils');
+const OresUtils = require('../OresUtils');
 
 process.chdir(__dirname);
 
