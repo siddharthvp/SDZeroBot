@@ -42,6 +42,7 @@ const BASEPAGE = 'User:SDZeroBot/NPP sorting';
 		// filtered out in the database query
 		var rfdRedirects = new Set(await new bot.category('All redirects for discussion').pages()
 			.then(pages => pages.map(pg => pg.title)));
+		log('[S] Got list of redirects at RfD');
 
 		revidsTitles = {};
 		tableInfo = {};
@@ -78,8 +79,9 @@ const BASEPAGE = 'User:SDZeroBot/NPP sorting';
 	} else {
 		var errors = [];
 
-		oresdata = await OresUtils.queryRevisions(pagelist, ['articlequality', 'draftquality', 'drafttopic'], errors);
-
+		oresdata = await OresUtils.queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors).catch(err => {
+			return Promise.reject('Failed to fetch ORES predictions:' + err);
+		});
 		utils.saveObject('oresdata', oresdata);
 		utils.saveObject('errors', errors);
 	}
@@ -238,7 +240,7 @@ const BASEPAGE = 'User:SDZeroBot/NPP sorting';
 		}
 		content += `{{${BASEPAGE}/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
 
-		var table = new mwn.table({ sortable: true });
+		var table = new mwn.table({ sortable: true, multiline: true });
 		table.addHeaders([
 			`scope="col" style="width: 5em;" | Created`,
 			`scope="col" style="width: 18em;" | Article`,
