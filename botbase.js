@@ -16,7 +16,9 @@ const mysql = require('mysql');
 const argv = require('minimist')(process.argv.slice(2));
 
 /** Colorised and dated console logging. Semlog is a dependency of mwn */
-const log = require('semlog').log;
+const semlog = require('semlog');
+semlog.updateConfig({ printDateTime: true });
+const log = semlog.log;
 
 /** bot account and databse access credentials */
 const auth = require('./.auth');
