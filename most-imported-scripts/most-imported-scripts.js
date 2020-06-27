@@ -2,44 +2,39 @@ const {fs, mwn, bot, utils, log, argv, emailOnError} = require('../botbase');
 
 process.chdir(__dirname);
 
-/** globals */
-var table, activeusers, scriptList, tableList, tableSorted;
+(async () => {
 
-bot.loginGetToken().then(() => {
-
-	if (argv.tabulate) return;
-	if (argv.noactiveusers) {
-		activeusers = require('./active-users');
-		return;
-	}
+	await bot.loginGetToken();
 
 	/** Get list of all active users */
-	return bot.continuedQuery({
-		"action": "query",
-		"assert": "bot",
-		"list": "allusers",
-		"auactiveusers": 1,
-		"aulimit": "max"
-	}, 50).then(function(jsons) {
+	var activeusers;
+	if (argv.noactiveusers) {
+		activeusers = require('./active-users');
+	} else {
+		await bot.continuedQuery({
+			"action": "query",
+			"assert": "bot",
+			"list": "allusers",
+			"auactiveusers": 1,
+			"aulimit": "max"
+		}, 50).then(function(jsons) {
 
-		activeusers = jsons.reduce(function(activeusers, json) {
-			json.query.allusers.forEach(e => {
-				activeusers[e.name] = e.recentactions;
+			activeusers = jsons.reduce(function(activeusers, json) {
+				json.query.allusers.forEach(e => {
+					activeusers[e.name] = e.recentactions;
+				});
+				return activeusers;
+			}, {});
 
-			});
-			return activeusers;
-		}, {});
+			utils.saveObject('active-users', activeusers);
+			log('[S] Got list of active users');
+		});
+	}
 
-		utils.saveObject('active-users', activeusers);
-		log('[S] Got list of active users');
-	});
-
-}).then(function() {
-	if (argv.tabulate) return;
 
 	/** Get the first 5000 JS pages sorted by number of backlinks
 	 * Should cover every script that has at least 2 backlinks, and many others. */
-	return bot.request({
+	var scriptList = await bot.request({
 		"action": "query",
 		"list": "search",
 		"srsearch": "contentmodel:javascript",
@@ -51,14 +46,12 @@ bot.loginGetToken().then(() => {
 		log('[S] Got basic script list');
 		scriptList = json.query.search.map(e => e.title);
 		utils.saveObject('scriptList', scriptList);
+		return scriptList;
 	});
 
-}).then(function() {
-	if (argv.tabulate) return;
+	var table = {};
 
-	table = {};
-
-	return bot.batchOperation(scriptList, function(title, idx) {
+	await bot.batchOperation(scriptList, function(title, idx) {
 		log(`[i][${idx}/${scriptList.length}] Processing ${title}`);
 		var subpagename = title.slice(title.indexOf('/') + 1);
 
@@ -103,9 +96,6 @@ bot.loginGetToken().then(() => {
 		utils.saveObject('failures', failures.failures);
 	});
 
-}).then(function() {
-	if (argv.tabulate) return;
-
 	// Read old JSON file and compute deltas
 
 	// var oldcounts = require('./importCounts');
@@ -117,20 +107,18 @@ bot.loginGetToken().then(() => {
 	// 	table[page].deltaTotal = table[page].total - oldjson[page].total;
 	// });
 
-}).then(function() {
-
-	if (!argv.tabulate) {
-		utils.saveObject('table', table);
-	} else {
+	if (argv.tabulate) { // for debugging
 		table = require('./table');
+	} else {
+		utils.saveObject('table', table);
 	}
 
 	// Sort the table by total:
-	tableList = [];
+	var tableList = [];
 	Object.entries(table).forEach(([title, data]) => {
 		tableList.push([title, data.total, data.active]);
 	});
-	tableSorted = {};
+	var tableSorted = {};
 	tableList.sort((a, b) => {
 		if (b[1] - a[1] !== 0) {
 			return b[1] - a[1];
@@ -143,10 +131,9 @@ bot.loginGetToken().then(() => {
 	fs.writeFileSync('importCounts-time.txt', new Date().toString(), console.log);
 
 	// Create wikitable:
-	var dateString = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
-	var table = new mwn.table({ sortable: true, style: 'text-align: center' });
-	table.addHeaders([
+	var wikitexttable = new mwn.table({ sortable: true, style: 'text-align: center' });
+	wikitexttable.addHeaders([
 		'Position',
 		'Script',
 		'Total users',
@@ -154,10 +141,10 @@ bot.loginGetToken().then(() => {
 	]);
 
 	var wikitext = `{{Wikipedia:User scripts/Most imported scripts/header}}\n\n` +
-		`:''Last updated on ${dateString} by [[User:SDZeroBot|SDZeroBot]]\n`;
+		`:''Last updated on {{subst:#time:j F Y}} by [[User:SDZeroBot|SDZeroBot]]\n`;
 
 // 	wikitable =
-// 	`:''Last updated on ${dateString} by [[User:SDZeroBot|SDZeroBot]]
+// 	`:''Last updated on {{subst:#time:j F Y}} by [[User:SDZeroBot|SDZeroBot]]
 // {| class="wikitable sortable"  style="text-align: center"
 // ! Position !! Script !! Total users !! data-sort-type=number | Change !! Active users !! data-sort-type=number | Change
 // `;
@@ -169,16 +156,14 @@ bot.loginGetToken().then(() => {
 		if (count.total < 3) {
 			return;
 		}
-		table.addRow([ idx+1, `[[${name}]]`, count.total, count.active ]);
+		wikitexttable.addRow([ idx+1, `[[${name}]]`, count.total, count.active ]);
 
 	});
 
-	wikitext += table.getText();
+	wikitext += wikitexttable.getText();
 
 	if (!argv.dry) {
 		return bot.save('Wikipedia:User scripts/Most imported scripts', wikitext, 'Updating');
 	}
 
-}).catch(err => {
-	emailOnError(err, 'most-imported-scripts');
-});
+})().catch(err => emailOnError(err, 'most-imported-scripts'));
