@@ -43,11 +43,15 @@ process.chdir(__dirname);
 					}
 				});
 				if (prod_template) {
-					prod_concern = prod_blp ? '[BLP]' : prod_template.getValue('concern') ;
+					prod_concern = prod_blp ? '[BLP]' : prod_template.getValue('concern');
+					if (prod_concern === '') {
+						prod_concern = '<span class=error>[No reason given]</span>';
+					}
+					var prod_nom = prod_template.getValue('nom');
+					if (prod_nom) {
+						prod_concern += ` (<small>({{u|${prod_nom}}})</small>)`;
+					}
 					prod_date = formatTimeStamp(prod_template.getValue('timestamp') || '');
-				}
-				if (prod_concern === '') {
-					prod_concern = '<span class=error>[No reason given]</span>';
 				}
 				tableInfo[pg.title] = {
 					concern: prod_concern || '[Failed to parse]',
