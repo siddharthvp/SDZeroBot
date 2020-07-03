@@ -32,7 +32,7 @@ process.chdir(__dirname);
 			};
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
+				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates(); // KLUDGE
 				var prod_template, prod_blp, prod_date, prod_concern;
 				prod_template = templates.find(t => {
 					if (t.name === 'Proposed deletion/dated') {
@@ -49,7 +49,7 @@ process.chdir(__dirname);
 					}
 					var prod_nom = prod_template.getValue('nom');
 					if (prod_nom) {
-						prod_concern += ` (<small>({{u|${prod_nom}}})</small>)`;
+						prod_concern += ` (<small>{{u|${prod_nom}}}</small>)`;
 					}
 					prod_date = formatTimeStamp(prod_template.getValue('timestamp') || '');
 				}
