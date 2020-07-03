@@ -258,8 +258,12 @@ process.chdir(__dirname);
 				summary: 'Updating report'
 			};
 		}).then(result => {
-			if (result.nochange) {
-				log(`[W] No change made for User:SDZeroBot/NPP sorting`);
+			if (result) {
+				if (result.nochange) {
+					log(`[W] No change made for User:SDZeroBot/NPP sorting`);
+				}
+			}  else {
+				log(`[W] Success response but no data returned?`);
 			}
 		});
 	};
