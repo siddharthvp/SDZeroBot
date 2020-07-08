@@ -1,5 +1,6 @@
 const {bot, mwn, log, argv, utils, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
+const TextExtractor = require('../TextExtractor')(bot);
 
 process.chdir(__dirname);
 
@@ -49,13 +50,14 @@ process.chdir(__dirname);
 					}
 					var prod_nom = prod_template.getValue('nom');
 					if (prod_nom) {
-						prod_concern += ` (<small>{{u|${prod_nom}}}</small>)`;
+						prod_concern += ` ({{u|${prod_nom}}})`;
 					}
 					prod_date = formatTimeStamp(prod_template.getValue('timestamp') || '');
 				}
 				tableInfo[pg.title] = {
 					concern: prod_concern || '[Failed to parse]',
 					prod_date: prod_date || '[Failed to parse]',
+					extract: TextExtractor.getExtract(pg.revisions[0].content, 250, 500),
 					shortdesc: pg.description
 				};
 				// cut out noise
@@ -72,24 +74,13 @@ process.chdir(__dirname);
 		utils.saveObject('tableInfo', tableInfo);
 	}
 
-	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-
 
 	/* GET DATA FROM ORES */
 
 	var pagelist = Object.keys(revidsTitles);
-	if (argv.size) {
-		pagelist = pagelist.slice(0, argv.size);
-	}
-	var oresdata = {};
-
-	if (argv.noores) {
-		oresdata = require('./oresdata');
-	} else {
-		oresdata = await OresUtils.queryRevisions(['drafttopic'], pagelist);
-		utils.saveObject('oresdata', oresdata);
-	}
-
+	var oresdata = await OresUtils.queryRevisions(['drafttopic'], pagelist);
+	utils.saveObject('oresdata', oresdata);
+	
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
 
 	/**
@@ -128,24 +119,32 @@ process.chdir(__dirname);
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	var createSection = function(topic) {
+	/** @param {string} topic, @param {boolean} lite - for lite mode */
+	var createSection = function(topic, lite) {
 		var pagetitle = topic;
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new mwn.table({ sortable: true });
-		table.addHeaders([
+		var table = new mwn.table({ sortable: true, multiline: true });
+
+		table.addHeaders(lite ? [ // exlcude excerpt in lite mode
 			`scope="col" style="width: 7em;" | PROD date`,
 			`scope="col" style="width: 21em;" | Article`,
 			`Concern`
+		] : [
+			`scope="col" style="width: 5em;" | PROD date`,
+			`scope="col" style="width: 15em;" | Article`,
+			`scope="col" style="width: 22em"; | Excerpt`,
+			`Concern`
 		]);
-
+		
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
 
 			table.addRow([
 				tabledata.prod_date,
 				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
+				tabledata.extract,
 				tabledata.concern
 			]);
 
@@ -154,22 +153,21 @@ process.chdir(__dirname);
 		return [pagetitle, table.getText()];
 	};
 
-	var makeMainPage = function() {
+	/** @param {boolean} lite */
+	var makeMainPage = function(lite) {
 		var count = Object.keys(revidsTitles).length;
 
-		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
+		var content = `{{User:SDZeroBot/PROD sorting/header|count=${count}|date={{subst:#time:j F Y}}|ts=~~~~~}}\n`;
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
-			var [sectionTitle, sectionText] = createSection(topic);
+			var [sectionTitle, sectionText] = createSection(topic, lite);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';
 		});
 
-		return bot.save('User:SDZeroBot/PROD sorting', content, 'Updating report');
+		return bot.save('User:SDZeroBot/PROD sorting' + lite ? '/lite' : '', content, 'Updating report');
 
 	}
-	await makeMainPage();
+	await makeMainPage(); // User:SDZeroBot/PROD sorting
+	await makeMainPage(true); // User:SDZeroBot/PROD sorting/lite
 
-
-})().catch(err => {
-	emailOnError(err, 'prod-sorting');
-});
+})().catch(err => emailOnError(err, 'prod-sorting'));
