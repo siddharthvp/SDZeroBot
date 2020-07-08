@@ -141,7 +141,11 @@ process.chdir(__dirname);
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
 
-			table.addRow([
+			table.addRow(lite ? [
+				tabledata.prod_date,
+				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
+				tabledata.concern
+			] : [
 				tabledata.prod_date,
 				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
 				tabledata.extract,
@@ -164,7 +168,7 @@ process.chdir(__dirname);
 			content += sectionText + '\n';
 		});
 
-		return bot.save('User:SDZeroBot/PROD sorting' + lite ? '/lite' : '', content, 'Updating report');
+		return bot.save('User:SDZeroBot/PROD sorting' + (lite ? '/lite' : ''), content, 'Updating report');
 
 	}
 	await makeMainPage(); // User:SDZeroBot/PROD sorting
