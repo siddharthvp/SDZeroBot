@@ -178,7 +178,7 @@ process.chdir(__dirname);
 			`AfD nomination`
 		]);
 
-		sorter[topic].forEach(function(page) {
+		sorter[topic].forEach(function(page, idx, arr) {
 			if (page.skip && page.skip.includes(topic)) {
 				return;
 			}
@@ -188,9 +188,13 @@ process.chdir(__dirname);
 				if (multiPageData[tabledata.afd_page].length > 1) {
 					article_cell = "'''Multiple articles:'''\n";
 					for (let pg of multiPageData[tabledata.afd_page]) {
-						var pgObj = sorter[topic].find(p => p.title === pg);
-						!pgObj.skip ? (pgObj.skip = [topic]) : pgObj.skip.push(topic);
-						article_cell += '* ' + article_entry(pgObj.title, tableInfo[pgObj.title].shortdesc) + '\n';
+						var pgObj = arr.find(p => p.title === pg);
+						if (pgObj) {
+							!pgObj.skip ? (pgObj.skip = [topic]) : pgObj.skip.push(topic);
+							article_cell += '* ' + article_entry(pgObj.title, tableInfo[pgObj.title].shortdesc) + '\n';
+						} else {
+							log(`[E] ${pg} not found`);
+						}
 					}
 				} else {
 					article_cell = article_entry(page.title, tabledata.shortdesc);
