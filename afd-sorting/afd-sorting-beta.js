@@ -188,7 +188,7 @@ process.chdir(__dirname);
 					article_cell = "'''Multiple articles:'''\n";
 					for (let pg of multiPageData[tabledata.afd_page]) {
 						var pgObj = sorter[topic].find(p => p.title === pg);
-						pgObj.skip ? (pgObj.skip = [topic]) : pgObj.skip.push(topic);
+						!pgObj.skip ? (pgObj.skip = [topic]) : pgObj.skip.push(topic);
 						article_cell += '* ' + article_entry(pgObj.title, tableInfo[pgObj.title].shortdesc) + '\n';
 					}
 				} else {
