@@ -14,7 +14,7 @@ process.chdir(__dirname);
 
 	if (argv.noapiget) { // for debugging
 		revidsTitles = require('./revidsTitles');
-		tableInfo = utils.saveObject('./tableInfo');
+		tableInfo = require('./tableInfo');
 	} else {
 		await bot.continuedQuery({
 			"action": "query",
