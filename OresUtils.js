@@ -3,7 +3,7 @@
  * sortlist tasks.
  */
 
-const { mwn, utils, log } = require('./botbase');
+const { bot, utils, log } = require('./botbase');
 
 module.exports = {
 
@@ -19,7 +19,7 @@ module.exports = {
 		var oresdata = {};
 		var chunks = utils.arrayChunk(revids, 50);
 		for (let i = 0; i < chunks.length; i++) {
-			await mwn.rawRequest({
+			await bot.rawRequest({
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {

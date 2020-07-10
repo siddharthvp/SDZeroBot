@@ -73,7 +73,7 @@ process.chdir(__dirname);
 		var errors = [];
 		var queryOres = function(revids, i) {
 
-			return mwn.rawRequest({
+			return bot.rawRequest({
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {
