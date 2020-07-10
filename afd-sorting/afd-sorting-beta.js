@@ -70,6 +70,7 @@ process.chdir(__dirname);
 			multiPageData[afd_page] = [ title ];
 		}
 	});
+	utils.saveObject('multiPageData', multiPageData);
 
 	var afd_data = {};
 
