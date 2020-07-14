@@ -52,3 +52,5 @@
 30  21  *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
 
 0   3   *   *   *  jsub -quiet -N job-grid -mem 2g   ~/bin/node ~/SDZeroBot/grid-afd-prod.js
+
+0   2   *   *   2  jsub -quiet -N job-draft -mem 2g   ~/bin/node ~/SDZeroBot/draftify-watch/draftify-watch.js
