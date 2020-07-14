@@ -1,27 +1,27 @@
 module.exports = function(bot) {
-	
+
 	class TextExtractor {
 
 		/**
-		 * Get extract 
-		 * @param {string} pagetext - full page text 
-		 * @param {number} [charLimit] - cut off the extract at this many readable characters, or wherever 
+		 * Get extract
+		 * @param {string} pagetext - full page text
+		 * @param {number} [charLimit] - cut off the extract at this many readable characters, or wherever
 		 * the sentence ends after this limit
-		 * @param {number} [hardUpperLimit] - cut off the extract at this many readable characters even if 
+		 * @param {number} [hardUpperLimit] - cut off the extract at this many readable characters even if
 		 * the sentence hasn't ended
 		 */
 		static getExtract(pagetext, charLimit, hardUpperLimit) {
-	
-			// Remove images. Can't be done correctly with just regex as there could be wikilinks 
+
+			// Remove images. Can't be done correctly with just regex as there could be wikilinks
 			// in the captions.
 			var extract = TextExtractor.removeImages(pagetext);
-	
-			// Remove templates beginning on a new line, such as infoboxes.	
-			// These ocassionally contain parameters with part of the content 
+
+			// Remove templates beginning on a new line, such as infoboxes.
+			// These ocassionally contain parameters with part of the content
 			// beginning on a newline not starting with a | or * or # or !
 			// thus can't be handled with the line regex.
 			extract = TextExtractor.removeTemplatesOnNewlines(extract);
-	
+
 			extract = extract
 				.replace(/<!--.*?-->/sg, '')
 				// remove refs, including named ref definitions and named ref invocations
@@ -30,6 +30,8 @@ module.exports = function(bot) {
 				.replace(/^\s*[{|}=*#:<!].*$/mg, '')
 				// these are just bad
 				.replace(/__[A-Z]+__/g, '')
+				// horizontal rules on AFC drafts
+				.replace(/^----/m, '')
 				// trim left to prepare for next step
 				.trimLeft()
 				// keep only the first paragraph
@@ -37,16 +39,16 @@ module.exports = function(bot) {
 				.replace(/'''(.*?)'''/g, '$1')
 				.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
 				.trim();
-	
+
 			if (charLimit) {
 				// We consider a period followed by a space or newline NOT followed by a lowercase char
 				// as a sentence ending. Lowercase chars after period+space is generally use of an abbreviation
 				// XXX: this still results in issues with name like Arthur A. Kempod.
 				//  (?![^[]*?\]\]) so that this is not a period within a link
-				//  (?![^{*]?\}\}) so that this is not a period within a template - doesn't work if there 
+				//  (?![^{*]?\}\}) so that this is not a period within a template - doesn't work if there
 				//      is a nested templates after the period.
 				var sentenceEnd = /\.\s(?![a-z])(?![^[]*?\]\])(?![^{]*?\}\})/g;
-		
+
 				if (extract.length > charLimit) {
 					var match = sentenceEnd.exec(extract);
 					while (match) {
@@ -59,13 +61,13 @@ module.exports = function(bot) {
 					}
 				}
 			}
-	
+
 			if (hardUpperLimit) {
 				if (TextExtractor.effCharCount(extract) > hardUpperLimit) {
 					extract = extract.slice(0, hardUpperLimit) + ' ...';
 				}
 			}
-	
+
 			return extract;
 		}
 
@@ -81,7 +83,7 @@ module.exports = function(bot) {
 		static removeTemplatesOnNewlines(text) {
 			var templateOnNewline = /^\{\{/m; // g is omitted for a reason, the text is changing.
 			var match = templateOnNewline.exec(text);
-			while (match) {	
+			while (match) {
 				var template = new bot.wikitext(text.slice(match.index)).parseTemplates(1)[0];
 				if (template) {
 					text = text.replace(template.wikitext, '');
@@ -92,17 +94,17 @@ module.exports = function(bot) {
 			}
 			return text;
 		}
-	
+
 		static effCharCount(text) {
 			return text
 				.replace(/\[\[:?(?:[^|\]]+?\|)?([^\]|]+?)\]\]/g, '$1')
 				.replace(/''/g, '')
 				.length;
 		}
-	
-	
+
+
 		/**
-		 * Do away with some of the more bizarre stuff from page extracts that aren't worth 
+		 * Do away with some of the more bizarre stuff from page extracts that aren't worth
 		 * checking for on a per-page basis @param {string} content
 		 */
 		static finalSanitise(content) {
