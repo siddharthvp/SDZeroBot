@@ -151,7 +151,7 @@ var months = ["January", "February", "March", "April", "May", "June", "July", "A
 var pad = num => num < 10 ? '0' + num : num;
 
 var ymdDate = function(date) {
-	return date.getFullYear() + '-' + pad(date.getMonth()) + '-' + pad(date.getDate());
+	return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
 };
 
 var readableDate = function(date) {
