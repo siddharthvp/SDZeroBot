@@ -1,4 +1,4 @@
-const {bot, log, mwn, argv} = require('../botbase');
+const {bot, log, mwn} = require('../botbase');
 
 (async function() {
 
@@ -14,6 +14,7 @@ var pages = {};
 
 var deprodded = new Set(),
 	deleted = new Set(),
+	deletedAtAfd = new Set(),
 	others = new Set(),
 	movedpagefollowed = new Set(),
 	faileddeprodget = new Set();
@@ -49,7 +50,7 @@ log(`[S] extracted pages from grid. Found ${totalcount} pages`);
 // });
 
 var prodRgx = /\{\{(Proposed deletion|Prod blp)\/dated/;
-var redirectRgx = /\s*#redirect\s*\[\[(.*?)\]\]/i;
+var redirectRgx = /^\s*#redirect\s*\[\[(.*?)\]\]/i;
 
 await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 	let pageobj = new bot.page(page);
@@ -62,7 +63,7 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 		let prodRgxMatch = currenttext.match(prodRgx);
 		if (prodRgxMatch) {
 			others.add(page);
-			pages[page].note = `Page still has PROD tag`;
+			pages[page].note = `Page still has a PROD tag`;
 			return;
 		}
 
@@ -86,7 +87,7 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 					// XXX: this is yet uncovered in tests
 
 					let moveCommentRgx = new RegExp(
-						`^${mwn.util.escapeRegExp(rev.user)} moved page \\[\\[${mwn.util.escapeRegExp(page)}\\]\\] to \\[\\[.*?\\]\\]`
+						`^${mwn.util.escapeRegExp(rev.user)} moved page \\[\\[${mwn.util.escapeRegExp(page)}\\]\\] to \\[\\[(.*?)\\]\\]`
 					);
 					let match = rev.comment.match(moveCommentRgx);
 					if (match) {
@@ -101,6 +102,8 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 						}
 
 						pages[target] = pages[page]; // copy over data
+						// update title, keeping the shortdesc
+						pages[target].article = pages[page].article.replace(/^\[\[.*?\]\]/, '[[' + target + ']]');
 						movedpagefollowed.add(target);
 						return pageWorker(target); // recurse
 					}
@@ -109,12 +112,12 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 				prevcomment = rev.comment;
 			}
 
-			// was it recreated after deletion? That's how we'd end up here
+			// if we reach here check if it was recreated after deletion (most likely)
 			return pageobj.logs('user|comment|timestamp', 1, 'delete/delete').then(logs => {
-				var firstrev = revs[revs.length-1];
+				let firstrev = revs[revs.length-1];
 				if (logs.length && new Date(logs[0].timestamp) < new Date(firstrev.timestamp)) {
 					// yes
-					pages[page].note = `Deleted by ${logs[0].user}: ${small(logs[0].comment)}\n\n` +
+					pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(logs[0].comment)}\n\n` +
 					`Recreated as redirect by ${userlink(firstrev.user)}: ${small(firstrev.comment)}`;
 					others.add(page);
 
@@ -166,7 +169,7 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 			prevcomment = rev.comment;
 		}
 
-		// was it recreated after deletion? That's how we'd end up here
+		// if we reach here check if it was recreated after deletion (most likely)
 		// duplicates some code above for the redirect case
 		return pageobj.logs('user|comment|timestamp', 1, 'delete/delete').then(logs => {
 			var firstrev = revs[revs.length-1];
@@ -191,8 +194,21 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 		// Article doesn't exist. Check deletion log
 		return pageobj.logs(null, 1, 'delete/delete').then(logs => {
 
-			// Nothing in the deletion log? Check move log then
-			if (logs.length === 0) {
+			if (logs.length) {
+				let prod_comment_rgx = 'Expired [[WP:PROD|PROD]], concern was:';
+				let afd_comment_rgx = /\[\[Wikipedia:Articles for deletion\//;
+
+				let isProd = logs[0].comment.startsWith(prod_comment_rgx);
+				let isAfd = afd_comment_rgx.test(logs[0].comment);
+				pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(isProd ? '(Expired PROD)' : logs[0].comment)}`;
+				if (isAfd) {
+					deletedAtAfd.add(page);
+				} else {
+					deleted.add(page);
+				}
+
+			} else {
+				// Nothing in the deletion log? Check move log then
 				return pageobj.logs('details|user|comment', 1, 'move').then(movelogs => {
 					if (movelogs.length === 0) {
 						log(`[W] wherabouts of ${page} are unknown`);
@@ -202,18 +218,26 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 						let move = movelogs[0];
 						if (move.params.target_title === 'Draft:' + page) {
 							pages[page].note = `Draftified to [[${move.params.target_title}]] by ${userlink(move.user)} (${small(move.comment)})`;
+							others.add(page);
 						} else {
-							pages[page].note = `Moved to [[${move.params.target_title}]] by ${userlink(move.user)} (${small(move.comment)})`;
+							let target = move.params.target_title;
+
+							// non-mainspace target, don't follow
+							if (bot.title.newFromText(target).namespace !== 0) {
+								pages[page].note = `Moved to [[${target}]] by ${userlink(move.user)} (${small(move.comment)})`;
+								others.add(page);
+								return;
+							}
+
+							// follow the redirect
+							pages[target] = pages[page]; // copy over data
+							// update title, keeping the shortdesc
+							pages[target].article = pages[page].article.replace(/^\[\[.*?\]\]/, '[[' + target + ']]');
+							movedpagefollowed.add(target);
+							return pageWorker(target); // recurse
 						}
-						others.add(page);
 					}
 				});
-
-			} else {
-				let bpreason = 'Expired [[WP:PROD|PROD]], concern was:';
-				let usingbpreason = logs[0].comment.startsWith(bpreason);
-				pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(usingbpreason ? '(Expired PROD)' : logs[0].comment)}`;
-				deleted.add(page);
 			}
 		});
 	});
@@ -227,70 +251,49 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 log(`[S] analysis complete`);
 
 // console.log('De-prodded: ' + JSON.stringify([...deprodded], null, 2));
-// console.log('deleted: ' + JSON.stringify([...deleted], null, 2));
+console.log('deletedAtAfd: ' + JSON.stringify([...deletedAtAfd], null, 2));
 console.log('others: ' + JSON.stringify([...others], null, 2));
 console.log('movedpagefollowed: ' + JSON.stringify([...movedpagefollowed], null, 2));
 console.log('faileddeprodget: ' + JSON.stringify([...faileddeprodget], null, 2));
 
 
-// 3 tables: De-prodded, Deleted, Others
-
-let deprodtable = new mwn.table({sortable: true});
-deprodtable.addHeaders([
-	{ style: 'width: 15em;', label: `Article`},
-	{ style: 'width: 25em;', label: `Excerpt`},
-	`De-prodding`
-]);
-for (let page of deprodded) {
-	deprodtable.addRow([
-		pages[page].article,
-		`<small>${pages[page].excerpt}</small>`,
-		pages[page].note
+var makeTable = function(header3, set) {
+	var table = new mwn.table();
+	table.addHeaders([
+		{ style: 'width: 15em;', label: `Article`},
+		{ style: 'width: 25em;', label: `Excerpt`},
+		header3
 	]);
-}
+	for (let page of set) {
+		table.addRow([
+			pages[page].article,
+			`<small>${pages[page].excerpt}</small>`,
+			pages[page].note
+		]);
+	}
+	return table.getText();
+};
 
-
-let deletedtable = new mwn.table();
-deletedtable.addHeaders([
-	{ style: 'width: 15em;', label: `Article`},
-	{ style: 'width: 25em', label: `Excerpt`},
-	`Deleted`
-]);
-for (let page of deleted) {
-	deletedtable.addRow([
-		pages[page].article,
-		`<small>${pages[page].excerpt}</small>`,
-		pages[page].note
-	]);
-}
-
-
-let othertable = new mwn.table();
-othertable.addHeaders([
-	{ style: 'width: 15em;', label: `Article`},
-	{ style: 'width: 25em;', label: `Excerpt`},
-	`State`
-]);
-for (let page of others) {
-	othertable.addRow([
-		pages[page].article,
-		`<small>${pages[page].excerpt}</small>`,
-		pages[page].note
-	]);
-}
+let deprodtable = makeTable('De-prodding', deprodded);
+let deletedAtAfdTable = makeTable('Deletion', deletedAtAfd);
+let deletedtable = makeTable('Deletion', deleted);
+let othertable = makeTable('Others', others);
 
 let text =
 
 `{{/header|count=${totalcount}|date=${readableDate(d)}|ts=~~~~~}}
 
 ==De-prodded (${deprodded.size})==
-${deprodtable.getText()}
+${deprodtable}
+
+==De-prodded but deleted at AfD (${deletedAtAfd.size})==
+${deletedAtAfdTable}
 
 ==Deleted (${deleted.size})==
-${deletedtable.getText()}
+${deletedtable}
 
 ==Others (${others.size})==
-${othertable.getText()}
+${othertable}
 `;
 
 await bot.save('User:SDZeroBot/ProdWatch', text, 'Updating report');
