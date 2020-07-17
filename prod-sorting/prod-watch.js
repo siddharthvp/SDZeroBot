@@ -1,12 +1,17 @@
-const {bot, log, mwn} = require('../botbase');
+const {bot, log, mwn, argv} = require('../botbase');
 
 (async function() {
 
-await bot.loginGetToken();
+await bot.getTokensAndSiteInfo();
 
 var d = new Date();
-d.setDate(d.getDate() - 20);
-d.setHours(0, 0, 0, 0);
+
+if (argv.date) {
+	d = new Date(argv.date); 
+} else {
+	d.setDate(d.getDate() - 20);
+	d.setHours(0, 0, 0, 0);
+}
 
 var grid = new bot.page('User:SDZeroBot/PROD grid');
 
@@ -85,8 +90,6 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 					return; // TODO: also find out who de-prodded it, if different
 
 				} else { // redirect, check if this edit is a page move
-
-					// XXX: this is yet uncovered in tests
 
 					let moveCommentRgx = new RegExp(
 						`^${mwn.util.escapeRegExp(rev.user)} moved page \\[\\[${mwn.util.escapeRegExp(page)}\\]\\] to \\[\\[(.*?)\\]\\]`

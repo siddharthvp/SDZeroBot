@@ -9,7 +9,7 @@ process.chdir(__dirname);
 
 	log('[i] Started');
 
-	await bot.loginGetToken();
+	await bot.getTokensAndSiteInfo();
 
 	var revidsTitles, tableInfo;
 	if (argv.nodb) {

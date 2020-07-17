@@ -15,22 +15,28 @@ const mysql = require('mysql');
 /** Parsed console arguments */
 const argv = require('minimist')(process.argv.slice(2));
 
-/** Colorised and dated console logging. Semlog is a dependency of mwn */
-const semlog = require('semlog');
-semlog.updateConfig({ printDateTime: true });
-const log = semlog.log;
+/** Colorised and dated console logging. Powered by Semlog, a dependency of mwn */
+const log = mwn.log;
 
 /** bot account and databse access credentials */
 const auth = require('./.auth');
 
 const bot = new mwn({
 	apiUrl: 'https://en.wikipedia.org/w/api.php',
+	hasApiHighLimit: true,
 	username: auth.bot_username,
 	password: auth.bot_password,
-	hasApiHighLimit: true,
+	oauth_consumer_token: auth.oauth_consumer_token,
+	oauth_consumer_secret: auth.oauth_consumer_secret,
+	oauth_access_token: auth.oauth_access_token,
+	oauth_access_secret: auth.oauth_access_secret,
+	defaultParams: {
+		assert: 'bot'
+	},
+	userAgent: 'w:en:User:SDZeroBot'
 });
-bot.setDefaultParams({ assert: 'bot' });
-bot.setUserAgent('w:en:User:SDZeroBot');
+
+bot.initOAuth();
 
 const sql = mysql.createConnection({
 	host: 'enwiki.analytics.db.svc.eqiad.wmflabs',

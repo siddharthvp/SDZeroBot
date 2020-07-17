@@ -75,7 +75,7 @@ process.chdir(__dirname);
 
 	/* GET COPYVIOS REPORT */
 
-	await bot.loginGetToken();
+	await bot.getTokensAndSiteInfo();
 
 	var UserSQLReport = await bot.request({
 		"action": "query",

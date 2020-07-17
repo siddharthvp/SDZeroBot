@@ -3,7 +3,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 (async () => {
 
-	await bot.loginGetToken();
+	await bot.getTokensAndSiteInfo();
 
 	var ts1 = new Date()
 	ts1.setDate(ts1.getDate() - 8);

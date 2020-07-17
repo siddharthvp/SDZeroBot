@@ -8,7 +8,7 @@ process.chdir(__dirname);
 	/* GET DATA FROM DATABASE */
 
 	log('[i] Started');
-	await bot.loginGetToken();
+	await bot.getTokensAndSiteInfo();
 
 	var revidsTitles, tableInfo;
 

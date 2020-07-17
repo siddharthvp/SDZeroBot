@@ -4,7 +4,7 @@ process.chdir(__dirname);
 
 (async () => {
 
-	await bot.loginGetToken();
+	await bot.getTokensAndSiteInfo();
 
 	/** Get list of all active users */
 	var activeusers;

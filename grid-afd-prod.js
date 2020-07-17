@@ -38,7 +38,7 @@ function parseArticleForPROD(pagetext) {
 
 	var afdtable = {}, prodtable = {};
 
-	await bot.loginGetToken();
+	await bot.getTokensAndSiteInfo();
 	
 	await bot.continuedQuery({
 		"action": "query",

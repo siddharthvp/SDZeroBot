@@ -1,4 +1,13 @@
-// TODO: write documentation
+/**
+ * node petscan-resort
+ * 
+ * command line arguments:
+ * 
+ * --link 	: petscan link from which to get articles
+ * --add  	: add a stub tag, this arg can be given multiple times
+ * --remove : remove a stub tag if it exists, this arg can be given multiple times
+ * --sleep 	: (default 3000) number of milliseconds to pause after each edit
+ */
 
 const {utils, log, argv} = require('../botbase');
 const auth = require('../.auth');
@@ -25,16 +34,10 @@ bot.loginGetToken().then(function() {
 			var text = rev.content;
 			var stm = new StubTagManager(text);
 
-			if (Array.isArray(argv.remove)) {
-				argv.remove.forEach(tag => stm.removeTag(tag));
-			} else if (argv.remove) {
-				stm.removeTag(argv.remove);
-			}
-			if (Array.isArray(argv.add)) {
-				argv.add.forEach(tag => stm.addTag(tag));
-			} else if (argv.add) {
-				stm.addTag(argv.add);
-			}
+			var tagsToAdd = Array.isArray(argv.add) ? argv.add : [ argv.add ];
+			var tagsToRemove = Array.isArray(argv.remove) ? argv.remove : [ argv.remove ];
+			tagsToAdd.forEach(tag => stm.addTag(tag));
+			tagsToRemove.forEach(tag => stm.removeTag(tag)); 
 			
 			var summary;
 			if (stm.removedTags.length && stm.addedTags.length) {
@@ -43,9 +46,8 @@ bot.loginGetToken().then(function() {
 				summary = `Stub sorting: removing ${utils.makeSentence(stm.removedTags)}}`;
 			} else if (stm.addedTags.length) {
 				summary = `Stub sorting: adding ${utils.makeSentence(stm.addedTags)}`;
-			} else {  // should only happen if there are no tags added or removed - only re-formatting is taking place
-				// can't abort the edit as bot.edit doensn't let us do so 
-				summary = `Stub sorting`;	
+			} else {  
+				return; // no edit	
 			}
 			return {
 				text: stm.getText(),
