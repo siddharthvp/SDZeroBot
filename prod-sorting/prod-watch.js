@@ -13,8 +13,10 @@ var grid = new bot.page('User:SDZeroBot/PROD grid');
 var pages = {};
 
 var deprodded = new Set(),
+	afdkept = new Set(),
+	afdstillopen = new Set(),
 	deleted = new Set(),
-	deletedAtAfd = new Set(),
+	afddeleted = new Set(),
 	others = new Set(),
 	movedpagefollowed = new Set(),
 	faileddeprodget = new Set();
@@ -138,8 +140,6 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 				pages[page].comment = prevcomment;
 				pages[page].note = `De-prodded by ${userlink(pages[page].deproder)} with comment: <small>${pages[page].comment || ''}</small>`;
 
-				deprodded.add(page);
-
 				// check if it was AFD'd later after de-prodding
 				return bot.search('prefix:Wikipedia:Articles for deletion/' + page, 5, '', {
 					srsort: 'create_timestamp_desc' // get most recent afd first if there are multiple
@@ -157,12 +157,18 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 							let text = pg.revisions[0].content;
 							if (/\{\{REMOVE THIS TEMPLATE WHEN CLOSING THIS AfD/.test(text)) {
 								pages[page].note += `\n\nNominated to [[${afd.title}|AfD]]. Still open.`;
+								afdstillopen.add(page);
 							} else {
 								let boldeds = text.match(/'''.*?'''/g);
-								pages[page].note += `\n\nNominated to [[${afd.title}|AfD]]. Closed as ${boldeds[1] || '<undetermined>'}`;
+								let result = boldeds[1] ? boldeds[1].slice(3, -3) : '<undetermined>';
+								pages[page].note += `\n\nNominated to [[${afd.title}|AfD]]. Closed as ${result}`;
+								afdkept.add(page);
 							}
 						});
 					}
+
+					// if we get here, that means we didn't find any AfDs
+					deprodded.add(page);
 				});
 			}
 			prevuser = rev.user;
@@ -195,14 +201,14 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 		return pageobj.logs(null, 1, 'delete/delete').then(logs => {
 
 			if (logs.length) {
-				let prod_comment_rgx = 'Expired [[WP:PROD|PROD]], concern was:';
+				// let prod_comment_rgx = 'Expired [[WP:PROD|PROD]], concern was:';
+				// let isProd = logs[0].comment.startsWith(prod_comment_rgx);
+				
 				let afd_comment_rgx = /\[\[Wikipedia:Articles for deletion\//;
-
-				let isProd = logs[0].comment.startsWith(prod_comment_rgx);
 				let isAfd = afd_comment_rgx.test(logs[0].comment);
 				pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(logs[0].comment)}`;
 				if (isAfd) {
-					deletedAtAfd.add(page);
+					afddeleted.add(page);
 				} else {
 					deleted.add(page);
 				}
@@ -251,7 +257,7 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 log(`[S] analysis complete`);
 
 // console.log('De-prodded: ' + JSON.stringify([...deprodded], null, 2));
-console.log('deletedAtAfd: ' + JSON.stringify([...deletedAtAfd], null, 2));
+console.log('afddeleted: ' + JSON.stringify([...afddeleted], null, 2));
 console.log('others: ' + JSON.stringify([...others], null, 2));
 console.log('movedpagefollowed: ' + JSON.stringify([...movedpagefollowed], null, 2));
 console.log('faileddeprodget: ' + JSON.stringify([...faileddeprodget], null, 2));
@@ -275,7 +281,9 @@ var makeTable = function(header3, set) {
 };
 
 let deprodtable = makeTable('De-prodding', deprodded);
-let deletedAtAfdTable = makeTable('Deletion', deletedAtAfd);
+let afdstillopentable = makeTable('De-prodding and AfD', afdstillopen);
+let afdkepttable = makeTable('De-prodding and AfD', afdkept);
+let afddeletedtable = makeTable('Deletion', afddeleted);
 let deletedtable = makeTable('Deletion', deleted);
 let othertable = makeTable('Others', others);
 
@@ -283,17 +291,22 @@ let text =
 
 `{{User:SDZeroBot/ProdWatch/header|count=${totalcount}|date=${readableDate(d)}|ts=~~~~~}}
 
-==De-prodded (${deprodded.size})==
+==Uncontested de-prods (${deprodded.size})==
 ${deprodtable}
 
-==De-prodded but deleted at AfD (${deletedAtAfd.size})==
-${deletedAtAfdTable}
+==Conteseted de-prods (${afdkept.size + afdstillopen.size})==
+${afdstillopen.size ? `\n===AfDs still open===\n${afdstillopentable}\n` : ''}
+===Kept at AfD (${afdkept.size})===
+${afdkepttable}
 
-==Deleted (${deleted.size})==
-${deletedtable}
+===Deleted at AfD (${afddeleted.size})==
+${afddeletedtable}
 
 ==Others (${others.size})==
 ${othertable}
+
+==Deleted (${deleted.size})==
+${deletedtable}
 `;
 
 await bot.save(`User:SDZeroBot/ProdWatch/${ymdDate(d)}`, text, 'Updating report');
