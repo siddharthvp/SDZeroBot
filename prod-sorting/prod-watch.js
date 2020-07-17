@@ -295,7 +295,7 @@ let text =
 ${deprodtable}
 
 ==Conteseted de-prods (${afdkept.size + afdstillopen.size + afddeleted.size})==
-${afdstillopen.size ? `\n===AfDs still open===\n${afdstillopentable}\n` : ''}
+${afdstillopen.size ? `\n===AfDs still open (${afdstillopen.size})===\n${afdstillopentable}\n` : ''}
 ===Kept at AfD (${afdkept.size})===
 ${afdkepttable}
 
