@@ -26,10 +26,12 @@ const bot = new mwn({
 	hasApiHighLimit: true,
 	username: auth.bot_username,
 	password: auth.bot_password,
-	oauth_consumer_token: auth.oauth_consumer_token,
-	oauth_consumer_secret: auth.oauth_consumer_secret,
-	oauth_access_token: auth.oauth_access_token,
-	oauth_access_secret: auth.oauth_access_secret,
+	OAuthCredentials: {
+		consumerToken: auth.oauth_consumer_token,
+		consumerSecret: auth.oauth_consumer_secret,
+		accessToken: auth.oauth_access_token,
+		accessSecret: auth.oauth_access_secret,
+	},
 	defaultParams: {
 		assert: 'bot'
 	},
