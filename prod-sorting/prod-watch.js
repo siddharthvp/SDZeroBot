@@ -5,7 +5,7 @@ const {bot, log, mwn} = require('../botbase');
 await bot.loginGetToken();
 
 var d = new Date();
-d.setDate(d.getDate() - 16);
+d.setDate(d.getDate() - 20);
 d.setHours(0, 0, 0, 0);
 
 var grid = new bot.page('User:SDZeroBot/PROD grid');
@@ -200,7 +200,7 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 
 				let isProd = logs[0].comment.startsWith(prod_comment_rgx);
 				let isAfd = afd_comment_rgx.test(logs[0].comment);
-				pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(isProd ? '(Expired PROD)' : logs[0].comment)}`;
+				pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(logs[0].comment)}`;
 				if (isAfd) {
 					deletedAtAfd.add(page);
 				} else {
@@ -217,14 +217,14 @@ await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 					} else {
 						let move = movelogs[0];
 						if (move.params.target_title === 'Draft:' + page) {
-							pages[page].note = `Draftified to [[${move.params.target_title}]] by ${userlink(move.user)} (${small(move.comment)})`;
+							pages[page].note = `Draftified to [[${move.params.target_title}]] by ${userlink(move.user)}: ${small(move.comment)}`;
 							others.add(page);
 						} else {
 							let target = move.params.target_title;
 
 							// non-mainspace target, don't follow
 							if (bot.title.newFromText(target).namespace !== 0) {
-								pages[page].note = `Moved to [[${target}]] by ${userlink(move.user)} (${small(move.comment)})`;
+								pages[page].note = `Moved to [[${target}]] by ${userlink(move.user)}: ${small(move.comment)}`;
 								others.add(page);
 								return;
 							}
@@ -281,7 +281,7 @@ let othertable = makeTable('Others', others);
 
 let text =
 
-`{{/header|count=${totalcount}|date=${readableDate(d)}|ts=~~~~~}}
+`{{User:SDZeroBot/ProdWatch/header|count=${totalcount}|date=${readableDate(d)}|ts=~~~~~}}
 
 ==De-prodded (${deprodded.size})==
 ${deprodtable}
@@ -296,7 +296,7 @@ ${deletedtable}
 ${othertable}
 `;
 
-await bot.save('User:SDZeroBot/ProdWatch', text, 'Updating report');
+await bot.save(`User:SDZeroBot/ProdWatch/${ymdDate(d)}`, text, 'Updating report');
 
 log(`[i] Done`);
 
@@ -304,7 +304,11 @@ log(`[i] Done`);
 
 
 var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+var pad = num => num < 10 ? '0' + num : num;
 
+var ymdDate = function(date) {
+	return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
+};
 var readableDate = function(date) {
 	return date.getDate() + ' ' + months[date.getMonth()] + ' ' + date.getFullYear();
 }
