@@ -26,7 +26,7 @@ var deprodded = new Set(),
 	movedpagefollowed = new Set(),
 	faileddeprodget = new Set();
 
-await grid.history('content|timestamp', 1, {
+await grid.history('content', 1, {
 	rvstart: d.toISOString(),
 }).then(revs => {
 	let rev = revs[0];

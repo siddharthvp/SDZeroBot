@@ -84,7 +84,7 @@ module.exports = function(bot) {
 			var templateOnNewline = /^\{\{/m; // g is omitted for a reason, the text is changing.
 			var match = templateOnNewline.exec(text);
 			while (match) {
-				var template = new bot.wikitext(text.slice(match.index)).parseTemplates(1)[0];
+				var template = new bot.wikitext(text.slice(match.index)).parseTemplates({count: 1})[0];
 				if (template) {
 					text = text.replace(template.wikitext, '');
 				} else { // just get rid of that line, otherwise we'd enter an infinite loop
