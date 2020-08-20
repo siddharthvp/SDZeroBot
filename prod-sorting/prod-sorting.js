@@ -33,16 +33,19 @@ process.chdir(__dirname);
 			};
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates(); // KLUDGE
 				var prod_template, prod_blp, prod_date, prod_concern;
-				prod_template = templates.find(t => {
-					if (t.name === 'Proposed deletion/dated') {
-						return true;
-					} else if (t.name === 'Prod blp/dated') {
-						prod_blp = true;
-						return true;
+				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates({
+					count: 1,
+					namePredicate: name => {
+						if (name === 'Proposed deletion/dated') {
+							return true;
+						} else if (name === 'Prod blp/dated') {
+							prod_blp = true;
+							return true;
+						}
 					}
 				});
+				prod_template = templates[0];
 				if (prod_template) {
 					prod_concern = prod_blp ? '[BLP]' : prod_template.getValue('concern');
 					if (prod_concern === '') {
@@ -80,7 +83,7 @@ process.chdir(__dirname);
 	var pagelist = Object.keys(revidsTitles);
 	var oresdata = await OresUtils.queryRevisions(['drafttopic'], pagelist);
 	utils.saveObject('oresdata', oresdata);
-	
+
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
 
 	/**
@@ -137,7 +140,7 @@ process.chdir(__dirname);
 			`scope="col" style="width: 22em"; | Excerpt`,
 			`Concern`
 		]);
-		
+
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
 
@@ -167,6 +170,7 @@ process.chdir(__dirname);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';
 		});
+		content = TextExtractor.finalSanitise(content);
 
 		return bot.save('User:SDZeroBot/PROD sorting' + (lite ? '/lite' : ''), content, 'Updating report');
 
