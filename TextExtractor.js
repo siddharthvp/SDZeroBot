@@ -27,11 +27,9 @@ module.exports = function(bot) {
 				// remove refs, including named ref definitions and named ref invocations
 				.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
 				// the magic
-				.replace(/^\s*[{|}=*#:<!].*$/mg, '')
+				.replace(/^\s*[-{|}=*#:<!].*$/mg, '')
 				// these are just bad
 				.replace(/__[A-Z]+__/g, '')
-				// horizontal rules on AFC drafts
-				.replace(/^----/m, '')
 				// trim left to prepare for next step
 				.trimLeft()
 				// keep only the first paragraph
