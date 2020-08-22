@@ -112,6 +112,10 @@ process.chdir(__dirname);
 	})) {
 
 		data.query.pages.forEach(pg => {
+			tableInfo[pg.title].description = pg.description;
+			if (pg.missing) {
+				return;
+			}
 			var text = pg.revisions[0].content;
 			new bot.wikitext(text).parseTemplates({
 				limit: 2,
@@ -125,7 +129,6 @@ process.chdir(__dirname);
 					}
 				}
 			});
-			tableInfo[pg.title].description = pg.description;
 		});
 
 	}
