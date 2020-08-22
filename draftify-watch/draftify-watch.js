@@ -143,7 +143,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	await bot.save('User:SDZeroBot/DraftifyWatch', text, 'Updating report');
 
-	log(`[i] Done`);
+	log('[i] Finished');
 
 })();
 

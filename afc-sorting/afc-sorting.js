@@ -128,8 +128,9 @@ process.chdir(__dirname);
 		});
 
 	}
-	log(`[i] found ${Object.keys(coi).length} drafts with COI tag`);
-	log(`[i] found ${Object.keys(undisclosedpaid).length} drafts with undisclosed-paid tag`);
+	log(`[i] Found ${Object.keys(coi).length} drafts with COI tag`);
+	log(`[i] Found ${Object.keys(undisclosedpaid).length} drafts with undisclosed-paid tag`);
+	log(`[i] Found ${Object.values(tableInfo).filter(val => val.description).length} drafts with descriptions`);
 
 
 

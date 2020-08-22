@@ -178,4 +178,6 @@ process.chdir(__dirname);
 	await makeMainPage(); // User:SDZeroBot/PROD sorting
 	await makeMainPage(true); // User:SDZeroBot/PROD sorting/lite
 
+	log('[i] Finished');
+
 })().catch(err => emailOnError(err, 'prod-sorting'));

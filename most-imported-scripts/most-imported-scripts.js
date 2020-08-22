@@ -163,7 +163,9 @@ process.chdir(__dirname);
 	wikitext += wikitable.getText();
 
 	if (!argv.dry) {
-		return bot.save('Wikipedia:User scripts/Most imported scripts', wikitext, 'Updating');
+		await bot.save('Wikipedia:User scripts/Most imported scripts', wikitext, 'Updating');
 	}
+
+	log('[i] Finished');
 
 })().catch(err => emailOnError(err, 'most-imported-scripts'));

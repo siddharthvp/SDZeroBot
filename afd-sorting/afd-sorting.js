@@ -218,7 +218,6 @@ process.chdir(__dirname);
 	}
 	await makeMainPage();
 
+	log('[i] Finished');
 
-})().catch(err => {
-	emailOnError(err, 'afd-sorting');
-});
+})().catch(err => emailOnError(err, 'afd-sorting'));
