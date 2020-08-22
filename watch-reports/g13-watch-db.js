@@ -1,7 +1,11 @@
+// jstart -N g13-db -mem 2g ~/bin/node ~/SDZeroBot/watch-reports/g13-watch-db.js
+
 const {bot, log, emailOnError} = require('../botbase');
 const EventSource = require('eventsource');
 const TextExtractor = require('../TextExtractor')(bot);
 const sqlite3 = require('sqlite3').verbose();
+
+process.chdir(__dirname);
 
 (async function() {
 
