@@ -1,5 +1,6 @@
 const {fs, mwn, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
+const page = require('mwn/src/page');
 process.chdir(__dirname);
 
 (async function() {
@@ -279,9 +280,9 @@ process.chdir(__dirname);
 		}
 		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
 
-		var table = new mwn.table({ sortable: true });
+		var table = new mwn.table();
 		table.addHeaders([
-			`scope="col" style="width: 14em;" | Page`,
+			`scope="col" style="width: 17em;" | Page`,
 			`Class`,
 			`scope="col" style="width: 5em;" | Submitted`,
 			`scope="col" style="width: 5em;" | Created`,
@@ -290,7 +291,10 @@ process.chdir(__dirname);
 			`Notes`
 		]);
 
-		sorter[topic].forEach(function(page) {
+		sorter[topic].sort((a, b) => {
+			// sort by submitted date
+			return tableInfo[a.title].submit_date > tableInfo[b.title].submit_date ? 1 : -1;
+		}).forEach(function(page) {
 			var tabledata = tableInfo[page.title];
 
 			var nameString = `[[${page.title}]]`;
@@ -341,6 +345,4 @@ process.chdir(__dirname);
 		log('[i] Finished');
 	});
 
-})().catch(err => {
-	emailOnError(err, 'afc-sorting');
-});
+})().catch(err => emailOnError(err, 'afc-sorting'));
