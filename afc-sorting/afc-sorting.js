@@ -99,6 +99,39 @@ process.chdir(__dirname);
 	};
 
 
+	/* GET CONTENT (FOR TAG CHECK) AND DESCRIPTIONS */
+
+	var coi = {}, undisclosedpaid = {};
+
+	for await (let data of bot.massQueryGen({
+		"action": "query",
+		"prop": "revisions|description",
+		"titles": Object.keys(tableInfo),
+		"rvprop": "content"
+	})) {
+
+		data.query.pages.forEach(pg => {
+			var text = pg.revisions[0].content;
+			new bot.wikitext(text).parseTemplates({
+				limit: 2,
+				namePredicate: name => {
+					if (name === 'COI') {
+						coi[pg.title] = 1;
+						return true;
+					} else if (name === 'Undisclosed paid') {
+						undisclosedpaid[pg.title] = 1;
+						return true;
+					}
+				}
+			});
+			tableInfo[pg.title].description = pg.description;
+		});
+
+	}
+	log(`[i] found ${Object.keys(coi).length} drafts with COI tag`);
+	log(`[i] found ${Object.keys(undisclosedpaid).length} drafts with undisclosed-paid tag`);
+
+
 
 	/* GET DATA FOR NUMBER OF DECLINES */
 
@@ -159,6 +192,12 @@ process.chdir(__dirname);
 		var issues = [];
 		if (numDeclines[title]) {
 			issues.push(`${numDeclines[title]} past decline${numDeclines[title] > 1 ? 's' : ''}`);
+		}
+		if (coi[title]) {
+			issues.push(`COI`);
+		}
+		if (undisclosedpaid[title]) {
+			issues.push(`Undisclosed-paid`);
 		}
 		if (ores.draftquality !== 'OK') { // OK / vandalism / spam / attack
 			issues.push('Possible ' + ores.draftquality);
@@ -253,6 +292,11 @@ process.chdir(__dirname);
 		sorter[topic].forEach(function(page) {
 			var tabledata = tableInfo[page.title];
 
+			var nameString = `[[${page.title}]]`;
+			if (tabledata.description) {
+				nameString += ` <small>(${tabledata.description})</small>`;
+			}
+
 			var editorString;
 			if (tabledata.creatorEdits) {
 				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
@@ -277,7 +321,7 @@ process.chdir(__dirname);
 			}
 
 			table.addRow([
-				`[[${page.title}]]`,
+				nameString,
 				classString,
 				tabledata.submit_date,
 				tabledata.creation_date,
