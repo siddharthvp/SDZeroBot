@@ -1,4 +1,4 @@
-const {bot, mwn, log, utils} = require('../botbase');
+const {bot, mwn, log, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async () => {
@@ -145,7 +145,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	log('[i] Finished');
 
-})();
+})().catch(err => emailOnError(err, 'draftify-watch'));
 
 var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 var pad = num => num < 10 ? '0' + num : num;

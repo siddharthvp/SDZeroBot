@@ -1,17 +1,10 @@
-const {bot, log, mwn, argv} = require('../botbase');
+const {bot, log, mwn, argv, emailOnError} = require('../botbase');
 
 (async function() {
 
 await bot.getTokensAndSiteInfo();
 
-var d = new Date();
-
-if (argv.date) {
-	d = new Date(argv.date); 
-} else {
-	d.setDate(d.getDate() - 20);
-	d.setHours(0, 0, 0, 0);
-}
+var d = new Date(argv.date);  // take target date as console argument
 
 var grid = new bot.page('User:SDZeroBot/PROD grid');
 
@@ -294,10 +287,10 @@ let text =
 
 `{{User:SDZeroBot/ProdWatch/header|count=${totalcount}|date=${readableDate(d)}|ts=~~~~~}}
 
-==Uncontested de-prods (${deprodded.size})==
+==De-prods (${deprodded.size})==
 ${deprodtable}
 
-==Conteseted de-prods (${afdkept.size + afdstillopen.size + afddeleted.size})==
+==Contested de-prods (${afdkept.size + afdstillopen.size + afddeleted.size})==
 ${afdstillopen.size ? `\n===AfDs still open (${afdstillopen.size})===\n${afdstillopentable}\n` : ''}
 ===Kept at AfD (${afdkept.size})===
 ${afdkepttable}
@@ -312,11 +305,11 @@ ${othertable}
 ${deletedtable}
 `;
 
-await bot.save(`User:SDZeroBot/ProdWatch/${ymdDate(d)}`, text, 'Updating report');
+await bot.save(`User:SDZeroBot/PROD Watch/${ymdDate(d)}`, text, 'Updating report');
 
-log(`[i] Done`);
+log(`[i] Finished`);
 
-})();
+})().catch(err => emailOnError(err, 'prod-watch'));
 
 
 var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
