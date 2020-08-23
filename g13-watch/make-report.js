@@ -59,7 +59,7 @@ db.each(`
 	let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
 		let date = new xdate(rev.timestamp).subtract(24, 'hours');
 		return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
-	}).join(' - ') + ' - {{history|2=more}}';
+	}).join(' - ') + ' - {{history|2=older}}';
 
 	let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}` 
 		+ `\n\n${wikitable}`;
