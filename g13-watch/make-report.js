@@ -11,6 +11,8 @@ let db = new sqlite3.Database('./g13.db', async (err) => {
 	log('[S] Connected to the g13 database.');
 });
 
+await bot.getTokensAndSiteInfo();
+
 let table = new mwn.table();
 table.addHeaders([
 	{label: 'Date', style: 'width: 5em'},
@@ -21,7 +23,7 @@ table.addHeaders([
 let end = new xdate();
 let start = new xdate().subtract(24, 'hours');
 
-await db.each(`
+db.each(`
 	SELECT * FROM g13
 	WHERE ts > ?
 	AND ts < ?
@@ -44,15 +46,30 @@ await db.each(`
 
 	let wikitable = table.getText();
 	let yesterday = new xdate().subtract(1, 'day');
+	
+	let text = 
+`<templatestyles src="User:SD0001/grid-styles.css" />
+Drafts nominated for G13 ― ${yesterday.format('YYYY-MM-DD')} ― SDZeroBot
 
-	let text = `Drafts nominated for G13 ― ${yesterday.format('YYYY-MM-DD')} ― SDZeroBot` 
-		+ `\n\nFor older G13s, please see {{history|2=page history}}`
-		+ `\n\n${wikitable}`;
+For older G13s, please see {{history|2=page history}}
+${wikitable}`;
 
 	await bot.save('User:SDZeroBot/G13 Watch', text, 'Updating G13 report');
 
 	log(`[i] Finished`);
 
+});
+
+// Delete data more than 3 days old:
+let ts_3days_old = new xdate().subtract(72, 'hours').getTime() / 1000;
+
+db.run(`
+	DELETE FROM g13
+	WHERE ts < ?
+`, [ts_3days_old], (err) => {
+	if (!err) {
+		log(`[S] Deleted data more than 3 days old`);
+	}
 });
 
 
