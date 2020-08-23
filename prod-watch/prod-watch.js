@@ -201,7 +201,7 @@ const xdate = require('../xdate');
 						// let prod_comment_rgx = 'Expired [[WP:PROD|PROD]], concern was:';
 						// let isProd = logs[0].comment.startsWith(prod_comment_rgx);
 						
-						let afd_comment_rgx = /\[\[Wikipedia:Articles for deletion\//;
+						let afd_comment_rgx = /^\[\[Wikipedia:Articles for deletion\//;
 						let isAfd = afd_comment_rgx.test(logs[0].comment);
 						pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(logs[0].comment)}`;
 						if (isAfd) {
@@ -311,7 +311,7 @@ const xdate = require('../xdate');
 	}
 
 	// Triggers:
-	
+
 	await main(new xdate().subtract(7, 'days'), 'last week');
 	await main(new xdate().subtract(14, 'days'), 'last fortnight');
 	await main(new xdate().subtract(28, 'days'), 'last month');
