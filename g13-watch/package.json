@@ -1,6 +1,6 @@
 {
 	"scripts": {
-		"viewdb": "node view-table.js",
+		"view": "node view-table.js",
 		"job": "jstart -N g13-db -mem 2g ~/bin/node ~/SDZeroBot/g13-watch/save-to-db.js"
 	}
 }

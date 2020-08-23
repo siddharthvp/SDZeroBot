@@ -1,4 +1,4 @@
-// jstart -N g13-db -mem 2g ~/bin/node ~/SDZeroBot/watch-reports/g13-watch-db.js
+// start job using: npm run job
 
 const {bot, log, emailOnError} = require('../botbase');
 const EventSource = require('eventsource');
@@ -49,7 +49,7 @@ stream.onmessage = async function(event) {
 	let pagedata = await bot.read(title, {prop: 'revisions|description'});
 	let text = pagedata.revisions[0].content;
 	let desc = pagedata.description;
-	let extract = TextExtractor.getExtract(text);
+	let extract = TextExtractor.getExtract(text, 300, 550);
 
 	db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts]);
 

@@ -12,15 +12,15 @@ let db = new sqlite3.Database('./g13.db', async (err) => {
 
 let table = new mwn.table();
 table.addHeaders([
-	{label: 'Date'},
-	{label: 'Draft'},
+	{label: 'Date', style: 'width: 5em'},
+	{label: 'Draft', style: 'width: 18em'},
 	{label: 'Excerpt'}
 ]);
 
 let end = new Date();
 let start = new Date(); start.setHours(start.getHours() - 24);
 
-var formatTimeStamp = function(date) {
+const formatTimeStamp = function(date) {
 	`${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate} ${date.getUTCHours}:${date.getUTCMinutes}`
 };
 
