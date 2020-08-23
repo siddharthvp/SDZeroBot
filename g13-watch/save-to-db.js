@@ -20,9 +20,9 @@ stream.onerror = function(event) {
 	console.log('--- Encountered error', event);
 };
 
-let db = new sqlite3.Database('./g13.db', async (err) => {
+let db = new sqlite3.Database('./g13.db', (err) => {
 	if (err) {
-		console.error(err.message);
+		throw err;
 	}
 	log('[S] Connected to the g13 database.');
 });
@@ -58,7 +58,7 @@ stream.onmessage = async function(event) {
 			log(`[W] ${title} entered category more than once`);
 			return;
 		}
-		emailOnError(err, 'g13-watch-db');
+		throw err;
 	});
 
 };

@@ -1,12 +1,16 @@
+// npm run make
+
 const {bot, log, emailOnError, mwn} = require('../botbase');
 const sqlite3 = require('sqlite3').verbose();
 const xdate = require('../xdate');
 
+process.chdir(__dirname);
+
 (async function() {
 
-let db = new sqlite3.Database('./g13.db', async (err) => {
+let db = new sqlite3.Database('./g13.db', (err) => {
 	if (err) {
-		console.error(err.message);
+		throw err;
 	}
 	log('[S] Connected to the g13 database.');
 });
@@ -46,7 +50,7 @@ db.each(`
 
 	let wikitable = table.getText();
 	let yesterday = new xdate().subtract(1, 'day');
-	
+
 	let text = 
 `<templatestyles src="User:SD0001/grid-styles.css" />
 Drafts nominated for G13 ― ${yesterday.format('YYYY-MM-DD')} ― SDZeroBot
@@ -67,9 +71,10 @@ db.run(`
 	DELETE FROM g13
 	WHERE ts < ?
 `, [ts_3days_old], (err) => {
-	if (!err) {
-		log(`[S] Deleted data more than 3 days old`);
+	if (err) {
+		throw err;
 	}
+	log(`[S] Deleted data more than 3 days old`);
 });
 
 

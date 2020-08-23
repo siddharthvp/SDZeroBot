@@ -1,6 +1,7 @@
 {
 	"scripts": {
 		"view": "node view-table.js",
+		"make": "node make-report.js",
 		"start": "jstart -N g13-db -mem 2g ~/bin/node ~/SDZeroBot/g13-watch/save-to-db.js",
 		"stop": "jstop g13-db"
 	}
