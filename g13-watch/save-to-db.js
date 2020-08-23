@@ -1,4 +1,4 @@
-// start job using: npm run job
+// start job using: npm run start
 
 const {bot, log, emailOnError} = require('../botbase');
 const EventSource = require('eventsource');
