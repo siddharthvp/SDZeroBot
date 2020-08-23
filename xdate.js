@@ -154,7 +154,7 @@ Object.assign(xdate.prototype, {
 			'YYYY': Y, 'YY': pad(Y % 100), 'Y': Y
 		};
 
-		var unbinder = new unbinder(formatstr); // escape stuff between [...]
+		var unbinder = new xunbinder(formatstr); // escape stuff between [...]
 		unbinder.unbind('\\[', '\\]');
 		unbinder.content = unbinder.content.replace(
 			/* Regex notes:
@@ -239,7 +239,7 @@ Object.assign(xdate.prototype, {
  * @constructor
  * @param {string} string
  */
-var unbinder = function Unbinder(string) {
+var xunbinder = function Unbinder(string) {
 	if (typeof string !== 'string') {
 		throw new Error('not a string');
 	}
@@ -250,14 +250,14 @@ var unbinder = function Unbinder(string) {
 	this.postfix = '::UNIQ%';
 };
 
-unbinder.prototype = {
+xunbinder.prototype = {
 	/**
 	 * @param {string} prefix
 	 * @param {string} postfix
 	 */
 	unbind: function UnbinderUnbind(prefix, postfix) {
 		var re = new RegExp(prefix + '([\\s\\S]*?)' + postfix, 'g');
-		this.content = this.content.replace(re, unbinder.getCallback(this));
+		this.content = this.content.replace(re, xunbinder.getCallback(this));
 	},
 
 	/** @returns {string} The output */
@@ -278,7 +278,7 @@ unbinder.prototype = {
 	history: null // {}
 };
 
-unbinder.getCallback = function UnbinderGetCallback(self) {
+xunbinder.getCallback = function UnbinderGetCallback(self) {
 	return function UnbinderCallback(match) {
 		var current = self.prefix + self.counter + self.postfix;
 		self.history[current] = match;
