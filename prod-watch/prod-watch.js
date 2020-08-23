@@ -285,7 +285,7 @@ let othertable = makeTable('Others', others);
 
 let text =
 
-`{{User:SDZeroBot/ProdWatch/header|count=${totalcount}|date=${readableDate(d)}|ts=~~~~~}}
+`{{User:SDZeroBot/PROD Watch/header|count=${totalcount}|date=${readableDate(d)}|ts=~~~~~}}
 
 ==De-prods (${deprodded.size})==
 ${deprodtable}

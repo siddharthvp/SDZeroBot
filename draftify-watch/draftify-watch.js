@@ -141,7 +141,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	var text = `{{/header|count=${Object.keys(tableInfo).length}|date1=${readableDate(ts1)}|date2=${readableDate(ts2)}|ts=~~~~~}}\n` + TextExtractor.finalSanitise(wikitable.getText());
 
-	await bot.save('User:SDZeroBot/DraftifyWatch', text, 'Updating report');
+	await bot.save('User:SDZeroBot/Draftify Watch', text, 'Updating report');
 
 	log('[i] Finished');
 

@@ -27,6 +27,8 @@ table.addHeaders([
 let end = new xdate();
 let start = new xdate().subtract(24, 'hours');
 
+let count = 0;
+
 db.each(`
 	SELECT * FROM g13
 	WHERE ts > ?
@@ -34,6 +36,7 @@ db.each(`
 `, [start.getTime() / 1000, end.getTime() / 1000], (err, row) => {
 
 	if (err) throw err;
+	count += 1;
 
 	let page = `[[${row.name}]]`;
 	if (row.desc) {
@@ -51,14 +54,16 @@ db.each(`
 	let wikitable = table.getText();
 	let yesterday = new xdate().subtract(1, 'day');
 
-	let text = 
-`<templatestyles src="User:SD0001/grid-styles.css" />
-Drafts nominated for G13 ― ${yesterday.format('YYYY-MM-DD')} ― SDZeroBot
+	let page = new bot.page('User:SDZeroBot/G13 Watch');
 
-For older G13s, please see {{history|2=page history}}
-${wikitable}`;
+	let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
+		return `[[Special:Permalink/${rev.revid}|${rev.timestamp.slice(0, 10)}]]`;
+	}).join(' - ') + ' - {{history|2=more}}';
 
-	await bot.save('User:SDZeroBot/G13 Watch', text, 'Updating G13 report');
+	let text = `{{/header|count=${count}|date=${yesterday.format('YYYY-MM-DD')}|ts=~~~~~|oldlinks=${oldlinks}}}` 
+		+ `\n\n${wikitable}`;
+
+	await page.save(text, 'Updating G13 report');
 
 	log(`[i] Finished`);
 
