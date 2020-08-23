@@ -57,10 +57,11 @@ db.each(`
 	let page = new bot.page('User:SDZeroBot/G13 Watch');
 
 	let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
-		return `[[Special:Permalink/${rev.revid}|${rev.timestamp.slice(0, 10)}]]`;
+		let date = new xdate(rev.timestamp).subtract(24, 'hours');
+		return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 	}).join(' - ') + ' - {{history|2=more}}';
 
-	let text = `{{/header|count=${count}|date=${yesterday.format('YYYY-MM-DD')}|ts=~~~~~|oldlinks=${oldlinks}}}` 
+	let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}` 
 		+ `\n\n${wikitable}`;
 
 	await page.save(text, 'Updating G13 report');
