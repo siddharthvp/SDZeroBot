@@ -286,3 +286,5 @@ unbinder.getCallback = function UnbinderGetCallback(self) {
 		return current;
 	};
 };
+
+module.exports = xdate;
