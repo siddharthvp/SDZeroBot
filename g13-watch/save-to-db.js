@@ -52,6 +52,7 @@ stream.onmessage = async function(event) {
 	let extract = TextExtractor.getExtract(text, 300, 550);
 
 	db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts], (err) => {
+		if (!err) return;
 		// amazing how this library doesn't have object-oriented error handling ...
 		if (err.message.startsWith('SQLITE_CONSTRAINT: UNIQUE constraint failed: g13.name')) {
 			log(`[W] ${title} entered category more than once`);
