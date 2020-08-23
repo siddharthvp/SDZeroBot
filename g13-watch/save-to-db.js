@@ -30,7 +30,7 @@ db.get(`SELECT * FROM sqlite_master WHERE type='table'`, [], (err, row) => {
 	if (err) throw err;
 	if (!row) {
 		db.run(`CREATE TABLE g13(
-			name varbinary(255) primary key, 
+			name varbinary(255) unique, 
 			desc varbinary(500),
 			excerpt varbinary(1500),
 			ts int not null
@@ -51,7 +51,14 @@ stream.onmessage = async function(event) {
 	let desc = pagedata.description;
 	let extract = TextExtractor.getExtract(text, 300, 550);
 
-	db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts]);
+	db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts], (err) => {
+		// amazing how this library doesn't have object-oriented error handling ...
+		if (err.message.startsWith('SQLITE_CONSTRAINT: UNIQUE constraint failed: g13.name')) {
+			log(`[W] ${title} entered category more than once`);
+			return;
+		}
+		emailOnError(err, 'g13-watch-db');
+	});
 
 };
 	
