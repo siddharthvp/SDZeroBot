@@ -55,4 +55,6 @@
 
 5   0   *   *   2  jsub -quiet -N job-draft -mem 2g  ~/bin/node ~/SDZeroBot/draftify-watch/draftify-watch.js
 
-0   0   *   *   *  jsub -quiet -N job-g13-save -mem 2g   ~/bin/node ~/SDZeroBot/g13-watch/make-report.js
+5   0   *   *   3  jsub -quiet -N job-pwatch -mem 2g  ~/bin/node ~/SDZeroBot/prod-watch/prod-watch.js
+
+0   0   *   *   *  jsub -quiet -N job-g13-save -mem 2g ~/bin/node ~/SDZeroBot/g13-watch/make-report.js
