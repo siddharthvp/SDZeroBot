@@ -63,4 +63,7 @@ stream.onmessage = async function(event) {
 
 };
 	
-})().catch(err => emailOnError(err, 'g13-watch-db'));
+})().catch(err => {
+	emailOnError(err, 'g13-watch-db');
+	process.exit(1); // exit with error so that it's automatically restarted on the grid
+});

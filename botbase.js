@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const util = require('util');
+const path = require('path');
 const assert = require('assert');
 
 var mwn; // kludge: so that this works well on both toolforge and my local
@@ -72,9 +73,17 @@ const emailOnError = function(err, taskname) {
 	console.log(err);
 	require('child_process').exec(
 		`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
-		err => console.log(err)
+		() => {} // Emailing failed, must be a non-toolforge environ 
 	);
+	// exit normally
 };
+
+// Errors occurring inside async functions are caught by emailOnError(),
+// this is only for anything else, such as failing imports
+process.on('uncaughtException', function(err) {
+	var taskname = path.basename(process.argv[1]);
+	emailOnError(err, taskname);
+});
 
 const utils = {
 	saveObject: function(filename, obj) {
@@ -109,4 +118,4 @@ const utils = {
 };
 
 // export everything
-module.exports = { bot, mwn, sql, mysql, fs, util, assert, argv, log, utils, emailOnError };
+module.exports = { bot, mwn, sql, mysql, fs, util, utils, assert, argv, log, emailOnError };
