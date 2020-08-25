@@ -5,12 +5,8 @@ const util = require('util');
 const path = require('path');
 const assert = require('assert');
 
-var mwn; // kludge: so that this works well on both toolforge and my local
-try {
-	mwn = require('mwn');
-} catch(e) {
-	mwn = require('../mwn/src/bot');
-}
+const mwn = require('../mwn/src/bot');
+
 const mysql = require('mysql');
 
 /** Parsed console arguments */
