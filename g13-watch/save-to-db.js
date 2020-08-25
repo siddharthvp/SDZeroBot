@@ -11,7 +11,11 @@ process.chdir(__dirname);
 
 await bot.getTokensAndSiteInfo();
 
-let stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange');
+let stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange', {
+	headers: {
+		'User-Agent': 'w:en:User:SDZeroBot'
+	}
+});
 stream.onopen = function() {
 	log('[S] Opened eventsource connection');
 };
