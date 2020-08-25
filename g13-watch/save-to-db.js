@@ -24,7 +24,7 @@ let db = new sqlite3.Database('./g13.db', (err) => {
 	if (err) {
 		throw err;
 	}
-	throw 'deliberate';
+	throw new Error('deliberate');
 	log('[S] Connected to the g13 database.');
 });
 db.get(`SELECT * FROM sqlite_master WHERE type='table'`, [], (err, row) => {
