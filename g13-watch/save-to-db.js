@@ -19,7 +19,7 @@ stream.onerror = function(event) {
 	log('[E] Error: eventsource connection');
 	console.log('--- Encountered error', event);
 };
-throw new Error('deliberate');
+
 let db = new sqlite3.Database('./g13.db', (err) => {
 	if (err) {
 		throw err;
