@@ -3,18 +3,39 @@
 const {bot, log, emailOnError} = require('../botbase');
 const EventSource = require('eventsource');
 const TextExtractor = require('../TextExtractor')(bot);
-const sqlite3 = require('sqlite3').verbose();
+const sqlite3 = require('sqlite3');
+const sqlite = require('sqlite');
+const xdate = require('../xdate');
 
 process.chdir(__dirname);
 
-let ts;
 
-async function main(lastTs) {
+async function main() {
 
-	await bot.getTokensAndSiteInfo();
+	await bot.getSiteInfo();
 
-	let stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange' + 
-	(lastTs ? '?since=' + lastTs : ''), {
+	const db = await sqlite.open({
+		filename: './g13.db',
+		driver: sqlite3.Database
+	});
+
+	log('[S] Connected to the g13 database.');
+
+	const res = await db.get(`SELECT * FROM sqlite_master WHERE type='table'`);
+	if (!res) {
+		await db.run(`CREATE TABLE g13(
+			name varbinary(255) unique, 
+			desc varbinary(500),
+			excerpt varbinary(1500),
+			ts int not null
+		)`);
+	}
+
+	const firstrow = await db.get(`SELECT ts FROM g13 ORDER BY ts DESC`);
+	
+	const lastTs = firstrow ? firstrow.ts : new xdate().setUTCHours(0, 0, 0, 0);
+
+	const stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange?since=' + lastTs, {
 		headers: {
 			'User-Agent': 'w:en:User:SDZeroBot'
 		}
@@ -28,52 +49,35 @@ async function main(lastTs) {
 		// should we throw here?
 	};
 
-	let db = new sqlite3.Database('./g13.db', (err) => {
-		if (err) {
-			throw err;
-		}
-		log('[S] Connected to the g13 database.');
-	});
-	db.get(`SELECT * FROM sqlite_master WHERE type='table'`, [], (err, row) => {
-		if (err) throw err;
-		if (!row) {
-			db.run(`CREATE TABLE g13(
-				name varbinary(255) unique, 
-				desc varbinary(500),
-				excerpt varbinary(1500),
-				ts int not null
-			)`);
-		}
-	});
-
 	stream.onmessage = async function(event) {
 		let data = JSON.parse(event.data);
 		if (data.wiki !== 'enwiki') return;
 		if (data.type !== 'categorize') return;
 		if (data.title !== 'Category:Candidates for speedy deletion as abandoned drafts or AfC submissions') return;
 
-		ts = data.timestamp;
+		let ts = data.timestamp;
 		let title = data.comment.match(/\[\[:(.*?)\]\]/)[1];
+		log(`[+] Page ${title} at ${new xdate(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
 		let pagedata = await bot.read(title, {prop: 'revisions|description'});
 		let text = pagedata.revisions[0].content;
 		let desc = pagedata.description;
 		let extract = TextExtractor.getExtract(text, 300, 550);
 
-		db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts], (err) => {
-			if (!err) return;
+		try {
+			await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts]);
+		} catch (err) {
 			// amazing how this library doesn't have object-oriented error handling ...
 			if (err.message.startsWith('SQLITE_CONSTRAINT: UNIQUE constraint failed: g13.name')) {
 				log(`[W] ${title} entered category more than once`);
 				return;
 			}
 			throw err;
-		});
-
+		}
 	};
 	
 }
 
 main().catch(err => {
 	emailOnError(err, 'g13-watch-db');
-	main(ts);
+	main();
 });

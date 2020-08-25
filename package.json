@@ -19,6 +19,7 @@
     "minimist": "^1.2.5",
     "mwn": "^0.3.0",
     "mysql": "^2.18.1",
+    "sqlite": "^4.0.14",
     "sqlite3": "^5.0.0"
   },
   "devDependencies": {
