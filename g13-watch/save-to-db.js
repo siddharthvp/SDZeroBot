@@ -66,7 +66,7 @@ async function main() {
 		let pagedata = await bot.read(title, {prop: 'revisions|description'});
 		let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
 		let desc = pagedata.description;
-		let extract = TextExtractor.getExtract(text, 300, 550);
+		let extract = text && TextExtractor.getExtract(text, 300, 550);
 
 		try {
 			await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts]);
