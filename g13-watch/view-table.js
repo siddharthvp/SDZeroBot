@@ -14,7 +14,7 @@ let db = new sqlite3.Database('./g13.db', async (err) => {
 	log('[S] Connected to the g13 database.');
 });
 
-db.each(`SELECT * FROM g13`, [], (err, row) => {
+db.each(`SELECT name, desc, excerpt, datetime(ts, 'unixepoch') FROM g13`, [], (err, row) => {
 	if (err) throw err;
 	console.log(row);
 });
