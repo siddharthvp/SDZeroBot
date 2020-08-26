@@ -207,7 +207,7 @@ const OresUtils = require('../OresUtils');
 			});
 			pagetext += '{{div col end}}\n';
 		});
-		return bot.save('User:SDZeroBot/G13 soon sorting', pagetext, 'Updating report (testing)');
+		return bot.save('User:SDZeroBot/G13 soon sorting', pagetext, 'Updating report');
 	};
 
 	await makeSinglePageReport();
