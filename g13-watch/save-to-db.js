@@ -33,7 +33,8 @@ async function main() {
 
 	const firstrow = await db.get(`SELECT ts FROM g13 ORDER BY ts DESC`);
 	
-	const lastTs = firstrow ? firstrow.ts * 1000 : new xdate().setUTCHours(0, 0, 0, 0);
+	const lastTs = firstrow ? new Date(firstrow.ts * 1000).toISOString() : 
+		new Date().toISOString();
 
 	const stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange?since=' + lastTs, {
 		headers: {
