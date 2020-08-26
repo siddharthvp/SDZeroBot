@@ -64,7 +64,7 @@ async function main() {
 		let ts = data.timestamp;
 		log(`[+] Page ${title} at ${new xdate(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
 		let pagedata = await bot.read(title, {prop: 'revisions|description'});
-		let text = pagedata.revisions[0].content;
+		let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
 		let desc = pagedata.description;
 		let extract = TextExtractor.getExtract(text, 300, 550);
 
