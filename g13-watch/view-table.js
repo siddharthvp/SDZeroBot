@@ -1,13 +1,13 @@
 // npm run view
 
+process.chdir(__dirname);
+
 const {log} = require('../botbase');
 const sqlite3 = require('sqlite3').verbose();
 
-process.chdir(__dirname);
-
 (async function() {
 
-let db = new sqlite3.Database('./g13.db', async (err) => {
+let db = new sqlite3.Database('./g13.db', (err) => {
 	if (err) {
 		console.error(err.message);
 	}

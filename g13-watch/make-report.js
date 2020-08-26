@@ -71,7 +71,7 @@ db.each(`
 });
 
 // Delete data more than 3 days old:
-let ts_3days_old = new xdate().subtract(72, 'hours').getTime() / 1000;
+let ts_3days_old = Math.round(new xdate().subtract(72, 'hours').getTime() / 1000);
 
 db.run(`
 	DELETE FROM g13
