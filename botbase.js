@@ -77,8 +77,12 @@ const emailOnError = function(err, taskname) {
 // Errors occurring inside async functions are caught by emailOnError(),
 // this is only for anything else, such as failing imports
 process.on('uncaughtException', function(err) {
-	var taskname = path.basename(process.argv[1]);
-	emailOnError(err, taskname);
+	if (process.argv[1]) { 
+		var taskname = path.basename(process.argv[1]);
+		emailOnError(err, taskname);
+	} else { // else we're probably running in the console
+		console.log(err);
+	}
 });
 
 const utils = {
