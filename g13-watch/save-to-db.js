@@ -55,8 +55,12 @@ async function main() {
 		if (data.type !== 'categorize') return;
 		if (data.title !== 'Category:Candidates for speedy deletion as abandoned drafts or AfC submissions') return;
 
+		let match = /^\[\[:(.*?)\]\] added/.exec(data.comment);
+		if (!match) {
+			return;
+		}
+		let title = match[1];
 		let ts = data.timestamp;
-		let title = data.comment.match(/\[\[:(.*?)\]\]/)[1];
 		log(`[+] Page ${title} at ${new xdate(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
 		let pagedata = await bot.read(title, {prop: 'revisions|description'});
 		let text = pagedata.revisions[0].content;
