@@ -1,8 +1,7 @@
 // npm run make
 
-const {bot, log, emailOnError, mwn} = require('../botbase');
+const {bot, log, xdate, emailOnError, mwn} = require('../botbase');
 const sqlite3 = require('sqlite3').verbose();
-const xdate = require('../xdate');
 
 process.chdir(__dirname);
 

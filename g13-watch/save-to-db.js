@@ -1,11 +1,10 @@
 // start job using: npm run start
 
-const {bot, log, emailOnError} = require('../botbase');
+const {bot, log, xdate, emailOnError} = require('../botbase');
 const EventSource = require('eventsource');
 const TextExtractor = require('../TextExtractor')(bot);
 const sqlite3 = require('sqlite3');
 const sqlite = require('sqlite');
-const xdate = require('../xdate');
 
 process.chdir(__dirname);
 

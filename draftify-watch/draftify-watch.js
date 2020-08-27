@@ -1,17 +1,14 @@
-const {bot, mwn, log, utils, emailOnError} = require('../botbase');
+const {bot, mwn, log, xdate, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async () => {
 
 	await bot.getTokensAndSiteInfo();
 
-	var ts1 = new Date()
-	ts1.setDate(ts1.getDate() - 8);
-	ts1.setHours(0,0,0,0);
-
-	var ts2 = new Date()
-	ts2.setDate(ts2.getDate() - 1);
-	ts2.setHours(0,0,0,0);
+	var ts1 = new xdate().subtract(8, 'days'); 
+	ts1.setHours(0, 0, 0, 0);
+	var ts2 = new xdate().subtract(1, 'day');
+	ts2.setHours(0, 0, 0, 0);
 
 	// fetch page moves
 	var tableInfo = await bot.continuedQuery({
@@ -32,7 +29,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 		for (let move of moves) {
 			var drafttitle = move.params.target_title;
 
-			// skip moves to draft done during round-robin pageswap process usally using [[User:Andy M. Wang/pageswap]]
+			// skip moves to draft done during round-robin pageswap process usually using [[User:Andy M. Wang/pageswap]]
 			if (drafttitle.startsWith('Draft:Move/')) {
 				continue;
 			}
@@ -55,7 +52,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 	}).then(async (pages) => {
 		for (let page of pages) {
 			if (page.missing) {
-				// page doesn't exits, check the logs to see what happened to it
+				// page doesn't exist, check the logs to see what happened to it
 				let pageobj = new bot.page(page.title);
 				let logtext, logentry;
 				let deletionlog = await pageobj.logs(null, 1, 'delete/delete');
@@ -70,10 +67,13 @@ const TextExtractor = require('../TextExtractor')(bot);
 					logtext = `[[User:${logentry.user}|${logentry.user}]] deleted page ${logentry.comment ? `(${logentry.comment})` : ''}`;
 				}
 				tableInfo[page.title].excerpt = `[''Deleted'']: ${logtext}`;
+				tableInfo[page.title].footer = true;
 				continue;
 
 			} else {
+
 				tableInfo[page.title].excerpt = TextExtractor.getExtract(page.revisions[0].content, 300, 500);
+
 				if (tableInfo[page.title].excerpt === '') {
 					// empty extract, check if it's a redirect
 					let match = page.revisions[0].content.match(/^\s*#redirect\s*\[\[(.*?)\]\]/i);
@@ -81,6 +81,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 						let redirectTarget = match[1];
 						if (redirectTarget === tableInfo[page.title].source) {
 							tableInfo[page.title].excerpt = `[''Moved back'' to [[${redirectTarget}]]]`;
+							tableInfo[page.title].footer = true;
 						} else {
 							tableInfo[page.title].excerpt = `[''Redirects'' to [[${redirectTarget}]]]`;
 						}
@@ -114,46 +115,44 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	log(`[S] Got creation times and creators`);
 
-
-	var wikitable = new mwn.table({ sortable: true });
-	wikitable.addHeaders([
+	let tableHeaders = [
 		{ style: 'width: 6em;', label: 'Creation date' },
 		{ style: 'width: 15em', label: 'Titles' },
 		{ style: 'width: 23em', label: 'Excerpt' },
 		{ style: 'width: 7em', label: `User` },
 		{ label: `Move summary` },
-	]);
+	];
+
+	var maintable = new mwn.table();
+	maintable.addHeaders(tableHeaders);
+
+	let footertable = new mwn.table();
+	footertable.addHeaders(tableHeaders);
 
 	for (let [page, data] of Object.entries(tableInfo)) {
+
+		let table = data.footer ? footertable : maintable;
 
 		// split large usernames into 14 characters per line to prevent them from
 		// causing the username field to be too wide
 		var user = utils.arrayChunk(data.user.split(''), 14).map(e => e.join('')).join('<br>');
 
-		wikitable.addRow([
-			data.created ? ymdDate(new Date(data.created)) : '',
+		table.addRow([
+			data.created ? new xdate(data.created).format('YYYY-MM-DD') : '',
 			`[[${page}]] <small>(moved from [[${data.source}]])</small>`,
 			`<small>${data.excerpt || ''}</small>`,
 			`[[User:${data.user}|${user}]]`,
 			`<small>${data.comment || ''}</small>`,
 		]);
 	}
-
-	var text = `{{/header|count=${Object.keys(tableInfo).length}|date1=${readableDate(ts1)}|date2=${readableDate(ts2)}|ts=~~~~~}}\n` + TextExtractor.finalSanitise(wikitable.getText());
+	
+	let text = `{{/header|count=${Object.keys(tableInfo).length}|date1=${ts1.format('D MMMM YYYY')}|date2=${ts2.format('D MMMM YYYY')}|ts=~~~~~}}` +
+	`\n\n` + TextExtractor.finalSanitise(maintable.getText()) + 
+	`\n\n==Moved back or deleted==` + 
+	`\n` + TextExtractor.finalSanitise(footertable.getText());
 
 	await bot.save('User:SDZeroBot/Draftify Watch', text, 'Updating report');
 
 	log('[i] Finished');
 
 })().catch(err => emailOnError(err, 'draftify-watch'));
-
-var months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-var pad = num => num < 10 ? '0' + num : num;
-
-var ymdDate = function(date) {
-	return date.getFullYear() + '-' + pad(date.getMonth() + 1) + '-' + pad(date.getDate());
-};
-
-var readableDate = function(date) {
-	return date.getDate() + ' ' + months[date.getMonth()] + ' ' + date.getFullYear();
-}

@@ -1,10 +1,9 @@
-const {utils, bot, libApi} = require('../botbase');
+const {utils, bot} = require('../botbase');
 
-bot.loginBot().then(() => {
+bot.login().then(() => {
 
-	return libApi.ApiQueryContinuous(bot, {
+	return bot.continuedQuery({
 		"action": "query",
-		"assert": "bot",
 		"list": "allusers",
 		"auactiveusers": 1,
 		"aulimit": "max"

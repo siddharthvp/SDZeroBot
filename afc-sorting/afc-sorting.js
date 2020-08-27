@@ -1,4 +1,4 @@
-const {fs, mwn, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
+const {fs, xdate, mwn, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 process.chdir(__dirname);
 
@@ -39,16 +39,14 @@ process.chdir(__dirname);
 				creation_date: formatDateString(row.rev_timestamp),
 				bytecount: row.page_len,
 				creator: row.actor_name,
-				creatorEdits: row.user_editcount || '',
-				//creatorRegn: row.user_registration ? new Date(formatDateString(row.user_registration) + ' UTC').toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : ''
+				creatorEdits: row.user_editcount || ''			
 			};
 		});
 		utils.saveObject('revidsTitles', revidsTitles);
 		utils.saveObject('tableInfo', tableInfo);
 	}
 
-	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-
+	var accessdate = new xdate().format('D MMMM YYYY');
 
 
 

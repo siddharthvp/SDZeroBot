@@ -12,6 +12,6 @@ const sqlite = require('sqlite');
 
 	log('[S] Connected to the g13 database.');
 
-	log(await db.all(argv[0]));
+	log(await db.get(argv._));
 
 })();

@@ -1,5 +1,4 @@
-const {bot, log, mwn, emailOnError} = require('../botbase');
-const xdate = require('../xdate');
+const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 
 (async function() {
 

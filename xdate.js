@@ -18,6 +18,16 @@ var xdate = function() {
 		args[0] = args[0].replace(/(\d\d:\d\d),/, '$1').replace(/\(UTC\)/, 'UTC');
 	}
 	this._d = new (Function.prototype.bind.apply(Date, [Date].concat(args)));
+
+	if (isNaN(this._d.getTime()) && typeof args[0] === 'string' && /^\d{14}$/.test(args[0])) {
+		let match = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(args[0]);
+		this._d = new (Function.prototype.bind.apply(Date, [Date].concat(match.slice(1))));
+	}
+
+	// Still no?
+	if (isNaN(this._d.getTime())) {
+		console.warn('Invalid initialisation of xdate object: ', args);
+	}
 };
 
 xdate.localeData = {
@@ -123,15 +133,16 @@ Object.assign(xdate.prototype, {
 	/**
 	 * Formats the date into a string per the given format string.
 	 * Replacement syntax is a subset of that in moment.js.
+	 * **Different from morebits.js version: takes zone=utc by default**
 	 * @param {string} formatstr
-	 * @param {(string|number)} [zone=system] - 'system' (for browser-default time zone),
+	 * @param {(string|number)} [zone=utc] - 'system' (for browser-default time zone),
 	 * 'utc' (for UTC), or specify a time zone as number of minutes past UTC.
 	 * @returns {string}
 	 */
 	format: function(formatstr, zone) {
 		var udate = this;
 		// create a new date object that will contain the date to display as system time
-		if (zone === 'utc') {
+		if (!zone || zone === 'utc') {
 			udate = new xdate(this.getTime()).add(this.getTimezoneOffset(), 'minutes');
 		} else if (typeof zone === 'number') {
 			// convert to utc, then add the utc offset given

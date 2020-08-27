@@ -15,6 +15,9 @@ const argv = require('minimist')(process.argv.slice(2));
 /** Colorised and dated console logging. Powered by Semlog, a dependency of mwn */
 const log = mwn.log;
 
+/** Date library */
+const xdate = require('./xdate');
+
 /** bot account and databse access credentials */
 const auth = require('./.auth');
 
