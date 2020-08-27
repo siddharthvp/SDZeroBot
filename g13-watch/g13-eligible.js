@@ -7,6 +7,8 @@ const OresUtils = require('../OresUtils');
 
 	log('[i] Started');
 
+	await bot.getTokensAndSiteInfo();
+
 	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
 	// takes a lot more time
 	const sixMonthOldTs = new xdate().subtract(6, 'months').format('YYYYMMDDHHmmss');

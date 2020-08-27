@@ -8,6 +8,8 @@ const OresUtils = require('../OresUtils');
 
 	log('[i] Started');
 
+	await bot.getTokensAndSiteInfo();
+
 	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
 	// takes a lot more time
 	const fiveMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
@@ -53,8 +55,6 @@ const OresUtils = require('../OresUtils');
 
 	let errors = [];
 	let oresdata = await OresUtils.queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
-
-	await bot.getTokensAndSiteInfo();
 
 
 	/* GET CONTENT (FOR TAG CHECK) AND DESCRIPTIONS */
