@@ -13,6 +13,7 @@ const OresUtils = require('../OresUtils');
 	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
 	// takes a lot more time
 	const fiveMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
+	const sixMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
 	const result = await sql.queryBot(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
 		FROM page
@@ -20,6 +21,7 @@ const OresUtils = require('../OresUtils');
 		WHERE page_namespace = 118
 		AND page_is_redirect = 0
 		AND rev_timestamp < "${fiveMonthOldTs}"
+		AND rev_timestamp > "${sixMonthOldTs}"
 
 		UNION
 		
@@ -32,6 +34,7 @@ const OresUtils = require('../OresUtils');
 		AND tl_namespace = 10
 		AND page_is_redirect = 0
 		AND rev_timestamp < "${fiveMonthOldTs}"
+		AND rev_timestamp > "${sixMonthOldTs}"
 	`);
 	sql.end();
 	log('[S] Got DB query result');
@@ -40,9 +43,11 @@ const OresUtils = require('../OresUtils');
 	let revidsTitles = {};
 	let tableInfo = {};
 	result.forEach(row => {
-		var pagename = 'Draft:' + row.page_title.replace(/_/g, ' ');
+		var pagename = new bot.title(row.page_title, row.page_namespace).toText();
 		revidsTitles[row.page_latest] = pagename
-		tableInfo[pagename] = {};
+		tableInfo[pagename] = {
+			ts: row.rev_timestamp
+		};
 	});
 
 
@@ -177,30 +182,30 @@ const OresUtils = require('../OresUtils');
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	var makeSinglePageReport = function() {
-		var count = Object.keys(revidsTitles).length;
-		var pagetext = `{{/header|count=${count}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}\n`;
+	var count = Object.keys(revidsTitles).length;
+	var pagetext = `{{/header|count=${count}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}\n`;
 
-		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
+	Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
 
-			var rawtopic = topic;
-			if (isStarred(topic)) {
-				topic = meta(topic) + '/*';
-			}
-			var size = `<small>(${sorter[rawtopic].length})</small>`;
+		var rawtopic = topic;
+		if (isStarred(topic)) {
+			topic = meta(topic) + '/*';
+		}
+		var size = `<small>(${sorter[rawtopic].length})</small>`;
 
-			pagetext += `\n== ${topic} ${size} {{anchor|${topic}}} ==\n` +
-				`{{div col|colwidth=20em}}\n`;
-			sorter[rawtopic].forEach(function(page) {
-				pagetext += '* [[' + page.title + ']]: <small>' + page.quality + '-class' +
-				(!page.issues ? '' : ', ' + page.issues.replace(/<br>/g, ', ')) + '</small>\n';
-			});
-			pagetext += '{{div col end}}\n';
+		pagetext += `\n== ${topic} ${size} {{anchor|${topic}}} ==\n` +
+			`{{div col|colwidth=20em}}\n`;
+
+		sorter[rawtopic].sort(function (p1, p2) {
+			return tableInfo[p1.title].ts < tableInfo[p2.title].ts ? -1 : 1;
+		}).forEach(function(page) {
+			pagetext += '* [[' + page.title + ']]: <small>' + page.quality + '-class' +
+			(!page.issues ? '' : ', ' + page.issues.replace(/<br>/g, ', ')) + '</small>\n';
 		});
-		return bot.save('User:SDZeroBot/G13 soon sorting', pagetext, 'Updating report');
-	};
 
-	await makeSinglePageReport();
+		pagetext += '{{div col end}}\n';
+	});
+	await bot.save('User:SDZeroBot/G13 soon sorting', pagetext, 'Updating report');
 
 	log('[i] Finished');
 

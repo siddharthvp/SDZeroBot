@@ -40,7 +40,9 @@ const OresUtils = require('../OresUtils');
 	result.forEach(row => {
 		var pagename = new bot.title(row.page_title, row.page_namespace).toText();
 		revidsTitles[row.page_latest] = pagename
-		tableInfo[pagename] = {};
+		tableInfo[pagename] = {
+			ts: row.rev_timestamp
+		};
 	});
 
 	var accessdate = new xdate().format('D MMMM YYYY');
@@ -179,31 +181,31 @@ const OresUtils = require('../OresUtils');
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	var makeSinglePageReport = function() {
-		var count = Object.keys(revidsTitles).length;
-		var pagetext = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
+	var count = Object.keys(revidsTitles).length;
+	var pagetext = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
 
-		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
+	Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
 
-			var rawtopic = topic;
-			if (isStarred(topic)) {
-				topic = meta(topic) + '/*';
-			}
-			var size = `<small>(${sorter[rawtopic].length})</small>`;
+		var rawtopic = topic;
+		if (isStarred(topic)) {
+			topic = meta(topic) + '/*';
+		}
+		var size = `<small>(${sorter[rawtopic].length})</small>`;
 
-			pagetext += `\n== ${topic} ${size} {{anchor|${topic}}} ==\n` +
-				`{{div col|colwidth=20em}}\n`;
-			sorter[rawtopic].forEach(function(page) {
-				pagetext += '* [[' + page.title + ']]: <small>' + page.quality + '-class' +
-				(!page.issues ? '' : ', ' + page.issues.replace(/<br>/g, ', ')) + '</small>\n';
-			});
-			pagetext += '{{div col end}}\n';
+		pagetext += `\n== ${topic} ${size} {{anchor|${topic}}} ==\n` +
+			`{{div col|colwidth=20em}}\n`;
+
+		sorter[rawtopic].sort(function (p1, p2) {
+			return tableInfo[p1.title].ts < tableInfo[p2.title].ts ? -1 : 1;
+		}).forEach(function(page) {
+			pagetext += '* [[' + page.title + ']]: <small>' + page.quality + '-class' +
+			(!page.issues ? '' : ', ' + page.issues.replace(/<br>/g, ', ')) + '</small>\n';
 		});
-		return bot.save('User:SDZeroBot/G13 eligible sorting', pagetext, 'Updating report');
-	};
-
-	await makeSinglePageReport();
-
+		
+		pagetext += '{{div col end}}\n';
+	});
+	await bot.save('User:SDZeroBot/G13 eligible sorting', pagetext, 'Updating report');
+	
 	log('[i] Finished');
 
 })().catch(err => emailOnError(err, 'g13-eligible-sorting'));
