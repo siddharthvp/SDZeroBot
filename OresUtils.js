@@ -80,7 +80,7 @@ module.exports = {
 	 * @param {Object} pagedata - a {title, revid, issues, quality} object
 	 */
 	processTopicsForPage: function(topics, sorter, pagedata) {
-		if (topics.length) {
+		if (topics && topics.length) {
 			topics = topics.map(t => t.replace(/\./g, '/'));
 			topics.forEach(function(topic) {
 				// Remove Asia.Asia* if Asia.South-Asia is present (example)
