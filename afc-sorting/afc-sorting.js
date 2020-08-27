@@ -97,42 +97,44 @@ process.chdir(__dirname);
 	};
 
 
-	/* GET CONTENT (FOR TAG CHECK) AND DESCRIPTIONS */
-
-	var coi = {}, undisclosedpaid = {};
+	/* GET DESCRIPTIONS */
 
 	for await (let data of bot.massQueryGen({
 		"action": "query",
-		"prop": "revisions|description",
+		"prop": "description",
 		"titles": Object.keys(tableInfo),
 		"rvprop": "content"
 	})) {
 
 		data.query.pages.forEach(pg => {
 			tableInfo[pg.title].description = pg.description;
-			if (pg.missing) {
-				return;
-			}
-			var text = pg.revisions[0].content;
-			new bot.wikitext(text).parseTemplates({
-				limit: 2,
-				namePredicate: name => {
-					if (name === 'COI') {
-						coi[pg.title] = 1;
-						return true;
-					} else if (name === 'Undisclosed paid') {
-						undisclosedpaid[pg.title] = 1;
-						return true;
-					}
-				}
-			});
 		});
 
 	}
-	log(`[i] Found ${Object.keys(coi).length} drafts with COI tag`);
-	log(`[i] Found ${Object.keys(undisclosedpaid).length} drafts with undisclosed-paid tag`);
 	log(`[i] Found ${Object.values(tableInfo).filter(val => val.description).length} drafts with descriptions`);
 
+
+
+	/* GET DATA FOR COI/UPE TAGS */
+
+	var coi = {}, undisclosedpaid = {};
+
+	// using search instead of parsing page content means we get it
+	// even if a redirect to the template was used
+
+	const coi_json = await bot.search(`incategory:"Pending AfC submissions" hastemplate:"COI"`, 'max', '', { srnamespace: '118' });
+	coi_json.query.search.forEach(page => {
+		coi[page.title] = 1;
+	});
+	log(`[i] Found ${Object.keys(coi).length} drafts with COI tag`);
+
+	const upe_json = await bot.search(`incategory:"Pending AfC submissions" hastemplate:"Undisclosed paid"`, 'max', '', { srnamespace: '118' });
+	upe_json.query.search.forEach(page => {
+		coi[page.title] = 1;
+	});
+
+	log(`[i] Found ${Object.keys(undisclosedpaid).length} drafts with undisclosed-paid tag`);
+	
 
 
 	/* GET DATA FOR NUMBER OF DECLINES */
