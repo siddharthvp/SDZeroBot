@@ -53,7 +53,9 @@
 
 0   0   *   *   *  jsub -quiet -N job-grid		-mem 2g  ~/bin/node ~/SDZeroBot/grid-afd-prod.js
 
-2   0   *   *   *  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/g13-watch/g13-soon.js
+10  0   *   *   *  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/g13-watch/g13-soon.js
+
+20  0   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/g13-watch/g13-eligible.js
 
 5   0   *   *   2  jsub -quiet -N job-draft 	-mem 2g  ~/bin/node ~/SDZeroBot/draftify-watch/draftify-watch.js
 
