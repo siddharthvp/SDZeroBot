@@ -1,4 +1,4 @@
-const {fs, mwn, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
+const {bot, sql, xdate, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 // process.chdir(__dirname);
 
@@ -7,36 +7,41 @@ const OresUtils = require('../OresUtils');
 	/* GET DATA FROM DATABASE */
 
 	log('[i] Started');
-	var revidsTitles, tableInfo;
-	if (argv.nodb) {
-		revidsTitles = require('./revidsTitles');
-		tableInfo = require('./tableInfo');
-	} else {
-		const result = await sql.queryBot(`
-			SELECT page_title, page_latest
-			FROM categorylinks
-			JOIN page ON page_id = cl_from
-			WHERE cl_to = 'AfC_G13_eligible_soon_submissions'
-			AND page_namespace = 118;
-		`);
-		sql.end();
-		log('[S] Got DB query result');
+
+	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
+	// takes a lot more time
+	const fiveMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
+	const result = await sql.queryBot(`
+		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
+		FROM page
+		JOIN revision ON rev_id = page_latest
+		WHERE page_namespace = 118
+		AND page_is_redirect = 0
+		AND rev_timestamp < "${fiveMonthOldTs}"
+
+		UNION
+		
+		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
+		FROM page
+		JOIN revision ON rev_id = page_latest
+		JOIN templatelinks ON tl_from = page_id 
+		WHERE page_namespace = 2
+		AND tl_title = "AFC_submission" 
+		AND tl_namespace = 10
+		AND page_is_redirect = 0
+		AND rev_timestamp < "${fiveMonthOldTs}"
+	`);
+	sql.end();
+	log('[S] Got DB query result');
 
 
-		revidsTitles = {};
-		tableInfo = {};
-		result.forEach(row => {
-			var pagename = 'Draft:' + row.page_title.replace(/_/g, ' ');
-			revidsTitles[row.page_latest] = pagename
-			tableInfo[pagename] = {};
-		});
-		utils.saveObject('revidsTitles', revidsTitles);
-		utils.saveObject('tableInfo', tableInfo);
-	}
-
-	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-
-
+	let revidsTitles = {};
+	let tableInfo = {};
+	result.forEach(row => {
+		var pagename = 'Draft:' + row.page_title.replace(/_/g, ' ');
+		revidsTitles[row.page_latest] = pagename
+		tableInfo[pagename] = {};
+	});
 
 
 	/* GET DATA FROM ORES */
@@ -45,24 +50,16 @@ const OresUtils = require('../OresUtils');
 	if (argv.size) {
 		pagelist = pagelist.slice(0, argv.size);
 	}
-	var oresdata = {};
 
-	if (argv.noores) {
-		oresdata = require('./oresdata');
-	} else {
-		var errors = [];
-		oresdata = await OresUtils.queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
-
-		utils.saveObject('oresdata', oresdata);
-		utils.saveObject('errors', errors);
-	}
+	let errors = [];
+	let oresdata = await OresUtils.queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
 
 	await bot.getTokensAndSiteInfo();
 
 
 	/* GET CONTENT (FOR TAG CHECK) AND DESCRIPTIONS */
 
-	var coi = {}, undisclosedpaid = {};
+	let coi = {}, undisclosedpaid = {};
 
 	for await (let data of bot.massQueryGen({
 		"action": "query",
@@ -124,7 +121,6 @@ const OresUtils = require('../OresUtils');
 	for (let i = 1; i <= 10; i++) {
 		await doSearch(i);
 	}
-	utils.saveObject('numDeclines', numDeclines);
 
 
 
@@ -174,10 +170,6 @@ const OresUtils = require('../OresUtils');
 		OresUtils.processTopicsForPage(topics, sorter, toInsert);
 	});
 
-	// sorter: object mapping topic names to array of objects with page name and other ORES data
-	utils.saveObject('sorter', sorter);
-
-
 
 
 	/* FORMAT DATA TO BE SAVED ON THE WIKI */
@@ -185,11 +177,9 @@ const OresUtils = require('../OresUtils');
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	/* MAIN-PAGE REPORT */
-
 	var makeSinglePageReport = function() {
 		var count = Object.keys(revidsTitles).length;
-		var pagetext = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
+		var pagetext = `{{/header|count=${count}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}\n`;
 
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
 
