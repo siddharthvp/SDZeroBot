@@ -1,6 +1,5 @@
 const {bot, sql, xdate, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
-// process.chdir(__dirname);
 
 (async function() {
 
@@ -69,15 +68,21 @@ const OresUtils = require('../OresUtils');
 	// using search instead of parsing page content means we get it
 	// even if a redirect to the template was used
 
-	const coi_json = await bot.search(`incategory:"Pending AfC submissions" hastemplate:"COI"`, 'max', '', { srnamespace: '118' });
+	const coi_json = await bot.search(`hastemplate:"COI"`, 'max', '', { 
+		srnamespace: '118', 
+		srsort: 'last_edit_asc'
+	});
 	coi_json.query.search.forEach(page => {
 		coi[page.title] = 1;
 	});
 	log(`[i] Found ${Object.keys(coi).length} drafts with COI tag`);
 
-	const upe_json = await bot.search(`incategory:"Pending AfC submissions" hastemplate:"Undisclosed paid"`, 'max', '', { srnamespace: '118' });
+	const upe_json = await bot.search(`hastemplate:"Undisclosed paid"`, 'max', '', { 
+		srnamespace: '118', 
+		srsort: 'last_edit_asc'
+	});
 	upe_json.query.search.forEach(page => {
-		coi[page.title] = 1;
+		undisclosedpaid[page.title] = 1;
 	});
 
 	log(`[i] Found ${Object.keys(undisclosedpaid).length} drafts with undisclosed-paid tag`);
