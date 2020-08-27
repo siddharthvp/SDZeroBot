@@ -1,6 +1,5 @@
-const {bot, sql, argv, log, emailOnError} = require('../botbase');
+const {bot, sql, argv, xdate, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
-const xdate = require('../xdate');
 
 (async function() {
 
@@ -177,8 +176,6 @@ const xdate = require('../xdate');
 
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
-
-	/* MAIN-PAGE REPORT */
 
 	var makeSinglePageReport = function() {
 		var count = Object.keys(revidsTitles).length;
