@@ -13,7 +13,7 @@ const OresUtils = require('../OresUtils');
 	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
 	// takes a lot more time
 	const fiveMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
-	const sixMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
+	const sixMonthOldTs = new xdate().subtract(6, 'months').format('YYYYMMDDHHmmss');
 	const result = await sql.queryBot(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
 		FROM page
