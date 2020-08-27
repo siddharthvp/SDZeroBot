@@ -121,4 +121,4 @@ const utils = {
 };
 
 // export everything
-module.exports = { bot, mwn, sql, mysql, fs, util, utils, assert, argv, log, emailOnError };
+module.exports = { bot, mwn, sql, mysql, fs, util, utils, assert, argv, xdate, log, emailOnError };
