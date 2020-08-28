@@ -16,7 +16,7 @@ for (let rev of revisions) {
 
 	let month = new xdate(rev.timestamp).subtract(1, 'month').format('MMMM YYYY');
 
-	let moves = bot.wikitext.parseTable(rev.content.slice(rev.content.indexOf('{|')));
+	let moves = bot.wikitext.parseTable(rev.content.slice(rev.content.indexOf('{|'), rev.content.lastIndexOf('|}') +  2));
 	log(`[+] Parsed ${moves.length} moves for ${month}`);
 
 	for (let move of moves) {
