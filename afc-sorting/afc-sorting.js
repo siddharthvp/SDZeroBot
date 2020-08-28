@@ -122,14 +122,14 @@ process.chdir(__dirname);
 	// using search instead of parsing page content means we get it
 	// even if a redirect to the template was used
 
-	const coi_json = await bot.search(`incategory:"Pending AfC submissions" hastemplate:"COI"`, 'max', '', { srnamespace: '118' });
-	coi_json.query.search.forEach(page => {
+	const coi_result = await bot.search(`incategory:"Pending AfC submissions" hastemplate:"COI"`, 'max', '', { srnamespace: '118' });
+	coi_result.forEach(page => {
 		coi[page.title] = 1;
 	});
 	log(`[i] Found ${Object.keys(coi).length} drafts with COI tag`);
 
-	const upe_json = await bot.search(`incategory:"Pending AfC submissions" hastemplate:"Undisclosed paid"`, 'max', '', { srnamespace: '118' });
-	upe_json.query.search.forEach(page => {
+	const upe_result = await bot.search(`incategory:"Pending AfC submissions" hastemplate:"Undisclosed paid"`, 'max', '', { srnamespace: '118' });
+	upe_result.forEach(page => {
 		coi[page.title] = 1;
 	});
 

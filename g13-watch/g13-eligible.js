@@ -68,20 +68,20 @@ const OresUtils = require('../OresUtils');
 	// using search instead of parsing page content means we get it
 	// even if a redirect to the template was used
 
-	const coi_json = await bot.search(`hastemplate:"COI"`, 'max', '', { 
+	const coi_result = await bot.search(`hastemplate:"COI"`, 'max', '', { 
 		srnamespace: '118', 
 		srsort: 'last_edit_asc'
 	});
-	coi_json.query.search.forEach(page => {
+	coi_result.forEach(page => {
 		coi[page.title] = 1;
 	});
 	log(`[i] Found ${Object.keys(coi).length} drafts with COI tag`);
 
-	const upe_json = await bot.search(`hastemplate:"Undisclosed paid"`, 'max', '', { 
+	const upe_result = await bot.search(`hastemplate:"Undisclosed paid"`, 'max', '', { 
 		srnamespace: '118', 
 		srsort: 'last_edit_asc'
 	});
-	upe_json.query.search.forEach(page => {
+	upe_result.forEach(page => {
 		undisclosedpaid[page.title] = 1;
 	});
 
