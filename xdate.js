@@ -142,6 +142,9 @@ Object.assign(xdate.prototype, {
 	 * @returns {string}
 	 */
 	format: function(formatstr, zone) {
+		if (!this.isValid()) {
+			return ''; // avoid bogus NaNs in output
+		}
 		var udate = this;
 		// create a new date object that will contain the date to display as system time
 		if (!zone || zone === 'utc') {

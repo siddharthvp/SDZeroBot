@@ -192,7 +192,7 @@ process.chdir(__dirname);
 					var {concern, keeps, deletes, relists, relist_date} = afd_data[afd_title];
 					afd_cell += ` (${keeps} k, ${deletes} d)`;
 					if (relists) { // skip if no relists 
-						afd_cell += ` (${relists} relists)`;
+						afd_cell += ` (${relists} relist${relists > 1 ? 's' : ''})`;
 					}
 					afd_cell += ` (<small>${concern}</small>)`;
 
