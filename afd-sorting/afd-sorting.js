@@ -1,4 +1,4 @@
-const {mwn, bot, log, argv, utils, emailOnError} = require('../botbase');
+const {mwn, bot, log, xdate, argv, utils, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 process.chdir(__dirname);
@@ -29,16 +29,16 @@ process.chdir(__dirname);
 			revidsTitles = {};
 			tableInfo = {};
 			var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
-			var months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-			var pad = num => num < 10 ? '0' + num : num;
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
-				var afd_template, afd_date, afd_page;
-				afd_template = templates.find(t => t.name === 'Article for deletion/dated' || t.name === 'AfDM');
+				var afd_template = new bot.wikitext(pg.revisions[0].content).parseTemplates({
+					count: 1,
+					namePredicate: name => name === 'Article for deletion/dated' || name === 'AfDM'
+				})[0];
+				var afd_date, afd_page;
 				if (afd_template) {
 					if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
-						afd_date = `${afd_template.getValue('year')}-${pad(months.indexOf(afd_template.getValue('month')))}-${pad(afd_template.getValue('day'))}`;
+						afd_date = new xdate(afd_template.getValue('year'), afd_template.getValue('month') - 1, afd_template.getValue('day')).format('YYYY-MM-DD');
 					}
 					afd_page = afd_template.getValue('page');
 				}
@@ -91,12 +91,21 @@ process.chdir(__dirname);
 					deletes++;
 				}
 			});
-			afd_data[pg.title] = { concern, keeps, deletes };
+
+			// find number of relists and last relist date
+			var rgx = /div class="xfd_relist".*?(\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\))/sg;
+			var match, relists = 0, relist_date;
+			while (match = rgx.exec(text)) { // eslint-disable-line no-cond-assign
+				relists++;
+				relist_date = match[1];
+			}
+
+			afd_data[pg.title] = { concern, keeps, deletes, relists, relist_date };
 		});
 		log('[S] Got AfDs');
 	});
 
-	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+	var accessdate = new xdate().format('D MMMM YYYY');
 
 
 	/* GET DATA FROM ORES */
@@ -157,14 +166,14 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new mwn.table({ sortable: true });
+		var table = new mwn.table();
 		table.addHeaders([
 			`scope="col" style="width: 5em;" | AfD date`,
 			`scope="col" style="width: 19em;" | Article`,
 			`AfD nomination`
 		]);
 
-		sorter[topic].forEach(function(page) {
+		sorter[topic].map(function(page) {
 			var tabledata = tableInfo[page.title];
 			var afd_cell;
 			if (tabledata.afd_page) {
@@ -174,28 +183,38 @@ process.chdir(__dirname);
 
 				afd_cell = `[[${afd_title}|AfD]]`;
 				if (afd_data[afd_title]) {
-					var {concern, keeps, deletes} = afd_data[afd_title];
-					afd_cell += ` (${keeps} k, ${deletes} d) (<small>${concern}</small>)`;
+					var {concern, keeps, deletes, relists, relist_date} = afd_data[afd_title];
+					afd_cell += ` (${keeps} k, ${deletes} d)`;
+					if (relists) { // skip if no relists 
+						afd_cell += ` (${relists} relists)`;
+					}
+					afd_cell += ` (<small>${concern}</small>)`;
 
-					// parse the date if it hadn't been parsed from the template earlier
+					// over-write date with date of last relist
+					if (relists && relist_date) {
+						tabledata.afd_date = new xdate(relist_date).format('YYYY-MM-DD');
+					}
+
+					// parse the date from concern it hadn't been parsed from the template earlier
+					// or from relisting
 					if (!tabledata.afd_date) {
-						var datematch = concern.match(/(\d{2}:\d{2}),( \d{1,2} \w+ \d{4} )\(UTC\)/);
+						var datematch = concern.match(/\d{2}:\d{2} \d{1,2} \w+ \d{4} \(UTC\)/);
 						if (datematch) {
-							var dateobj = new Date(datematch[1] + datematch[2] + 'UTC');
-							if (!isNaN(dateobj.getTime())) {
-								tabledata.afd_date = dateobj.toISOString().slice(0, 10);
-							}
+							tabledata.afd_date = new xdate(datematch[0]).format('YYYY-MM-DD');
 						}
 					}
 				}
 			}
 
-			table.addRow([
+			return [
 				tabledata.afd_date || '[Failed to parse]',
 				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
 				afd_cell || `[Couldn't find open AfD]`
-			]);
-		});
+			]
+
+		// sort rows by AfD date
+		}).sort((row1, row2) => row1[0] < row2[0] ? -1 : 1)
+		.forEach(row => table.addRow(row));
 
 		return [pagetitle, table.getText()];
 	};
