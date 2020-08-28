@@ -235,11 +235,11 @@ process.chdir(__dirname);
 		var prevCount = parseInt(fs.readFileSync('./previousRunCount.txt').toString());
 		var diff = count - prevCount;
 		if (diff < 0) {
-			diff = `{{DecreasePositive}} ${-diff} from yesterday`;
+			diff = `{{DecreasePositive}} ${-diff} from last update`;
 		} else if (diff > 0) {
-			diff = `{{IncreaseNegative}} ${diff} from yesterday`;
+			diff = `{{IncreaseNegative}} ${diff} from last update`;
 		} else {
-			diff = `{{Steady}} no change from yesterday`;
+			diff = `{{Steady}} no change from last update`;
 		}
 		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}\n`;
 
