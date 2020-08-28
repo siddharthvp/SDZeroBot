@@ -2,7 +2,7 @@ const {fs, mwn, bot, utils, log, argv, emailOnError} = require('../botbase');
 
 process.chdir(__dirname);
 
-(async () => {
+(async function() {
 
 	await bot.getTokensAndSiteInfo();
 
@@ -149,16 +149,18 @@ process.chdir(__dirname);
 // ! Position !! Script !! Total users !! data-sort-type=number | Change !! Active users !! data-sort-type=number | Change
 // `;
 
-	Object.entries(tableSorted).forEach(function([name, count], idx) {
+	let idx = 1, prevtotal;
+	for (let [name, count] of Object.entries(tableSorted)) {
 		// count.deltaTotal = count.deltaTotal || count.total;
 		// var deltaTotal = count.deltaTotal + ' &nbsp; ' + (count.deltaTotal >= 0 ? '{{up}}' : '{{down}}');
 
-		if (count.total < 3) {
-			return;
+		if (idx >= 1000 && count.total !== prevtotal) {
+			break;
 		}
-		wikitable.addRow([ idx+1, `[[${name}]]`, count.total, count.active ]);
+		wikitable.addRow([ idx++, `[[${name}]]`, count.total, count.active ]);
+		prevtotal = count.total;
 
-	});
+	}
 
 	wikitext += wikitable.getText();
 
