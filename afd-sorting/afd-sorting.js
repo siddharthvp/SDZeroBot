@@ -37,8 +37,14 @@ process.chdir(__dirname);
 				})[0];
 				var afd_date, afd_page;
 				if (afd_template) {
-					if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
-						afd_date = new xdate(afd_template.getValue('year'), afd_template.getValue('month') - 1, afd_template.getValue('day')).format('YYYY-MM-DD');
+					if (afd_template.getValue('timestamp')) {
+						afd_date = new xdate(afd_template.getValue('timestamp')).format('YYYY-MM-DD');
+					} else if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
+						afd_date = new xdate(
+							afd_template.getValue('year'), 
+							xdate.localeData.months.indexOf(afd_template.getValue('month')),
+							afd_template.getValue('day')
+						).format('YYYY-MM-DD');
 					}
 					afd_page = afd_template.getValue('page');
 				}

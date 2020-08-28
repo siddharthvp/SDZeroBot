@@ -19,8 +19,10 @@ var xdate = function() {
 	}
 	this._d = new (Function.prototype.bind.apply(Date, [Date].concat(args)));
 
+	// parse MediaWiki format: YYYYMMDDHHmmss (used in afd-sorting)
 	if (isNaN(this._d.getTime()) && typeof args[0] === 'string' && /^\d{14}$/.test(args[0])) {
 		let match = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(args[0]);
+		match[2] = parseInt(match[2]) - 1; // fix month
 		this._d = new (Function.prototype.bind.apply(Date, [Date].concat(match.slice(1))));
 	}
 
