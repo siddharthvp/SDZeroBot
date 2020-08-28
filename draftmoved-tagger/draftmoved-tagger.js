@@ -30,6 +30,9 @@ for (let rev of revisions) {
 			await draft.edit(rev => {
 				log(`[+] Editing ${draft.toText()}`);
 				let text = rev.content;
+				if (/^#redirect/i.test(text)) {
+					return;
+				}
 				text = text.replace(tmpRgx, `{{Drafts moved from mainspace|date=${month}}}`);
 				if (!tmpRgx.test(text)) {
 					text += `\n\n{{Drafts moved from mainspace|date=${month}}}`;
@@ -39,7 +42,13 @@ for (let rev of revisions) {
 					summary: `Draft moved from mainspace (${month})`,
 					minor: true
 				};
-			});	
+			}).catch(err => {
+				if (err === 'nocreate-missing') {
+					return;
+				} else {
+					throw err;
+				}
+			});
 		}
 		
 	}

@@ -5,7 +5,7 @@
   "main": "",
   "scripts": {
     "push": "eslint . && git push",
-    "update": "git pull && crontab crontab && git -C node_modules/mwn pull"
+    "update": "git pull && crontab crontab && git -C ../mwn pull"
   },
   "author": "Siddharth VP",
   "license": "MIT",
