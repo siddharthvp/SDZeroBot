@@ -2,11 +2,13 @@ const {bot, log, xdate, argv} = require('../botbase');
 
 (async function() {
 	
+log(`[i] Started`);
+
 await bot.getTokensAndSiteInfo();
 
 let report = new bot.page('User:JJMC89 bot/report/Draftifications/monthly');
 
-let revisions = (await report.history('content|timestamp', 35)).revisions;
+let revisions = await report.history('content|timestamp', 35);
 
 const tmpRgx = /\{\{[dD]rafts moved from mainspace.*?\}\}/;
 
@@ -41,8 +43,9 @@ for (let rev of revisions) {
 		}
 		
 	}
-
 }
+
+log(`[i] Finished`);
 
 
 })();
