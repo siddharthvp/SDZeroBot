@@ -53,6 +53,8 @@
 
 0   0   *   *   *  jsub -quiet -N job-grid		-mem 2g  ~/bin/node ~/SDZeroBot/grid-afd-prod.js
 
+0   5   *   *   *  jsub -quiet -N job-gan		-mem 2g  ~/bin/node ~/SDZeroBot/gan-sorting/gan-sorting.js
+
 10  0   *   *   1  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/g13-watch/g13-soon.js
 10  0   *   *   4  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/g13-watch/g13-soon.js
 
