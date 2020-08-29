@@ -118,7 +118,14 @@ module.exports = function(bot) {
 				// Harvard referencing
 				.replace(/\{\{[sS]fnp?\|.*?\}\}/g, '')
 				// shortcut for named ref invocation
-				.replace(/\{\{r\|.*?\}\}/gi, '');
+				.replace(/\{\{r\|.*?\}\}/gi, '')
+				// inline parenthetical referencing
+				.replace(/\{\{[hH]arv\|.*?\}\}/g, '')
+				// footnote templates
+				.replace(/\{\{[eE]fn\|.*?\}\}/g, '')
+				.replace(/\{\{[rR]efn\|.*?\}\}/g, '')
+				// pronunciation
+				.replace(/\{\{IPA.*?\}\}/g, '');
 		}
 	}
 
