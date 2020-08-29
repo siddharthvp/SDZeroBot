@@ -111,7 +111,10 @@ module.exports = function(bot) {
 
 		/**
 		 * Do away with some of the more bizarre stuff from page extracts that aren't worth
-		 * checking for on a per-page basis @param {string} content
+		 * checking for on a per-page basis 
+		 * Minimise the amount of removals done here, since if the extract was cut off, it may
+		 * happen one of the regexes below will match across two different extracts.
+		 * @param {string} content
 		 */
 		static finalSanitise(content) {
 			return content.replace(/\[\[Category:.*?\]\]/gi, '')
@@ -121,9 +124,6 @@ module.exports = function(bot) {
 				.replace(/\{\{r\|.*?\}\}/gi, '')
 				// inline parenthetical referencing
 				.replace(/\{\{[hH]arv\|.*?\}\}/g, '')
-				// footnote templates
-				.replace(/\{\{[eE]fn\|.*?\}\}/g, '')
-				.replace(/\{\{[rR]efn\|.*?\}\}/g, '')
 				// pronunciation
 				.replace(/\{\{IPA.*?\}\}/g, '');
 		}
