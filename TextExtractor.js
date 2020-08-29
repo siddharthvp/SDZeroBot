@@ -9,12 +9,20 @@ module.exports = function(bot) {
 		 * the sentence ends after this limit
 		 * @param {number} [hardUpperLimit] - cut off the extract at this many readable characters even if
 		 * the sentence hasn't ended
+		 * @param {Function} [preprocessHook] - optional function to work on the text at the 
+		 * beginnning
 		 */
-		static getExtract(pagetext, charLimit, hardUpperLimit) {
+		static getExtract(pagetext, charLimit, hardUpperLimit, preprocessHook) {
+
+			let extract = pagetext;
+
+			if (preprocessHook) {
+				extract = preprocessHook(extract);
+			}
 
 			// Remove images. Can't be done correctly with just regex as there could be wikilinks
 			// in the captions.
-			var extract = TextExtractor.removeImages(pagetext);
+			extract = TextExtractor.removeImages(pagetext);
 
 			// Remove templates beginning on a new line, such as infoboxes.
 			// These ocassionally contain parameters with part of the content

@@ -65,7 +65,18 @@ async function main() {
 		let pagedata = await bot.read(title, {prop: 'revisions|description'});
 		let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
 		let desc = pagedata.description;
-		let extract = text && TextExtractor.getExtract(text, 300, 550);
+		let extract = text && TextExtractor.getExtract(text, 300, 550, function preprocessHook(text) {
+			let wkt = new bot.wikitext(text);
+			wkt.parseTemplates({
+				namePredicate: name => {
+					return /infobox/i.test(name) || name === 'AFC submission';
+				}
+			});
+			for (let template of wkt.templates) {
+				wkt.removeEntity(template);
+			}
+			return wkt.getText();
+		});
 
 		try {
 			await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts]);
