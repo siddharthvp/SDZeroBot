@@ -138,6 +138,12 @@ const TextExtractor = require('../TextExtractor')(bot);
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
+	let counts = {
+		old: 0,
+		recent: 0,
+		new: 0
+	};
+
 	var createSection = function(topic) {
 		var pagetitle = topic;
 		if (isStarred(topic)) {
@@ -154,21 +160,33 @@ const TextExtractor = require('../TextExtractor')(bot);
 		sorter[topic].map(function(page) {
 			var tabledata = tableInfo[page.title];
 
-			let date = new xdate(tabledata.date).format('YYYY-MM-DD HH:mm');
+			let date = new xdate(tabledata.date);
 
-			return [
-				date || '[Failed to parse]',
+			let row = [
+				date.format('YYYY-MM-DD HH:mm') || '[Failed to parse]',
 				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
 				tabledata.excerpt,
 				tabledata.nominator || '[Failed to parse]'
 			];
-		
+
+			// put class (used for color coding via templatestyles) as row.class 
+			if (date.isAfter(new xdate().subtract(30, 'days'))) {
+				row.class = 'new'
+				counts.new++;
+			} else if (date.isAfter(new xdate().subtract(90, 'days'))) {
+				row.class = 'recent';
+				counts.recent++;
+			} else {
+				row.class = 'old';
+				counts.old++;
+			}		
+
 		}).sort(function(a, b) {
 			// sort by date
 			return a[0] < b[0] ? -1 : 1;
 
 		}).forEach(function(row) {
-			table.addRow(row);
+			table.addRow(row, { class: row.class });
 		});
 
 		return [pagetitle, table.getText()];
@@ -177,7 +195,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 	var makeMainPage = function() {
 		var count = Object.keys(revidsTitles).length;
 
-		var content = `{{/header|count=${count}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}\n`;
+		var content = `{{/header|count=${count}|countold=${counts.old}|countrecent=${counts.recent}|countnew=${counts.new}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}\n`;
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
@@ -196,3 +214,21 @@ const TextExtractor = require('../TextExtractor')(bot);
 	log(`[i] Finished`);
 
 })().catch(err => emailOnError(err, 'gan-sorting'));
+
+
+// const userFromSignature = function (sig) {
+// 	let wkt = new bot.wikitext(sig);
+// 	wkt.parseLinks();
+// 	for (let link of wkt.links) {
+// 		let title = new bot.title(link.target);
+// 		if (title.namespace === 2 || title.namespace === 3) {
+// 			return title.getMainText().split('/')[0];
+// 		} else if (title.namespace === -1) {
+// 			let splPgName = title.title.split('/')[0];
+// 			if (splPgName === 'Contributions' || splPgName === 'Contribs') {
+// 				return title.title.split('/')[1];
+// 			}
+// 		}
+// 	}
+// 	return null;
+// };
