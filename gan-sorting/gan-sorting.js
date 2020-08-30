@@ -51,6 +51,12 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	/* GET NOMINATION DATA */
 
+	let counts = {
+		old: 0,
+		recent: 0,
+		new: 0
+	};
+
 	for await (let data of bot.massQueryGen({
 		"action": "query",
 		"prop": "revisions",
@@ -88,6 +94,18 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 			tableInfo[article].date = template[1];
 			tableInfo[article].nominator = template[2];
+
+			let date = new xdate(template[1]);
+			if (date.isAfter(new xdate().subtract(30, 'days'))) {
+				tableInfo[article].class = 'new';
+				counts.new++;
+			} else if (date.isAfter(new xdate().subtract(90, 'days'))) {
+				counts.recent++;
+				tableInfo[article].class = 'recent';
+			} else {
+				counts.old++;
+				tableInfo[article].class = 'old';
+			}
 
 		});
 	}
@@ -138,12 +156,6 @@ const TextExtractor = require('../TextExtractor')(bot);
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	let counts = {
-		old: 0,
-		recent: 0,
-		new: 0
-	};
-
 	var createSection = function(topic) {
 		var pagetitle = topic;
 		if (isStarred(topic)) {
@@ -160,26 +172,14 @@ const TextExtractor = require('../TextExtractor')(bot);
 		sorter[topic].map(function(page) {
 			var tabledata = tableInfo[page.title];
 
-			let date = new xdate(tabledata.date);
-
 			let row = [
-				date.format('YYYY-MM-DD HH:mm') || '[Failed to parse]',
+				tabledata.date || '[Failed to parse]',
 				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
 				tabledata.excerpt,
 				tabledata.nominator || '[Failed to parse]'
 			];
 
-			// put class (used for color coding via templatestyles) as row.class 
-			if (date.isAfter(new xdate().subtract(30, 'days'))) {
-				row.class = 'new'
-				counts.new++;
-			} else if (date.isAfter(new xdate().subtract(90, 'days'))) {
-				row.class = 'recent';
-				counts.recent++;
-			} else {
-				row.class = 'old';
-				counts.old++;
-			}
+			row.class = tabledata.class;
 			return row;
 
 		}).sort(function(a, b) {
