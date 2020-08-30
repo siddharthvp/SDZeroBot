@@ -163,10 +163,10 @@ const TextExtractor = require('../TextExtractor')(bot);
 		}
 		var table = new mwn.table();
 		table.addHeaders([
-			{label: 'Date', style: 'width: 5em'},
-			{label: 'Article', style: 'width: 15em'}, 
-			{label: 'Excerpt', style: 'width: 18em'},
-			{label: 'Nominator', style: 'width: 8em'}
+			{label: 'Date', class: 'date-header'},
+			{label: 'Article', class: 'article-header'}, 
+			{label: 'Excerpt', class: 'excerpt-header'},
+			{label: 'Nominator', class: 'nominator-header'}
 		]);
 
 		sorter[topic].map(function(page) {
