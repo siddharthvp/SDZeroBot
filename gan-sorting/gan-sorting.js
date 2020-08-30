@@ -179,7 +179,8 @@ const TextExtractor = require('../TextExtractor')(bot);
 			} else {
 				row.class = 'old';
 				counts.old++;
-			}		
+			}
+			return row;
 
 		}).sort(function(a, b) {
 			// sort by date
