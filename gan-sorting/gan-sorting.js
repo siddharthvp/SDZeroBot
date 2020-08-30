@@ -172,8 +172,10 @@ const TextExtractor = require('../TextExtractor')(bot);
 		sorter[topic].map(function(page) {
 			var tabledata = tableInfo[page.title];
 
+			let formatted_date = new xdate(tabledata.date).format('YYYY-MM-DD HH:mm');
+
 			let row = [
-				tabledata.date || '[Failed to parse]',
+				formatted_date || '[Failed to parse]',
 				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
 				tabledata.excerpt,
 				tabledata.nominator || '[Failed to parse]'
