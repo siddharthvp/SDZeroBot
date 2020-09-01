@@ -117,7 +117,7 @@ module.exports = function(bot) {
 		 * @param {string} content
 		 */
 		static finalSanitise(content) {
-			return content.replace(/\[\[Category:.*?\]\]/gi, '')
+			content = content.replace(/\[\[Category:.*?\]\]/gi, '')
 				// Harvard referencing
 				.replace(/\{\{[sS]fnp?\|.*?\}\}/g, '')
 				// shortcut for named ref invocation
@@ -126,6 +126,17 @@ module.exports = function(bot) {
 				.replace(/\{\{[hH]arv\|.*?\}\}/g, '')
 				// pronunciation
 				.replace(/\{\{IPA.*?\}\}/g, '');
+
+			let wkt = new bot.wikitext(content);
+			wkt.parseTemplates({
+				namePredicate: name => {
+					return /^[eE]fn$/.test(name) || /^[rR]efn$/.test(name);
+				}
+			});
+			wkt.templates.forEach(t => {
+				wkt.removeEntity(t);
+			});
+			return wkt.getText();
 		}
 	}
 
