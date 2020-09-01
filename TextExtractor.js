@@ -125,7 +125,9 @@ module.exports = function(bot) {
 				// inline parenthetical referencing
 				.replace(/\{\{[hH]arv\|.*?\}\}/g, '')
 				// pronunciation
-				.replace(/\{\{IPA.*?\}\}/g, '');
+				.replace(/\{\{IPA.*?\}\}/g, '')
+				// audio
+				.replace(/\{\{[aA]udio\|.*?\}\}/g, '');
 
 			let wkt = new bot.wikitext(content);
 			wkt.parseTemplates({
