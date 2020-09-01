@@ -175,7 +175,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 			let formatted_date = new xdate(tabledata.date).format('YYYY-MM-DD HH:mm');
 
 			let row = [
-				formatted_date || '[Failed to parse]',
+				{ label: formatted_date || '[Failed to parse]', class: tabledata.class },
 				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
 				tabledata.excerpt,
 				tabledata.nominator || '[Failed to parse]'
@@ -186,10 +186,10 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 		}).sort(function(a, b) {
 			// sort by date
-			return a[0] < b[0] ? -1 : 1;
+			return a[0].label < b[0].label ? -1 : 1;
 
 		}).forEach(function(row) {
-			table.addRow(row, { class: row.class });
+			table.addRow(row);
 		});
 
 		return [pagetitle, table.getText()];
