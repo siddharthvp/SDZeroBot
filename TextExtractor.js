@@ -110,11 +110,11 @@ module.exports = function(bot) {
 		static removeTemplates(text, templates) {
 			var wkt = new bot.wikitext(text);
 			const makeRegexFromTemplate = function(template) {
-				return new RegExp('[' + template[0].toLowerCase() + template[0].toUpperCase() + ']' + template.slice(1), 'g');
+				return new RegExp('^[' + template[0].toLowerCase() + template[0].toUpperCase() + ']' + template.slice(1) + '$', 'g');
 			}
 			wkt.parseTemplates({
 				namePredicate: name => {
-					return !templates.some(template => {
+					return templates.some(template => {
 						return makeRegexFromTemplate(template).test(name);
 					});
 				}
