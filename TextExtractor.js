@@ -107,8 +107,17 @@ module.exports = function(bot) {
 			return text;
 		}
 
+		/**
+		 * @param {string} text 
+		 * @param {string[]} templates 
+		 */
 		static removeTemplates(text, templates) {
 			var wkt = new bot.wikitext(text);
+			// TODO: Things to think about: how to generate ONE regex that matches all the given 
+			// templates and which is as efficient as possible? That is, for 'efn' and 'refn'
+			// the regex generated should be /[rR]?[eE]?fn/ (as efn is a substring of refn)
+			// Can this be solved using the longest common subsequence problem?
+			// Or maybe use tries?
 			const makeRegexFromTemplate = function(template) {
 				return new RegExp('^[' + template[0].toLowerCase() + template[0].toUpperCase() + ']' + template.slice(1) + '$', 'g');
 			}
