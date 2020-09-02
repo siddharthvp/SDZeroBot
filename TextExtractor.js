@@ -1,9 +1,13 @@
+/**
+ * @param {mwn} bot 
+ */
 module.exports = function(bot) {
 
 	class TextExtractor {
 
 		/**
-		 * Get extract
+		 * Get wikitext extract. If you want plain text or HTML extracts, consider using 
+		 * the TextExtracts API instead.
 		 * @param {string} pagetext - full page text
 		 * @param {number} [charLimit] - cut off the extract at this many readable characters, or wherever
 		 * the sentence ends after this limit
@@ -30,18 +34,20 @@ module.exports = function(bot) {
 			// thus can't be handled with the line regex.
 			extract = TextExtractor.removeTemplatesOnNewlines(extract);
 
+			// Remove some other templates too
+			extract = TextExtractor.removeTemplates(extract, ['efn', 'refn']);
+
 			extract = extract
 				.replace(/<!--.*?-->/sg, '')
 				// remove refs, including named ref definitions and named ref invocations
 				.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
 				// the magic
 				.replace(/^\s*[-{|}=*#:<!].*$/mg, '')
-				// these are just bad
-				.replace(/__[A-Z]+__/g, '')
 				// trim left to prepare for next step
 				.trimLeft()
 				// keep only the first paragraph
 				.replace(/\n\n.*/s, '')
+				// unbold
 				.replace(/'''(.*?)'''/g, '$1')
 				.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
 				.trim();
@@ -101,6 +107,24 @@ module.exports = function(bot) {
 			return text;
 		}
 
+		static removeTemplates(text, templates) {
+			var wkt = new bot.wikitext(text);
+			const makeRegexFromTemplate = function(template) {
+				return new RegExp('[' + template[0].toLowerCase() + template[0].toUpperCase() + ']' + template.slice(1), 'g');
+			}
+			wkt.parseTemplates({
+				namePredicate: name => {
+					return !templates.some(template => {
+						return makeRegexFromTemplate(template).test(name);
+					});
+				}
+			});
+			for (let template of wkt.templates) {
+				wkt.removeEntity(template);
+			}
+			return wkt.getText();
+		}
+
 		static effCharCount(text) {
 			return text
 				.replace(/\[\[:?(?:[^|\]]+?\|)?([^\]|]+?)\]\]/g, '$1')
@@ -117,7 +141,9 @@ module.exports = function(bot) {
 		 * @param {string} content
 		 */
 		static finalSanitise(content) {
-			content = content.replace(/\[\[Category:.*?\]\]/gi, '')
+			return content.replace(/\[\[Category:.*?\]\]/gi, '')
+				// these are just bad
+				.replace(/__[A-Z]+__/g, '')
 				// Harvard referencing
 				.replace(/\{\{[sS]fnp?\|.*?\}\}/g, '')
 				// shortcut for named ref invocation
@@ -128,17 +154,6 @@ module.exports = function(bot) {
 				.replace(/\{\{IPA.*?\}\}/g, '')
 				// audio
 				.replace(/\{\{[aA]udio\|.*?\}\}/g, '');
-
-			let wkt = new bot.wikitext(content);
-			wkt.parseTemplates({
-				namePredicate: name => {
-					return /^[eE]fn$/.test(name) || /^[rR]efn$/.test(name);
-				}
-			});
-			wkt.templates.forEach(t => {
-				wkt.removeEntity(t);
-			});
-			return wkt.getText();
 		}
 	}
 
