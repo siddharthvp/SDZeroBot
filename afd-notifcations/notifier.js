@@ -120,10 +120,11 @@ class Notifier {
 	
 	}
 	
+	// XXX: pathetic, everything here can be done for multiple users at once, rewrite this
 	async notifyUser(username, article, afd) {
 		let user = new bot.user(username);
 		let text = await user.talkpage.text();
-		if (/\{\{nobots\}\}/i.test(text)) {
+		if (/\{\{nobots\}\}/i.test(text)) { // TODO: also check for deny=SDZeroBot
 			return;
 		}
 		// TODO: also check if user was already notified
@@ -138,6 +139,9 @@ class Notifier {
 				return;
 			}
 		}
+
+		// TODO: query globaluserinfo API to check if user is globally locked 
+		// (implement globalinfo() in mwn#user)
 
 		log(`[+] Notifying ${username}`);
 		return user.sendMessage('', `{{subst:afd notice|1=${article}|2=${afd.slice('Wikipedia:Articles for deletion/'.length)}}}`, {

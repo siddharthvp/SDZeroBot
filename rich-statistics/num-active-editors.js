@@ -30,17 +30,24 @@ for (let i = userswithcount.length - 1; i >= 0; i--) {
 
 let table = new mwn.table();
 table.addHeaders([
-	'Statistic',
-	'Value'
+	{label: 'Statistic', style: 'width: 40em;'},
+	{label: 'Value', style: 'width: 20em'}
 ]);
 
-table.addRow([ 'Number of users active (1+ action) in the last 30 days', orz(userswithcount[1]) + '<ref>Users active in the last 30 days according to [[mw:API:Allusers]] with auactiveusers=1, which is different from figure on [[Special:Statistics]] ([[phab:T261890]]). Users with recentchanges value equal to 0 (due to outdated caches, see [[phab:T261282]]) are not counted</ref>' ]);
+table.addRow([ 'Number of users active (1+ action) in the last 30 days', orz(userswithcount[1]) + '<ref>Users active in the last 30 days according to [[mw:API:Allusers]] with auactiveusers=1, which is different from figure on [[Special:Statistics]] ([[phab:T261890]]). Users with recentchanges value equal to 0 ([[phab:T261282]]) are not counted</ref>' ]);
 table.addRow([ 'Users with 5+ actions in the last 30 days', orz(userswithcount[5]) ]);
-table.addRow([ 'Users with 10+ actions in the last 30 days', orz(userswithcount[5]) ]);
+table.addRow([ 'Users with 10+ actions in the last 30 days', orz(userswithcount[10]) ]);
 table.addRow([ 'Users with 50+ actions in the last 30 days', orz(userswithcount[50]) ]);
 table.addRow([ 'Users with 100+ actions in the last 30 days', orz(userswithcount[100]) ]);
 
-await bot.save('User:SDZeroBot/Number of active editors', table.getText(), 'Updating');
+let wikitext = 
+`${table.getText()}
+
+==Notes==
+{{reflist}}
+`
+
+await bot.save('User:SDZeroBot/Number of active editors', wikitext, 'Updating');
 
 log(`[i] Finished`);
 
