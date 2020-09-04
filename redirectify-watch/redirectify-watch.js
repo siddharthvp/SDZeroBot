@@ -52,7 +52,9 @@ for (let edit of actions) {
 	}
 	count++;
 
-	let page = new bot.page(edit.title)
+	// XXX: this is bad, since we know the timestamp, we should directly fetch that 
+	// revision. The description can also be fetched in the same call.
+	let page = new bot.page(edit.title);
 	let revs = await page.history('content', 10, {
 		rvsection: '0'
 	});
