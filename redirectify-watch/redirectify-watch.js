@@ -79,7 +79,7 @@ for (let edit of actions) {
 
 let report = new bot.page('User:SDZeroBot/Redirectify Watch');
 let oldlinks = '';
-let revs = report.history('timestamp|ids', 3);
+let revs = await report.history('timestamp|ids', 3);
 for (let rev of revs) {
 	oldlinks += ` [[Special:Permalink/${rev.revid}|${new xdate(rev.timestamp).subtract(1, 'day').format('D MMMM')}]]`
 }
