@@ -107,10 +107,10 @@ const TextExtractor = require('../TextExtractor')(bot);
 				return;
 			}
 
-			tableInfo[article].date = template.getValue(1);
-			tableInfo[article].nominator = template.getValue('nominator');
+			tableInfo[article].date = template && template.getValue(1);
+			tableInfo[article].nominator = template && template.getValue('nominator');
 
-			let date = new xdate(template.getValue(1));
+			let date = new xdate(tableInfo[article].date);
 			if (date.isAfter(new xdate().subtract(30, 'days'))) {
 				tableInfo[article].class = 'new';
 				counts.new++;
