@@ -2,7 +2,7 @@ const {mwn, bot, log, argv, xdate, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 const TextExtractor = require('../TextExtractor')(bot);
 
-(async function() {
+(async function () {
 
 	/* GET DATA FROM DATABASE */
 
@@ -10,7 +10,8 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	await bot.getTokensAndSiteInfo();
 
-	let revidsTitles = {}, tableInfo = {};
+	let revidsTitles = {},
+		tableInfo = {};
 
 	let talkpages = (await new bot.category('Good article nominees awaiting review').pages())
 		.map(page => page.title);
@@ -43,7 +44,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 			} catch (e) {
 				log(`[E] error in processing ${pg.title}`);
 			}
-			
+
 		});
 	}
 
@@ -66,7 +67,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 	})) {
 		log(`[+] Got a page of the API response for talk page texts`);
 		let pages = data.query.pages;
-		pages.forEach(pg => {
+		pages.forEach(async pg => {
 			if (pg.missing) {
 				return;
 			}
@@ -78,17 +79,31 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 			let text = pg.revisions[0].content;
 
-			// Recursive parsing doesn't seem to work ??
-			// let template = new bot.wikitext(text).parseTemplates({
-			// 	count: 1,
-			// 	recursive: true,
-			// 	namePredicate: name => name === 'GA nominee'
-			// })[0];
+			const getGATemplateFromText = function(text) {
+				let wkt = new bot.wikitext(text);
+				let template = wkt.parseTemplates({
+					count: 1,
+					namePredicate: name => name === 'GA nominee'
+				})[0];
+	
+				if (!template) {
+					template = wkt.parseTemplates({
+						recursive: true
+					}).find(t => t.name === 'GA nominee');
+				}
+				return template;
+			};
 
-			let template = text.match(/\{\{GA nominee\|(.*?)\|nominator=(.*?)\|page=/);
-
+			let template = getGATemplateFromText(text);
+			
 			if (!template) {
-				log(`[E] No {{GA nominee}} on ${pg.title}`);
+				// get whole page
+				text = (await bot.read(pg.title)).revisions[0].content;
+				template = getGATemplateFromText(text);
+
+				if (!template) {
+					log(`[E] No {{GA nominee}} on ${pg.title}`);
+				}
 				return;
 			}
 
@@ -121,7 +136,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	let oresdata = await OresUtils.queryRevisions(['drafttopic'], pagelist);
 
-	
+
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
 
 	/**
@@ -137,7 +152,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 		"Unsorted/Unsorted*": []
 	};
 
-	Object.entries(oresdata).forEach(function([revid, ores]) {
+	Object.entries(oresdata).forEach(function ([revid, ores]) {
 
 		var title = revidsTitles[revid];
 		if (!title) {
@@ -156,7 +171,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
-	var createSection = function(topic) {
+	var createSection = function (topic) {
 		var pagetitle = topic;
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
@@ -169,7 +184,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 			{label: 'Nominator', class: 'nominator-header'}
 		]);
 
-		sorter[topic].map(function(page) {
+		sorter[topic].map(function (page) {
 			var tabledata = tableInfo[page.title];
 
 			let formatted_date = new xdate(tabledata.date).format('YYYY-MM-DD HH:mm');
@@ -184,18 +199,18 @@ const TextExtractor = require('../TextExtractor')(bot);
 			row.class = tabledata.class;
 			return row;
 
-		}).sort(function(a, b) {
+		}).sort(function (a, b) {
 			// sort by date
 			return a[0].label < b[0].label ? -1 : 1;
 
-		}).forEach(function(row) {
+		}).forEach(function (row) {
 			table.addRow(row);
 		});
 
 		return [pagetitle, table.getText()];
 	};
 
-	var makeMainPage = function() {
+	var makeMainPage = function () {
 		var count = Object.keys(revidsTitles).length;
 
 		var content = `{{/header|count=${count}|countold=${counts.old}|countrecent=${counts.recent}|countnew=${counts.new}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}\n`;
@@ -213,7 +228,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	}
 	await makeMainPage();
-	
+
 	log(`[i] Finished`);
 
 })().catch(err => emailOnError(err, 'gan-sorting'));
