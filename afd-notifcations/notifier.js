@@ -13,8 +13,7 @@ class Notifier {
 			await notifier.processAfD(afd);
 		}
 
-		log(notifier.notifications);
-		// await notifier.sendNotifications();
+		await notifier.sendNotifications();
 	}
 
 	async getConfig() {
@@ -56,8 +55,7 @@ class Notifier {
 		while (match = rgx.exec(text)) { // eslint-disable-line no-cond-assign
 			this.afds[match[1]] = '';
 		}
-		log(`[S] Got list of AfDs`);
-		log(Object.keys(this.afds));
+		log(`[S] Got list of ${Object.keys(this.afds).length} AfDs`);
 
 		(await bot.read(Object.keys(this.afds))).map(pg => {
 			this.afds[pg.title] = pg.revisions[0].content;
@@ -67,7 +65,7 @@ class Notifier {
 	}
 	
 	async processAfD([afd, afdtext]) {
-		log(`[+] Processing ${afd}`);
+		log(`[i] Processing ${afd}`);
 		let tsmatch = afdtext.match(/\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\)/);
 		if (!tsmatch || !tsmatch[0]) {
 			return log(`[E] Failed to read a timestamp in ${afd}`);
@@ -76,6 +74,7 @@ class Notifier {
 		let date = new xdate(ts);
 		if (date.setHours(0, 0, 0, 0) !== new xdate().subtract(1, 'day').setHours(0, 0, 0, 0)) {
 			// not actually from yesterday; might be a manual relist
+			log(`[W] ${afd} not from yesterday (manual relist)?`);
 			return;
 		}
 		let articleRgx = /\{\{la\|(.*?)\}\}/g;
@@ -92,6 +91,7 @@ class Notifier {
 			authors.forEach(async ([name, percent]) => {
 				if (percent > (this.config[name] || 0.2)) {
 					this.notifications.push({ name, article, afd });
+					log(`[+] ${afd}: (${article}): will notify ${name}`);
 				}
 			});
 			await bot.sleep(2000); // pause for a while after querying WikiWho
@@ -193,37 +193,39 @@ class Notifier {
 		let user = new bot.user(username);
 		let text = await user.talkpage.text();
 		if (/\{\{nobots\}\}/i.test(text)) { // TODO: also check for deny=SDZeroBot
+			log(`[C] ${username} has {{nobots}} on their talk page`);
 			return;
 		}
 		let rgx = new RegExp(`== ?Nomination of \\[\\[:?${article}\\]\\] for deletion ?==`);
 		if (rgx.test(text)) {
+			log(`[C] ${username} was already notified of ${article}`);
 			return;
 		}
 		
 		let blockinfo = await user.info('blockinfo');
 		if (blockinfo.blockid) { // blocked
 			if (blockinfo.blockexpiry === 'infinite') {
-				log(`[+] Not notifying ${username} as account is indef-blocked`);
+				log(`[C] Not notifying ${username} as account is indef-blocked`);
 				return;
 			}
 			if (new xdate().add(7, 'days').isBefore(new xdate(blockinfo.blockexpiry))) {
-				log(`[+] Not notifying ${username} as account is blocked for 7+ days`);
+				log(`[C] Not notifying ${username} as account is blocked for 7+ days`);
 				return;
 			}
 		}
 
 		let globalinfo = await user.globalinfo();
 		if (globalinfo.locked) {
-			log(`[+] Not notifying ${username} as account is locked`);
+			log(`[C] Not notifying ${username} as account is locked`);
 			return;
 		}
 
-		log(`[+] Notifying ${username}`);
-		return user.sendMessage('', `{{subst:afd notice|1=${article}|afdpage=${afd}}}`, {
-			summary: `[[${article}]] nominated for deletion ([[User:SDZeroBot/AfD notifier|AFDN]])`
-		}).catch(err => { // errors are logged, don't cause task to stop
-			log(`[W] ${username} couldn't be notified due to error: ${err.code}: ${err.info}`);
-		});
+		// log(`[+] Notifying ${username}`);
+		// return user.sendMessage('', `{{subst:User:SDZeroBot/AfD notifier/template|1=${article}|afdpage=${afd}}}`, {
+		// 	summary: `[[${article}]] nominated for deletion ([[User:SDZeroBot/AfD notifier|AFDN]])`
+		// }).catch(err => { // errors are logged, don't cause task to stop
+		// 	log(`[W] ${username} couldn't be notified due to error: ${err.code}: ${err.info}`);
+		// });
 	}
 }
 
