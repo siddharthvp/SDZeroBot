@@ -268,22 +268,24 @@ class Notifier {
 			}
 		}
 
-		let blockinfo = await user.info('blockinfo');
-		if (blockinfo.blockid) { // blocked
-			if (blockinfo.blockexpiry === 'infinite') {
-				log(`[C] Not notifying ${username} as account is indef-blocked`);
-				return Promise.reject('blocked-indef');
+		if (!mwn.util.isIPAddress(username)) { // IP blocks can't be looked up this way, TODO: handle this
+			let blockinfo = await user.info('blockinfo');
+			if (blockinfo.blockid) { // blocked
+				if (blockinfo.blockexpiry === 'infinite') {
+					log(`[C] Not notifying ${username} as account is indef-blocked`);
+					return Promise.reject('blocked-indef');
+				}
+				if (new xdate().add(7, 'days').isBefore(new xdate(blockinfo.blockexpiry))) {
+					log(`[C] Not notifying ${username} as account is blocked for 7+ days`);
+					return Promise.reject('blocked');
+				}
 			}
-			if (new xdate().add(7, 'days').isBefore(new xdate(blockinfo.blockexpiry))) {
-				log(`[C] Not notifying ${username} as account is blocked for 7+ days`);
-				return Promise.reject('blocked');
-			}
-		}
 
-		let globalinfo = await user.globalinfo();
-		if (globalinfo.locked) {
-			log(`[C] Not notifying ${username} as account is locked`);
-			return Promise.reject('locked');
+			let globalinfo = await user.globalinfo();
+			if (globalinfo.locked) {
+				log(`[C] Not notifying ${username} as account is locked`);
+				return Promise.reject('locked');
+			}
 		}
 
 		// return Promise.resolve();
