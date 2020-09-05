@@ -5,20 +5,39 @@ class Notifier {
 	static async init() {
 		await bot.getTokensAndSiteInfo();
 		let notifier = new Notifier();
-		notifier.config = await notifier.getConfig();
+		await notifier.getConfig();
+
 		let AfDs = await notifier.getAfDs();
-		for (let afd of AfDs) {
-			await notifier.processAfD(afd);
-		}
+		
+		// for (let afd of AfDs) {
+		// 	await notifier.processAfD(afd);
+		// }
 	}
 
 	async getConfig() {
-		let userconfig = new bot.page('User:SDZeroBot/AfD notifier/userconfig');
+		let userconfig = new bot.page('User:SDZeroBot/AfD notifier');
 		let text = await userconfig.text();
-		// TODO: set up exclusion page
+		let wkt = new bot.wikitext(text);
+		wkt.unbind('<pre>', '</pre>');
+		wkt.unbind('<!--', '-->');
+		let sections = wkt.parseSections();
 
-		// return a map {{user: percentage}}
-		return {};
+		this.config = {};
+	
+		let rgx = /^\*\s*\{\{[uU]\|(.*?)\}\}\s*[-–—]\s*(\d+)\s*%/mg;
+		let percentCustomisations = sections[2].content;
+		let match; 
+		while (match = rgx.exec(percentCustomisations)) { // eslint-disable-line no-cond-assign
+			this.config[match[1]] = match[2];
+		}
+
+		rgx = /^\*\s*\{\{[uU]\|(.*?)\}\}/mg;
+		let exclusions = sections[4].content;
+		while (match = rgx.exec(exclusions)) { // eslint-disable-line no-cond-assign
+			this.config[match[1]] = 101;
+		}
+		log(`[S] Got config`);
+		log(this.config);
 	}
 	
 	/**
@@ -34,6 +53,8 @@ class Notifier {
 		while (match = rgx.exec(text)) { // eslint-disable-line no-cond-assign
 			AfDs.push(match[1]);
 		}
+		log(`[S] Got AfDs`);
+		log(AfDs);
 		return AfDs;
 	}
 	
