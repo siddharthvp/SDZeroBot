@@ -64,8 +64,6 @@ class Notifier {
 		});
 
 		log(`[S] Got content of AfDs`);
-		log(this.afds);
-
 	}
 	
 	async processAfD([afd, afdtext]) {
@@ -125,11 +123,13 @@ class Notifier {
 	 * @returns {{totalBytes: number, users: ({id: number, name: string, bytes: number, percent: number})[]}}
 	 */
 	async queryAuthors(title) {
-		let langcodematch = bot.options.apiUrl.match(/\.(.*?)\.wikipedia\.org/);
+		let langcodematch = bot.options.apiUrl.match(/([^/]*?)\.wikipedia\.org/);
 		if (!langcodematch || !langcodematch[1]) {
 			throw new Error('WikiWho API is not supported for bot API url. Re-check.');
 		}
-		const json = await bot.rawRequest(`https://api.wikiwho.net/${langcodematch[1]}/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(title)}/?o_rev_id=true&editor=true`);
+		const json = await bot.rawRequest({
+			url: `https://api.wikiwho.net/${langcodematch[1]}/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(title)}/?o_rev_id=true&editor=true`
+		});
 	
 		const tokens = Object.values(json.revisions[0])[0].tokens;
 
@@ -163,7 +163,7 @@ class Notifier {
 			"ususerids": Object.keys(userdata)
 		}).then(json => {
 			json.query.users.forEach(us => {
-				userdata[us.id].name = us.name;
+				userdata[String(us.userid)].name = us.name;
 			});
 		});
 
