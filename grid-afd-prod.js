@@ -1,8 +1,6 @@
 const {mwn, bot, emailOnError} = require('./botbase');
 const TextExtractor = require('./TextExtractor')(bot);
 
-process.chdir(__dirname);
-
 var months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 function pad(num) {
 	return num < 10 ? '0' + num : num;
@@ -12,9 +10,11 @@ function formatTimeStamp(ts) {
 }
 
 function parseArticleForAfD(pagetext) {
-	var templates = new bot.wikitext(pagetext).parseTemplates();
-	var afd_template = templates.find(t => t.name === 'AfDM' || t.name === 'Article for deletion/dated'),
-		afd_date, afd_page;
+	var templates = new bot.wikitext(pagetext).parseTemplates({
+		namePredicate: name => name === 'AfDM' || name === 'Article for deletion/dated',
+		count: 1
+	});
+	var afd_template = templates[0], afd_date, afd_page;
 	if (afd_template) { 
 		if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
 			afd_date = `${afd_template.getValue('year')}-${pad(months.indexOf(afd_template.getValue('month')))}-${pad(afd_template.getValue('day'))}`;
@@ -25,9 +25,12 @@ function parseArticleForAfD(pagetext) {
 }
 
 function parseArticleForPROD(pagetext) {
-	var templates = new bot.wikitext(pagetext).parseTemplates();
+	var templates = new bot.wikitext(pagetext).parseTemplates({
+		namePredicate: name => name === 'Proposed deletion/dated' || name === 'Prod blp/dated',
+		count: 1
+	});
 	var prod_template, prod_date;
-	prod_template = templates.find(t => t.name === 'Proposed deletion/dated' || t.name === 'Prod blp/dated');
+	prod_template = templates[0];
 	if (prod_template) {
 		prod_date = formatTimeStamp(prod_template.getValue('timestamp') || '');
 	}
