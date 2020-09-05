@@ -1,4 +1,9 @@
-const {bot, log, xdate, emailOnError} = require('../botbase');
+const {bot, log, xdate, emailOnError, utils, mwn} = require('../botbase');
+
+process.chdir(__dirname);
+
+const PercentDefault = 0.25;
+const ByteDefault = 1000;
 
 class Notifier {
 
@@ -8,12 +13,32 @@ class Notifier {
 		await notifier.getConfig();
 
 		await notifier.getAfDs();
-		
-		for (let afd of Object.entries(notifier.afds)) {
-			await notifier.processAfD(afd);
+
+		notifier.table = new mwn.table();
+		notifier.table.addHeaders([
+			`! scope="col" style="width: 14em" | AfD`,
+			`! scope="col" style="width: 14em" | Article`,
+			`! scope="col" style="width: 9em" | User`,
+			`! scope="col" style="width: 4em" | Bytes`,
+			`! scope="col" style="width: 4em" | Percent`,
+			`! scope="col" style="width: 14em" | Comment`
+		]);
+
+		try {
+			for (let afd of Object.entries(notifier.afds)) {
+				await notifier.processAfD(afd);
+			}
+		} catch(e) {
+			emailOnError(e, 'notifier');
+		} finally {
+			let wikitext = `~~~~~\n\n${notifier.table.getText()}`;
+			bot.save('User:SDZeroBot/AfD notifier/log', wikitext, 'Logging dry run');
+
+			utils.saveObject('notifications', notifier.notifications);
+			log(notifier.aborts);
+			utils.saveObject('abort-stats', notifier.aborts);
 		}
 
-		await notifier.sendNotifications();
 	}
 
 	async getConfig() {
@@ -25,23 +50,31 @@ class Notifier {
 		let sections = wkt.parseSections();
 
 		this.config = {};
-	
-		let rgx = /^\*\s*\{\{[uU]\|(.*?)\}\}\s*[-–—]\s*(\d+)\s*%/mg;
+
 		let percentCustomisations = sections[2].content;
-		let match; 
-		while (match = rgx.exec(percentCustomisations)) { // eslint-disable-line no-cond-assign
-			this.config[match[1]] = match[2];
+		let items = new bot.wikitext(percentCustomisations).parseTemplates({
+			namePredicate: name => name === '/user'
+		});
+		for (let item of items) {
+			this.config[item.getValue(1)] = {
+				bytes: item.getValue('bytes') || ByteDefault,
+				percent: item.getValue('percent') || PercentDefault
+			};
 		}
 
-		rgx = /^\*\s*\{\{[uU]\|(.*?)\}\}/mg;
 		let exclusions = sections[4].content;
-		while (match = rgx.exec(exclusions)) { // eslint-disable-line no-cond-assign
-			this.config[match[1]] = 101;
-		}
+		new bot.wikitext(exclusions).parseTemplates({
+			namePredicate: name => name === 'U'
+		}).map(t => t.getValue(1)).forEach(user => {
+			this.config[user] = {
+				percent: 101
+			};
+		});
+
 		log(`[S] Got config`);
 		log(this.config);
 	}
-	
+
 	/**
 	 * @returns {string[]}
 	 */
@@ -63,20 +96,20 @@ class Notifier {
 
 		log(`[S] Got content of AfDs`);
 	}
-	
+
 	async processAfD([afd, afdtext]) {
-		log(`[i] Processing ${afd}`);
-		let tsmatch = afdtext.match(/\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\)/);
-		if (!tsmatch || !tsmatch[0]) {
-			return log(`[E] Failed to read a timestamp in ${afd}`);
-		}
-		let ts = tsmatch[0];
-		let date = new xdate(ts);
-		if (date.setHours(0, 0, 0, 0) !== new xdate().subtract(1, 'day').setHours(0, 0, 0, 0)) {
-			// not actually from yesterday; might be a manual relist
-			log(`[W] ${afd} not from yesterday (manual relist)?`);
-			return;
-		}
+		log(`[+] Processing ${afd}`);
+		// let tsmatch = afdtext.match(/\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\)/);
+		// if (!tsmatch || !tsmatch[0]) {
+		// 	return log(`[E] Failed to read a timestamp in ${afd}`);
+		// }
+		// let ts = tsmatch[0];
+		// let date = new xdate(ts);
+		// if (date.setHours(0, 0, 0, 0) !== new xdate().subtract(1, 'day').setHours(0, 0, 0, 0)) {
+		// 	// not actually from yesterday; might be a manual relist
+		// 	log(`[W] ${afd} not from yesterday (manual relist)?`);
+		// 	return;
+		// }
 		let articleRgx = /\{\{la\|(.*?)\}\}/g;
 		let articles = [];
 		let match;
@@ -86,30 +119,52 @@ class Notifier {
 		}
 
 		this.notifications = [];
+		this.aborts = {
+			'nobots': 0,
+			'already-notified': 0,
+			'blocked': 0,
+			'blocked-indef': 0,
+			'locked': 0
+		}
 		for (let article of articles) {
 			let authors = await this.getAuthorsForArticle(article);
-			for (let {name, percent} of authors) {
-				if (percent > (this.config[name] || 0.2)) {
-					this.notifications.push({ name, article, afd });
-					log(`[+] ${afd}: (${article}): will notify ${name}`);
+			log(`[i] Got authors: ${authors.filter(e => e.percent > PercentDefault && e.bytes > ByteDefault).map(e => e.name).join(', ')}`);
+			for (let {name, percent, bytes} of authors) {
+				if (percent > ((this.config[name] && this.config[name].percent) || PercentDefault) &&
+					bytes > ((this.config[name] && this.config[name].bytes) || ByteDefault)) {
+
+					let cmt = '';
+					await this.notifyUser(name, article, afd).then(() => {
+						log(`[T] Notified ${name} about ${article}`);
+						cmt = 'Notified';
+						this.notifications.push({name, article, afd});
+					}, (abortreason) => {
+						if (typeof this.aborts[abortreason] === 'number') {
+							this.aborts[abortreason]++;
+							cmt = abortreason;
+						} else {
+							log(`[E] Unknown rejection (${abortreason}): ${name}, ${afd}, ${article}`);
+						}
+					});
+					this.table.addRow([`[[${afd}]]`, `[[${article}]] ({{history|1=${article}|2=h}})`, `[[User:${name}|${name}]]`,
+						bytes,
+						`[https://xtools.wmflabs.org/authorship/en.wikipedia.org/${article.replace(/ /g, '_')} ${Math.round(percent*100)}%]`,
+						cmt
+					]);
 				}
 			}
 			await bot.sleep(500); // pause for a while after querying WikiWho
 		}
 	}
-	
-	/**
-	 * 
-	 * @param {string} article 
-	 * @returns {Object}   userid: {name, percent}
-	 */
+
 	async getAuthorsForArticle(article) {
-		
+
 		const data = await this.queryAuthors(article);
 		return data.users.map(us => {
 			return {
 				name: us.name,
-				percent: us.percent
+				percent: us.percent,
+				bytes: us.bytes
 			};
 		});
 
@@ -119,7 +174,7 @@ class Notifier {
 	 * Query the top contributors to the article using the WikiWho API.
 	 * This API has a throttling of 2000 requests a day.
 	 * Supported for EN, DE, ES, EU, TR Wikipedias only
-	 * @param {string} title 
+	 * @param {string} title
 	 * @returns {{totalBytes: number, users: ({id: number, name: string, bytes: number, percent: number})[]}}
 	 */
 	async queryAuthors(title) {
@@ -127,27 +182,36 @@ class Notifier {
 		if (!langcodematch || !langcodematch[1]) {
 			throw new Error('WikiWho API is not supported for bot API url. Re-check.');
 		}
-		const json = await bot.rawRequest({
-			url: `https://api.wikiwho.net/${langcodematch[1]}/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(title)}/?o_rev_id=true&editor=true`
-		});
-	
+
+		let json;
+		try {
+			json = await bot.rawRequest({
+				url: `https://api.wikiwho.net/${langcodematch[1]}/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(title)}/?o_rev_id=true&editor=true`
+			});
+		} catch(err) {
+			if (/does not exist/.test(err.response.data.Error)) {
+				log(`[W] ${title} does not exist`);
+				return { users: [] }; // kludge: dummy object
+			}
+		}
+
 		const tokens = Object.values(json.revisions[0])[0].tokens;
 
 		let data = {
 				totalBytes: 0,
 				users: []
 			}, userdata = {};
-		
+
 		for (let token of tokens) {
 			data.totalBytes += token.str.length;
 			let editor = token['editor'];
-			if (editor.startsWith('0|')) { // IP
-				continue;
-			} 
 			if (!userdata[editor]) {
 				userdata[editor] = { bytes: 0 };
 			}
 			userdata[editor].bytes += token.str.length;
+			if (editor.startsWith('0|')) { // IP
+				userdata[editor].name = editor.slice(2);
+			}
 		}
 
 		Object.entries(userdata).map(([userid, {bytes}]) => {
@@ -156,11 +220,11 @@ class Notifier {
 				delete userdata[userid];
 			}
 		});
-	
+
 		await bot.request({
 			"action": "query",
 			"list": "users",
-			"ususerids": Object.keys(userdata)
+			"ususerids": Object.keys(userdata).filter(us => !us.startsWith('0|')) // don't lookup IPs
 		}).then(json => {
 			json.query.users.forEach(us => {
 				userdata[String(us.userid)].name = us.name;
@@ -177,55 +241,68 @@ class Notifier {
 		}).sort((a, b) => {
 			a.bytes < b.bytes ? 1 : -1;
 		});
-	
+
 		return data;
 	}
 
 
-	async sendNotifications() {
-		this.notifications.forEach(([user, article, afd]) => {
-			this.notifyUser(user, article, afd);
-		});
-	}
-	
 	// XXX: everything here can be done for multiple users at once, rewrite this
 	async notifyUser(username, article, afd) {
 		let user = new bot.user(username);
-		let text = await user.talkpage.text();
-		if (/\{\{nobots\}\}/i.test(text)) { // TODO: also check for deny=SDZeroBot
-			log(`[C] ${username} has {{nobots}} on their talk page`);
-			return;
+		try {
+			let text = await user.talkpage.text();
+			if (/\{\{nobots\}\}/i.test(text)) { // TODO: also check for deny=SDZeroBot
+				log(`[C] ${username} has {{nobots}} on their talk page`);
+				return Promise.reject('nobots');
+			}
+
+			let rgx = new RegExp(`== ?Nomination of \\[\\[:?${article}\\]\\] for deletion ?==`);
+			if (rgx.test(text)) {
+				log(`[C] ${username} was already notified of ${article}`);
+				return Promise.reject('already-notified');
+			}
+
+		} catch (err) {
+			if (err.code !== 'missingtitle') {
+				throw err;
+			}
 		}
-		let rgx = new RegExp(`== ?Nomination of \\[\\[:?${article}\\]\\] for deletion ?==`);
-		if (rgx.test(text)) {
-			log(`[C] ${username} was already notified of ${article}`);
-			return;
-		}
-		
+
 		let blockinfo = await user.info('blockinfo');
 		if (blockinfo.blockid) { // blocked
 			if (blockinfo.blockexpiry === 'infinite') {
 				log(`[C] Not notifying ${username} as account is indef-blocked`);
-				return;
+				return Promise.reject('blocked-indef');
 			}
 			if (new xdate().add(7, 'days').isBefore(new xdate(blockinfo.blockexpiry))) {
 				log(`[C] Not notifying ${username} as account is blocked for 7+ days`);
-				return;
+				return Promise.reject('blocked');
 			}
 		}
 
 		let globalinfo = await user.globalinfo();
 		if (globalinfo.locked) {
 			log(`[C] Not notifying ${username} as account is locked`);
-			return;
+			return Promise.reject('locked');
 		}
 
-		// log(`[+] Notifying ${username}`);
-		// return user.sendMessage('', `{{subst:User:SDZeroBot/AfD notifier/template|1=${article}|afdpage=${afd}}}`, {
-		// 	summary: `[[${article}]] nominated for deletion ([[User:SDZeroBot/AfD notifier|AFDN]])`
-		// }).catch(err => { // errors are logged, don't cause task to stop
-		// 	log(`[W] ${username} couldn't be notified due to error: ${err.code}: ${err.info}`);
-		// });
+		// return Promise.resolve();
+		log(`[+] Notifying ${username}`);
+
+		// bot.newSection() doesn't really check out
+		await bot.request({
+			action: 'edit',
+			title: 'User talk:' + username,
+			bot: 1,
+			summary: `Nomination of [[${article}]] for deletion at [[${afd}|AfD]]`,
+			appendtext: `\n\n{{subst:User:SDZeroBot/AfD notifier/template|1=${article}|afdpage=${afd}}}`,
+			token: bot.csrfToken
+		}).then(() => {
+			// log(`[S] Notified ${username}`);
+		}, err => { // errors are logged, don't cause task to stop
+			log(`[E] ${username} couldn't be notified due to error: ${err.code}: ${err.info}`);
+		});
+		await bot.sleep(5000);
 	}
 }
 
