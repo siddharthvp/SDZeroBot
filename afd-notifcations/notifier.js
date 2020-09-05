@@ -88,13 +88,13 @@ class Notifier {
 		this.notifications = [];
 		for (let article of articles) {
 			let authors = await this.getAuthorsForArticle(article);
-			authors.forEach(async ([name, percent]) => {
+			for (let {name, percent} of authors) {
 				if (percent > (this.config[name] || 0.2)) {
 					this.notifications.push({ name, article, afd });
 					log(`[+] ${afd}: (${article}): will notify ${name}`);
 				}
-			});
-			await bot.sleep(2000); // pause for a while after querying WikiWho
+			}
+			await bot.sleep(500); // pause for a while after querying WikiWho
 		}
 	}
 	
