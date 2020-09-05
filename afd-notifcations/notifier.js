@@ -7,11 +7,14 @@ class Notifier {
 		let notifier = new Notifier();
 		await notifier.getConfig();
 
-		let AfDs = await notifier.getAfDs();
+		await notifier.getAfDs();
 		
-		// for (let afd of AfDs) {
-		// 	await notifier.processAfD(afd);
-		// }
+		for (let afd of Object.entries(notifier.afds)) {
+			await notifier.processAfD(afd);
+		}
+
+		log(notifier.notifications);
+		// await notifier.sendNotifications();
 	}
 
 	async getConfig() {
@@ -48,21 +51,30 @@ class Notifier {
 		const afdlog = new bot.page(`Wikipedia:Articles for deletion/Log/${date}`);
 		const text = await afdlog.text();
 		let rgx = /\{\{(Wikipedia:Articles for deletion\/.*?)}}(?!<!--Relisted-->)/mg;
-		let AfDs = [];
+		this.afds = {};
 		let match;
 		while (match = rgx.exec(text)) { // eslint-disable-line no-cond-assign
-			AfDs.push(match[1]);
+			this.afds[match[1]] = '';
 		}
-		log(`[S] Got AfDs`);
-		log(AfDs);
-		return AfDs;
+		log(`[S] Got list of AfDs`);
+		log(Object.keys(this.afds));
+
+		(await bot.read(Object.keys(this.afds))).map(pg => {
+			this.afds[pg.title] = pg.revisions[0].content;
+		});
+
+		log(`[S] Got content of AfDs`);
+		log(this.afds);
+
 	}
 	
-	async processAfD(afd) {
+	async processAfD([afd, afdtext]) {
 		log(`[+] Processing ${afd}`);
-		let afdpage = new bot.page(afd);
-		let text = await afdpage.text();
-		let ts = text.match(/\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\)/)[0];
+		let tsmatch = afdtext.match(/\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\)/);
+		if (!tsmatch || !tsmatch[0]) {
+			return log(`[E] Failed to read a timestamp in ${afd}`);
+		}
+		let ts = tsmatch[0];
 		let date = new xdate(ts);
 		if (date.setHours(0, 0, 0, 0) !== new xdate().subtract(1, 'day').setHours(0, 0, 0, 0)) {
 			// not actually from yesterday; might be a manual relist
@@ -71,20 +83,20 @@ class Notifier {
 		let articleRgx = /\{\{la\|(.*?)\}\}/g;
 		let articles = [];
 		let match;
-		// eslint-disable-next-line no-cond-assign
-		while (match = articleRgx.exec(text)) {
+		while (match = articleRgx.exec(afdtext)) { // eslint-disable-line no-cond-assign
 			let article = match[1];
 			articles.push(article);
 		}
 
+		this.notifications = [];
 		for (let article of articles) {
-			let authors = await Notifier.getAuthorsForArticle(article);
-			Object.values(authors).forEach(async ([name, percent]) => {
-				if (!this.config[name] || percent > this.config[name].percent) {
-					await this.notifyUser(name, article, afd);
+			let authors = await this.getAuthorsForArticle(article);
+			authors.forEach(async ([name, percent]) => {
+				if (percent > (this.config[name] || 0.2)) {
+					this.notifications.push({ name, article, afd });
 				}
 			});
-			// await bot.sleep(2000); // pause for a while after querying WikiWho
+			await bot.sleep(2000); // pause for a while after querying WikiWho
 		}
 	}
 	
@@ -95,78 +107,120 @@ class Notifier {
 	 */
 	async getAuthorsForArticle(article) {
 		
-		const json = await bot.rawRequest(`https://api.wikiwho.net/en/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(article)}/?o_rev_id=true&editor=true&token_id=true&out=true&in=true`);
+		const data = await this.queryAuthors(article);
+		return data.users.map(us => {
+			return {
+				name: us.name,
+				percent: us.percent
+			};
+		});
+
+	}
+
+	/**
+	 * Query the top contributors to the article using the WikiWho API.
+	 * This API has a throttling of 2000 requests a day.
+	 * Supported for EN, DE, ES, EU, TR Wikipedias only
+	 * @param {string} title 
+	 * @returns {{totalBytes: number, users: ({id: number, name: string, bytes: number, percent: number})[]}}
+	 */
+	async queryAuthors(title) {
+		let langcodematch = bot.options.apiUrl.match(/\.(.*?)\.wikipedia\.org/);
+		if (!langcodematch || !langcodematch[1]) {
+			throw new Error('WikiWho API is not supported for bot API url. Re-check.');
+		}
+		const json = await bot.rawRequest(`https://api.wikiwho.net/${langcodematch[1]}/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(title)}/?o_rev_id=true&editor=true`);
 	
-		const tokens = Object.values(json.revisions[0])[0].tokens
-	
-		let counts = {}, totalCount = 0;
-	
+		const tokens = Object.values(json.revisions[0])[0].tokens;
+
+		let data = {
+				totalBytes: 0,
+				users: []
+			}, userdata = {};
+		
 		for (let token of tokens) {
-			totalCount += token.str.length;
+			data.totalBytes += token.str.length;
 			let editor = token['editor'];
 			if (editor.startsWith('0|')) { // IP
 				continue;
 			} 
-			if (!counts[editor]) {
-				counts[editor] = 0;
+			if (!userdata[editor]) {
+				userdata[editor] = { bytes: 0 };
 			}
-			counts[editor] += token.str.length;
+			userdata[editor].bytes += token.str.length;
 		}
-	
-		const data = {};
-		const users = Object.entries(counts)
-			.sort((a, b) => a[1] < b[1] ? 1 : -1)
-			.filter(([userid, bytes]) => { // eslint-disable-line no-unused-vars
-				let percent = bytes/totalCount;
-				return percent > 0.1;
-			})
-			.forEach(([userid, bytes]) => {
-				data[userid] = { bytes };
-			});
-		
-		// this is broken, use mwn version instead
 
+		Object.entries(userdata).map(([userid, {bytes}]) => {
+			userdata[userid].percent = bytes / data.totalBytes;
+			if (userdata[userid].percent < 0.02) {
+				delete userdata[userid];
+			}
+		});
+	
 		await bot.request({
 			"action": "query",
 			"list": "users",
-			"formatversion": "2",
-			"ususerids": users.map(e => e[0])
+			"ususerids": Object.keys(userdata)
 		}).then(json => {
 			json.query.users.forEach(us => {
-				data[us.id].name = us.name;
+				userdata[us.id].name = us.name;
 			});
 		});
+
+		data.users = Object.entries(userdata).map(([userid, {bytes, name, percent}]) => {
+			return {
+				id: userid,
+				name: name,
+				bytes: bytes,
+				percent: percent
+			};
+		}).sort((a, b) => {
+			a.bytes < b.bytes ? 1 : -1;
+		});
 	
-		return users;
-	
+		return data;
+	}
+
+
+	async sendNotifications() {
+		this.notifications.forEach(([user, article, afd]) => {
+			this.notifyUser(user, article, afd);
+		});
 	}
 	
-	// XXX: pathetic, everything here can be done for multiple users at once, rewrite this
+	// XXX: everything here can be done for multiple users at once, rewrite this
 	async notifyUser(username, article, afd) {
 		let user = new bot.user(username);
 		let text = await user.talkpage.text();
 		if (/\{\{nobots\}\}/i.test(text)) { // TODO: also check for deny=SDZeroBot
 			return;
 		}
-		// TODO: also check if user was already notified
+		let rgx = new RegExp(`== ?Nomination of \\[\\[:?${article}\\]\\] for deletion ?==`);
+		if (rgx.test(text)) {
+			return;
+		}
 		
-		// get blockinfo
 		let blockinfo = await user.info('blockinfo');
 		if (blockinfo.blockid) { // blocked
 			if (blockinfo.blockexpiry === 'infinite') {
+				log(`[+] Not notifying ${username} as account is indef-blocked`);
 				return;
 			}
 			if (new xdate().add(7, 'days').isBefore(new xdate(blockinfo.blockexpiry))) {
+				log(`[+] Not notifying ${username} as account is blocked for 7+ days`);
 				return;
 			}
 		}
 
-		// TODO: query globaluserinfo API to check if user is globally locked 
-		// (implement globalinfo() in mwn#user)
+		let globalinfo = await user.globalinfo();
+		if (globalinfo.locked) {
+			log(`[+] Not notifying ${username} as account is locked`);
+			return;
+		}
 
 		log(`[+] Notifying ${username}`);
-		return user.sendMessage('', `{{subst:afd notice|1=${article}|2=${afd.slice('Wikipedia:Articles for deletion/'.length)}}}`, {
-			summary: 'Afd notification'
+		return user.sendMessage('', `{{subst:afd notice|1=${article}|afdpage=${afd}}}`, {
+			summary: `[[${article}]] nominated for deletion ([[User:SDZeroBot/AfD notifier|AFDN]])`
 		}).catch(err => { // errors are logged, don't cause task to stop
 			log(`[W] ${username} couldn't be notified due to error: ${err.code}: ${err.info}`);
 		});
