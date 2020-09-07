@@ -56,7 +56,7 @@ await bot.batchOperation(prpages, prpage => {
 		Object.assign(data[article], {
 			requestor: firstrev.user,
 			startdate: firstrev.timestamp,
-			commentors: editors - 1,
+			commenters: editors - 1,
 		});
 	}, err => {
 		if (err === 'missingarticle') {
@@ -81,13 +81,13 @@ table.addHeaders([
 
 for (let [title, details] of Object.entries(data)) {
 
-	const {startdate, description, excerpt, prpage, commentors, requestor, prmissing} = details;
+	const {startdate, description, excerpt, prpage, commenters, requestor, prmissing} = details;
 
 	table.addRow([
 		new bot.date(startdate).format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${description ? `(<small>${description}</small>)` : ''}`,
 		excerpt,
-		prmissing ? `<span class=error>[No PR page was created]</span>` : `data-sort-value=${commentors} | [[${prpage}|PR]]<br>(${commentors} commentors)<br>Initiated by: [[User:${requestor}|${requestor}]]`
+		prmissing ? `<span class=error>[No PR page was created]</span>` : `data-sort-value=${commenters} | [[${prpage}|PR]]<br>(${commenters} commenters)<br>Initiated by: [[User:${requestor}|${requestor}]]`
 	]);
 
 }
