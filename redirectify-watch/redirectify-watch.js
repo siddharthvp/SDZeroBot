@@ -2,7 +2,7 @@ const {mwn, bot, xdate, log, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async function() {
-	
+
 await bot.getTokensAndSiteInfo();
 
 log(`[i] Started`);
@@ -22,7 +22,12 @@ let json = await bot.request({
 const actions = json.query.recentchanges;
 log(`[S] Fetched data from the API - ${actions.length} pages`);
 
-let table = new mwn.table();
+let table = new mwn.table({
+	// overflow-wrap: anywhere avoids a column from being widened due to one user
+	// using a very large "word" (eg. an external link or a wikilink with underscores)
+	// in the summary
+	style: 'overflow-wrap: anywhere;'
+});
 table.addHeaders([
 	{label: 'Time', style: 'width: 5em'},
 	{label: 'Article', style: 'width: 17em;'},
@@ -31,7 +36,10 @@ table.addHeaders([
 ]);
 
 const isRedirect = function(text) {
-	return /^#redirect\s*\[\[/i.test(text);	
+	// Don't require the # - while it's required for the redirect to be recognized, it seems
+	// to be frequently skipped as a mistake, or done intentionally to link redirect
+	// with wikidata
+	return /^#?redirect\s*\[\[/i.test(text);
 };
 
 const formatSummary = function(text) {
@@ -47,12 +55,13 @@ for (let edit of actions) {
 	log(`[+] Doing ${edit.title}`);
 
 	// skip redirectifications as a result of AfD or RfD
-	if (/^\[\[:?Wikipedia:(Redirects|Articles) for d.*?\]\]/.test(edit.comment)) {
+	if (/^\[\[:?Wikipedia:(Redirects|Articles) for d.*?\]\]/.test(edit.comment) ||
+		/^RFD closed as/.test(edit.comment)) {
 		continue;
 	}
 	count++;
 
-	// XXX: this is bad, since we know the timestamp, we should directly fetch that 
+	// XXX: this is bad, since we know the timestamp, we should directly fetch that
 	// revision. The description can also be fetched in the same call.
 	let page = new bot.page(edit.title);
 	let revs = await page.history('content', 10, {
@@ -73,7 +82,7 @@ for (let edit of actions) {
 	table.addRow([
 		new xdate(edit.timestamp).format('YYYY-MM-DD HH:mm'),
 		`[[${edit.title}]] ${shortdesc ? `(<small>${shortdesc}</small>)` : ''}`,
-		`[[User:${edit.user}|${edit.user}]]: <small>${formatSummary(edit.comment)}</small>`,
+		`[[User:${edit.user}|${edit.user}]]: <small>${formatSummary(edit.comment)} ({{history|1=${edit.title}|2=hist}})</small>`,
 		edit.excerpt || ''
 	]);
 
@@ -86,7 +95,7 @@ let oldlinks = revs.map(rev => {
 	return `[[Special:Permalink/${rev.revid}|${new xdate(rev.timestamp).subtract(1, 'day').format('D MMMM')}]]`;
 }).join(' - ') + ' - {{history|2=older}}';
 
-let wikitext = 
+let wikitext =
 `{{/header|count=${count}|date=${new xdate().subtract(1, 'day').format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}
 
 ${table.getText()}
