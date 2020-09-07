@@ -1,6 +1,18 @@
 /** Base file to reduce the amount of boilerplate code in each file */
 
 // Before doing anything, first set up the error handler
+
+/** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
+const emailOnError = function(err, taskname) {
+	log('[E] Fatal error');
+	console.log(err);
+	require('child_process').exec(
+		`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
+		() => {} // Emailing failed, must be a non-toolforge environ
+	);
+	// exit normally
+};
+
 // Errors occurring inside async functions are caught by emailOnError(),
 // this is only for anything else, such as failing imports
 process.on('uncaughtException', function(err) {
@@ -76,17 +88,6 @@ sql.queryBot = function(query) {
 			return row;
 		});
 	});
-};
-
-/** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
-const emailOnError = function(err, taskname) {
-	log('[E] Fatal error');
-	console.log(err);
-	require('child_process').exec(
-		`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
-		() => {} // Emailing failed, must be a non-toolforge environ
-	);
-	// exit normally
 };
 
 const utils = {
