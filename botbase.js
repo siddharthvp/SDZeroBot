@@ -13,6 +13,7 @@ try {
 	// duplication of process.on() and emailOnError() as those can't be used before
 	// mwn has loaded
 	if (process.argv[1]) {
+		console.log('[E]: failed to load mwn');
 		var taskname = path.basename(process.argv[1]);
 		require('child_process').exec(
 			`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
