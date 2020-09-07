@@ -95,7 +95,7 @@ for (let [title, details] of Object.entries(data)) {
 let wikitext =
 `{{/header|count=${articles.length}|date=${new bot.date().format('D MMMM YYYY')}|ts=~~~~~}}
 
-${table.getText()}
+${TextExtractor.finalSanitise(table.getText())}
 `;
 
 await bot.save('User:SDZeroBot/Peer reviews', wikitext, 'Updating');
