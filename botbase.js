@@ -21,6 +21,7 @@ try {
 	} else { // else we're probably running in the console
 		console.log(err);
 	}
+	process.exit();
 }
 
 /** Colorised and dated console logging. Powered by Semlog, a dependency of mwn */
