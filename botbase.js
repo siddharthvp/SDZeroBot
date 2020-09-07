@@ -1,10 +1,34 @@
 /** Base file to reduce the amount of boilerplate code in each file */
 
-// Before doing anything, first set up the error handler
+
+const fs = require('fs');
+const util = require('util');
+const path = require('path');
+const assert = require('assert');
+
+let mwn;
+try {
+	mwn = require('../mwn/src/bot');
+} catch(err) {
+	// duplication of process.on() and emailOnError() as those can't be used before
+	// mwn has loaded
+	if (process.argv[1]) {
+		var taskname = path.basename(process.argv[1]);
+		require('child_process').exec(
+			`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
+			() => {} // Emailing failed, must be a non-toolforge environ
+		);
+	} else { // else we're probably running in the console
+		console.log(err);
+	}
+}
+
+/** Colorised and dated console logging. Powered by Semlog, a dependency of mwn */
+const log = mwn.log;
 
 /** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
 const emailOnError = function(err, taskname) {
-	(typeof log === 'undefined' ? console.log : log)('[E] Fatal error');
+	log('[E] Fatal error');
 	console.log(err);
 	require('child_process').exec(
 		`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
@@ -24,20 +48,8 @@ process.on('uncaughtException', function(err) {
 	}
 });
 
-const fs = require('fs');
-const util = require('util');
-const path = require('path');
-const assert = require('assert');
-
-const mwn = require('../mwn/src/bot');
-
-const mysql = require('mysql');
-
 /** Parsed console arguments */
 const argv = require('minimist')(process.argv.slice(2));
-
-/** Colorised and dated console logging. Powered by Semlog, a dependency of mwn */
-const log = mwn.log;
 
 /** Date library */
 const xdate = require('./xdate');
@@ -63,6 +75,8 @@ const bot = new mwn({
 });
 
 bot.initOAuth();
+
+const mysql = require('mysql');
 
 const sql = mysql.createConnection({
 	host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
