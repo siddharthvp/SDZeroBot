@@ -1,5 +1,17 @@
 /** Base file to reduce the amount of boilerplate code in each file */
 
+// Before doing anything, first set up the error handler
+// Errors occurring inside async functions are caught by emailOnError(),
+// this is only for anything else, such as failing imports
+process.on('uncaughtException', function(err) {
+	if (process.argv[1]) {
+		var taskname = path.basename(process.argv[1]);
+		emailOnError(err, taskname);
+	} else { // else we're probably running in the console
+		console.log(err);
+	}
+});
+
 const fs = require('fs');
 const util = require('util');
 const path = require('path');
@@ -72,21 +84,10 @@ const emailOnError = function(err, taskname) {
 	console.log(err);
 	require('child_process').exec(
 		`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
-		() => {} // Emailing failed, must be a non-toolforge environ 
+		() => {} // Emailing failed, must be a non-toolforge environ
 	);
 	// exit normally
 };
-
-// Errors occurring inside async functions are caught by emailOnError(),
-// this is only for anything else, such as failing imports
-process.on('uncaughtException', function(err) {
-	if (process.argv[1]) { 
-		var taskname = path.basename(process.argv[1]);
-		emailOnError(err, taskname);
-	} else { // else we're probably running in the console
-		console.log(err);
-	}
-});
 
 const utils = {
 	saveObject: function(filename, obj) {
