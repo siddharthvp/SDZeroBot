@@ -4,7 +4,7 @@
 
 /** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
 const emailOnError = function(err, taskname) {
-	log('[E] Fatal error');
+	(typeof log === 'undefined' ? console.log : log)('[E] Fatal error');
 	console.log(err);
 	require('child_process').exec(
 		`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
