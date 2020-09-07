@@ -47,9 +47,9 @@ log(`[S] got articles`);
 let prpages = Object.values(data).map(e => e.prpage);
 
 await bot.batchOperation(prpages, prpage => {
+	let article = prpage.match(/^Wikipedia:Peer review\/(.*?)\/archive/)[1];
 	return new bot.page(prpage).history('timestamp|user', 'max').then(revs => {
 		let firstrev = revs[revs.length - 1];
-		let article = prpage.match(/^Wikipedia:Peer review\/(.*?)\/archive/)[1];
 
 		let editors = revs.map(rev => rev.user).filter((u, i, arr) => arr.indexOf(u) === i).length;
 
@@ -58,6 +58,14 @@ await bot.batchOperation(prpages, prpage => {
 			startdate: firstrev.timestamp,
 			commentors: editors - 1,
 		});
+	}, err => {
+		if (err === 'missingtitle') {
+			Object.assign(data[article], {
+				prmissing: true
+			});
+		} else {
+			return Promise.reject(err);
+		}
 	});
 }, 1, 2);
 log(`[S] got histories`);
@@ -65,21 +73,21 @@ log(`[S] got histories`);
 
 let table = new mwn.table();
 table.addHeaders([
-	{label: 'Date'},
-	{label: 'Article'},
-	{label: 'Excerpt'},
-	{label: 'Peer review'}
+	{label: 'Date', class: 'date-header'},
+	{label: 'Article', class: 'article-header'},
+	{label: 'Excerpt', class: 'excerpt-header'},
+	{label: 'Peer review', class: 'pr-header'}
 ]);
 
 for (let [title, details] of Object.entries(data)) {
 
-	const {startdate, description, prpage, commentors, excerpt, requestor} = details;
+	const {startdate, description, excerpt, prpage, commentors, requestor, prmissing} = details;
 
 	table.addRow([
 		new bot.date(startdate).format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${description ? `(<small>${description}</small>)` : ''}`,
 		excerpt,
-		`data-sort-value=${commentors} | [[${prpage}|PR]]<br>(${commentors} commentors)<br>Initiated by: [[User:${requestor}|${requestor}]]`
+		prmissing ? `<span class=error>[No PR page was created]</span>` : `data-sort-value=${commentors} | [[${prpage}|PR]]<br>(${commentors} commentors)<br>Initiated by: [[User:${requestor}|${requestor}]]`
 	]);
 
 }
