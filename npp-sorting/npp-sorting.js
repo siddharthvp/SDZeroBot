@@ -23,6 +23,7 @@ process.chdir(__dirname);
 		if (new bot.date().isAfter(lastrevtime.add(1, 'day'))) {
 			replag = lastrevtime;
 		}
+		log(`Replag: ${replag}`);
 		const result = await sql.queryBot(`
 			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
 			FROM pagetriage_page
@@ -114,14 +115,13 @@ process.chdir(__dirname);
 	}
 
 	/* GET SHORT DESCRIPTIONS AND PAGE CONTENT */
-	await bot.massQuery({
-		action: 'query',
-		titles: Object.values(revidsTitles),
+	let pagesWithShortDescs = 0;
+
+	for await (let json of bot.readGen(Object.values(revidsTitles), {
 		prop: 'revisions|description',
-		rvprop: 'content'
-	}).then(jsons => {
-		log('[S] Fetched API result for article content and shortdescs');
-		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+	})) {
+		let pages = json.query.pages;
+		log('[+] Fetched a page of API results for article content and shortdescs');
 		pages.forEach(page => {
 			if (page.missing) {
 				tableInfo[page.title].skip = true; // skip it and return
@@ -138,6 +138,7 @@ process.chdir(__dirname);
 				}
 			}
 			if (page.description) {
+				pagesWithShortDescs++;
 				tableInfo[page.title].shortdesc = page.description;
 				// cut out noise
 				if (page.description === 'Wikimedia list article') {
@@ -147,8 +148,8 @@ process.chdir(__dirname);
 				}
 			}
 		});
-		log(`[S] Found ${pages.filter(page => page.description).length} pages with short descriptions`);
-	});
+	}
+	log(`[S] Found ${pagesWithShortDescs} pages with short descriptions`);
 
 
 
