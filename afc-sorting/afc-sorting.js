@@ -271,7 +271,7 @@ process.chdir(__dirname);
 
 	/* TOPICAL SUBPAGES */
 	let replagMessage = replagHours > 12 ? 
-	`{{hatnote|Replica database replag is high. Changes newer than ${replagHours} hours may not be reflected.}}` :
+	`{{hatnote|Replica database lag is high. Changes newer than ${replagHours} hours may not be reflected.}}` :
 	'';
 
 
