@@ -7,11 +7,12 @@ process.chdir(__dirname);
 	/* GET DATA FROM DATABASE */
 
 	log('[i] Started');
-	var revidsTitles, tableInfo;
+	var revidsTitles, tableInfo, replagHours;
 	if (argv.nodb) {
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
+		replagHours = await sql.getReplagHours();
 		const result = await sql.queryBot(`
 			SELECT page_title, page_latest, cl_sortkey_prefix, page_len, actor_name, rev_timestamp, user_editcount
 			FROM categorylinks
@@ -269,6 +270,10 @@ process.chdir(__dirname);
 
 
 	/* TOPICAL SUBPAGES */
+	let replagMessage = replagHours > 12 ? 
+	`{{hatnote|Replica database replag is high. Changes newer than ${replagHours} hours may not be reflected.}}` :
+	'';
+
 
 	var createSubpage = function(topic) {
 		var pagetitle = topic;
@@ -280,7 +285,7 @@ process.chdir(__dirname);
 				`{{Special:PrefixIndex/Wikipedia:AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
 			}
 		}
-		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
+		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n${replagMessage}\n`;
 
 		var table = new mwn.table();
 		table.addHeaders([

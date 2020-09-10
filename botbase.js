@@ -106,6 +106,14 @@ sql.queryBot = function(query) {
 	});
 };
 
+sql.getReplagHours = async function() {
+	const lastrev = await sql.queryBot(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
+	const lastrevtime = new bot.date(lastrev[0].ts);
+	if (new bot.date().isAfter(lastrevtime.add(1, 'day'))) {
+		return Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60);
+	}
+}
+
 const utils = {
 	saveObject: function(filename, obj) {
 		fs.writeFileSync('./' + filename + '.json', JSON.stringify(obj, null, 2), console.log);
