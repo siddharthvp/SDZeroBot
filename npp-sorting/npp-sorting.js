@@ -11,11 +11,18 @@ process.chdir(__dirname);
 
 	await bot.getTokensAndSiteInfo();
 
+	let replag = null;
+	
 	var revidsTitles, tableInfo;
 	if (argv.nodb) {
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
+		const lastrev = await sql.queryBot(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
+		const lastrevtime = new bot.date(lastrev[0].ts);
+		if (new bot.date().isAfter(lastrevtime.add(1, 'day'))) {
+			replag = lastrevtime;
+		}
 		const result = await sql.queryBot(`
 			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
 			FROM pagetriage_page
@@ -272,6 +279,10 @@ process.chdir(__dirname);
 
 	/* TOPICAL SUBPAGES */
 
+	let replagMessage = replag ? 
+		`{{hatnote|Replica database replag is high. Changes newer than ${Math.round((Date.now() - replag.getTime()) / 1000 / 60 / 60)} hours may not be reflected.}}` :
+		'';
+
 	var createSubpage = function(topic) {
 		var pagetitle = topic;
 		var content = '';
@@ -282,8 +293,8 @@ process.chdir(__dirname);
 				`{{Special:PrefixIndex/User:SDZeroBot/NPP sorting/${pagetitle}/|stripprefix=1}}\n\n`;
 			}
 		}
-		content += `{{User:SDZeroBot/NPP sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n`;
-		content += `
+		content += `{{User:SDZeroBot/NPP sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}
+${replag ? `${replagMessage}\n`: ''}
 {| class="wikitable sortable"
 |-
 ! scope="col" style="width: 5em;" | Created
