@@ -11,7 +11,7 @@ process.chdir(__dirname);
 
 	await bot.getTokensAndSiteInfo();
 
-	let replag = null;
+	let replagDuration = null;
 	
 	var revidsTitles, tableInfo;
 	if (argv.nodb) {
@@ -21,9 +21,9 @@ process.chdir(__dirname);
 		const lastrev = await sql.queryBot(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
 		const lastrevtime = new bot.date(lastrev[0].ts);
 		if (new bot.date().isAfter(lastrevtime.add(1, 'day'))) {
-			replag = lastrevtime;
+			replagDuration = Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60)
+			log(`[W] Replag: ${replagDuration} hours`);
 		}
-		log(`Replag: ${replag}`);
 		const result = await sql.queryBot(`
 			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
 			FROM pagetriage_page
@@ -117,38 +117,35 @@ process.chdir(__dirname);
 	/* GET SHORT DESCRIPTIONS AND PAGE CONTENT */
 	let pagesWithShortDescs = 0;
 
-	for await (let json of bot.readGen(Object.values(revidsTitles), {
+	for await (let page of bot.readGen(Object.values(revidsTitles), {
 		prop: 'revisions|description',
 	})) {
-		let pages = json.query.pages;
-		log('[+] Fetched a page of API results for article content and shortdescs');
-		pages.forEach(page => {
-			if (page.missing) {
-				tableInfo[page.title].skip = true; // skip it and return
-				return;
+		if (page.missing) {
+			tableInfo[page.title].skip = true; // skip it and return
+			return;
+		}
+		var text = page.revisions[0].content;
+		tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
+		// NOTE: additional processing of extracts at the end of createSubpage() function
+		if (tableInfo[page.title].extract === '') { // empty extract is suspicious
+			if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
+				// the db query should omit redirects, this happens only because of db lag
+				// or if the page was converted to redirect after the db fetch
+				tableInfo[page.title].skip = true; // skip it
 			}
-			var text = page.revisions[0].content;
-			tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
-			// NOTE: additional processing of extracts at the end of createSubpage() function
-			if (tableInfo[page.title].extract === '') { // empty extract is suspicious
-				if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
-					// the db query should omit redirects, this happens only because of db lag
-					// or if the page was converted to redirect after the db fetch
-					tableInfo[page.title].skip = true; // skip it
-				}
+		}
+		if (page.description) {
+			pagesWithShortDescs++;
+			tableInfo[page.title].shortdesc = page.description;
+			// cut out noise
+			if (page.description === 'Wikimedia list article') {
+				tableInfo[page.title].shortdesc = '';
+			} else if (page.description === 'Disambiguation page providing links to topics that could be referred to by the same search term') {
+				tableInfo[page.title].shortdesc = 'Disambiguation page';
 			}
-			if (page.description) {
-				pagesWithShortDescs++;
-				tableInfo[page.title].shortdesc = page.description;
-				// cut out noise
-				if (page.description === 'Wikimedia list article') {
-					tableInfo[page.title].shortdesc = '';
-				} else if (page.description === 'Disambiguation page providing links to topics that could be referred to by the same search term') {
-					tableInfo[page.title].shortdesc = 'Disambiguation page';
-				}
-			}
-		});
+		}
 	}
+	log(`[S] Fetched page contents and short descriptions`);
 	log(`[S] Found ${pagesWithShortDescs} pages with short descriptions`);
 
 
@@ -280,8 +277,8 @@ process.chdir(__dirname);
 
 	/* TOPICAL SUBPAGES */
 
-	let replagMessage = replag ? 
-		`{{hatnote|Replica database replag is high. Changes newer than ${Math.round((Date.now() - replag.getTime()) / 1000 / 60 / 60)} hours may not be reflected.}}` :
+	let replagMessage = replagDuration ? 
+		`{{hatnote|Replica database replag is high. Changes newer than ${replagDuration} hours may not be reflected.}}` :
 		'';
 
 	var createSubpage = function(topic) {
