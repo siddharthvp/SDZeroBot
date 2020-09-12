@@ -1,4 +1,4 @@
-const {bot, sql, argv, xdate, log, emailOnError} = require('../botbase');
+const {bot, db, argv, xdate, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 (async function() {
@@ -12,7 +12,9 @@ const OresUtils = require('../OresUtils');
 	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
 	// takes a lot more time
 	const sixMonthOldTs = new xdate().subtract(6, 'months').format('YYYYMMDDHHmmss');
-	const result = await sql.queryBot(`
+	const sql = await new db().connect();
+	await sql.getReplagHours();
+	const result = await sql.query(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
 		FROM page
 		JOIN revision ON rev_id = page_latest
@@ -174,6 +176,8 @@ const OresUtils = require('../OresUtils');
 
 	var count = Object.keys(revidsTitles).length;
 	var pagetext = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
+
+	pagetext += sql.makeReplagMessage(24);
 
 	Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
 

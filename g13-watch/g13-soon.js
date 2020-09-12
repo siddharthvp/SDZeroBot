@@ -1,4 +1,4 @@
-const {bot, sql, xdate, argv, log, emailOnError} = require('../botbase');
+const {bot, db, xdate, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 (async function() {
@@ -13,7 +13,8 @@ const OresUtils = require('../OresUtils');
 	// takes a lot more time
 	const fiveMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
 	const sixMonthOldTs = new xdate().subtract(6, 'months').format('YYYYMMDDHHmmss');
-	const result = await sql.queryBot(`
+	const sql = await new db().connect();
+	const result = await sql.query(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
 		FROM page
 		JOIN revision ON rev_id = page_latest
@@ -174,6 +175,8 @@ const OresUtils = require('../OresUtils');
 
 	var count = Object.keys(revidsTitles).length;
 	var pagetext = `{{/header|count=${count}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}\n`;
+
+	pagetext += sql.makeReplagMessage(72);
 
 	Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
 

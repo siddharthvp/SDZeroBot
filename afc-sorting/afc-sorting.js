@@ -1,4 +1,4 @@
-const {fs, xdate, mwn, bot, sql, utils, argv, log, emailOnError} = require('../botbase');
+const {fs, xdate, mwn, bot, db, utils, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 process.chdir(__dirname);
 
@@ -7,13 +7,15 @@ process.chdir(__dirname);
 	/* GET DATA FROM DATABASE */
 
 	log('[i] Started');
-	var revidsTitles, tableInfo, replagHours;
+	let revidsTitles, tableInfo, sql;
+
 	if (argv.nodb) {
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
-		replagHours = await sql.getReplagHours();
-		const result = await sql.queryBot(`
+		sql = await new db().connect();
+		await sql.getReplagHours();
+		const result = await sql.query(`
 			SELECT page_title, page_latest, cl_sortkey_prefix, page_len, actor_name, rev_timestamp, user_editcount
 			FROM categorylinks
 			JOIN page ON page_id = cl_from
@@ -270,10 +272,7 @@ process.chdir(__dirname);
 
 
 	/* TOPICAL SUBPAGES */
-	let replagMessage = replagHours > 12 ? 
-	`{{hatnote|Replica database lag is high. Changes newer than ${replagHours} hours may not be reflected.}}` :
-	'';
-
+	let replagMessage = sql ? sql.makeReplagMessage(12) : '';
 
 	var createSubpage = function(topic) {
 		var pagetitle = topic;
@@ -285,7 +284,7 @@ process.chdir(__dirname);
 				`{{Special:PrefixIndex/Wikipedia:AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
 			}
 		}
-		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n${replagMessage}\n`;
+		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n${replagMessage}`;
 
 		var table = new mwn.table();
 		table.addHeaders([

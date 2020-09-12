@@ -1,8 +1,6 @@
 /** Base file to reduce the amount of boilerplate code in each file */
 
-
 const fs = require('fs');
-const util = require('util');
 const path = require('path');
 const assert = require('assert');
 
@@ -78,41 +76,49 @@ const bot = new mwn({
 
 bot.initOAuth();
 
-const mysql = require('mysql');
+const mysql = require('mysql2/promise');
 
-const sql = mysql.createConnection({
-	host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
-	port: 3306,
-	user: auth.db_user,
-	password: auth.db_password,
-	database: 'enwiki_p'
-});
-
-/**
- * Wrapper around sql.query that returns a promise
- * and stringifies non-null items in output.
- */
-sql.queryBot = function(query) {
-	const promisifiedfn = util.promisify(sql.query).bind(sql);
-	return promisifiedfn(query).then(results => {
-		return results.map(row => {
+class db {
+	async connect() {
+		this.conn = await mysql.createConnection({
+			host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
+			port: 3306,
+			user: auth.db_user,
+			password: auth.db_password,
+			database: 'enwiki_p'
+		});
+		return this;
+	}
+	async query(...args) {
+		const result = await this.conn.query(...args);
+		return result[0].map(row => {
 			Object.keys(row).forEach(prop => {
-				if (row[prop]) { // not null
+				if (row[prop]) { 
 					row[prop] = row[prop].toString();
 				}
 			});
 			return row;
 		});
-	});
-};
-
-sql.getReplagHours = async function() {
-	const lastrev = await sql.queryBot(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
-	const lastrevtime = new bot.date(lastrev[0].ts);
-	if (new bot.date().isAfter(lastrevtime.add(1, 'day'))) {
-		return Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60);
+	}
+	async getReplagHours() {
+		const lastrev = await this.query(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
+		const lastrevtime = new bot.date(lastrev[0].ts);
+		this.replagHours = Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60);
+		return this.replagHours;
+	}
+	/**
+	 * Return replag hatnote wikitext. Remember getReplagHours() must have been called before.
+	 * @param {number} threshold - generate message only if replag hours is greater than this
+	 * @returns {string}
+	 */
+	makeReplagMessage(threshold) {
+		return this.replagHours > threshold ? `{{hatnote|Replica database lag is high. Changes newer than ${this.replagHours} hours may not be reflected.}}\n` : '';
+	}
+	end() {
+		this.conn.end();
 	}
 }
+
 
 const utils = {
 	saveObject: function(filename, obj) {
@@ -147,4 +153,4 @@ const utils = {
 };
 
 // export everything
-module.exports = { bot, mwn, sql, mysql, fs, util, utils, assert, argv, xdate, log, emailOnError };
+module.exports = { bot, mwn, db, mysql, fs, utils, assert, argv, xdate, log, emailOnError };

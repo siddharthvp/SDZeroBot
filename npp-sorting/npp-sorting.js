@@ -1,4 +1,4 @@
-const {log, argv, mwn, bot, sql, utils, emailOnError} = require('../botbase');
+const {log, argv, mwn, bot, db, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 process.chdir(__dirname);
@@ -11,15 +11,16 @@ process.chdir(__dirname);
 
 	await bot.getTokensAndSiteInfo();
 
-	let replagHours = null;
+	let sql;
 	
 	var revidsTitles, tableInfo;
 	if (argv.nodb) {
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
-		replagHours = await sql.getReplagHours();
-		const result = await sql.queryBot(`
+		sql = await new db().connect();
+		await sql.getReplagHours();
+		const result = await sql.query(`
 			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
 			FROM pagetriage_page
 			JOIN page on page_id = ptrp_page_id
@@ -272,9 +273,7 @@ process.chdir(__dirname);
 
 	/* TOPICAL SUBPAGES */
 
-	let replagMessage = replagHours > 12 ? 
-		`{{hatnote|Replica database lag is high. Changes newer than ${replagHours} hours may not be reflected.}}` :
-		'';
+	let replagMessage = sql ? sql.makeReplagMessage(12) : '';
 
 	var createSubpage = function(topic) {
 		var pagetitle = topic;
@@ -287,7 +286,7 @@ process.chdir(__dirname);
 			}
 		}
 		content += `{{User:SDZeroBot/NPP sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}
-${replagMessage ? `${replagMessage}\n`: ''}
+${replagMessage}
 {| class="wikitable sortable"
 |-
 ! scope="col" style="width: 5em;" | Created
