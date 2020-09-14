@@ -8,6 +8,8 @@ let data = {};
 let revidmap = {};
 
 log(`[i] Started`);
+await bot.getTokensAndSiteInfo();
+
 for await (let json of bot.continuedQueryGen({
 	"action": "query",
 	"prop": "revisions|description",
