@@ -10,6 +10,9 @@ let revidmap = {};
 log(`[i] Started`);
 await bot.getTokensAndSiteInfo();
 
+const extlinkrgx = /\[(?:https?:)?\/\//;
+const extlinksectionrgx = /==\s*External [Ll]inks\s*==/;
+
 for await (let json of bot.continuedQueryGen({
 	"action": "query",
 	"prop": "revisions|description",
@@ -22,24 +25,19 @@ for await (let json of bot.continuedQueryGen({
 	"gcmlimit": "500"
 })) {
 	for (let pg of json.query.pages) {
+		let text = pg.revisions[0].content;
 		data[pg.title] = {
-			extract: TextExtractor.getExtract(pg.revisions[0].content, 200, 400),
+			extract: TextExtractor.getExtract(text, 200, 400),
 			desc: pg.description,
 			revid: pg.revisions[0].revid
+		}
+		if (!extlinkrgx.test(text) && !extlinksectionrgx.test(text)) {
+			data[pg.title].nolinks = true;	
 		}
 		revidmap[pg.revisions[0].revid] = pg.title;
 	}
 }
 log(`[S] got data from API`);
-
-
-for (let title of Object.keys(data)) {
-	let links = await new bot.page(title).externallinks();
-	if (links.length === 0) {
-		data[title].nolinks = true;
-	}
-}
-log(`[S] got extlinks data from API`);
 
 const oresdata = await OresUtils.queryRevisions(['drafttopic'], Object.values(data).map(e => e.revid));
 
@@ -68,8 +66,8 @@ menwithlinks.addHeaders(headers);
 let wcount = 0, mcount = 0;
 for (let [title, {extract, woman, desc, nolinks}] of Object.entries(data)) {
 	if (!woman) {
-		if (nolinks) {
-			mcount++;
+		mcount++;
+		if (nolinks) {	
 			mennolinks.addRow([
 				`[[${title}]] ${desc ? `<small>${desc}</small>` : ''}`,
 				extract
