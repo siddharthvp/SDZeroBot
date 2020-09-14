@@ -1,5 +1,5 @@
 const {bot, mwn, log} = require('../botbase');
-const TextExtractor = require('../TextExtractor');
+const TextExtractor = require('../TextExtractor')(bot);
 const OresUtils = require('../OresUtils');
 
 (async function() {
