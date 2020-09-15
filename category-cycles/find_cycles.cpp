@@ -48,7 +48,7 @@ int main() {
     int parent, sub;
     while(1) {
         cin >> sub;
-        if (sub == -1) {
+        if (sub == -1) { // end of input
             break;
         }
         cin >> parent;
