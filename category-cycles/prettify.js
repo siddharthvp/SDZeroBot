@@ -23,7 +23,7 @@ for await (let json of bot.massQueryGen({
 
 	log(`[+] Got titles for 5000 pages`);
 	for (let pg of json.query.pages) {
-		map[pg.pageid] = pg.title;
+		map[pg.pageid] = pg.title.slice('Category:'.length);
 	}
 
 }
