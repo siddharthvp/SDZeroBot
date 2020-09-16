@@ -12,7 +12,7 @@ process.chdir(__dirname);
 	await bot.getTokensAndSiteInfo();
 
 	let sql;
-	
+
 	var revidsTitles, tableInfo;
 	if (argv.nodb) {
 		revidsTitles = require('./revidsTitles');
@@ -121,6 +121,10 @@ process.chdir(__dirname);
 			return;
 		}
 		var text = page.revisions[0].content;
+		if (!tableInfo[page.title]) {
+			log(`[E] tableInfo[${page.title}] undefined`);
+			continue;
+		}
 		tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
 		// NOTE: additional processing of extracts at the end of createSubpage() function
 		if (tableInfo[page.title].extract === '') { // empty extract is suspicious
