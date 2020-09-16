@@ -14,6 +14,7 @@ for await (let json of bot.continuedQueryGen({
 	"generator": "categorymembers",
 	"rvprop": "content",
 	"rvsection": "0",
+	"rvslots": "main",
 	"gcmtitle": "Category:Declined_AfC_submissions",
 	"gcmlimit": "500",
 	"gcmnamespace": "118",
@@ -25,7 +26,7 @@ for await (let json of bot.continuedQueryGen({
 
 	for (let pg of json.query.pages) {
 		tableInfo[pg.title] = {
-			extract: TextExtractor.getExtract(pg.revisions[0].content, 250, 500),
+			extract: TextExtractor.getExtract(pg.revisions[0].slots.main.content, 250, 500),
 			desc: pg.description
 		}
 	}
