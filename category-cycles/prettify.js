@@ -17,11 +17,10 @@ log(`[+] ${Object.keys(map).length} page IDs`);
 
 for await (let json of bot.massQueryGen({
 	action: 'query',
-	pageids: Object.keys(map),
-	limit: 'max'
+	pageids: Object.keys(map)
 }, 'pageids')) {
 
-	log(`[+] Got titles for 5000 pages`);
+	log(`[+] Got titles for 500 pages`);
 	for (let pg of json.query.pages) {
 		map[pg.pageid] = pg.title.slice('Category:'.length);
 	}
