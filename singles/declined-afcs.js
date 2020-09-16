@@ -20,8 +20,8 @@ for await (let json of bot.continuedQueryGen({
 	"gcmnamespace": "118",
 	"gcmsort": "timestamp",
 	"gcmdir": "ascending",
-	"gcmstart": new bot.date().subtract(24, 'hours').setHours(0, 0, 0, 0),
-	"gcmend": new bot.date().setHours(0, 0, 0, 0)
+	"gcmstart": new bot.date().subtract(24, 'hours').setHours(0, 0, 0, 0).toISOString(),
+	"gcmend": new bot.date().setHours(0, 0, 0, 0).toISOString()
 })) {
 
 	for (let pg of json.query.pages) {
