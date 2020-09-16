@@ -55,10 +55,12 @@
 
 0   5   *   *   *  jsub -quiet -N job-gan		-mem 2g  ~/bin/node ~/SDZeroBot/gan-sorting/gan-sorting.js
 
-10  0   *   *   1  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/g13-watch/g13-soon.js
-10  0   *   *   4  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/g13-watch/g13-soon.js
+10  0   *   *   1  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/singles/g13-soon.js
+10  0   *   *   4  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/singles/g13-soon.js
 
-20  0   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/g13-watch/g13-eligible.js
+20  0   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/singles/g13-eligible.js
+
+30  0   *   *   *  jsub -quiet -N job-dec-afc 	-mem 1g  ~/bin/node ~/SDZeroBot/singles/declined-afcs.js
 
 5   0   *   *   2  jsub -quiet -N job-draft 	-mem 2g  ~/bin/node ~/SDZeroBot/draftify-watch/draftify-watch.js
 

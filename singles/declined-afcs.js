@@ -19,7 +19,8 @@ for await (let json of bot.continuedQueryGen({
 	"gcmnamespace": "118",
 	"gcmsort": "timestamp",
 	"gcmdir": "ascending",
-	"gcmstart": new bot.date().subtract(24, 'hours').toISOString()
+	"gcmstart": new bot.date().subtract(24, 'hours').setHours(0, 0, 0, 0),
+	"gcmend": new bot.date().setHours(0, 0, 0, 0)
 })) {
 
 	for (let pg of json.query.pages) {
@@ -63,7 +64,7 @@ for (let [title, {extract, desc}] of Object.entries(tableInfo)) {
 }
 
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|date=${new bot.date().format('D MMMM YYYY')}|ts=~~~~~}}
+`{{/header|count=${Object.keys(tableInfo).length}|date=${new bot.date().subtract(24, 'hours').format('D MMMM YYYY')}|ts=~~~~~}}
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 
