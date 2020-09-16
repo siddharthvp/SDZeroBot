@@ -1,6 +1,6 @@
 // start job using: npm run start
 
-const {bot, log, emailOnError} = require('../botbase');
+const {bot, log} = require('../botbase');
 const sqlite3 = require('sqlite3');
 const sqlite = require('sqlite');
 
@@ -21,7 +21,7 @@ async function main() {
 	const res = await db.get(`SELECT * FROM sqlite_master WHERE type='table'`);
 	if (!res) {
 		await db.run(`CREATE TABLE g13(
-			name varbinary(255) unique, 
+			name varbinary(255) unique,
 			desc varbinary(500),
 			excerpt varbinary(1500),
 			ts int not null

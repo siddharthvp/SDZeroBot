@@ -356,6 +356,4 @@ ${replagMessage}
 		log('[i] Finished');
 	});
 
-})().catch(err => {
-	emailOnError(err, 'npp-sorting');
-});
+})().catch(err => emailOnError(err, 'npp-sorting'));

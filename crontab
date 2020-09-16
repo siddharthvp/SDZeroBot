@@ -51,20 +51,21 @@
 30  17  *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
 30  21  *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
 
-0   0   *   *   *  jsub -quiet -N job-grid		-mem 2g  ~/bin/node ~/SDZeroBot/grid-afd-prod.js
+0   0   *   *   *  jsub -quiet -N job-grid		-mem 2g  ~/bin/node ~/SDZeroBot/tasks/grid-afd-prod.js
 
-0   5   *   *   *  jsub -quiet -N job-gan		-mem 2g  ~/bin/node ~/SDZeroBot/gan-sorting/gan-sorting.js
+0   5   *   *   *  jsub -quiet -N job-gan		-mem 2g  ~/bin/node ~/SDZeroBot/tasks/gan-sorting.js
 
-10  0   *   *   1  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/singles/g13-soon.js
-10  0   *   *   4  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/singles/g13-soon.js
+10  0   *   *   1  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-soon.js
+10  0   *   *   4  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-soon.js
 
-20  0   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/singles/g13-eligible.js
+20  0   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-eligible.js
 
-30  0   *   *   *  jsub -quiet -N job-dec-afc 	-mem 1g  ~/bin/node ~/SDZeroBot/singles/declined-afcs.js
+5   0   *   *   2  jsub -quiet -N job-draft 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/draftify-watch.js
 
-5   0   *   *   2  jsub -quiet -N job-draft 	-mem 2g  ~/bin/node ~/SDZeroBot/draftify-watch/draftify-watch.js
+5   0   *   *   3  jsub -quiet -N job-pwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/prod-watch.js
 
-5   0   *   *   3  jsub -quiet -N job-pwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/prod-watch/prod-watch.js
-0   0   *   *   *  jsub -quiet -N job-rwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/redirectify-watch/redirectify-watch.js
+0   0   *   *   *  jsub -quiet -N job-rwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/redirectify-watch.js
+
+30  3   *   *   2  jsub -quiet -N job-draft 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/peer-review.js
 
 0   0   *   *   *  jsub -quiet -N job-g13-save 	-mem 2g	 ~/bin/node ~/SDZeroBot/g13-watch/make-report.js

@@ -1,5 +1,5 @@
-const {mwn, bot, emailOnError} = require('./botbase');
-const TextExtractor = require('./TextExtractor')(bot);
+const {mwn, bot, emailOnError} = require('../botbase');
+const TextExtractor = require('../TextExtractor')(bot);
 
 var months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 function pad(num) {
@@ -15,7 +15,7 @@ function parseArticleForAfD(pagetext) {
 		count: 1
 	});
 	var afd_template = templates[0], afd_date, afd_page;
-	if (afd_template) { 
+	if (afd_template) {
 		if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
 			afd_date = `${afd_template.getValue('year')}-${pad(months.indexOf(afd_template.getValue('month')))}-${pad(afd_template.getValue('day'))}`;
 		}
@@ -42,7 +42,7 @@ function parseArticleForPROD(pagetext) {
 	var afdtable = {}, prodtable = {};
 
 	await bot.getTokensAndSiteInfo();
-	
+
 	await bot.continuedQuery({
 		"action": "query",
 		"prop": "revisions|description",
@@ -59,7 +59,7 @@ function parseArticleForPROD(pagetext) {
 			var [afd_page, afd_date] = parseArticleForAfD(text)
 			afdtable[pg.title] = {
 				afd_date,
-				afd_page, 
+				afd_page,
 				shortdesc: pg.description,
 				extract: TextExtractor.getExtract(text)
 			};
@@ -90,34 +90,34 @@ function parseArticleForPROD(pagetext) {
 	var fnMakeTableAfD = function(afdtable) {
 		var table = new mwn.table({ sortable: true });
 		table.addHeaders([
-			'scope="col" style="width: 5em" | Date', 
-			'scope="col" style="width: 18em" | Article', 
+			'scope="col" style="width: 5em" | Date',
+			'scope="col" style="width: 18em" | Article',
 			'Extract'
 		]);
 		Object.entries(afdtable).forEach(([title, data]) => {
-			var datefield = data.afd_page ? 
+			var datefield = data.afd_page ?
 				`[[Wikipedia:Articles for deletion/${data.afd_page}|${data.afd_date}]]` :
 				data.afd_date;
 			var articlefield = `[[${title}]]` + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
 			table.addRow([datefield, articlefield, data.extract ]);
 		});
-		return `<templatestyles src="User:SD0001/grid-styles.css" />\n` + 
-			`:${Object.keys(afdtable).length} articles at AfD as of {{subst:#time:j F Y}} — [[User:SDZeroBot|SDZeroBot]]\n\n` + 
+		return `<templatestyles src="User:SD0001/grid-styles.css" />\n` +
+			`:${Object.keys(afdtable).length} articles at AfD as of {{subst:#time:j F Y}} — [[User:SDZeroBot|SDZeroBot]]\n\n` +
 			TextExtractor.finalSanitise(table.getText());
 	};
 	var fnMakeTablePROD = function(prodtable) {
 		var table = new mwn.table({ sortable: true });
 		table.addHeaders([
-			'scope="col" style="width: 5em" | Date', 
-			'scope="col" style="width: 18em" | Article', 
+			'scope="col" style="width: 5em" | Date',
+			'scope="col" style="width: 18em" | Article',
 			'Extract'
 		]);
 		Object.entries(prodtable).forEach(([title, data]) => {
 			var articlefield = `[[${title}]]` + (data.shortdesc ? ` <small>(${data.shortdesc})</small>` : '');
 			table.addRow([data.prod_date, articlefield, data.extract ]);
 		});
-		return `<templatestyles src="User:SD0001/grid-styles.css" />\n` + 
-			`:${Object.keys(prodtable).length} articles proposed for deletion as of {{subst:#time:j F Y}} — [[User:SDZeroBot|SDZeroBot]]\n\n` + 
+		return `<templatestyles src="User:SD0001/grid-styles.css" />\n` +
+			`:${Object.keys(prodtable).length} articles proposed for deletion as of {{subst:#time:j F Y}} — [[User:SDZeroBot|SDZeroBot]]\n\n` +
 			TextExtractor.finalSanitise(table.getText());
 	};
 

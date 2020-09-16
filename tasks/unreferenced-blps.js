@@ -32,12 +32,25 @@ for await (let json of bot.continuedQueryGen({
 			revid: pg.revisions[0].revid
 		}
 		if (!extlinkrgx.test(text) && !extlinksectionrgx.test(text)) {
-			data[pg.title].nolinks = true;	
+			data[pg.title].nolinks = true;
 		}
 		revidmap[pg.revisions[0].revid] = pg.title;
 	}
 }
 log(`[S] got data from API`);
+
+
+
+
+// {
+// 	"action": "wbgetclaims",
+// 	"format": "json",
+// 	"entity": "Q1394070",
+// 	"property": "P21",
+// 	"props": "",
+// 	"formatversion": "2"
+// }
+
 
 const oresdata = await OresUtils.queryRevisions(['drafttopic'], Object.values(data).map(e => e.revid));
 
@@ -49,12 +62,18 @@ for (let [revid, {drafttopic}] of Object.entries(oresdata)) {
 	}
 }
 
+
+
+
+
+
+
 let womennolinks = new mwn.table();
 let womenwithlinks = new mwn.table();
 let mennolinks = new mwn.table();
 let menwithlinks = new mwn.table();
 let headers = [
-	'Article',
+	{label: 'Article', style: 'width: 17em'},
 	'Extract'
 ];
 
@@ -67,34 +86,34 @@ let wcount = 0, mcount = 0;
 for (let [title, {extract, woman, desc, nolinks}] of Object.entries(data)) {
 	if (!woman) {
 		mcount++;
-		if (nolinks) {	
+		if (nolinks) {
 			mennolinks.addRow([
-				`[[${title}]] ${desc ? `<small>${desc}</small>` : ''}`,
+				`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
 				extract
 			]);
 		} else {
 			menwithlinks.addRow([
-				`[[${title}]] ${desc ? `<small>${desc}</small>` : ''}`,
+				`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
 				extract
 			]);
-		}	
+		}
 	} else {
 		wcount++;
 		if (nolinks) {
 			womennolinks.addRow([
-				`[[${title}]] ${desc ? `<small>${desc}</small>` : ''}`,
+				`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
 				extract
 			]);
 		} else {
 			womenwithlinks.addRow([
-				`[[${title}]] ${desc ? `<small>${desc}</small>` : ''}`,
+				`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
 				extract
 			]);
 		}
-	}	
+	}
 }
 
-let wikitext = 
+let wikitext =
 `${wcount} unreferenced woman BLPs -- SDZeroBOT (last updated ~~~~~)
 
 === No external links ===
@@ -106,7 +125,7 @@ ${TextExtractor.finalSanitise(womenwithlinks.getText())}
 
 await bot.save('User:SDZeroBot/Unreferenced BLPs/Women', wikitext, 'Updating');
 
-wikitext = 
+wikitext =
 `${mcount} unreferenced BLPs of men -- SDZeroBOT (last updated ~~~~~)
 
 === No external links ===

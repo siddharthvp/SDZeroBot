@@ -21,7 +21,7 @@ for await (let json of bot.continuedQueryGen({
 	"gcmsort": "timestamp",
 	"gcmdir": "ascending",
 	"gcmstart": new bot.date().subtract(24, 'hours').setHours(0, 0, 0, 0).toISOString(),
-	"gcmend": new bot.date().setHours(0, 0, 0, 0).toISOString()
+	"gcmend": new bot.date().setHours(0, 0, 0, 0).toISOString()India Today. Retrieved 21 August 2020.
 })) {
 
 	for (let pg of json.query.pages) {
