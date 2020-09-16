@@ -17,7 +17,7 @@ log(`[+] ${Object.keys(map).length} page IDs`);
 
 for await (let json of bot.massQueryGen({
 	action: 'query',
-	pageids: [...map],
+	pageids: Object.keys(map),
 	limit: 'max'
 }, 'pageids')) {
 
