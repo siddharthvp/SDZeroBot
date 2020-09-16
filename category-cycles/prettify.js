@@ -13,14 +13,14 @@ for (let cycle of cycles) {
 	}
 }
 
-log(`[+] ${Object.keys(map).length} page IDs`);
+log(`[+] Detected ${cycles.length} category cycles involving a total of ${Object.keys(map).length} unique categories. Showing first 5000 lines of output...`);
 
+// Resolve titles from page IDs, 500 at a time
 for await (let json of bot.massQueryGen({
 	action: 'query',
 	pageids: Object.keys(map)
 }, 'pageids')) {
 
-	log(`[+] Got titles for 500 pages`);
 	for (let pg of json.query.pages) {
 		map[pg.pageid] = pg.title.slice('Category:'.length);
 	}

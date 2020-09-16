@@ -11,4 +11,4 @@ g++ find_cycles.cpp
 
 /data/project/sdzerobot/bin/node prettify.js > cycles_p.txt
 
-head -5000 cycles_p.txt > /data/project/sdzerobot/www/static/output_pretty_trunc.txt
+head -5000 cycles_p.txt > /data/project/sdzerobot/www/static/cyclic_categories.txt
