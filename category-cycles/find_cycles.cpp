@@ -12,8 +12,9 @@ unordered_map<int,int> edgeTo;
 int numCycles = 0;
 long long totalCycleSize = 0;
 
-void dfs(int v) {
+bool first = true;
 
+void dfs(int v) {
     visited.insert(v);
     onStack.insert(v);
     for (int i : graph[v]) {
@@ -21,19 +22,23 @@ void dfs(int v) {
             edgeTo[i] = v;
             dfs(i);
         } else if (onStack.find(i) != onStack.end()) {
-            cout << "Found cycle:\n";
+            if (first) {
+                cout << "[";
+                first = false;
+            } else {
+                cout << ",[";
+            }
             numCycles++, totalCycleSize++;
             int x = v;
             while (x != i) {
-                cout << x << " <- ";
+                cout << x << ",";
                 x = edgeTo[x];
                 totalCycleSize++;
             }
-            cout << i << endl;
+            cout << i << "]";
         }
     }
     onStack.erase(onStack.find(v));
-
 }
 
 int main() {
@@ -54,13 +59,15 @@ int main() {
         cin >> parent;
         cl.insert({ parent, sub });
     }
-    cout << "Finished reading inputs...\n";
+    // cout << "Finished reading inputs...\n";
 
     // Convert list of edges representation to adjacency list representation
     for (auto p: cl) {
         graph[p.first].insert(p.second);
     }
-    cout << "Finished converting list of edges to adjacency list...\n";
+    // cout << "Finished converting list of edges to adjacency list...\n";
+
+    cout << "[";
 
     // Begin DFS
     for (auto p: graph) {
@@ -68,7 +75,9 @@ int main() {
             dfs(p.first);
         }
     }
-    cout << "Done: found " + to_string(numCycles) + " cycles. Each cycle contains an average of " + to_string(totalCycleSize/numCycles) + " categories\n";
+
+    cout << "]";
+    // cout << "Done: found " + to_string(numCycles) + " cycles. Each cycle contains an average of " + to_string(totalCycleSize/numCycles) + " categories\n";
 }
 
 

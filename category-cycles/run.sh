@@ -7,4 +7,8 @@ echo "Got edges\n"
 echo -e "\n-1" >> edges.out
 
 g++ find_cycles.cpp
-./a.out < edges.out > cycles.out
+./a.out < edges.out > cycles.json
+
+/data/project/sdzerobot/bin/node prettify.js > cycles_p.txt
+
+head -5000 cycles_p.txt > /data/project/sdzerobot/www/static/output_pretty_trunc.txt
