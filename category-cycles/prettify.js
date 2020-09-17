@@ -50,7 +50,11 @@ for (let cycle of cycles) {
 			.then(() => log(`[+] Saved ${wiki_page_name(page_number)}`));
 		page_number++;
 		page = '';
+		if (page_number > 100) {
+			break;
+		}
 	}
 }
+log(`[i] Finished`);
 
 })();
