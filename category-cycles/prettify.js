@@ -46,7 +46,7 @@ let wiki_page_name = num => `User:SDZeroBot/Category cycles/${num}`
 for (let cycle of cycles) {
 	page += '*' + cycle.map(e => `[[Category:${map[e]}|${map[e]}]]`).join(' -> ') + '\n';
 	if (page.length > PAGE_SIZE_MAX_LIMIT) {
-		bot.save(wiki_page_name(page_number), page)
+		await bot.save(wiki_page_name(page_number), page)
 			.then(() => log(`[+] Saved ${wiki_page_name(page_number)}`));
 		page_number++;
 		page = '';
