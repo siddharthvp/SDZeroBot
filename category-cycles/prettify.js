@@ -1,6 +1,8 @@
-const {bot, log, fs} = require('../botbase');
+const {bot, log} = require('../botbase');
 
 const PAGE_SIZE_MAX_LIMIT = 60000;
+
+process.chdir(__dirname);
 
 // sort cycles by length as we're more interested in the smaller cycles
 let cycles = require('./cycles.json').sort((a, b) => a.length - b.length);
@@ -38,20 +40,16 @@ for await (let json of bot.massQueryGen({
 }
 
 let page_number = 1;
-let page_size = 0;
-let output_file = num => `cycles_${num}.txt`;
+let page = 0;
 let wiki_page_name = num => `User:SDZeroBot/Category cycles/${num}`
 
 for (let cycle of cycles) {
-	
-	let output_str = '*' + cycle.map(e => `[[Category:${map[e]}|${map[e]}]]`).join(' -> ') + '\n';
-	
-	fs.writeFileSync(output_file(page_number), output_str, console.log);
-	page_size += output_str.length;
-	if (page_size > PAGE_SIZE_MAX_LIMIT) {
-		bot.save(wiki_page_name(page_number), fs.readFileSync(output_file(page_number)).toString()).then(() => log(`[+] Saved ${wiki_page_name(page_number)}`));
+	page += '*' + cycle.map(e => `[[Category:${map[e]}|${map[e]}]]`).join(' -> ') + '\n';
+	if (page.length > PAGE_SIZE_MAX_LIMIT) {
+		bot.save(wiki_page_name(page_number), page)
+			.then(() => log(`[+] Saved ${wiki_page_name(page_number)}`));
 		page_number++;
-		page_size = 0;
+		page = '';
 	}
 }
 
