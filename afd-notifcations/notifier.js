@@ -24,6 +24,8 @@ class Notifier {
 			`! scope="col" style="width: 14em" | Comment`
 		]);
 
+		notifier.notificationScheme = new Map();
+
 		try {
 			for (let afd of Object.entries(notifier.afds)) {
 				await notifier.processAfD(afd);
@@ -31,10 +33,10 @@ class Notifier {
 		} catch(e) {
 			emailOnError(e, 'notifier');
 		} finally {
+			await notifier.notifyUsers();
 			let wikitext = `~~~~~\n\n${notifier.table.getText()}`;
 			bot.save('User:SDZeroBot/AfD notifier/log', wikitext, 'Logging');
 
-			utils.saveObject('notifications', notifier.notifications);
 			log(notifier.aborts);
 			utils.saveObject('abort-stats', notifier.aborts);
 		}
@@ -133,7 +135,6 @@ class Notifier {
 			articles.push(article);
 		}
 
-		this.notifications = [];
 		this.aborts = {
 			'nobots': 0,
 			'already-notified': 0,
@@ -161,10 +162,9 @@ class Notifier {
 				}
 
 				let cmt = '';
-				await this.notifyUser(name, article, afd).then(() => {
+				await this.checkWhetherToNotify(name, article, afd).then(() => {
 					log(`[T] Notified ${name} about ${article}`);
 					cmt = 'Sent notification';
-					this.notifications.push({name, article, afd});
 				}, (abortreason) => {
 					if (this.aborts[abortreason] !== undefined) {
 						this.aborts[abortreason]++;
@@ -341,7 +341,7 @@ class Notifier {
 
 
 	// XXX: everything here can be done for multiple users at once, rewrite this
-	async notifyUser(username, article, afd) {
+	async checkWhetherToNotify(username, article, afd) {
 		let user = new bot.user(username);
 		if (/bot\b/i.test(username)) {
 			log(`[W] Didn't notify ${username} as user is bot?`);
@@ -386,26 +386,41 @@ class Notifier {
 			}
 		}
 
-		if (!argv.dry) {
-			log(`[+] Notifying ${username}`);
-
-			// bot.newSection() doesn't really check out
-			await bot.request({
-				action: 'edit',
-				title: 'User talk:' + username,
-				bot: 1,
-				summary: `Nomination of [[${article}]] for deletion at [[${afd}|AfD]]`,
-				appendtext: `\n\n{{subst:User:SDZeroBot/AfD notifier/template|1=${article}|afdpage=${afd}}}`,
-				token: bot.csrfToken
-			}).then(() => {
-				// log(`[S] Notified ${username}`);
-			}, err => { // errors are logged, don't cause task to stop
-				log(`[E] ${username} couldn't be notified due to error: ${err.code}: ${err.info}`);
-			});
-			await bot.sleep(5000);
+		if (this.notificationScheme.has({username, afd})) {
+			this.notificationScheme.get({username, afd}).push(article);
+		} else {
+			this.notificationScheme.set({username, afd}, [article]);
 		}
 
 	}
+
+	async notifyUsers() {
+		for (let [{username, afd}, articles] of this.notificationScheme.entries()) {
+			log(`[+] Notifying ${username} about ${afd}`);
+			if (!argv.dry) {
+				// bot.newSection() doesn't really check out
+				await bot.request({
+					action: 'edit',
+					title: 'User talk:' + username,
+					bot: 1,
+					summary: articles.length === 1 ?
+						`Nomination of [[${articles[0]}]] for deletion at [[${afd}|AfD]]` :
+						`Nomination of [[${articles[0]}]] and other articles for deletion at [[${afd}|AfD]]`,
+					appendtext: articles.length === 1 ?
+						`\n\n{{subst:User:SDZeroBot/AfD notifier/template|1=${articles[0]}|afdpage=${afd}}}` :
+						`\n\n{{subst:User:SDZeroBot/AfD notifier/templatemulti|afdpage=${afd}` + 
+							articles.map((e, i) => `|${i}=${e}`).join('') + '}}',
+					token: bot.csrfToken
+				}).then(() => {
+					// log(`[S] Notified ${username}`);
+				}, err => { // errors are logged, don't cause task to stop
+					log(`[E] ${username} couldn't be notified due to error: ${err.code}: ${err.info}`);
+				});
+				await bot.sleep(5000);
+			}
+		}
+	}
+
 }
 
 Notifier.init().catch(err => emailOnError(err, 'afd-notifier'));
