@@ -284,7 +284,7 @@ process.chdir(__dirname);
 				`{{Special:PrefixIndex/Wikipedia:AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
 			}
 		}
-		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n${replagMessage}`;
+		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n${replagMessage}`;
 
 		var table = new mwn.table();
 		table.addHeaders([

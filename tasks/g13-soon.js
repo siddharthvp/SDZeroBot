@@ -174,7 +174,7 @@ const OresUtils = require('../OresUtils');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
 	var count = Object.keys(revidsTitles).length;
-	var pagetext = `{{/header|count=${count}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}\n`;
+	var pagetext = `{{/header|count=${count}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
 
 	pagetext += sql.makeReplagMessage(72);
 

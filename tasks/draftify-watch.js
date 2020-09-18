@@ -146,7 +146,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 		]);
 	}
 	
-	let text = `{{/header|count=${Object.keys(tableInfo).length}|date1=${ts1.format('D MMMM YYYY')}|date2=${ts2.format('D MMMM YYYY')}|ts=~~~~~}}` +
+	let text = `{{/header|count=${Object.keys(tableInfo).length}|date1=${ts1.format('D MMMM YYYY')}|date2=${ts2.format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>` +
 	`\n\n` + TextExtractor.finalSanitise(maintable.getText()) + 
 	`\n\n==Moved back or deleted==` + 
 	`\n` + TextExtractor.finalSanitise(footertable.getText());

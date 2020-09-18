@@ -285,7 +285,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 		
 		let text =
 		
-		`{{User:SDZeroBot/PROD Watch/header|count=${totalcount}|date=${date.format('D MMMM YYYY')}|ts=~~~~~}}
+		`{{User:SDZeroBot/PROD Watch/header|count=${totalcount}|date=${date.format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
 		
 		==De-prods (${deprodded.size})==
 		${deprodtable}

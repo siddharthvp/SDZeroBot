@@ -114,7 +114,7 @@ for (let [title, {extract, woman, desc, nolinks}] of Object.entries(data)) {
 }
 
 let wikitext =
-`${wcount} unreferenced woman BLPs -- SDZeroBOT (last updated ~~~~~)
+`${wcount} unreferenced woman BLPs -- SDZeroBOT (last updated ~~~~~)<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
 
 === No external links ===
 ${TextExtractor.finalSanitise(womennolinks.getText())}

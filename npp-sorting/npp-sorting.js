@@ -242,7 +242,7 @@ process.chdir(__dirname);
 		return bot.edit('User:SDZeroBot/NPP sorting', function(rev) {
 			var text = rev.content;
 			text = text.replace(/\{\{\/header.*\}\}/,
-				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}`);
+				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>`);
 
 			var sorterKeys = Object.keys(sorter);
 

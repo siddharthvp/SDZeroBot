@@ -228,7 +228,7 @@ process.chdir(__dirname);
 	var makeMainPage = function() {
 		var count = Object.keys(revidsTitles).length;
 
-		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
+		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
