@@ -65,6 +65,7 @@ db.each(`
 
 	await page.save(text, 'Updating G13 report').catch(async err => {
 		if (err.code === 'spamblacklist') {
+			console.log(err);
 			for (let site of err.spamblacklist.matches) {
 				text = text.replace(
 					new RegExp('https?:\\/\\/' + site, 'g'),
