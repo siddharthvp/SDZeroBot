@@ -1,3 +1,9 @@
+/**
+ * Reads the output of the database query as STDIN 
+ * and writes a JSON string representing the cycles
+ * to STDOUT.
+ */
+
 #include<iostream>
 #include<unordered_map>
 #include<unordered_set>
@@ -7,10 +13,6 @@ using namespace std;
 unordered_map< int, unordered_set<int> > graph;
 unordered_set<int> visited, onStack;
 unordered_map<int,int> edgeTo;
-
-// globals: counting puroposes only
-int numCycles = 0;
-long long totalCycleSize = 0;
 
 bool first = true;
 
@@ -28,12 +30,10 @@ void dfs(int v) {
             } else {
                 cout << ",[";
             }
-            numCycles++, totalCycleSize++;
             int x = v;
             while (x != i) {
                 cout << x << ",";
                 x = edgeTo[x];
-                totalCycleSize++;
             }
             cout << i << "]";
         }
@@ -77,7 +77,4 @@ int main() {
     }
 
     cout << "]";
-    // cout << "Done: found " + to_string(numCycles) + " cycles. Each cycle contains an average of " + to_string(totalCycleSize/numCycles) + " categories\n";
 }
-
-

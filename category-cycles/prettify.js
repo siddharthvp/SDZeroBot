@@ -1,3 +1,9 @@
+/**
+ * Reads in cycles.json (output of the C++ program),
+ * translates the page IDs to titles using the API,
+ * and writes the output to the wiki as bot user subpages.
+ */
+
 const {bot, log} = require('../botbase');
 
 const PAGE_SIZE_MAX_LIMIT = 60000;

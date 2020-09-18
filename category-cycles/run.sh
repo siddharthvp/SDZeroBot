@@ -9,6 +9,4 @@ echo -e "\n-1" >> edges.out
 g++ find_cycles.cpp
 ./a.out < edges.out > cycles.json
 
-/data/project/sdzerobot/bin/node prettify.js > cycles_p.txt
-
-head -5000 cycles_p.txt > /data/project/sdzerobot/www/static/cyclic_categories.txt
+/data/project/sdzerobot/bin/node prettify.js 
