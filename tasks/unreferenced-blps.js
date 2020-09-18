@@ -1,141 +1,135 @@
 const {bot, mwn, log} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
-const OresUtils = require('../OresUtils');
+
+const wd = new mwn({
+	...bot.options,
+	apiUrl: 'https://www.wikidata.org/w/api.php',
+	hasApiHighLimit: false
+});
+wd.initOAuth();
+wd.options.defaultParams.assert = 'user';
+
+// maxlag is not a problem when merely reading data
+delete bot.options.defaultParams.maxlag;
+delete wd.options.defaultParams.maxlag;
+
+function getGender(title) {
+	return wd.request({
+		"action": "wbgetentities",
+		"format": "json",
+		"sites": "enwiki",
+		"titles": title,
+		"props": "",
+		"languages": "en",
+		"formatversion": "2"
+	}).then(data => {
+		let id = Object.keys(data.entities)[0];
+		return wd.request({
+			"action": "wbgetclaims",
+			"format": "json",
+			"entity": id,
+			"property": "P21",
+			"props": "",
+			"formatversion": "2"
+		});
+	}).then(data => {
+		return data.claims.P21[0].mainsnak.datavalue.value.id === 'Q6581097' ? 'male' : 'female';
+	}).catch(() => {
+		return undefined;
+	});
+}
 
 (async function() {
 
 let data = {};
-let revidmap = {};
 
 log(`[i] Started`);
 await bot.getTokensAndSiteInfo();
-
-const extlinkrgx = /\[(?:https?:)?\/\//;
-const extlinksectionrgx = /==\s*External [Ll]inks\s*==/;
 
 for await (let json of bot.continuedQueryGen({
 	"action": "query",
 	"prop": "revisions|description",
 	"generator": "categorymembers",
 	"rvprop": "ids|content",
+	"rvslots": "main",
 	"rvsection": "0",
 	"gcmtitle": "Category:All unreferenced BLPs",
 	"gcmnamespace": "0",
 	"gcmtype": "page",
 	"gcmlimit": "500"
 })) {
-	for (let pg of json.query.pages) {
-		let text = pg.revisions[0].content;
+	await bot.batchOperation(json.query.pages, function(pg) {
+		log(`[+] Processing ${pg.title}`)
+		let text = pg.revisions[0].slots.main.content;
 		data[pg.title] = {
-			extract: TextExtractor.getExtract(text, 200, 400),
+			extract: TextExtractor.getExtract(text, 200, 500),
 			desc: pg.description,
-			revid: pg.revisions[0].revid
+			revid: pg.revisions[0].revid,
 		}
-		if (!extlinkrgx.test(text) && !extlinksectionrgx.test(text)) {
-			data[pg.title].nolinks = true;
-		}
-		revidmap[pg.revisions[0].revid] = pg.title;
-	}
+		return getGender(pg.title).then(gender => {
+			data[pg.title].gender = gender
+		});
+	}, 50, 1);
 }
-log(`[S] got data from API`);
+log(`[S] got data from the APIs`);
 
-
-
-
-// {
-// 	"action": "wbgetclaims",
-// 	"format": "json",
-// 	"entity": "Q1394070",
-// 	"property": "P21",
-// 	"props": "",
-// 	"formatversion": "2"
-// }
-
-
-const oresdata = await OresUtils.queryRevisions(['drafttopic'], Object.values(data).map(e => e.revid));
-
-log(`[S] got data from ORES`);
-
-for (let [revid, {drafttopic}] of Object.entries(oresdata)) {
-	if (drafttopic.includes("Culture.Biography.Women")) {
-		data[revidmap[revid]].woman = true;
-	}
-}
-
-
-
-
-
-
-
-let womennolinks = new mwn.table();
-let womenwithlinks = new mwn.table();
-let mennolinks = new mwn.table();
-let menwithlinks = new mwn.table();
+let tables = {
+	men: new mwn.table(),
+	women: new mwn.table(),
+	unknown: new mwn.table()
+};
 let headers = [
 	{label: 'Article', style: 'width: 17em'},
 	'Extract'
 ];
 
-womennolinks.addHeaders(headers);
-womenwithlinks.addHeaders(headers);
-mennolinks.addHeaders(headers);
-menwithlinks.addHeaders(headers);
+tables.men.addHeaders(headers);
+tables.women.addHeaders(headers);
 
 let wcount = 0, mcount = 0;
-for (let [title, {extract, woman, desc, nolinks}] of Object.entries(data)) {
-	if (!woman) {
+for (let [title, {extract, gender, desc}] of Object.entries(data)) {
+	let table;
+	if (gender === 'male') {
 		mcount++;
-		if (nolinks) {
-			mennolinks.addRow([
-				`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
-				extract
-			]);
-		} else {
-			menwithlinks.addRow([
-				`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
-				extract
-			]);
-		}
-	} else {
+		table = tables.men;
+	} else if (gender === 'female') {
 		wcount++;
-		if (nolinks) {
-			womennolinks.addRow([
-				`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
-				extract
-			]);
-		} else {
-			womenwithlinks.addRow([
-				`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
-				extract
-			]);
-		}
+		table = tables.women;
+	} else {
+		table = tables.unknown;
 	}
+	table.addRow([
+		`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
+		extract
+	]);
 }
 
+// enable maxlag for writes
+bot.options.defaultParams.maxlag = 5;
+
 let wikitext =
-`${wcount} unreferenced woman BLPs -- SDZeroBOT (last updated ~~~~~)<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
+`${wcount} unreferenced woman BLPs — SDZeroBOT (last updated ~~~~~)<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
 
-=== No external links ===
-${TextExtractor.finalSanitise(womennolinks.getText())}
-
-=== Have external links ===
-${TextExtractor.finalSanitise(womenwithlinks.getText())}
+${TextExtractor.finalSanitise(tables.women.getText())}
 `;
-
 await bot.save('User:SDZeroBot/Unreferenced BLPs/Women', wikitext, 'Updating');
 
 wikitext =
-`${mcount} unreferenced BLPs of men -- SDZeroBOT (last updated ~~~~~)
+`${mcount} unreferenced BLPs of men — SDZeroBOT (last updated ~~~~~)
 
-=== No external links ===
-${TextExtractor.finalSanitise(mennolinks.getText())}
-
-=== Have external links ===
-${TextExtractor.finalSanitise(menwithlinks.getText())}
+${TextExtractor.finalSanitise(tables.men.getText())}
 `;
-
 await bot.save('User:SDZeroBot/Unreferenced BLPs/Men', wikitext, 'Updating');
+
+wikitext =
+`${mcount} unreferenced BLPs (unknown gender) — SDZeroBOT (last updated ~~~~~)
+
+(Please check if the wikidata item has the gender property present.)
+
+${TextExtractor.finalSanitise(tables.unknown.getText())}
+`;
+await bot.save('User:SDZeroBot/Unreferenced BLPs/Unknown gender', wikitext, 'Updating');
+
 
 log(`[i] Finished`);
 
