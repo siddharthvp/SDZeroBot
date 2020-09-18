@@ -386,16 +386,20 @@ class Notifier {
 			}
 		}
 
-		if (this.notificationScheme.has({username, afd})) {
-			this.notificationScheme.get({username, afd}).push(article);
+		let key = `${username}____${afd}`; // Hack: can't really use an array or object as key,
+		// as .has() method doesn't correctly work with non-primitive keys
+
+		if (this.notificationScheme.has(key)) {
+			this.notificationScheme.get(key).push(article);
 		} else {
-			this.notificationScheme.set({username, afd}, [article]);
+			this.notificationScheme.set(key, [article]);
 		}
 
 	}
 
 	async notifyUsers() {
-		for (let [{username, afd}, articles] of this.notificationScheme.entries()) {
+		for (let [username_afd, articles] of this.notificationScheme.entries()) {
+			let [username, afd] = username_afd.split('____');
 			log(`[+] Notifying ${username} about ${afd}`);
 			if (!argv.dry) {
 				// bot.newSection() doesn't really check out
