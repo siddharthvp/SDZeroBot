@@ -1,6 +1,6 @@
 // npm run make
 
-const {bot, log, xdate, emailOnError, mwn} = require('../botbase');
+const {bot, log, emailOnError, mwn} = require('../botbase');
 const sqlite3 = require('sqlite3').verbose();
 
 process.chdir(__dirname);
@@ -23,8 +23,8 @@ table.addHeaders([
 	{label: 'Excerpt'}
 ]);
 
-let end = new xdate();
-let start = new xdate().subtract(24, 'hours');
+let end = new bot.date().setHours(0,0,0,0);
+let start = new bot.date().subtract(24, 'hours').setHours(0,0,0,0);
 
 let count = 0;
 
@@ -43,7 +43,7 @@ db.each(`
 	}
 
 	table.addRow([
-		new xdate(row.ts * 1000).format('YYYY-MM-DD HH:mm'),
+		new bot.date(row.ts * 1000).format('YYYY-MM-DD HH:mm'),
 		page,
 		row.excerpt || ''
 	]);
@@ -51,26 +51,38 @@ db.each(`
 }, async () => {
 
 	let wikitable = table.getText();
-	let yesterday = new xdate().subtract(1, 'day');
+	let yesterday = new bot.date().subtract(1, 'day');
 
 	let page = new bot.page('User:SDZeroBot/G13 Watch');
 
 	let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
-		let date = new xdate(rev.timestamp).subtract(24, 'hours');
+		let date = new bot.date(rev.timestamp).subtract(24, 'hours');
 		return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 	}).join(' - ') + ' - {{history|2=older}}';
 
 	let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}` 
 		+ `\n\n${wikitable}`;
 
-	await page.save(text, 'Updating G13 report');
+	await page.save(text, 'Updating G13 report').catch(async err => {
+		if (err.code === 'spamblacklist') {
+			for (let site of err.spamblacklist.matches) {
+				text = text.replace(
+					new RegExp('https?:\\/\\/' + site, 'g'),
+					site
+				);
+			}
+			await page.save(text, 'Updating G13 report');
+		} else {
+			return Promise.reject(err);
+		} 
+	});
 
 	log(`[i] Finished`);
 
 });
 
 // Delete data more than 3 days old:
-let ts_3days_old = Math.round(new xdate().subtract(72, 'hours').getTime() / 1000);
+let ts_3days_old = Math.round(new bot.date().subtract(72, 'hours').getTime() / 1000);
 
 db.run(`
 	DELETE FROM g13
