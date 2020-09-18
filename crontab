@@ -66,6 +66,8 @@
 
 0   0   *   *   *  jsub -quiet -N job-rwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/redirectify-watch.js
 
-30  3   *   *   2  jsub -quiet -N job-draft 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/peer-review.js
+30  3   *   *   2  jsub -quiet -N job-peer    	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/peer-review.js
+
+0   6   *   *   *  jsub -quiet -N job-unref 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/unreferenced-blps.js
 
 0   0   *   *   *  jsub -quiet -N job-g13-save 	-mem 2g	 ~/bin/node ~/SDZeroBot/g13-watch/make-report.js

@@ -122,7 +122,7 @@ ${TextExtractor.finalSanitise(tables.men.getText())}
 await bot.save('User:SDZeroBot/Unreferenced BLPs/Men', wikitext, 'Updating');
 
 wikitext =
-`${mcount} unreferenced BLPs (unknown gender) — SDZeroBOT (last updated ~~~~~)
+`Unreferenced BLPs (unknown gender) — SDZeroBOT (last updated ~~~~~)
 
 (Please check if the wikidata item has the gender property present.)
 
