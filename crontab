@@ -51,6 +51,8 @@
 30  17  *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
 30  21  *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
 
+0  18  *   *   *   jsub -quiet -N job-notifier -mem 1g   ~/bin/node ~/SDZeroBot/afd-notifications/notifier.js
+
 0   0   *   *   *  jsub -quiet -N job-grid		-mem 2g  ~/bin/node ~/SDZeroBot/tasks/grid-afd-prod.js
 
 0   5   *   *   *  jsub -quiet -N job-gan		-mem 2g  ~/bin/node ~/SDZeroBot/tasks/gan-sorting.js
