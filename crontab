@@ -51,7 +51,7 @@
 30  17  *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
 30  21  *   *   *  jsub -quiet -N job-AFD  -mem 1g   ~/bin/node ~/SDZeroBot/afd-sorting/afd-sorting.js
 
-0  18  *   *   *   jsub -quiet -N job-notifier -mem 1g   ~/bin/node ~/SDZeroBot/afd-notifications/notifier.js
+0   1   *   *   *   jsub -quiet -N job-notifier -mem 1g   ~/bin/node ~/SDZeroBot/afd-notifications/notifier.js
 
 0   0   *   *   *  jsub -quiet -N job-grid		-mem 2g  ~/bin/node ~/SDZeroBot/tasks/grid-afd-prod.js
 
@@ -66,7 +66,7 @@
 
 5   0   *   *   3  jsub -quiet -N job-pwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/prod-watch.js
 
-0   0   *   *   *  jsub -quiet -N job-rwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/redirectify-watch.js
+0   1   *   *   *  jsub -quiet -N job-rwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/redirectify-watch.js
 
 30  3   *   *   2  jsub -quiet -N job-peer    	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/peer-review.js
 
