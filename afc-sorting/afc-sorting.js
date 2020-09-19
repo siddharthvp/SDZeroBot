@@ -257,7 +257,7 @@ process.chdir(__dirname);
 			var size = ` <small>(${sorter[rawtopic].length})</small>`;
 
 			pagetext += `\n== ${topic} ${size} ==\n` +
-				`{{main page|Wikipedia:AfC sorting/${isStarred(topic) ? meta(topic) : topic}}}\n{{div col|colwidth=20em}}\n`;
+				`{{main page|Wikipedia:AfC sorting/${isStarred(topic) ? meta(topic) : topic}}}\n{{div col|colwidth=20em}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
 			sorter[rawtopic].forEach(function(page) {
 				pagetext += '* [[' + page.title + ']]: <small>' + page.quality + '-class' +
 				(!page.issues ? '' : ', ' + page.issues.replace(/<br>/g, ', ')) + '</small>\n';
@@ -284,7 +284,7 @@ process.chdir(__dirname);
 				`{{Special:PrefixIndex/Wikipedia:AfC sorting/${pagetitle}/|stripprefix=1}}\n\n`;
 			}
 		}
-		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n${replagMessage}`;
+		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n${replagMessage}`;
 
 		var table = new mwn.table();
 		table.addHeaders([
