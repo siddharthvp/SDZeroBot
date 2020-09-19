@@ -244,7 +244,7 @@ process.chdir(__dirname);
 		} else {
 			diff = `{{Steady}} no change from last update`;
 		}
-		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}\n`;
+		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
 
 		fs.writeFileSync('./previousRunCount.txt', count);
 
@@ -257,7 +257,7 @@ process.chdir(__dirname);
 			var size = ` <small>(${sorter[rawtopic].length})</small>`;
 
 			pagetext += `\n== ${topic} ${size} ==\n` +
-				`{{main page|Wikipedia:AfC sorting/${isStarred(topic) ? meta(topic) : topic}}}\n{{div col|colwidth=20em}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
+				`{{main page|Wikipedia:AfC sorting/${isStarred(topic) ? meta(topic) : topic}}}\n{{div col|colwidth=20em}}\n`;
 			sorter[rawtopic].forEach(function(page) {
 				pagetext += '* [[' + page.title + ']]: <small>' + page.quality + '-class' +
 				(!page.issues ? '' : ', ' + page.issues.replace(/<br>/g, ', ')) + '</small>\n';
