@@ -59,7 +59,7 @@ await bot.batchOperation(prpages, prpage => {
 			commenters: editors - 1,
 		});
 	}, err => {
-		if (err === 'missingarticle') {
+		if (err.code === 'missingarticle') {
 			Object.assign(data[article], {
 				prmissing: true
 			});

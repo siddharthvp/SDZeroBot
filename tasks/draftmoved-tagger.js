@@ -43,7 +43,7 @@ for (let rev of revisions) {
 					minor: true
 				};
 			}).catch(err => {
-				if (err === 'nocreate-missing') {
+				if (err.code === 'nocreate-missing') {
 					return;
 				} else {
 					throw err;

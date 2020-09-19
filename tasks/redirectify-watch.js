@@ -5,6 +5,9 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 await bot.getTokensAndSiteInfo();
 
+// uffoos, suppress rvslots warning, can't get that to work ...
+bot.options.suppressAPIWarnings = true;
+
 log(`[i] Started`);
 
 let json = await bot.request({
@@ -68,15 +71,14 @@ for (let edit of actions) {
 	
 	try {
 		let revs = await page.history('content', 10, {
-			rvsection: '0',
-			rvslots: 'main'
+			rvsection: '0'
 		});
 		for (let rev of revs) {
-			if (!rev.slots || !rev.slots.main || !rev.slots.main.content) {
+			if (!rev.content) {
 				continue;
 			}
 			if (!isRedirect(rev.content)) {
-				edit.excerpt = TextExtractor.getExtract(rev.slots.main.content, 250, 500);
+				edit.excerpt = TextExtractor.getExtract(rev.content, 250, 500);
 				break;
 			}
 		}
