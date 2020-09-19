@@ -84,7 +84,7 @@ for (let edit of actions) {
 		}
 		shortdesc = await page.getDescription();
 	} catch(err) {
-		if (err === 'missingarticle') {
+		if (err.code === 'missingarticle') {
 			edit.excerpt = `[Page deleted. Can't get extract]`;
 		}  else {
 			log(`[W] Error on fetching history or description: ${err.stack}`);
