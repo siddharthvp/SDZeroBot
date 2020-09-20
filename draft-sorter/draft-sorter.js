@@ -1,4 +1,4 @@
-const {bot, argv, log, utils} = require('../botbase');
+const {bot, argv, log, utils, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 (async function() {
@@ -44,14 +44,14 @@ if (argv.noores) {
 
 Object.entries(oresdata).forEach(async function([revid, {drafttopic}]) {
 
-	var title = revidsTitles[revid];
+	var title = revidsTitles[revid]
 	if (!title) {
-		log(`[E] revid ${revid} couldn't be matched to title`);
+		log(`[E] revid ${revid} couldn't be matched to title`)
 	}
 
 	var topics = drafttopic; // Array of topics
 	if (!topics || !topics.length) {
-		topics = ['unsorted'];
+		topics = ['unsorted']
 	}
 
 	// Process ORES API output for topics
@@ -96,11 +96,18 @@ Object.entries(oresdata).forEach(async function([revid, {drafttopic}]) {
 				summary: `Draft topics: ${topics.join(', ')}`,
 				minor: 1
 			}
-		})	
+		}).catch(err => {
+			if (err.code === 'missingarticle') {
+				log(`[W] ${title} has been deleted`)
+			} else {
+				emailOnError(err, 'draft-sorter non-fatal')
+				// keep going
+			}
+		})
 	} 
 	
 
 });
 
 
-})();
+})().catch(err => emailOnError(err, 'draft-sorter'));
