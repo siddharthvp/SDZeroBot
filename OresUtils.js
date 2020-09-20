@@ -89,7 +89,7 @@ module.exports = {
 					for (var i = 0; i < topics.length; i++) {
 						if (topics[i] !== topic && topics[i].startsWith(metatopic)) {
 							return;
-						}
+						} 
 					}
 				}
 				if (sorter[topic]) {

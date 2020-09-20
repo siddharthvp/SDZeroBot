@@ -241,7 +241,7 @@ process.chdir(__dirname);
 		var count = Object.keys(revidsTitles).length;
 		return bot.edit('User:SDZeroBot/NPP sorting', function(rev) {
 			var text = rev.content;
-			text = text.replace(/\{\{\/header.*\}\}/,
+			text = text.replace(/\{\{\/header.*\}\}.*?<\/includeonly>/,
 				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>`);
 
 			var sorterKeys = Object.keys(sorter);
