@@ -56,20 +56,18 @@ Object.entries(oresdata).forEach(async function([revid, {drafttopic}]) {
 
 	// Process ORES API output for topics
 	topics = topics
-		.map(t => t.replace(/\./g, '/'))
 		.map(topic => {
-			// Remove Asia/Asia* if Asia/South-Asia is present (example)
+			// Remove Asia.Asia* if Asia.South-Asia is present (example)
 			if (topic.endsWith('*')) {
-				let metatopic = topic.split('/').slice(0, -1).join('/')
+				let metatopic = topic.split('.').slice(0, -1).join('.')
 				for (let i = 0; i < topics.length; i++) {
 					if (topics[i] !== topic && topics[i].startsWith(metatopic)) {
 						return
 					}
 				}
-				return metatopic.split('/').pop()
+				return metatopic.split('.').pop()
 			}
-			return topic.split('/').pop()
-
+			return topic.split('.').pop()
 		})
 		.filter(e => e) // filter out undefined from above
 		.map(topic => {
@@ -82,6 +80,7 @@ Object.entries(oresdata).forEach(async function([revid, {drafttopic}]) {
 
 	let template = `{{draft topics|${topics.join('|')}}}`
 	log(`[+] ${title}: ${template}`)
+
 	if (!argv.dry) {
 		await bot.edit(title, rev => {
 			let text = rev.content
