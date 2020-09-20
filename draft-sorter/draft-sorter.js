@@ -19,6 +19,7 @@ await bot.request({
 	"gcmlimit": "max"
 }).then(json => {
 	let pages = json.query.pages
+	log(`[S] Fetched ${pages.length} drafts in ${yesterday} category`)
 	for (let pg of pages) {
 		revidsTitles[pg.lastrevid] = pg.title
 	}
