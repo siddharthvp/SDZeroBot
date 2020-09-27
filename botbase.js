@@ -90,6 +90,9 @@ class db { // abstract class
 			return row;
 		});
 	}
+	async execute(...args) {
+		return await this.conn.execute(...args);
+	}
 	end() {
 		this.conn.end();
 	}
