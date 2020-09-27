@@ -1,4 +1,4 @@
-const {bot, db, argv, xdate, log, emailOnError} = require('../botbase');
+const {bot, enwikidb, argv, xdate, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 (async function() {
@@ -12,7 +12,7 @@ const OresUtils = require('../OresUtils');
 	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
 	// takes a lot more time
 	const sixMonthOldTs = new xdate().subtract(6, 'months').format('YYYYMMDDHHmmss');
-	const sql = await new db().connect();
+	const sql = await new enwikidb().connect();
 	await sql.getReplagHours();
 	const result = await sql.query(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest

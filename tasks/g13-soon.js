@@ -1,4 +1,4 @@
-const {bot, db, xdate, argv, log, emailOnError} = require('../botbase');
+const {bot, enwikidb, xdate, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 (async function() {
@@ -13,7 +13,7 @@ const OresUtils = require('../OresUtils');
 	// takes a lot more time
 	const fiveMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
 	const sixMonthOldTs = new xdate().subtract(6, 'months').format('YYYYMMDDHHmmss');
-	const sql = await new db().connect();
+	const sql = await new enwikidb().connect();
 	const result = await sql.query(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
 		FROM page

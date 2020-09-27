@@ -51,7 +51,7 @@ process.on('uncaughtException', function(err) {
 /** Parsed console arguments */
 const argv = require('minimist')(process.argv.slice(2));
 
-/** Date library */
+/** Date library, deprecated (now available in mwn) */
 const xdate = require('./xdate');
 
 /** bot account and databse access credentials */
@@ -78,17 +78,7 @@ bot.initOAuth();
 
 const mysql = require('mysql2/promise');
 
-class db {
-	async connect() {
-		this.conn = await mysql.createConnection({
-			host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
-			port: 3306,
-			user: auth.db_user,
-			password: auth.db_password,
-			database: 'enwiki_p'
-		});
-		return this;
-	}
+class db { // abstract class
 	async query(...args) {
 		const result = await this.conn.query(...args);
 		return result[0].map(row => {
@@ -99,6 +89,22 @@ class db {
 			});
 			return row;
 		});
+	}
+	end() {
+		this.conn.end();
+	}
+}
+
+class enwikidb extends db {
+	async connect() {
+		this.conn = await mysql.createConnection({
+			host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
+			port: 3306,
+			user: auth.db_user,
+			password: auth.db_password,
+			database: 'enwiki_p'
+		});
+		return this;
 	}
 	async getReplagHours() {
 		const lastrev = await this.query(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
@@ -114,8 +120,18 @@ class db {
 	makeReplagMessage(threshold) {
 		return this.replagHours > threshold ? `{{hatnote|Replica database lag is high. Changes newer than ${this.replagHours} hours may not be reflected.}}\n` : '';
 	}
-	end() {
-		this.conn.end();
+}
+
+class toolsdb extends db {
+	async connect(dbname) {
+		this.conn = await mysql.createConnection({
+			host: 'tools.db.svc.eqiad.wmflabs',
+			port: 3306,
+			user: auth.db_user,
+			password: auth.db_password,
+			database: 's54328__' + dbname
+		});
+		return this;
 	}
 }
 
@@ -153,4 +169,4 @@ const utils = {
 };
 
 // export everything
-module.exports = { bot, mwn, db, mysql, fs, utils, assert, argv, xdate, log, emailOnError };
+module.exports = { bot, mwn, db, enwikidb, toolsdb, mysql, fs, utils, assert, argv, xdate, log, emailOnError };

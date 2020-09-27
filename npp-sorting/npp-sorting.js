@@ -1,4 +1,4 @@
-const {log, argv, mwn, bot, db, utils, emailOnError} = require('../botbase');
+const {log, argv, mwn, bot, enwikidb, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 process.chdir(__dirname);
@@ -18,7 +18,7 @@ process.chdir(__dirname);
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
-		sql = await new db().connect();
+		sql = await new enwikidb().connect();
 		await sql.getReplagHours();
 		const result = await sql.query(`
 			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
