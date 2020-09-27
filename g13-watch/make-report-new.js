@@ -39,6 +39,7 @@ result.forEach(row => {
 	table.addRow([
 		new bot.date(row.ts * 1000).format('YYYY-MM-DD HH:mm'),
 		page,
+		row.size,
 		row.excerpt || ''
 	]);
 });
