@@ -246,7 +246,7 @@ process.chdir(__dirname);
 		}
 		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
 
-		fs.writeFileSync('./previousRunCount.txt', count);
+		fs.writeFileSync('./previousRunCount.txt', String(count));
 
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(function(topic) {
 
