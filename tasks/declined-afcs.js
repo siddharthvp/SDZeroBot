@@ -63,12 +63,12 @@ log(`[i] Found ${upe.size} drafts with undisclosed-paid tag`);
 let table = new mwn.table();
 table.addHeaders([
 	{label: 'Time', style: 'width: 5em'},
-	{label: 'Draft', style: 'width: 17em'},
+	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt' },
-	{label: 'Notes', style: 'width: 8em'}
+	{label: 'Notes', style: 'width: 5em'}
 ]);
 
-for (let [title, {extract, desc, ts, unsourced, copyvio, rejected}] of Object.entries(tableInfo)) {
+Object.entries(tableInfo).map(([title, {extract, desc, ts, unsourced, copyvio, rejected}]) => {
 	let notes = [];
 	if (coi.has(title)) {
 		notes.push('COI');
@@ -86,13 +86,15 @@ for (let [title, {extract, desc, ts, unsourced, copyvio, rejected}] of Object.en
 		notes.push('rejected');
 	}
 
-	table.addRow([
+	return [
 		ts.format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
 		extract || '',
 		notes.join('<br>')
-	]);
-}
+	];
+})
+.sort((a, b) => a[0] - b[0]) // sort by date
+.forEach(row => tableInfo.addRow(row));
 
 let wikitext =
 `{{/header|count=${Object.keys(tableInfo).length}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~}}
