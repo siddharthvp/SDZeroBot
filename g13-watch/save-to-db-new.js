@@ -45,51 +45,56 @@ async function main() {
 	};
 
 	stream.onmessage = async function (event) {
-		let data = JSON.parse(event.data);
-		if (data.wiki !== 'enwiki') return;
-		if (data.type !== 'categorize') return;
-		if (data.title !== 'Category:Candidates for speedy deletion as abandoned drafts or AfC submissions') return;
-
-		let match = /^\[\[:(.*?)\]\] added/.exec(data.comment);
-		if (!match) {
-			return;
-		}
-
-		let title = match[1];
-		let ts = data.timestamp;
-		log(`[+] Page ${title} at ${new bot.date(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
-		let pagedata = await bot.read(title, {
-			prop: 'revisions|description',
-			rvprop: 'content|size'
-		});
-		let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
-		let size = text && pagedata.revisions[0].size;
-		let desc = pagedata.description;
-		if (desc.size > 255) {
-			desc = desc.slice(0, 250) + ' ...';
-		}
-		let extract = text && TextExtractor.getExtract(text, 300, 550, function preprocessHook(text) {
-			let wkt = new bot.wikitext(text);
-			wkt.parseTemplates({
-				namePredicate: name => {
-					return /infobox/i.test(name) || name === 'AFC submission';
-				}
-			});
-			for (let template of wkt.templates) {
-				wkt.removeEntity(template);
-			}
-			return wkt.getText();
-		});
-
 		try {
-			await db.execute(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
-		} catch (err) {
-			if (err.code === 'ER_DUP_ENTRY') {
-				log(`[W] ${title} entered category more than once`);
+			let data = JSON.parse(event.data);
+			if (data.wiki !== 'enwiki') return;
+			if (data.type !== 'categorize') return;
+			if (data.title !== 'Category:Candidates for speedy deletion as abandoned drafts or AfC submissions') return;
+	
+			let match = /^\[\[:(.*?)\]\] added/.exec(data.comment);
+			if (!match) {
 				return;
 			}
-			throw err;
+	
+			let title = match[1];
+			let ts = data.timestamp;
+			log(`[+] Page ${title} at ${new bot.date(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
+			let pagedata = await bot.read(title, {
+				prop: 'revisions|description',
+				rvprop: 'content|size'
+			});
+			let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
+			let size = text && pagedata.revisions[0].size;
+			let desc = pagedata.description;
+			if (desc.size > 255) {
+				desc = desc.slice(0, 250) + ' ...';
+			}
+			let extract = text && TextExtractor.getExtract(text, 300, 550, function preprocessHook(text) {
+				let wkt = new bot.wikitext(text);
+				wkt.parseTemplates({
+					namePredicate: name => {
+						return /infobox/i.test(name) || name === 'AFC submission';
+					}
+				});
+				for (let template of wkt.templates) {
+					wkt.removeEntity(template);
+				}
+				return wkt.getText();
+			});
+	
+			try {
+				await db.execute(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
+			} catch (err) {
+				if (err.code === 'ER_DUP_ENTRY') {
+					log(`[W] ${title} entered category more than once`);
+					return;
+				}
+				throw err;
+			}
+		} catch (err) {
+			emailOnError(err, 'g13-watch-db');
 		}
+
 	};
 
 }
