@@ -32,6 +32,8 @@ bot.wikitext.parseTemplates(await earwigReport.text(), {
 	}
 });
 
+log(`[i] Found ${Object.keys(tableInfo).length} pages declined yesterday`); 
+
 for await (let json of bot.massQueryGen({
 	"action": "query",
 	"prop": "revisions|description",
@@ -97,7 +99,20 @@ let wikitext =
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 
-await bot.save('User:SDZeroBot/Declined AFCs', wikitext, 'Updating');
+await bot.save('User:SDZeroBot/Declined AFCs', wikitext, 'Updating').catch(async err => {
+	if (err.code === 'spamblacklist') {
+		for (let site of err.response.error.spamblacklist.matches) {
+			wikitext = wikitext.replace(
+				new RegExp('https?:\\/\\/' + site, 'g'),
+				site
+			);
+		}
+		await bot.save('User:SDZeroBot/Declined AFCs', wikitext, 'Updating');
+	} else {
+		return Promise.reject(err);
+	} 
+});
+
 log(`[i] Finished`);
 
 
