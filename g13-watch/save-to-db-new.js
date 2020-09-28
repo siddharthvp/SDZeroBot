@@ -28,7 +28,7 @@ async function main() {
 
 	const lastTs = firstrow ?
 		new bot.date(firstrow.ts * 1000).toISOString() :
-		new bot.date().toISOString();
+		new bot.date().subtract(20, 'minutes').toISOString();
 
 	const stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange?since=' + lastTs, {
 		headers: {
