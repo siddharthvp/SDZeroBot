@@ -94,7 +94,7 @@ Object.entries(tableInfo).map(([title, {extract, desc, ts, unsourced, copyvio, r
 	];
 })
 .sort((a, b) => a[0] - b[0]) // sort by date
-.forEach(row => tableInfo.addRow(row));
+.forEach(row => table.addRow(row));
 
 let wikitext =
 `{{/header|count=${Object.keys(tableInfo).length}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~}}
