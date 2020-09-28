@@ -7,6 +7,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 async function main() {
 
 	await bot.getSiteInfo();
+	bot.options.suppressAPIWarnings = true; // ignore rvslots errors
 
 	const db = await new toolsdb().connect('g13watch_p');
 
@@ -62,7 +63,7 @@ async function main() {
 			rvprop: 'content|size'
 		});
 		let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
-		let size = pagedata.revisions[0].size;
+		let size = text && pagedata.revisions[0].size;
 		let desc = pagedata.description;
 		if (desc.size > 255) {
 			desc = desc.slice(0, 250) + ' ...';
