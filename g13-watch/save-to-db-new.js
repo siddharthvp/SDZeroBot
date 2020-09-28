@@ -16,7 +16,7 @@ async function main() {
 	await db.execute(`
 		CREATE TABLE IF NOT EXISTS g13(
 			name varchar(255) unique, 
-			desc varchar(255), 
+			description varchar(255), 
 			excerpt blob, 
 			size int, 
 			ts int not null
