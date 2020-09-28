@@ -66,7 +66,7 @@ async function main() {
 			let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
 			let size = text && pagedata.revisions[0].size;
 			let desc = pagedata.description;
-			if (desc.size > 255) {
+			if (desc && desc.size > 255) {
 				desc = desc.slice(0, 250) + ' ...';
 			}
 			let extract = text && TextExtractor.getExtract(text, 300, 550, function preprocessHook(text) {
