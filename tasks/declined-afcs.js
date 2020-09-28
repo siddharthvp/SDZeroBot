@@ -93,7 +93,7 @@ Object.entries(tableInfo).map(([title, {extract, desc, ts, unsourced, copyvio, r
 		notes.join('<br>')
 	];
 })
-.sort((a, b) => a[0] - b[0]) // sort by date
+.sort((a, b) => a[0] < b[0] ? -1 : 1) // sort by date
 .forEach(row => table.addRow(row));
 
 let wikitext =
