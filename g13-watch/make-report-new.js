@@ -49,12 +49,12 @@ let yesterday = new bot.date().subtract(1, 'day');
 
 let page = new bot.page('User:SDZeroBot/G13 Watch/new');
 
-let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
-	let date = new bot.date(rev.timestamp).subtract(24, 'hours');
-	return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
-}).join(' - ') + ' - {{history|2=older}}';
+// let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
+// 	let date = new bot.date(rev.timestamp).subtract(24, 'hours');
+// 	return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
+// }).join(' - ') + ' - {{history|2=older}}';
 
-let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>` 
+let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>` 
 	+ `\n\n${wikitable}`;
 
 await page.save(text, 'Updating G13 report').catch(async err => {
