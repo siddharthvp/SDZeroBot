@@ -6,29 +6,46 @@ const TextExtractor = require('../TextExtractor')(bot);
 log(`[i] Started`);
 await bot.getTokensAndSiteInfo();
 
+let earwigReport = new bot.page('Template:AFC statistics/declined');
+let yesterday = new bot.date().subtract(1, 'day');
 let tableInfo = {};
 
-for await (let json of bot.continuedQueryGen({
+bot.wikitext.parseTemplates(await earwigReport.text(), {
+	name: name => name === '#invoke:AfC'
+}).forEach(template => {
+	let title = template.getValue('t');
+	let ts = template.getValue('sd');
+	if (!title || new bot.date(ts).getDate() !== yesterday.getDate()) {
+		return;
+	}
+	tableInfo[title] = {
+		ts: new bot.date(ts)
+	};
+	if (template.getValue('nu')) {
+		tableInfo[title].unsourced = 1;
+	}
+	if (template.getValue('nc')) {
+		tableInfo[title].copyvio = 1;
+	}
+	if (template.getValue('nj')) {
+		tableInfo[title].rejected = 1;
+	}
+});
+
+for await (let json of bot.massQueryGen({
 	"action": "query",
 	"prop": "revisions|description",
-	"generator": "categorymembers",
+	"titles": Object.keys(tableInfo),
 	"rvprop": "content",
 	"rvsection": "0",
 	"rvslots": "main",
-	"gcmtitle": "Category:Declined_AfC_submissions",
-	"gcmlimit": "500",
-	"gcmnamespace": "118",
-	"gcmsort": "timestamp",
-	"gcmdir": "ascending",
-	"gcmstart": new bot.date().subtract(24, 'hours').setHours(0, 0, 0, 0).toISOString(),
-	"gcmend": new bot.date().setHours(0, 0, 0, 0).toISOString()India Today. Retrieved 21 August 2020.
 })) {
 
 	for (let pg of json.query.pages) {
-		tableInfo[pg.title] = {
+		Object.assign(tableInfo[pg.title], {
 			extract: TextExtractor.getExtract(pg.revisions[0].slots.main.content, 250, 500),
 			desc: pg.description
-		}
+		});
 	}
 
 }
@@ -43,12 +60,13 @@ log(`[i] Found ${upe.size} drafts with undisclosed-paid tag`);
 
 let table = new mwn.table();
 table.addHeaders([
+	{label: 'Time', style: 'width: 5em'},
 	{label: 'Draft', style: 'width: 17em'},
 	{label: 'Excerpt' },
 	{label: 'Notes', style: 'width: 8em'}
 ]);
 
-for (let [title, {extract, desc}] of Object.entries(tableInfo)) {
+for (let [title, {extract, desc, ts, unsourced, copyvio, rejected}] of Object.entries(tableInfo)) {
 	let notes = [];
 	if (coi.has(title)) {
 		notes.push('COI');
@@ -56,8 +74,18 @@ for (let [title, {extract, desc}] of Object.entries(tableInfo)) {
 	if (upe.has(title)) {
 		notes.push('Undisclosed-paid');
 	}
+	if (unsourced) {
+		notes.push('unsourced');
+	}
+	if (copyvio) {
+		notes.push('copyvio')
+	}
+	if (rejected) {
+		notes.push('rejected');
+	}
 
 	table.addRow([
+		ts.format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
 		extract || '',
 		notes.join('<br>')
@@ -65,7 +93,7 @@ for (let [title, {extract, desc}] of Object.entries(tableInfo)) {
 }
 
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|date=${new bot.date().subtract(24, 'hours').format('D MMMM YYYY')}|ts=~~~~~}}
+`{{/header|count=${Object.keys(tableInfo).length}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~}}
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 
