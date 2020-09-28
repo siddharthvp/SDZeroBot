@@ -16,7 +16,7 @@ async function main() {
 	await db.execute(`
 		CREATE TABLE IF NOT EXISTS g13(
 			name varchar(255) unique, 
-			descr varchar(255), 
+			desc varchar(255), 
 			excerpt blob, 
 			size int, 
 			ts int not null
@@ -28,7 +28,7 @@ async function main() {
 
 	const lastTs = firstrow ?
 		new bot.date(firstrow.ts * 1000).toISOString() :
-		new bot.date().setUTCHours(0, 0, 0, 0).toISOString();
+		new bot.date().toISOString();
 
 	const stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange?since=' + lastTs, {
 		headers: {
@@ -60,7 +60,7 @@ async function main() {
 			let ts = data.timestamp;
 			log(`[+] Page ${title} at ${new bot.date(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
 			let pagedata = await bot.read(title, {
-				prop: 'revisions|description',
+				prop: 'revisions|description', 
 				rvprop: 'content|size'
 			});
 			let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
