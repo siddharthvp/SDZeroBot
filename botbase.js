@@ -79,38 +79,56 @@ bot.initOAuth();
 const mysql = require('mysql2/promise');
 
 class db { // abstract class
+	constructor() {
+		this.connected = false;
+		this.inUse = false;
+	}
 	async query(...args) {
+		if (!this.connected) {
+			await this.conn.connect();
+			this.connected = true;
+		}
+		this.inUse = true;
 		const result = await this.conn.query(...args);
+		this.inUse = false;
 		return result[0].map(row => {
 			Object.keys(row).forEach(prop => {
-				if (row[prop]) { 
+				if (row[prop]) {
 					row[prop] = row[prop].toString();
 				}
 			});
 			return row;
 		});
 	}
-	async execute(...args) {
+	async run(...args) {
+		if (!this.connected) {
+			await this.conn.connect();
+			this.connected = true;
+		}
 		// convert `undefined`s in bind parameters to null
 		if (args[1] instanceof Array) {
 			args[1] = args[1].map(item => item === undefined ? null : item);
 		}
-		return await this.conn.execute(...args);
+		this.inUse = true;
+		const result = await this.conn.execute(...args);
+		this.inUse = false;
+		return result;
 	}
+	// Always call end() when no more database operations are immediately required
 	end() {
+		// Don't end connection if there are operations active
+		if (this.inUse) {
+			return;
+		}
 		this.conn.end();
+		this.connected = false;
 	}
 }
 
 class enwikidb extends db {
 	async connect() {
-		this.conn = await mysql.createConnection({
-			host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
-			port: 3306,
-			user: auth.db_user,
-			password: auth.db_password,
-			database: 'enwiki_p'
-		});
+		this.conn = await mysql.createConnection({host: 'enwiki.analytics.db.svc.eqiad.wmflabs', port: 3306, user: auth.db_user, password: auth.db_password, database: 'enwiki_p'});
+		this.connected = true;
 		return this;
 	}
 	async getReplagHours() {
@@ -130,14 +148,19 @@ class enwikidb extends db {
 }
 
 class toolsdb extends db {
-	async connect(dbname) {
+	constructor(dbname) {
+		super();
+		this.dbname = dbname;
+	}
+	async connect() {
 		this.conn = await mysql.createConnection({
 			host: 'tools.db.svc.eqiad.wmflabs',
 			port: 3306,
 			user: auth.db_user,
 			password: auth.db_password,
-			database: 's54328__' + dbname
+			database: 's54328__' + this.dbname
 		});
+		this.connected = true;
 		return this;
 	}
 }

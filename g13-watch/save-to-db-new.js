@@ -9,22 +9,23 @@ async function main() {
 	await bot.getSiteInfo();
 	bot.options.suppressAPIWarnings = true; // ignore rvslots errors
 
-	const db = await new toolsdb().connect('g13watch_p');
+	const db = new toolsdb('g13watch_p');
 
-	log('[S] Connected to the g13 database.');
-
-	await db.execute(`
+	await db.connect();
+	await db.run(`
 		CREATE TABLE IF NOT EXISTS g13(
-			name varchar(255) unique, 
-			description varchar(255), 
-			excerpt blob, 
-			size int, 
+			name varchar(255) unique,
+			description varchar(255),
+			excerpt blob,
+			size int,
 			ts int not null
 		) COLLATE 'utf8_unicode_ci'
 	`); // use utf8_unicode_ci so that MariaDb allows a varchar(255) field to have unique constraint
-	// max index column size is 767 bytes. 255*3 = 765 bytes with utf8, 255*4 = 1020 bytes with utf8mb4 
+	// max index column size is 767 bytes. 255*3 = 765 bytes with utf8, 255*4 = 1020 bytes with utf8mb4
 
 	const firstrow = await db.query(`SELECT ts FROM g13 ORDER BY ts DESC LIMIT 1`)[0];
+
+	db.end();
 
 	const lastTs = firstrow ?
 		new bot.date(firstrow.ts * 1000).toISOString() :
@@ -50,17 +51,17 @@ async function main() {
 			if (data.wiki !== 'enwiki') return;
 			if (data.type !== 'categorize') return;
 			if (data.title !== 'Category:Candidates for speedy deletion as abandoned drafts or AfC submissions') return;
-	
+
 			let match = /^\[\[:(.*?)\]\] added/.exec(data.comment);
 			if (!match) {
 				return;
 			}
-	
+
 			let title = match[1];
 			let ts = data.timestamp;
 			log(`[+] Page ${title} at ${new bot.date(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
 			let pagedata = await bot.read(title, {
-				prop: 'revisions|description', 
+				prop: 'revisions|description',
 				rvprop: 'content|size'
 			});
 			let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
@@ -81,9 +82,10 @@ async function main() {
 				}
 				return wkt.getText();
 			});
-	
+
 			try {
-				await db.execute(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
+				await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
+				db.end(); // close connection when done, will be reopened for the next write
 			} catch (err) {
 				if (err.code === 'ER_DUP_ENTRY') {
 					log(`[W] ${title} entered category more than once`);
