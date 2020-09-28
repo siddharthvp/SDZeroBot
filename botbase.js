@@ -91,6 +91,10 @@ class db { // abstract class
 		});
 	}
 	async execute(...args) {
+		// convert `undefined`s in bind parameters to null
+		if (args[1] instanceof Array) {
+			args[1] = args[1].map(item => item === undefined ? null : item);
+		}
 		return await this.conn.execute(...args);
 	}
 	end() {
