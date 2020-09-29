@@ -1,4 +1,4 @@
-const {bot, log, emailOnError, mwn} = require('../botbase');
+const {bot, log, enwikidb, emailOnError, mwn} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async function() {
@@ -146,7 +146,7 @@ let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
 }).join(' - ') + ' - {{history|2=older}}';
 
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|date=${yesterday.format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}
+`{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 
