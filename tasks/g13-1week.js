@@ -36,6 +36,8 @@ const result = await db.query(`
 db.end();
 log('[S] Got DB query result');
 
+await bot.getTokensAndSiteInfo();
+
 result.forEach(row => {
 	var pagename = new bot.title(row.page_title, row.page_namespace).toText();
 	tableInfo[pagename] = {
@@ -44,8 +46,6 @@ result.forEach(row => {
 });
 
 log(`[i] Found ${Object.keys(tableInfo).length} pages`); 
-
-await bot.getTokensAndSiteInfo();
 
 for await (let json of bot.massQueryGen({
 	"action": "query",
