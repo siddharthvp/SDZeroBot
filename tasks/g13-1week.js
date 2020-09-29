@@ -34,7 +34,7 @@ const result = argv.nodb ? JSON.parse(fs.readFileSync('./g13-1week-db.json').toS
 	AND rev_timestamp > "${endTs}"
 `);
 db.end();
-utils.saveObject('g13-1week-db.json', result);
+utils.saveObject('g13-1week-db', result);
 log('[S] Got DB query result');
 
 await bot.getTokensAndSiteInfo();
@@ -102,7 +102,7 @@ for (let i = 1; i <= 10; i++) {
 
 let table = new mwn.table();
 table.addHeaders([
-	{label: 'Time', style: 'width: 5em'},
+	{label: 'Last edit', style: 'width: 5em'},
 	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt' },
 	{label: '# declines', style: 'width: 4em'},
