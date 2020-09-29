@@ -1,4 +1,4 @@
-const {bot, enwikidb, xdate, argv, log, emailOnError} = require('../botbase');
+const {bot, enwikidb, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 (async function() {
@@ -11,8 +11,8 @@ const OresUtils = require('../OresUtils');
 
 	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
 	// takes a lot more time
-	const fiveMonthOldTs = new xdate().subtract(5, 'months').format('YYYYMMDDHHmmss');
-	const sixMonthOldTs = new xdate().subtract(6, 'months').format('YYYYMMDDHHmmss');
+	const fiveMonthOldTs = new bot.date().subtract(5, 'months').format('YYYYMMDDHHmmss');
+	const sixMonthOldTs = new bot.date().subtract(6, 'months').format('YYYYMMDDHHmmss');
 	const sql = await new enwikidb().connect();
 	const result = await sql.query(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
@@ -174,7 +174,7 @@ const OresUtils = require('../OresUtils');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
 	var count = Object.keys(revidsTitles).length;
-	var pagetext = `{{/header|count=${count}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
+	var pagetext = `{{/header|count=${count}|date=${new bot.date().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
 
 	pagetext += sql.makeReplagMessage(72);
 

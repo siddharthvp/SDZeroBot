@@ -1,4 +1,4 @@
-const {bot, log, emailOnError, mwn} = require('../botbase');
+const {bot, log, emailOnError, mwn, utils} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async function() {
@@ -19,42 +19,41 @@ bot.wikitext.parseTemplates(await earwigReport.text(), {
 		return;
 	}
 	tableInfo[title] = {
-		ts: new bot.date(ts)
+		ts: new bot.date(ts),
+		copyvio: !!template.getValue('nc')
 	};
-	if (template.getValue('nu')) {
-		tableInfo[title].unsourced = 1;
-	}
-	if (template.getValue('nc')) {
-		tableInfo[title].copyvio = 1;
-	}
-	if (template.getValue('nj')) {
-		tableInfo[title].rejected = 1;
-	}
 });
 
 log(`[i] Found ${Object.keys(tableInfo).length} pages declined yesterday`); 
 
-for await (let json of bot.massQueryGen({
-	"action": "query",
-	"prop": "revisions|description|templates",
-	"titles": Object.keys(tableInfo),
-	"rvprop": "content",
-	"rvsection": "0",
-	"rvslots": "main",
-	"tltemplates": ["Template:COI", "Template:Undisclosed paid", "Template:Connected contributor"],
-	"tllimit": "max",
-})) {
+// In theory, we can do request all the details of upto 500 pages in 1 API call, but 
+// send in batches of 100 to avoid the slim possibility of hitting the max API response size limit
+await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), async (pageSet) => {
 
-	for (let pg of json.query.pages) {
+	for await (let pg of bot.readGen(pageSet, {
+		"prop": "revisions|description|templates|categories",
+		"tltemplates": ["Template:COI", "Template:Undisclosed paid", "Template:Connected contributor"],
+		"clcategories": ["Category:Rejected AfC submissions", "Category:Promising draft articles"],
+		"tllimit": "max",
+		"cllimit": "max"
+	})) {
+		if (pg.missing) {
+			continue;
+		}
+		let text = pg.revisions[0].content;
 		Object.assign(tableInfo[pg.title], {
-			extract: TextExtractor.getExtract(pg.revisions?.[0].slots?.main?.content, 250, 500),
+			extract: TextExtractor.getExtract(text, 250, 500),
 			desc: pg.description,
 			coi: pg.templates && pg.templates.find(e => e.title === 'Template:COI' || e.title === 'Template:Connected contributor'),
 			upe: pg.templates && pg.templates.find(e => e.title === 'Template:Undisclosed paid'),
+			declines: text.match(/\{\{AFC submission\|d/g)?.length || 0,
+			rejected: pg.categories && pg.categories.find(e => e.title === 'Category:Rejected AfC submissions'),
+			promising: pg.categories && pg.categories.find(e => e.title === 'Category:Promising draft articles'),
+			unsourced: !/<ref/i.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text)
 		});
 	}
 
-}
+}, 0, 1);
 
 
 let table = new mwn.table();
@@ -62,36 +61,51 @@ table.addHeaders([
 	{label: 'Time', style: 'width: 5em'},
 	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt' },
+	{label: '# declines', style: 'width: 4em'},
 	{label: 'Notes', style: 'width: 5em'}
 ]);
 
-Object.entries(tableInfo).map(([title, {extract, desc, ts, coi, upe, unsourced, copyvio, rejected}]) => {
+Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => { // eslint-disable-line no-unused-vars
+	// Sorting: put promising drafts at the top, rejected ones at the bottom
+	// then put the unsourced ones below the ones with sources
+	// finally sort by time
+	if (data1.promising && !data2.promising) return -1;
+	if (!data1.promising && data2.promising) return 1;
+	if (data1.rejected && !data2.rejected) return 1;
+	if (!data1.rejected && data2.rejected) return -1;
+	if (data1.unsourced && !data2.unsourced) return 1;
+	if (!data1.unsourced && data2.unsourced) return -1;
+	return data1.ts < data2.ts ? -1 : 1;
+})
+.forEach(([title, data]) => {
 	let notes = [];
-	if (coi) {
+	if (data.promising) {
+		notes.push('promising');
+	}
+	if (data.coi) {
 		notes.push('COI');
 	}
-	if (upe) {
+	if (data.upe) {
 		notes.push('Undisclosed-paid');
 	}
-	if (unsourced) {
+	if (data.unsourced) {
 		notes.push('unsourced');
 	}
-	if (copyvio) {
-		notes.push('copyvio')
-	}
-	if (rejected) {
+	if (data.rejected) {
 		notes.push('rejected');
 	}
+	if (data.copyvio) {
+		notes.push('copyvio')
+	}
 
-	return [
-		ts.format('YYYY-MM-DD HH:mm'),
-		`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
-		extract || '',
+	table.addRow([
+		data.ts.format('YYYY-MM-DD HH:mm'),
+		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
+		data.extract || '',
+		data.declines ?? '',
 		notes.join('<br>')
-	];
-})
-.sort((a, b) => a[0] < b[0] ? -1 : 1) // sort by date
-.forEach(row => table.addRow(row));
+	]);
+});
 
 let page = new bot.page('User:SDZeroBot/Declined AFCs');
 

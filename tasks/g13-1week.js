@@ -73,7 +73,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			declines: text.match(/\{\{AFC submission\|d/g)?.length || 0,
 			rejected: pg.categories && pg.categories.find(e => e.title === 'Category:Rejected AfC submissions'),
 			promising: pg.categories && pg.categories.find(e => e.title === 'Category:Promising draft articles'),
-			unsourced: !/<ref>/.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text)
+			unsourced: !/<ref/i.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text)
 		});
 	}
 
@@ -139,7 +139,7 @@ try {
 } catch (e) {} // eslint-disable-line no-empty
 
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}
+`{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 
