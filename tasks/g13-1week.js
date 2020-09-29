@@ -1,4 +1,4 @@
-const {bot, log, enwikidb, emailOnError, mwn} = require('../botbase');
+const {bot, log, enwikidb, emailOnError, mwn, utils, argv} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async function() {
@@ -11,7 +11,7 @@ const startTs = new bot.date().subtract(6, 'months').add(7, 'days').format('YYYY
 const endTs = new bot.date().subtract(6, 'months').add(6, 'days').format('YYYYMMDDHHmmss');
 
 const db = await new enwikidb().connect();
-const result = await db.query(`
+const result = argv.nodb ? JSON.parse(fs.readFileSync('./g13-1week-db.json').toString()) : await db.query(`
 	SELECT DISTINCT page_namespace, page_title, rev_timestamp
 	FROM page
 	JOIN revision ON rev_id = page_latest
@@ -34,6 +34,7 @@ const result = await db.query(`
 	AND rev_timestamp > "${endTs}"
 `);
 db.end();
+utils.saveObject('g13-1week-db.json', result);
 log('[S] Got DB query result');
 
 await bot.getTokensAndSiteInfo();
@@ -138,12 +139,15 @@ Object.entries(tableInfo).map(([title, {extract, desc, ts, coi, upe, unsourced, 
 .forEach(row => table.addRow(row));
 
 
-let page = new bot.page('User:SDZeroBot/G13 soon');
+let page = new bot.page('User:SDZeroBot/G13 soon'),
+	oldlinks = '';
 
-let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
-	let date = new bot.date(rev.timestamp).subtract(24, 'hours');
-	return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
-}).join(' - ') + ' - {{history|2=older}}';
+try {
+	oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
+		let date = new bot.date(rev.timestamp).subtract(24, 'hours');
+		return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
+	}).join(' - ') + ' - {{history|2=older}}';	
+} catch (e) {}
 
 let wikitext =
 `{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}
