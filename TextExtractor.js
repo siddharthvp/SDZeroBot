@@ -18,6 +18,9 @@ module.exports = function(bot) {
 		 */
 		static getExtract(pagetext, charLimit, hardUpperLimit, preprocessHook) {
 
+			if (!pagetext) {
+				return '';
+			}
 			let extract = pagetext;
 
 			if (preprocessHook) {

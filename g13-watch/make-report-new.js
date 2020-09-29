@@ -4,10 +4,10 @@ const {bot, log, toolsdb, emailOnError, mwn} = require('../botbase');
 
 (async function() {
 
-const db = await new toolsdb().connect('g13watch_p');
-log('[S] Connected to the g13 database.');
-
 await bot.getTokensAndSiteInfo();
+
+const db = await new toolsdb('g13watch_p').connect();
+log('[S] Connected to the g13 database.');
 
 let table = new mwn.table();
 table.addHeaders([
@@ -74,6 +74,7 @@ await page.save(text, 'Updating G13 report').catch(async err => {
 // Delete data more than 3 days old:
 let ts_3days_old = Math.round(new bot.date().subtract(72, 'hours').getTime() / 1000);
 await db.execute(`DELETE FROM g13 WHERE ts < ?`, [ts_3days_old]);
+db.end();
 
 log(`[S] Deleted data more than 3 days old`);
 

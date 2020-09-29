@@ -45,7 +45,7 @@ for await (let json of bot.massQueryGen({
 
 	for (let pg of json.query.pages) {
 		Object.assign(tableInfo[pg.title], {
-			extract: TextExtractor.getExtract(pg.revisions[0].slots.main.content, 250, 500),
+			extract: TextExtractor.getExtract(pg.revisions?.[0].slots?.main?.content, 250, 500),
 			desc: pg.description
 		});
 	}
