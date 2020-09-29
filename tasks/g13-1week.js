@@ -1,3 +1,4 @@
+const { processNamespaceData } = require('../../mwn/src/title');
 const {fs, bot, log, enwikidb, emailOnError, mwn, utils, argv} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
@@ -11,7 +12,7 @@ const startTs = new bot.date().subtract(6, 'months').add(7, 'days').format('YYYY
 const endTs = new bot.date().subtract(6, 'months').add(6, 'days').format('YYYYMMDDHHmmss');
 
 const db = await new enwikidb().connect();
-const result = argv.nodb ? JSON.parse(fs.readFileSync('./g13-1week-db.json').toString()) : await db.query(`
+const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-1week-db.json').toString()) : await db.query(`
 	SELECT DISTINCT page_namespace, page_title, rev_timestamp
 	FROM page
 	JOIN revision ON rev_id = page_latest
@@ -34,6 +35,7 @@ const result = argv.nodb ? JSON.parse(fs.readFileSync('./g13-1week-db.json').toS
 	AND rev_timestamp > "${endTs}"
 `);
 db.end();
+process.chdir(__dirname);
 utils.saveObject('g13-1week-db', result);
 log('[S] Got DB query result');
 
