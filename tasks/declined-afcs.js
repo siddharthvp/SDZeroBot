@@ -36,28 +36,25 @@ log(`[i] Found ${Object.keys(tableInfo).length} pages declined yesterday`);
 
 for await (let json of bot.massQueryGen({
 	"action": "query",
-	"prop": "revisions|description",
+	"prop": "revisions|description|templates",
 	"titles": Object.keys(tableInfo),
 	"rvprop": "content",
 	"rvsection": "0",
 	"rvslots": "main",
+	"tltemplates": ["Template:COI", "Template:Undisclosed paid", "Template:Connected contributor"],
+	"tllimit": "max",
 })) {
 
 	for (let pg of json.query.pages) {
 		Object.assign(tableInfo[pg.title], {
 			extract: TextExtractor.getExtract(pg.revisions?.[0].slots?.main?.content, 250, 500),
-			desc: pg.description
+			desc: pg.description,
+			coi: pg.templates && pg.templates.find(e => e.title === 'Template:COI' || e.title === 'Template:Connected contributor'),
+			upe: pg.templates && pg.templates.find(e => e.title === 'Template:Undisclosed paid'),
 		});
 	}
 
 }
-
-
-let coi = new Set((await bot.search(`incategory:"Declined AfC submissions" hastemplate:"COI"`, 'max', '', { srnamespace: '118' })).map(page => page.title));
-log(`[i] Found ${coi.size} drafts with COI tag`);
-
-let upe = new Set((await bot.search(`incategory:"Declined AfC submissions" hastemplate:"Undisclosed paid"`, 'max', '', { srnamespace: '118' })).map(page => page.title));
-log(`[i] Found ${upe.size} drafts with undisclosed-paid tag`);
 
 
 let table = new mwn.table();
@@ -68,12 +65,12 @@ table.addHeaders([
 	{label: 'Notes', style: 'width: 5em'}
 ]);
 
-Object.entries(tableInfo).map(([title, {extract, desc, ts, unsourced, copyvio, rejected}]) => {
+Object.entries(tableInfo).map(([title, {extract, desc, ts, coi, upe, unsourced, copyvio, rejected}]) => {
 	let notes = [];
-	if (coi.has(title)) {
+	if (coi) {
 		notes.push('COI');
 	}
-	if (upe.has(title)) {
+	if (upe) {
 		notes.push('Undisclosed-paid');
 	}
 	if (unsourced) {
