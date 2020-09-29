@@ -73,7 +73,7 @@ await page.save(text, 'Updating G13 report').catch(async err => {
 
 // Delete data more than 3 days old:
 let ts_3days_old = Math.round(new bot.date().subtract(72, 'hours').getTime() / 1000);
-await db.execute(`DELETE FROM g13 WHERE ts < ?`, [ts_3days_old]);
+await db.run(`DELETE FROM g13 WHERE ts < ?`, [ts_3days_old]);
 db.end();
 
 log(`[S] Deleted data more than 3 days old`);
