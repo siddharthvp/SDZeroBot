@@ -85,7 +85,7 @@ class db { // abstract class
 	}
 	async query(...args) {
 		if (!this.connected) {
-			await this.conn.connect();
+			await this.connect();
 			this.connected = true;
 		}
 		this.inUse = true;
@@ -102,7 +102,7 @@ class db { // abstract class
 	}
 	async run(...args) {
 		if (!this.connected) {
-			await this.conn.connect();
+			await this.connect();
 			this.connected = true;
 		}
 		// convert `undefined`s in bind parameters to null
@@ -115,12 +115,12 @@ class db { // abstract class
 		return result;
 	}
 	// Always call end() when no more database operations are immediately required
-	end() {
+	async end() {
 		// Don't end connection if there are operations active
 		if (this.inUse) {
 			return;
 		}
-		this.conn.end();
+		await this.conn.end();
 		this.connected = false;
 	}
 }

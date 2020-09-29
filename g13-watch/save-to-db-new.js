@@ -93,7 +93,7 @@ async function main() {
 				}
 				emailOnError(err, 'g13-watch-db');
 			} finally {
-				db.end(); // close connection when done, will be reopened for the next write
+				await db.end(); // close connection when done, will be reopened for the next write
 			}
 		} catch (err) {
 			emailOnError(err, 'g13-watch-db');
