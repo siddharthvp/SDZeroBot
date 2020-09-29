@@ -1,4 +1,4 @@
-const {bot, log, enwikidb, emailOnError, mwn, utils, argv} = require('../botbase');
+const {fs, bot, log, enwikidb, emailOnError, mwn, utils, argv} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async function() {
