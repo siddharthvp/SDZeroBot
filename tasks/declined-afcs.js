@@ -93,12 +93,19 @@ Object.entries(tableInfo).map(([title, {extract, desc, ts, coi, upe, unsourced, 
 .sort((a, b) => a[0] < b[0] ? -1 : 1) // sort by date
 .forEach(row => table.addRow(row));
 
+let page = new bot.page('User:SDZeroBot/Declined AFCs');
+
+let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
+	let date = new bot.date(rev.timestamp).subtract(24, 'hours');
+	return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
+}).join(' - ') + ' - {{history|2=older}}';
+
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~}}
+`{{/header|count=${Object.keys(tableInfo).length}|date=${yesterday.format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 
-await bot.save('User:SDZeroBot/Declined AFCs', wikitext, 'Updating').catch(async err => {
+await page.save(wikitext, 'Updating').catch(async err => {
 	if (err.code === 'spamblacklist') {
 		for (let site of err.response.error.spamblacklist.matches) {
 			wikitext = wikitext.replace(
@@ -106,7 +113,7 @@ await bot.save('User:SDZeroBot/Declined AFCs', wikitext, 'Updating').catch(async
 				site
 			);
 		}
-		await bot.save('User:SDZeroBot/Declined AFCs', wikitext, 'Updating');
+		await page.save(wikitext, 'Updating');
 	} else {
 		return Promise.reject(err);
 	} 
