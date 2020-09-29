@@ -85,7 +85,7 @@ const doSearch = async function(count) {
 		"srinfo": "",
 		"srprop": ""
 	})) {
-		let pages = json.query.pages;
+		let pages = json.query.search;
 		if (!pages) {
 			continue;
 		}
@@ -94,9 +94,9 @@ const doSearch = async function(count) {
 				tableInfo[page.title].declines = count;
 			}
 		});
-		log(`[+][${count}/10] Fetched ${json.query.pages.length} drafts declined ${count} or more times`);
 	}
-}
+	log(`[+][${count}/10] Fetched drafts declined ${count} or more times`);
+};
 for (let i = 1; i <= 10; i++) {
 	await doSearch(i);
 }
@@ -133,7 +133,7 @@ Object.entries(tableInfo).map(([title, {extract, desc, ts, coi, upe, unsourced, 
 		new bot.date(ts).format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
 		extract || '',
-		declines,
+		declines || 0,
 		notes.join('<br>')
 	];
 })
