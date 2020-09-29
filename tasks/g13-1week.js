@@ -1,4 +1,3 @@
-const { processNamespaceData } = require('../../mwn/src/title');
 const {fs, bot, log, enwikidb, emailOnError, mwn, utils, argv} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
@@ -12,7 +11,8 @@ const startTs = new bot.date().subtract(6, 'months').add(7, 'days').format('YYYY
 const endTs = new bot.date().subtract(6, 'months').add(6, 'days').format('YYYYMMDDHHmmss');
 
 const db = await new enwikidb().connect();
-const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-1week-db.json').toString()) : await db.query(`
+const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-1week-db.json').toString()) : 
+await db.query(`
 	SELECT DISTINCT page_namespace, page_title, rev_timestamp
 	FROM page
 	JOIN revision ON rev_id = page_latest
@@ -42,7 +42,7 @@ log('[S] Got DB query result');
 await bot.getTokensAndSiteInfo();
 
 result.forEach(row => {
-	var pagename = new bot.title(row.page_title, row.page_namespace).toText();
+	let pagename = new bot.title(row.page_title, row.page_namespace).toText();
 	tableInfo[pagename] = {
 		ts: row.rev_timestamp
 	};
@@ -50,57 +50,34 @@ result.forEach(row => {
 
 log(`[i] Found ${Object.keys(tableInfo).length} pages`); 
 
-for await (let json of bot.massQueryGen({
-	"action": "query",
-	"prop": "revisions|description|templates",
-	"titles": Object.keys(tableInfo),
-	"rvprop": "content",
-	"rvsection": "0",
-	"rvslots": "main",
-	"tltemplates": ["Template:COI", "Template:Undisclosed paid", "Template:Connected contributor"],
-	"tllimit": "max",
-})) {
+// In theory, we can do request all the details of upto 500 pages in 1 API call, but 
+// send in batches of 100 to avoid the slim possibility of hitting the max API response size limit
+await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), async (pageSet) => {
 
-	for (let pg of json.query.pages) {
+	for await (let pg of bot.readGen(pageSet, {
+		"prop": "revisions|description|templates|categories",
+		"tltemplates": ["Template:COI", "Template:Undisclosed paid", "Template:Connected contributor"],
+		"clcategories": ["Category:Rejected AFC submissions", "Category:Promising draft articles"],
+		"tllimit": "max",
+		"cllimt": "max"
+	})) {
+		if (pg.missing) {
+			continue;
+		}
+		let text = pg.revisions[0].content;
 		Object.assign(tableInfo[pg.title], {
-			extract: TextExtractor.getExtract(pg.revisions?.[0].slots?.main?.content, 250, 500),
+			extract: TextExtractor.getExtract(text, 250, 500),
 			desc: pg.description,
 			coi: pg.templates && pg.templates.find(e => e.title === 'Template:COI' || e.title === 'Template:Connected contributor'),
 			upe: pg.templates && pg.templates.find(e => e.title === 'Template:Undisclosed paid'),
+			declines: text.match(/\{\{AFC submission\|d/g)?.length || 0,
+			rejected: pg.categories && pg.categories.find(e => e.title === 'Category:Rejected AFC submissions'),
+			promising: pg.categories && pg.categories.find(e => e.title === 'Category:Promising draft articles'),
+			unsourced: /<ref>/.test(text)
 		});
 	}
 
-}
-
-/* GET DATA FOR NUMBER OF DECLINES */
-const doSearch = async function(count) {
-	var dec = '\\{\\{AFC submission\\|d\\|.*'.repeat(count).slice(0, -2);
-	var searchQuery = `incategory:"Declined AfC submissions" insource:/${dec}/`;
-	for await (let json of bot.continuedQueryGen({
-		"action": "query",
-		"list": "search",
-		"srsearch": searchQuery,
-		"srnamespace": "118",
-		"srlimit": "max",
-		"srinfo": "",
-		"srprop": ""
-	})) {
-		let pages = json.query.search;
-		if (!pages) {
-			continue;
-		}
-		pages.forEach(page => {
-			if (tableInfo[page.title]) {
-				tableInfo[page.title].declines = count;
-			}
-		});
-	}
-	log(`[+][${count}/10] Fetched drafts declined ${count} or more times`);
-};
-for (let i = 1; i <= 10; i++) {
-	await doSearch(i);
-}
-
+}, 0, 1);
 
 let table = new mwn.table();
 table.addHeaders([
@@ -111,34 +88,41 @@ table.addHeaders([
 	{label: 'Notes', style: 'width: 5em'}
 ]);
 
-Object.entries(tableInfo).map(([title, {extract, desc, ts, coi, upe, unsourced, copyvio, rejected, declines}]) => {
+Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => {
+	// Sorting: put promising drafts at the top, rejected ones at the bottom
+	// Sort the rest by time
+	if (data1.promising) return -1;
+	if (data2.promising) return 1;
+	if (data1.rejected) return 1;
+	if (data2.rejected) return -1;
+	return data1.ts < data2.ts ? -1 : 1;
+}) 
+.forEach(([title, data]) => {
 	let notes = [];
-	if (coi) {
+	if (data.promising) {
+		notes.push('promising');
+	}
+	if (data.coi) {
 		notes.push('COI');
 	}
-	if (upe) {
+	if (data.upe) {
 		notes.push('Undisclosed-paid');
 	}
-	if (unsourced) {
+	if (data.unsourced) {
 		notes.push('unsourced');
 	}
-	if (copyvio) {
-		notes.push('copyvio')
-	}
-	if (rejected) {
+	if (data.rejected) {
 		notes.push('rejected');
 	}
 
-	return [
-		new bot.date(ts).format('YYYY-MM-DD HH:mm'),
-		`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
-		extract || '',
-		declines || 0,
+	table.addRow([
+		new bot.date(data.ts).format('YYYY-MM-DD HH:mm'),
+		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
+		data.extract || '',
+		data.declines || '',
 		notes.join('<br>')
-	];
-})
-.sort((a, b) => a[0] < b[0] ? -1 : 1) // sort by date
-.forEach(row => table.addRow(row));
+	]);
+});
 
 
 let page = new bot.page('User:SDZeroBot/G13 soon'),
@@ -149,7 +133,7 @@ try {
 		let date = new bot.date(rev.timestamp).subtract(24, 'hours');
 		return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 	}).join(' - ') + ' - {{history|2=older}}';	
-} catch (e) {}
+} catch (e) {} // eslint-disable-line no-empty
 
 let wikitext =
 `{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}

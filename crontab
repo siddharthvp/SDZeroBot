@@ -64,6 +64,8 @@
 
 35  1   *   *   *  jsub -quiet -N job-declined 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/declined-afcs.js
 
+20  1   *   *   *  jsub -quiet -N job-g131week 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/g13-1week.js
+
 5   0   *   *   2  jsub -quiet -N job-draft 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/draftify-watch.js
 
 5   0   *   *   3  jsub -quiet -N job-pwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/prod-watch.js

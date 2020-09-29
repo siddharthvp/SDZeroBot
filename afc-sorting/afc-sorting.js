@@ -78,15 +78,7 @@ process.chdir(__dirname);
 
 	await bot.getTokensAndSiteInfo();
 
-	var UserSQLReport = await bot.request({
-		"action": "query",
-		"prop": "revisions",
-		"titles": "User:SQL/AFC-Ores",
-		"rvprop": "content"
-	}).then(function(json) {
-		log('[S] Got User:SQL/AFC-Ores');
-		return json.query.pages[0].revisions[0].content;
-	}).catch(console.log);
+	var UserSQLReport = await new bot.page('User:SQL/AFC-Ores').text().catch(console.log); 
 	fs.writeFileSync('./UserSQLReport.txt', UserSQLReport, console.log);
 
 	var entriesFound = 0;
