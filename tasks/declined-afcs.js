@@ -26,7 +26,7 @@ bot.wikitext.parseTemplates(await earwigReport.text(), {
 
 log(`[i] Found ${Object.keys(tableInfo).length} pages declined yesterday`); 
 
-// In theory, we can do request all the details of upto 500 pages in 1 API call, but 
+// In theory, we can request all the details of upto 500 pages in 1 API call, but 
 // send in batches of 100 to avoid the slim possibility of hitting the max API response size limit
 await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), async (pageSet) => {
 

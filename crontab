@@ -60,7 +60,7 @@
 10  0   *   *   1  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-soon.js
 10  0   *   *   4  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-soon.js
 
-20  0   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-eligible.js
+5   8   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-eligible.js
 
 35  1   *   *   *  jsub -quiet -N job-declined 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/declined-afcs.js
 

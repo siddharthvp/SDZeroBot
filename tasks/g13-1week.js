@@ -50,7 +50,7 @@ result.forEach(row => {
 
 log(`[i] Found ${Object.keys(tableInfo).length} pages`); 
 
-// In theory, we can do request all the details of upto 500 pages in 1 API call, but 
+// In theory, we can request all the details of upto 500 pages in 1 API call, but 
 // send in batches of 100 to avoid the slim possibility of hitting the max API response size limit
 await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), async (pageSet) => {
 
@@ -73,7 +73,8 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			declines: text.match(/\{\{AFC submission\|d/g)?.length || 0,
 			rejected: pg.categories && pg.categories.find(e => e.title === 'Category:Rejected AfC submissions'),
 			promising: pg.categories && pg.categories.find(e => e.title === 'Category:Promising draft articles'),
-			unsourced: !/<ref/i.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text)
+			invalid: /\{\{AFC submission\|d\|(blank|test)/.test(text),
+			unsourced: !/<ref/i.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text),
 		});
 	}
 
@@ -89,11 +90,13 @@ table.addHeaders([
 ]);
 
 Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => { // eslint-disable-line no-unused-vars
-	// Sorting: put promising drafts at the top, rejected ones at the bottom
+	// Sorting: put promising drafts at the top, rejected or blank/test submissions at the bottom
 	// then put the unsourced ones below the ones with sources
 	// finally sort by time
 	if (data1.promising && !data2.promising) return -1;
 	if (!data1.promising && data2.promising) return 1;
+	if (data1.invalid && !data2.invalid) return 1;
+	if (!data1.invalid && data2.invalid) return -1;
 	if (data1.rejected && !data2.rejected) return 1;
 	if (!data1.rejected && data2.rejected) return -1;
 	if (data1.unsourced && !data2.unsourced) return 1;
@@ -116,6 +119,9 @@ Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => { // esli
 	}
 	if (data.rejected) {
 		notes.push('rejected');
+	}
+	if (data.invalid) {
+		notes.push('blank/test')
 	}
 
 	table.addRow([
