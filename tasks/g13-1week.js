@@ -57,7 +57,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 	for await (let pg of bot.readGen(pageSet, {
 		"prop": "revisions|description|templates|categories",
 		"tltemplates": ["Template:COI", "Template:Undisclosed paid", "Template:Connected contributor"],
-		"clcategories": ["Category:Rejected AFC submissions", "Category:Promising draft articles"],
+		"clcategories": ["Category:Rejected AfC submissions", "Category:Promising draft articles"],
 		"tllimit": "max",
 		"cllimt": "max"
 	})) {
@@ -71,9 +71,9 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			coi: pg.templates && pg.templates.find(e => e.title === 'Template:COI' || e.title === 'Template:Connected contributor'),
 			upe: pg.templates && pg.templates.find(e => e.title === 'Template:Undisclosed paid'),
 			declines: text.match(/\{\{AFC submission\|d/g)?.length || 0,
-			rejected: pg.categories && pg.categories.find(e => e.title === 'Category:Rejected AFC submissions'),
+			rejected: pg.categories && pg.categories.find(e => e.title === 'Category:Rejected AfC submissions'),
 			promising: pg.categories && pg.categories.find(e => e.title === 'Category:Promising draft articles'),
-			unsourced: /<ref>/.test(text)
+			unsourced: /<ref>/.test(text) || /\{\{([Ss]fn|[Hh]arv)/.test(text)
 		});
 	}
 
@@ -88,7 +88,7 @@ table.addHeaders([
 	{label: 'Notes', style: 'width: 5em'}
 ]);
 
-Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => {
+Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => { // eslint-disable-line no-unused-vars
 	// Sorting: put promising drafts at the top, rejected ones at the bottom
 	// Sort the rest by time
 	if (data1.promising) return -1;
