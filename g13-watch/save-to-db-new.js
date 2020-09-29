@@ -1,13 +1,12 @@
 // start job using: npm run start
 
-const {bot, log, toolsdb, emailOnError} = require('../botbase');
+const {fs, bot, log, toolsdb, emailOnError} = require('../botbase');
 const EventSource = require('eventsource');
 const TextExtractor = require('../TextExtractor')(bot);
 
 async function main() {
 
 	await bot.getSiteInfo();
-	bot.options.suppressAPIWarnings = true; // ignore rvslots errors
 
 	const db = new toolsdb('g13watch_p');
 
@@ -64,8 +63,8 @@ async function main() {
 				prop: 'revisions|description',
 				rvprop: 'content|size'
 			});
-			let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
-			let size = text && pagedata.revisions[0].size;
+			let text = pagedata?.[0]?.content;
+			let size = text ?? pagedata.revisions[0].size;
 			let desc = pagedata.description;
 			if (desc && desc.size > 255) {
 				desc = desc.slice(0, 250) + ' ...';
@@ -82,6 +81,8 @@ async function main() {
 				}
 				return wkt.getText();
 			});
+
+			fs.appendFileSync(__dirname + '/db-new.txt', JSON.stringify([title, desc, extract, size, ts]), console.log);
 
 			try {
 				await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
