@@ -88,8 +88,8 @@ const doSearch = async function(count) {
 			continue;
 		}
 		pages.forEach(page => {
-			if (tableInfo[page]) {
-				tableInfo[page].declines = count;
+			if (tableInfo[page.title]) {
+				tableInfo[page.title].declines = count;
 			}
 		});
 		log(`[+][${count}/10] Fetched ${json.query.pages.length} drafts declined ${count} or more times`);
