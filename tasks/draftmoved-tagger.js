@@ -46,7 +46,7 @@ for (let rev of revisions) {
 				if (err.code === 'nocreate-missing') {
 					return;
 				} else {
-					throw err;
+					return Promise.reject(err);
 				}
 			});
 		}

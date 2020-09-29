@@ -86,13 +86,14 @@ async function main() {
 
 			try {
 				await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
-				db.end(); // close connection when done, will be reopened for the next write
 			} catch (err) {
 				if (err.code === 'ER_DUP_ENTRY') {
 					log(`[W] ${title} entered category more than once`);
 					return;
 				}
-				throw err;
+				emailOnError(err, 'g13-watch-db');
+			} finally {
+				db.end(); // close connection when done, will be reopened for the next write
 			}
 		} catch (err) {
 			emailOnError(err, 'g13-watch-db');
