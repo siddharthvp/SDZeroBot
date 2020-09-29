@@ -59,7 +59,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 		"tltemplates": ["Template:COI", "Template:Undisclosed paid", "Template:Connected contributor"],
 		"clcategories": ["Category:Rejected AfC submissions", "Category:Promising draft articles"],
 		"tllimit": "max",
-		"cllimt": "max"
+		"cllimit": "max"
 	})) {
 		if (pg.missing) {
 			continue;
@@ -73,7 +73,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			declines: text.match(/\{\{AFC submission\|d/g)?.length || 0,
 			rejected: pg.categories && pg.categories.find(e => e.title === 'Category:Rejected AfC submissions'),
 			promising: pg.categories && pg.categories.find(e => e.title === 'Category:Promising draft articles'),
-			unsourced: /<ref>/.test(text) || /\{\{([Ss]fn|[Hh]arv)/.test(text)
+			unsourced: !/<ref>/.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text)
 		});
 	}
 
@@ -90,11 +90,14 @@ table.addHeaders([
 
 Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => { // eslint-disable-line no-unused-vars
 	// Sorting: put promising drafts at the top, rejected ones at the bottom
-	// Sort the rest by time
-	if (data1.promising) return -1;
-	if (data2.promising) return 1;
-	if (data1.rejected) return 1;
-	if (data2.rejected) return -1;
+	// then put the unsourced ones below the ones with sources
+	// finally sort by time
+	if (data1.promising && !data2.promising) return -1;
+	if (!data1.promising && data2.promising) return 1;
+	if (data1.rejected && !data2.rejected) return 1;
+	if (!data1.rejected && data2.rejected) return -1;
+	if (data1.unsourced && !data2.unsourced) return 1;
+	if (!data1.unsourced && data2.unsourced) return -1;
 	return data1.ts < data2.ts ? -1 : 1;
 }) 
 .forEach(([title, data]) => {
@@ -119,7 +122,7 @@ Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => { // esli
 		new bot.date(data.ts).format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
 		data.extract || '',
-		data.declines || '',
+		data.declines ?? '',
 		notes.join('<br>')
 	]);
 });
