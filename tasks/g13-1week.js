@@ -127,7 +127,7 @@ Object.entries(tableInfo).map(([title, {extract, desc, ts, coi, upe, unsourced, 
 	}
 
 	return [
-		ts.format('YYYY-MM-DD HH:mm'),
+		new bot.date(ts).format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
 		extract || '',
 		declines,
