@@ -69,7 +69,7 @@ async function main() {
 			if (desc && desc.size > 255) {
 				desc = desc.slice(0, 250) + ' ...';
 			}
-			let extract = text && TextExtractor.getExtract(text, 300, 550, function preprocessHook(text) {
+			let extract = TextExtractor.getExtract(text, 300, 550, function preprocessHook(text) {
 				let wkt = new bot.wikitext(text);
 				wkt.parseTemplates({
 					namePredicate: name => {
@@ -82,7 +82,7 @@ async function main() {
 				return wkt.getText();
 			});
 
-			fs.appendFileSync(__dirname + '/db-new.txt', JSON.stringify([title, desc, extract, size, ts]), console.log);
+			fs.appendFileSync(__dirname + '/db-new.txt', JSON.stringify([title, desc, extract, size, ts]) + '\n', console.log);
 
 			try {
 				await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
