@@ -143,12 +143,10 @@ await OresUtils.queryRevisions(['articlequality', 'draftquality'], Object.keys(r
 
 let table = new mwn.table();
 table.addHeaders([
-	{label: 'Last edit', style: 'width: 5em'},
 	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt' },
 	{label: '# declines', style: 'width: 4em'},
 	{label: 'Notes', style: 'width: 5em'},
-	'ORES',
 	'Size'
 ]);
 
@@ -208,14 +206,12 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 	if (data.test) notes.push('test')
 	if (data.short) notes.push('short');
 	if (data.draftified) notes.push('draftified');
-	if (data.oresBad) notes.push('ores: bad');
 
 	table.addRow([
 		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
 		data.extract || '',
 		data.declines ?? '',
 		notes.join('<br>'),
-		data.oresRating || '',
 		data.size
 	]);
 });
