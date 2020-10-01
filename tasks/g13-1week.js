@@ -99,7 +99,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 		}
 		let text = rev.content;
 		let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
-		let categories = pg.categories?.map(e => e.title.slice('Category'.length)) || [];
+		let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 		Object.assign(tableInfo[pg.title], {
 			extract: TextExtractor.getExtract(text, 250, 500),
 			revid: pg.lastrevid,
@@ -136,6 +136,7 @@ await OresUtils.queryRevisions(['articlequality', 'draftquality'], Object.keys(r
 			oresBad: draftquality !== 'OK' // Vandalism/spam/attack, many false positives
 		});
 	}
+	log(`[S] Got ORES result`);
 }).catch(err => {
 	log(`[E] ORES query failed: ${err}`);
 	emailOnError(err, 'g13-1week ores (non-fatal)');
@@ -202,16 +203,15 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 	if (data.upe) notes.push('undisclosed-paid');
 	if (data.unsourced) notes.push('unsourced');
 	if (data.rejected) notes.push('rejected');
-	if (data.blank) notes.push('blank')
-	if (data.test) notes.push('test')
-	if (data.short) notes.push('short');
+	if (data.blank) notes.push('blank');
+	if (data.test) notes.push('test');
 	if (data.draftified) notes.push('draftified');
 
 	table.addRow([
 		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
 		data.extract || '',
 		data.declines ?? '',
-		data.size,
+		data.short ? `<span class=short>${data.size}</span>` : data.size,
 		notes.join('<br>'),
 	]);
 });
@@ -230,7 +230,7 @@ try {
 let wikitext =
 `{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
-''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising draft are at the top.''
+''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;
 
 await page.save(wikitext, 'Updating').catch(async err => {
