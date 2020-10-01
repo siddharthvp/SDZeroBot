@@ -146,8 +146,8 @@ table.addHeaders([
 	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt' },
 	{label: '# declines', style: 'width: 4em'},
-	{label: 'Notes', style: 'width: 5em'},
-	'Size'
+	{label: 'Size', style: 'width: 2em'},
+	{label: 'Notes', style: 'width: 5em'}
 ]);
 
 // Helper functions for sorting
@@ -211,8 +211,8 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
 		data.extract || '',
 		data.declines ?? '',
+		data.size,
 		notes.join('<br>'),
-		data.size
 	]);
 });
 
@@ -230,6 +230,7 @@ try {
 let wikitext =
 `{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
+''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising draft are at the top.''
 `;
 
 await page.save(wikitext, 'Updating').catch(async err => {
