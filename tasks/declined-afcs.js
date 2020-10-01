@@ -92,7 +92,7 @@ Object.entries(tableInfo).sort(([_title1, data1], [_title2, data2]) => { // esli
 		notes.push('COI');
 	}
 	if (data.upe) {
-		notes.push('Undisclosed-paid');
+		notes.push('undisclosed-paid');
 	}
 	if (data.unsourced) {
 		notes.push('unsourced');
