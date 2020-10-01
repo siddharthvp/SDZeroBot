@@ -9,13 +9,12 @@
  * --sleep 	: (default 3000) number of milliseconds to pause after each edit
  */
 
-const {utils, log, argv} = require('../botbase');
+const {utils, mwn, log, argv} = require('../botbase');
 const auth = require('../.auth');
 
 var StubTagManager = require('./StubTagManager');
 var getPetscanList = require('./getPetscanList');
 
-const mwn = require('../mwn/src/bot');
 const bot = new mwn({
 	apiUrl: 'https://en.wikipedia.org/w/api.php',
 	username: auth.bot_username,

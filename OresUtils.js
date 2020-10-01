@@ -14,6 +14,16 @@ module.exports = {
 	 * @param {Array} revids - Array of revision IDs
 	 * @param {Array} errors - list of errors, modified in-place
 	 * @returns {Promise<Object>}
+	 * { 
+	 * 	"34242343": {
+	 * 		"drafttopic": [],
+	 * 		"articlequality": "C"
+	 * 	},
+	 * 	"94542343": {
+	 * 		"drafttopic": ["Culture.Asia", "Culture.Sports"],
+	 * 		"articlequality": "GA"
+	 * 	}
+	 * }
 	 */
 	queryRevisions: async function(models, revids, errors) {
 		var oresdata = {};

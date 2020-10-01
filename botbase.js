@@ -165,6 +165,8 @@ class toolsdb extends db {
 	}
 }
 
+const OresUtils = require('./OresUtils');
+const TextExtractor = require('./TextExtractor')(bot);
 
 const utils = {
 	saveObject: function(filename, obj) {
@@ -199,4 +201,4 @@ const utils = {
 };
 
 // export everything
-module.exports = { bot, mwn, db, enwikidb, toolsdb, mysql, fs, utils, assert, argv, xdate, log, emailOnError };
+module.exports = { bot, mwn, mysql, db, enwikidb, toolsdb, fs, assert, argv, xdate, log, utils, emailOnError, OresUtils, TextExtractor };

@@ -5,8 +5,7 @@ const {bot} = require('./botbase');
 const TE = require('./TextExtractor')(bot);
 
 before(function() {
-	this.timeout(10000);
-	return bot.login();
+	return bot.getSiteInfo();
 });
 
 it('removes templates on new lines', function() {
