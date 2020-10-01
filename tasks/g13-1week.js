@@ -7,8 +7,8 @@ log(`[i] Started`);
 
 let tableInfo = {};
 
-const startTs = new bot.date().subtract(6, 'months').add(7, 'days').format('YYYYMMDDHHmmss');	
-const endTs = new bot.date().subtract(6, 'months').add(6, 'days').format('YYYYMMDDHHmmss');
+const startTs = new bot.date().subtract(6, 'months').add(7, 'days').setUTCHours(0,0,0,0).format('YYYYMMDDHHmmss');	
+const endTs = new bot.date().subtract(6, 'months').add(6, 'days').setUTCHours(0,0,0,0).format('YYYYMMDDHHmmss');
 
 const db = await new enwikidb().connect();
 const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-1week-db.json').toString()) : 
@@ -126,11 +126,15 @@ let revidTitleMap = Object.entries(tableInfo).reduce((map, [title, data]) => {
 	}
 	return map;
 }, {});
-await OresUtils.queryRevisions(['articlequality'], Object.keys(revidTitleMap)).then(data => {
-	for (let [revid, {articlequality}] of Object.entries(data)) {
-		tableInfo[revidTitleMap[revid]].oresRating = {
-			'Stub': 1, 'Start': 2, 'C': 3, 'B': 4, 'GA': 5, 'FA': 6 // sort-friendly format
-		}[articlequality];
+await OresUtils.queryRevisions(['articlequality', 'draftquality'], Object.keys(revidTitleMap))
+.then(data => {
+	for (let [revid, {articlequality, draftquality}] of Object.entries(data)) {
+		Object.assign(tableInfo[revidTitleMap[revid]], {
+			oresRating: {
+				'Stub': 1, 'Start': 2, 'C': 3, 'B': 4, 'GA': 5, 'FA': 6 // sort-friendly format
+			}[articlequality],
+			oresBad: draftquality !== 'OK' // Vandalism/spam/attack, many false positives
+		});
 	}
 }).catch(err => {
 	log(`[E] ORES query failed: ${err}`);
@@ -189,6 +193,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 		demote('short', data1, data2) ||
 		demote('rejected', data1, data2) ||
 		demote('unsourced', data1, data2) ||
+		demote('oresBad', data1, data2) || // many false positives 
 		sortDesc('oresRating', data1, data2) ||
 		sortDesc('size', data1, data2)
 	);
@@ -203,9 +208,9 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 	if (data.test) notes.push('test')
 	if (data.short) notes.push('short');
 	if (data.draftified) notes.push('draftified');
+	if (data.oresBad) notes.push('ores: bad');
 
 	table.addRow([
-		new bot.date(data.ts).format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
 		data.extract || '',
 		data.declines ?? '',
