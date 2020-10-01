@@ -112,11 +112,11 @@ await OresUtils.queryRevisions(['articlequality', 'draftquality'], Object.keys(r
 
 let table = new mwn.table();
 table.addHeaders([
-	{label: 'Time', style: 'width: 5em'},
 	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt' },
 	{label: '# declines', style: 'width: 4em'},
-	{label: 'Notes', style: 'width: 5em'}
+	{label: 'Size', style: 'width: 2em'},
+	{label: 'Notes', style: 'width: 5em'},
 ]);
 
 // Helper functions for sorting
