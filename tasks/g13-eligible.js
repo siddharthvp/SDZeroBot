@@ -214,18 +214,10 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 });
 
 
-let page = new bot.page('User:SDZeroBot/G13 eligible'),
-	oldlinks = '';
-
-try {
-	oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
-		let date = new bot.date(rev.timestamp).subtract(24, 'hours');
-		return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
-	}).join(' - ') + ' - {{history|2=older}}';	
-} catch (e) {} // eslint-disable-line no-empty
+let page = new bot.page('User:SDZeroBot/G13 eligible');
 
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
+`{{/header|count=${Object.keys(tableInfo).length}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;
