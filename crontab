@@ -29,9 +29,8 @@
 0   2  1   *   *   jsub -quiet -N job-MIS  -mem 900m ~/bin/node ~/SDZeroBot/most-imported-scripts/most-imported-scripts.js
 0   2  15  *   *   jsub -quiet -N job-MIS  -mem 900m ~/bin/node ~/SDZeroBot/most-imported-scripts/most-imported-scripts.js
 
-0   0   *   *   *  jsub -quiet -N job-AFC  -mem 900m ~/bin/node ~/SDZeroBot/afc-sorting/afc-sorting.js
-0   6   *   *   *  jsub -quiet -N job-AFC  -mem 900m ~/bin/node ~/SDZeroBot/afc-sorting/afc-sorting.js
-0   12  *   *   *  jsub -quiet -N job-AFC  -mem 900m ~/bin/node ~/SDZeroBot/afc-sorting/afc-sorting.js
+0   2   *   *   *  jsub -quiet -N job-AFC  -mem 900m ~/bin/node ~/SDZeroBot/afc-sorting/afc-sorting.js
+0   10   *   *   *  jsub -quiet -N job-AFC  -mem 900m ~/bin/node ~/SDZeroBot/afc-sorting/afc-sorting.js
 0   18  *   *   *  jsub -quiet -N job-AFC  -mem 900m ~/bin/node ~/SDZeroBot/afc-sorting/afc-sorting.js
 
 0   1   *   *   *  jsub -quiet -N job-NPP  -mem 4g   ~/bin/node ~/SDZeroBot/npp-sorting/npp-sorting.js
@@ -57,14 +56,13 @@
 
 0   5   *   *   *  jsub -quiet -N job-gan		-mem 2g  ~/bin/node ~/SDZeroBot/tasks/gan-sorting.js
 
-10  0   *   *   1  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-soon.js
-10  0   *   *   4  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-soon.js
+10  4   *   *   1  jsub -quiet -N job-g13-soon 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-soon.js
 
-5   8   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-eligible.js
+0   0   *   *   *  jsub -quiet -N job-declined 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/declined-afcs.js
 
-35  1   *   *   *  jsub -quiet -N job-declined 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/declined-afcs.js
+0   0   *   *   *  jsub -quiet -N job-g131week 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/g13-1week.js
 
-20  1   *   *   *  jsub -quiet -N job-g131week 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/g13-1week.js
+0   0   *   *   *  jsub -quiet -N job-g13-eligible 	-mem 1g  ~/bin/node ~/SDZeroBot/tasks/g13-eligible.js
 
 5   0   *   *   2  jsub -quiet -N job-draft 	-mem 2g  ~/bin/node ~/SDZeroBot/tasks/draftify-watch.js
 
