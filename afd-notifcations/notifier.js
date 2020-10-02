@@ -354,7 +354,7 @@ class Notifier {
 				return Promise.reject('nobots');
 			}
 
-			let rgx = new RegExp(`== ?Nomination of \\[\\[:?${article}\\]\\] for deletion ?==`);
+			let rgx = new RegExp(`== ?Nomination of \\[\\[:?${mwn.util.escapeRegExp(article)}\\]\\] for deletion ?==`);
 			if (rgx.test(text)) {
 				log(`[C] ${username} was already notified of ${article}`);
 				return Promise.reject('already-notified');
