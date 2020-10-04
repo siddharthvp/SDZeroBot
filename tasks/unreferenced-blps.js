@@ -33,7 +33,14 @@ function getGender(title) {
 			"formatversion": "2"
 		});
 	}).then(data => {
-		return data.claims.P21[0].mainsnak.datavalue.value.id === 'Q6581097' ? 'male' : 'female';
+		let gender = data.claims.P21[0].mainsnak.datavalue.value.id;
+		if (gender === 'Q6581097') {
+			return 'male';
+		} else if (gender === 'Q6581072') {
+			return 'female';
+		} else {
+			return undefined;
+		}
 	}).catch(() => {
 		return undefined;
 	});
@@ -48,15 +55,15 @@ await bot.getTokensAndSiteInfo();
 
 for await (let json of bot.continuedQueryGen({
 	"action": "query",
-	"prop": "revisions|description",
+	"prop": "revisions|description|extlinks",
 	"generator": "categorymembers",
-	"rvprop": "ids|content",
+	"rvprop": "content",
 	"rvslots": "main",
-	"rvsection": "0",
+	"ellimit": "max",
 	"gcmtitle": "Category:All unreferenced BLPs",
 	"gcmnamespace": "0",
 	"gcmtype": "page",
-	"gcmlimit": "500"
+	"gcmlimit": "50"
 })) {
 	await bot.batchOperation(json.query.pages, function(pg) {
 		log(`[+] Processing ${pg.title}`)
@@ -64,7 +71,10 @@ for await (let json of bot.continuedQueryGen({
 		data[pg.title] = {
 			extract: TextExtractor.getExtract(text, 200, 500),
 			desc: pg.description,
-			revid: pg.revisions[0].revid,
+			sourced: /<ref/i.test(text) || /\{\{([Ss]fn|[Hh]arv)\}\}/.test(text),
+			hasextlinks: !!pg.extlinks.map(e => e.url).filter(link => {
+				return !link.includes('google.com') && !link.includes('jstor.org/action/doBasicSearch');
+			}).length
 		}
 		return getGender(pg.title).then(gender => {
 			data[pg.title].gender = gender
@@ -80,14 +90,15 @@ let tables = {
 };
 let headers = [
 	{label: 'Article', style: 'width: 17em'},
-	'Extract'
+	'Extract',
+	{label: 'Notes', style: 'width: 5em'}
 ];
 
 tables.men.addHeaders(headers);
 tables.women.addHeaders(headers);
 
 let wcount = 0, mcount = 0;
-for (let [title, {extract, gender, desc}] of Object.entries(data)) {
+for (let [title, {extract, gender, desc, sourced, hasextlinks}] of Object.entries(data)) {
 	let table;
 	if (gender === 'male') {
 		mcount++;
@@ -98,9 +109,13 @@ for (let [title, {extract, gender, desc}] of Object.entries(data)) {
 	} else {
 		table = tables.unknown;
 	}
+	let notes = [];
+	if (sourced) notes.push('has sources');
+	if (hasextlinks) notes.push('has extlinks');
 	table.addRow([
 		`[[${title}]] ${desc ? `(<small>${desc}</small>)` : ''}`,
-		extract
+		extract,
+		notes.join('<br>')
 	]);
 }
 
