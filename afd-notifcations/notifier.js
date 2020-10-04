@@ -1,6 +1,4 @@
-const {bot, log, emailOnError, utils, mwn, argv} = require('../botbase');
-
-process.chdir(__dirname);
+const {bot, log, emailOnError, mwn, argv} = require('../botbase');
 
 const PercentDefault = 0.25;
 const ByteDefault = 1000;
@@ -38,7 +36,6 @@ class Notifier {
 			bot.save('User:SDZeroBot/AfD notifier/log', wikitext, 'Logging');
 
 			log(notifier.aborts);
-			utils.saveObject('abort-stats', notifier.aborts);
 		}
 
 	}
@@ -94,8 +91,7 @@ class Notifier {
 		const text = await afdlog.text();
 		let rgx = /\{\{(Wikipedia:Articles for deletion\/.*?)}}(?!<!--Relisted-->)/mg;
 		this.afds = {};
-		let match;
-		while (match = rgx.exec(text)) { // eslint-disable-line no-cond-assign
+		for (let match of text.matchAll(rgx)) {
 			this.afds[match[1]] = '';
 		}
 		log(`[S] Got list of ${Object.keys(this.afds).length} AfDs`);
@@ -129,8 +125,7 @@ class Notifier {
 
 		let articleRgx = /\{\{la\|(.*?)\}\}/g;
 		let articles = [];
-		let match;
-		while (match = articleRgx.exec(afdtext)) { // eslint-disable-line no-cond-assign
+		for (let match of afdtext.matchAll(articleRgx)) {
 			let article = match[1];
 			articles.push(article);
 		}
