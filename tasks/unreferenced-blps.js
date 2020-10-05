@@ -39,10 +39,10 @@ function getGender(title) {
 		} else if (gender === 'Q6581072') {
 			return 'female';
 		} else {
-			return undefined;
+			return null;
 		}
 	}).catch(() => {
-		return undefined;
+		return null;
 	});
 }
 
@@ -56,10 +56,10 @@ await bot.getTokensAndSiteInfo();
 for await (let json of bot.continuedQueryGen({
 	"action": "query",
 	"prop": "revisions|description|extlinks",
-	"generator": "categorymembers",
 	"rvprop": "content",
 	"rvslots": "main",
 	"ellimit": "max",
+	"generator": "categorymembers",
 	"gcmtitle": "Category:All unreferenced BLPs",
 	"gcmnamespace": "0",
 	"gcmtype": "page",
@@ -72,7 +72,7 @@ for await (let json of bot.continuedQueryGen({
 			extract: TextExtractor.getExtract(text, 200, 500),
 			desc: pg.description,
 			sourced: /<ref/i.test(text) || /\{\{([Ss]fn|[Hh]arv)\}\}/.test(text),
-			hasextlinks: !!pg.extlinks.map(e => e.url).filter(link => {
+			hasextlinks: pg.extlinks && pg.extlinks.map(e => e.url).filter(link => {
 				return !link.includes('google.com') && !link.includes('jstor.org/action/doBasicSearch');
 			}).length
 		}
