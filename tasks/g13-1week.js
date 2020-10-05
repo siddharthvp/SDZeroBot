@@ -101,7 +101,18 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 		let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
 		let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 		Object.assign(tableInfo[pg.title], {
-			extract: TextExtractor.getExtract(text, 250, 500),
+			extract: TextExtractor.getExtract(text, 250, 500, function preprocessHook(text) {
+				let wkt = new bot.wikitext(text);
+				wkt.parseTemplates({
+					namePredicate: name => {
+						return /infobox/i.test(name) || name === 'AFC submission';
+					}
+				});
+				for (let template of wkt.templates) {
+					wkt.removeEntity(template);
+				}
+				return wkt.getText();
+			}),
 			revid: pg.lastrevid,
 			desc: pg.description,
 			coi: templates.includes('COI') || templates.includes('Connected contributor'),
