@@ -19,3 +19,5 @@ with open('/data/project/sdzerobot/SDZeroBot/crontab', 'r') as crontab:
 			print('> ' + command)
 			os.popen(command)
 			break
+	else:
+		print('no matching cron job')

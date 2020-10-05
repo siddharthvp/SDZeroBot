@@ -1,4 +1,5 @@
-const {bot, mwn, log} = require('../botbase');
+const { processNamespaceData } = require('../../mwn/src/title');
+const {bot, mwn, log, fs} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 const wd = new mwn({
@@ -41,8 +42,6 @@ function getGender(title) {
 		} else {
 			return null;
 		}
-	}).catch(() => {
-		return null;
 	});
 }
 
@@ -52,6 +51,8 @@ let data = {};
 
 log(`[i] Started`);
 await bot.getTokensAndSiteInfo();
+
+process.chdir(__dirname);
 
 for await (let json of bot.continuedQueryGen({
 	"action": "query",
@@ -79,7 +80,9 @@ for await (let json of bot.continuedQueryGen({
 		return getGender(pg.title).then(gender => {
 			data[pg.title].gender = gender
 		});
-	}, 50, 1);
+	}, 50, 1).then(err => {
+		fs.appendFile('./errlog.txt', JSON.stringify(err, null, 4), console.log);
+	});
 }
 log(`[S] got data from the APIs`);
 
