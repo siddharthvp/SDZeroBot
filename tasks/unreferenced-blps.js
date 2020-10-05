@@ -1,4 +1,3 @@
-const { processNamespaceData } = require('../../mwn/src/title');
 const {bot, mwn, log, fs} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
@@ -81,7 +80,7 @@ for await (let json of bot.continuedQueryGen({
 			data[pg.title].gender = gender
 		});
 	}, 50, 1).then(err => {
-		fs.appendFile('./errlog.txt', JSON.stringify(err, null, 4), console.log);
+		fs.appendFile('./errlog-unrefblps.txt', JSON.stringify(err, null, 4), console.log);
 	});
 }
 log(`[S] got data from the APIs`);
