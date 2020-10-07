@@ -110,7 +110,7 @@ let oldlinks = revs.map(rev => {
 }).join(' - ') + ' - {{history|2=older}}';
 
 let wikitext =
-`{{/header|count=${count}|date=${new bot.date().subtract(1, 'day').format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
+`{{/header|count=${count}|date=${new bot.date().subtract(1, 'day').format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 
 ${table.getText()}
 `;

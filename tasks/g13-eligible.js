@@ -230,7 +230,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 let page = new bot.page('User:SDZeroBot/G13 eligible');
 
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
+`{{/header|count=${Object.keys(tableInfo).length}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 

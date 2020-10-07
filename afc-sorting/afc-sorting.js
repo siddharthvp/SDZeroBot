@@ -236,7 +236,7 @@ process.chdir(__dirname);
 		} else {
 			diff = `{{Steady}} no change from last update`;
 		}
-		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
+		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
 
 		fs.writeFileSync('./previousRunCount.txt', String(count));
 

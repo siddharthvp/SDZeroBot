@@ -93,7 +93,7 @@ for (let [title, details] of Object.entries(data)) {
 }
 
 let wikitext =
-`{{/header|count=${articles.length}|date=${new bot.date().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
+`{{/header|count=${articles.length}|date=${new bot.date().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 
 ${TextExtractor.finalSanitise(table.getText())}
 `;

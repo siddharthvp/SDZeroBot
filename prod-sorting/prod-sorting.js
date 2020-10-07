@@ -164,7 +164,7 @@ process.chdir(__dirname);
 	var makeMainPage = function(lite) {
 		var count = Object.keys(revidsTitles).length;
 
-		var content = `{{User:SDZeroBot/PROD sorting/header|count=${count}|date={{subst:#time:j F Y}}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>\n`;
+		var content = `{{User:SDZeroBot/PROD sorting/header|count=${count}|date={{subst:#time:j F Y}}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic, lite);
 			content += `\n==${sectionTitle}==\n`;

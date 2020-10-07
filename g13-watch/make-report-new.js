@@ -54,7 +54,7 @@ let page = new bot.page('User:SDZeroBot/G13 Watch/new');
 // 	return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 // }).join(' - ') + ' - {{history|2=older}}';
 
-let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=}}<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>` 
+let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>` 
 	+ `\n\n${wikitable}`;
 
 await page.save(text, 'Updating G13 report').catch(async err => {

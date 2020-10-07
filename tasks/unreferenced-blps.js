@@ -125,7 +125,7 @@ for (let [title, {extract, gender, desc, sourced, hasextlinks}] of Object.entrie
 bot.options.defaultParams.maxlag = 5;
 
 let wikitext =
-`${wcount} unreferenced woman BLPs — SDZeroBOT (last updated ~~~~~)<includeonly><section begin=lastupdate />${new bot.date().format('D MMMM YYYY')}<section end=lastupdate /></includeonly>
+`${wcount} unreferenced woman BLPs — SDZeroBOT (last updated ~~~~~)<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 
 ${TextExtractor.finalSanitise(tables.women.getText())}
 `;
