@@ -150,7 +150,9 @@ await OresUtils.queryRevisions(['articlequality', 'draftquality'], Object.keys(r
 	emailOnError(err, 'g13-1week ores (non-fatal)');
 });
 
-let table = new mwn.table();
+let table = new mwn.table({
+	style: 'overflow-wrap: anywhere'
+});
 table.addHeaders([
 	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt' },

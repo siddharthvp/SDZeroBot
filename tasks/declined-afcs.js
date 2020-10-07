@@ -110,7 +110,9 @@ await OresUtils.queryRevisions(['articlequality', 'draftquality'], Object.keys(r
 });
 
 
-let table = new mwn.table();
+let table = new mwn.table({
+	style: 'overflow-wrap: anywhere'
+});
 table.addHeaders([
 	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt', style: 'width: 17em' },
