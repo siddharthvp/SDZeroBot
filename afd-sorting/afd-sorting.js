@@ -172,7 +172,9 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new mwn.table();
+		var table = new mwn.table({
+			style: 'overflow-wrap: anywhere'
+		});
 		table.addHeaders([
 			`scope="col" style="width: 5em;" | AfD date`,
 			`scope="col" style="width: 19em;" | Article`,
