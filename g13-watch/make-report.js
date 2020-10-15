@@ -1,6 +1,7 @@
 // npm run make
 
 const {bot, log, emailOnError, mwn} = require('../botbase');
+const {saveWithBlacklistHandling} = require('../tasks/commons');
 const sqlite3 = require('sqlite3').verbose();
 
 process.chdir(__dirname);
@@ -63,19 +64,7 @@ db.each(`
 	let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>` 
 		+ `\n\n${wikitable}`;
 
-	await page.save(text, 'Updating G13 report').catch(async err => {
-		if (err.code === 'spamblacklist') {
-			for (let site of err.response.error.spamblacklist.matches) {
-				text = text.replace(
-					new RegExp('https?:\\/\\/' + site, 'g'),
-					site
-				);
-			}
-			await page.save(text, 'Updating G13 report');
-		} else {
-			return Promise.reject(err);
-		} 
-	});
+	await saveWithBlacklistHandling(page, text);
 
 	log(`[i] Finished`);
 

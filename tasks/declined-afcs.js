@@ -1,5 +1,5 @@
-const {bot, log, TextExtractor, emailOnError, mwn, utils} = require('../botbase');
-const OresUtils = require('../OresUtils');
+const {argv, bot, log, TextExtractor, emailOnError, mwn, utils} = require('../botbase');
+const {AfcDraftSize, getWikidataShortdescs, populateOresQualityRatings, comparators, preprocessDraftForExtract} = require('./commons');
 
 (async function() {
 
@@ -26,18 +26,6 @@ bot.wikitext.parseTemplates(await earwigReport.text(), {
 
 log(`[i] Found ${Object.keys(tableInfo).length} pages declined yesterday`); 
 
-// Get page size not counting AFC templates and comments
-function size(text) {
-	text = text.replace(/<!--.*?-->/sg, ''); // remove comments
-	let wkt = new bot.wikitext(text);
-	wkt.parseTemplates({
-		namePredicate: name => name.startsWith('AFC ') // AFC submission, AFC comment, etc
-	});
-	for (let template of wkt.templates) {
-		wkt.removeEntity(template);
-	}
-	return wkt.getText().length;
-}
 
 // In theory, we can request all the details of upto 500 pages in 1 API call, but 
 // send in batches of 100 to avoid the slim possibility of hitting the max API response size limit
@@ -68,7 +56,8 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 		let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
 		let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 		Object.assign(tableInfo[pg.title], {
-			extract: TextExtractor.getExtract(text, 250, 500),
+			extract: TextExtractor.getExtract(text, 250, 500,
+				preprocessDraftForExtract),
 			revid: pg.lastrevid,
 			desc: pg.description,
 			coi: templates.includes('COI') || templates.includes('Connected contributor'),
@@ -79,7 +68,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			promising: categories.includes('Promising draft articles'),
 			blank: /\{\{AFC submission\|d\|blank/.test(text),
 			test: /\{\{AFC submission\|d\|test/.test(text),
-			size: size(text),
+			size: AfcDraftSize(text),
 			unsourced: !/<ref/i.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text),
 		});
 	}
@@ -87,28 +76,10 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 }, 0, 1);
 
 // ORES
-let revidTitleMap = Object.entries(tableInfo).reduce((map, [title, data]) => {
-	if (data.revid) {
-		map[data.revid] = title;
-	}
-	return map;
-}, {});
-await OresUtils.queryRevisions(['articlequality', 'draftquality'], Object.keys(revidTitleMap))
-.then(data => {
-	for (let [revid, {articlequality, draftquality}] of Object.entries(data)) {
-		Object.assign(tableInfo[revidTitleMap[revid]], {
-			oresRating: {
-				'Stub': 1, 'Start': 2, 'C': 3, 'B': 4, 'GA': 5, 'FA': 6 // sort-friendly format
-			}[articlequality],
-			oresBad: draftquality !== 'OK' // Vandalism/spam/attack, many false positives
-		});
-	}
-	log(`[S] Got ORES result`);
-}).catch(err => {
-	log(`[E] ORES query failed: ${err}`);
-	emailOnError(err, 'g13-1week ores (non-fatal)');
-});
+await populateOresQualityRatings(tableInfo);
 
+// Wikidata short descriptions
+await getWikidataShortdescs(Object.keys(tableInfo), tableInfo);
 
 let table = new mwn.table({
 	style: 'overflow-wrap: anywhere'
@@ -122,26 +93,7 @@ table.addHeaders([
 ]);
 
 // Helper functions for sorting
-function promote(param, data1, data2) {
-	if (data1[param] && !data2[param]) return -1;
-	else if (!data1[param] && data2[param]) return 1;
-	else return 0;
-}
-function demote(param, data1, data2) {
-	if (data1[param] && !data2[param]) return 1;
-	else if (!data1[param] && data2[param]) return -1;
-	else return 0;
-}
-function sortDesc(param, data1, data2) { 
-	if (data1[param] > data2[param]) return -1;
-	else if (data1[param] < data2[param]) return 1;
-	else return 0;
-}
-function sortAsc(param, data1, data2) { // eslint-disable-line no-unused-vars
-	if (data1[param] > data2[param]) return 1;
-	else if (data1[param] < data2[param]) return -1;
-	else return 0;
-}
+const {sortDesc, promote, demote} = comparators;
 
 Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no-unused-vars
 	return !data.skip;
@@ -188,7 +140,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 	]);
 });
 
-let page = new bot.page('User:SDZeroBot/Declined AFCs');
+let page = new bot.page('User:SDZeroBot/Declined AFCs' + (argv.sandbox ? '/sandbox' : ''));
 
 let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
 	let date = new bot.date(rev.timestamp).subtract(24, 'hours');

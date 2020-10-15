@@ -1,5 +1,5 @@
 const {fs, bot, log, TextExtractor, enwikidb, emailOnError, mwn, utils, argv} = require('../botbase');
-const OresUtils = require('../OresUtils');
+const {AfcDraftSize, getWikidataShortdescs, populateOresQualityRatings, comparators, preprocessDraftForExtract, saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
 
@@ -7,11 +7,11 @@ log(`[i] Started`);
 
 let tableInfo = {};
 
-const startTs = new bot.date().subtract(6, 'months').setUTCHours(0,0,0,0).format('YYYYMMDDHHmmss');	
+const startTs = new bot.date().subtract(6, 'months').setUTCHours(0,0,0,0).format('YYYYMMDDHHmmss');
 
 const db = await new enwikidb().connect();
-const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-eligible-db.json').toString()) : 
-await db.query(`
+const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-eligible-db.json').toString()) :
+	await db.query(`
 	SELECT DISTINCT page_namespace, page_title, rev_timestamp
 	FROM page
 	JOIN revision ON rev_id = page_latest
@@ -45,20 +45,7 @@ result.forEach(row => {
 	};
 });
 
-log(`[i] Found ${Object.keys(tableInfo).length} pages`); 
-
-// Get page size not counting AFC templates and comments
-function size(text) {
-	text = text.replace(/<!--.*?-->/sg, ''); // remove comments
-	let wkt = new bot.wikitext(text);
-	wkt.parseTemplates({
-		namePredicate: name => name.startsWith('AFC ') // AFC submission, AFC comment, etc
-	});
-	for (let template of wkt.templates) {
-		wkt.removeEntity(template);
-	}
-	return wkt.getText().length;
-}
+log(`[i] Found ${Object.keys(tableInfo).length} pages`);
 
 // Check that the last edit timestamp isn't recent, guards against database replag
 function validateTime(ts) {
@@ -69,7 +56,7 @@ function validateTime(ts) {
 	return true;
 }
 
-// In theory, we can request all the details of upto 500 pages in 1 API call, but 
+// In theory, we can request all the details of upto 500 pages in 1 API call, but
 // send in batches of 100 to avoid the slim possibility of hitting the max API response size limit
 await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), async (pageSet) => {
 
@@ -77,13 +64,13 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 		"prop": "revisions|info|description|templates|categories",
 		"rvprop": "content|timestamp",
 		"tltemplates": [
-			"Template:COI", 
-			"Template:Undisclosed paid", 
+			"Template:COI",
+			"Template:Undisclosed paid",
 			"Template:Connected contributor",
 			"Template:Drafts moved from mainspace"
 		],
 		"clcategories": [
-			"Category:Rejected AfC submissions", 
+			"Category:Rejected AfC submissions",
 			"Category:Promising draft articles"
 		],
 		"tllimit": "max",
@@ -98,18 +85,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 		let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
 		let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 		Object.assign(tableInfo[pg.title], {
-			extract: TextExtractor.getExtract(text, 250, 500, function preprocessHook(text) {
-				let wkt = new bot.wikitext(text);
-				wkt.parseTemplates({
-					namePredicate: name => {
-						return /infobox/i.test(name) || name === 'AFC submission';
-					}
-				});
-				for (let template of wkt.templates) {
-					wkt.removeEntity(template);
-				}
-				return wkt.getText();
-			}),
+			extract: TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract),
 			revid: pg.lastrevid,
 			desc: pg.description,
 			coi: templates.includes('COI') || templates.includes('Connected contributor'),
@@ -120,7 +96,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			promising: categories.includes('Promising draft articles'),
 			blank: /\{\{AFC submission\|d\|blank/.test(text),
 			test: /\{\{AFC submission\|d\|test/.test(text),
-			size: size(text),
+			size: AfcDraftSize(text),
 			unsourced: !/<ref/i.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text),
 		});
 	}
@@ -128,27 +104,10 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 }, 0, 1);
 
 // ORES
-let revidTitleMap = Object.entries(tableInfo).reduce((map, [title, data]) => {
-	if (data.revid) {
-		map[data.revid] = title;
-	}
-	return map;
-}, {});
-await OresUtils.queryRevisions(['articlequality', 'draftquality'], Object.keys(revidTitleMap))
-.then(data => {
-	for (let [revid, {articlequality, draftquality}] of Object.entries(data)) {
-		Object.assign(tableInfo[revidTitleMap[revid]], {
-			oresRating: {
-				'Stub': 1, 'Start': 2, 'C': 3, 'B': 4, 'GA': 5, 'FA': 6 // sort-friendly format
-			}[articlequality],
-			oresBad: draftquality !== 'OK' // Vandalism/spam/attack, many false positives
-		});
-	}
-	log(`[S] Got ORES result`);
-}).catch(err => {
-	log(`[E] ORES query failed: ${err}`);
-	emailOnError(err, 'g13-1week ores (non-fatal)');
-});
+await populateOresQualityRatings(tableInfo);
+
+// Wikidata short descriptions
+await getWikidataShortdescs(Object.keys(tableInfo), tableInfo);
 
 let table = new mwn.table({
 	style: 'overflow-wrap: anywhere'
@@ -161,27 +120,7 @@ table.addHeaders([
 	{label: 'Notes', style: 'width: 5em'}
 ]);
 
-// Helper functions for sorting
-function promote(param, data1, data2) {
-	if (data1[param] && !data2[param]) return -1;
-	else if (!data1[param] && data2[param]) return 1;
-	else return 0;
-}
-function demote(param, data1, data2) {
-	if (data1[param] && !data2[param]) return 1;
-	else if (!data1[param] && data2[param]) return -1;
-	else return 0;
-}
-function sortDesc(param, data1, data2) { 
-	if (data1[param] > data2[param]) return -1;
-	else if (data1[param] < data2[param]) return 1;
-	else return 0;
-}
-function sortAsc(param, data1, data2) { // eslint-disable-line no-unused-vars
-	if (data1[param] > data2[param]) return 1;
-	else if (data1[param] < data2[param]) return -1;
-	else return 0;
-}
+const {sortDesc, promote, demote} = comparators;
 
 Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no-unused-vars
 	return !data.skip;
@@ -202,7 +141,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 		demote('short', data1, data2) ||
 		demote('rejected', data1, data2) ||
 		demote('unsourced', data1, data2) ||
-		demote('oresBad', data1, data2) || // many false positives 
+		demote('oresBad', data1, data2) || // many false positives
 		sortDesc('oresRating', data1, data2) ||
 		sortDesc('size', data1, data2)
 	);
@@ -227,27 +166,14 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 });
 
 
-let page = new bot.page('User:SDZeroBot/G13 eligible');
+let page = new bot.page('User:SDZeroBot/G13 eligible' + (argv.sandbox ? '/sandbox' : ''));
 
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+	`{{/header|count=${Object.keys(tableInfo).length}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 
-await page.save(wikitext, 'Updating').catch(async err => {
-	if (err.code === 'spamblacklist') {
-		// Cut out the protocol of links that hit the blacklist
-		for (let site of err.response.error.spamblacklist.matches) {
-			wikitext = wikitext.replace(
-				new RegExp('https?:\\/\\/' + site, 'g'),
-				site
-			);
-		}
-		await page.save(wikitext, 'Updating');
-	} else {
-		return Promise.reject(err);
-	} 
-});
+await saveWithBlacklistHandling(page, wikitext);
 
 log(`[i] Finished`);
 
