@@ -86,7 +86,6 @@ class db { // abstract class
 	async query(...args) {
 		if (!this.connected) {
 			await this.connect();
-			this.connected = true;
 		}
 		this.inUse = true;
 		const result = await this.conn.query(...args);
@@ -103,7 +102,6 @@ class db { // abstract class
 	async run(...args) {
 		if (!this.connected) {
 			await this.connect();
-			this.connected = true;
 		}
 		// convert `undefined`s in bind parameters to null
 		if (args[1] instanceof Array) {

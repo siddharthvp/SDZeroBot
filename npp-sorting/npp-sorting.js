@@ -1,5 +1,6 @@
 const {log, argv, mwn, bot, enwikidb, utils, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
+const {getWikidataShortdescs} = require('../tasks/commons');
 
 process.chdir(__dirname);
 
@@ -148,7 +149,8 @@ process.chdir(__dirname);
 	log(`[S] Fetched page contents and short descriptions`);
 	log(`[S] Found ${pagesWithShortDescs} pages with short descriptions`);
 
-
+	// populate wikidata shortdescs into tableInfo
+	await getWikidataShortdescs(Object.values(revidsTitles), tableInfo);
 
 	/* GET DATA ABOUT PRIOR AFD */
 	var afds = {};
@@ -268,8 +270,10 @@ process.chdir(__dirname);
 					log(`[W] No change made for User:SDZeroBot/NPP sorting`);
 				}
 			}  else {
-				log(`[W] Success response but no data returned?`);
+				log(`[W] No data returned on success response`);
 			}
+		}).catch(err => {
+			log(`[E] Failed to save main page: ${err}`);
 		});
 	};
 	await makeMainPage();

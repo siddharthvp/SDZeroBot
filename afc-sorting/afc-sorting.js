@@ -1,4 +1,4 @@
-const {fs, xdate, mwn, bot, enwikidb, utils, argv, log, emailOnError} = require('../botbase');
+const {fs, mwn, bot, enwikidb, utils, argv, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 process.chdir(__dirname);
 
@@ -49,7 +49,7 @@ process.chdir(__dirname);
 		utils.saveObject('tableInfo', tableInfo);
 	}
 
-	var accessdate = new xdate().format('D MMMM YYYY');
+	var accessdate = new bot.date().format('D MMMM YYYY');
 
 
 
