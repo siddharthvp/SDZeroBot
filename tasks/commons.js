@@ -1,6 +1,11 @@
 const {bot, mwn, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
+/**
+ * @param {string} titles
+ * @param {Object} tableInfo
+ * @returns {Promise<void>}
+ */
 async function getWikidataShortdescs(titles, tableInfo) {
 	/* GET WIKIDATA SHORTDESCS */
 	const wdbot = new mwn({
@@ -27,6 +32,10 @@ async function getWikidataShortdescs(titles, tableInfo) {
 	}
 }
 
+/**
+ * @param {string} shortdesc
+ * @returns {string}
+ */
 function normaliseShortdesc(shortdesc) {
 	if (!shortdesc || shortdesc === 'Wikimedia list article') {
 		return '';
@@ -63,28 +72,56 @@ async function populateOresQualityRatings(tableInfo) {
 }
 
 // Helper functions for sorting
+/**
+ * @param {string} param
+ * @param {Object} data1
+ * @param {Object} data2
+ * @returns {number}
+ */
 function promote(param, data1, data2) {
 	if (data1[param] && !data2[param]) return -1;
 	else if (!data1[param] && data2[param]) return 1;
 	else return 0;
 }
+/**
+ * @param {string} param
+ * @param {Object} data1
+ * @param {Object} data2
+ * @returns {number}
+ */
 function demote(param, data1, data2) {
 	if (data1[param] && !data2[param]) return 1;
 	else if (!data1[param] && data2[param]) return -1;
 	else return 0;
 }
+/**
+ * @param {string} param
+ * @param {Object} data1
+ * @param {Object} data2
+ * @returns {number}
+ */
 function sortDesc(param, data1, data2) {
 	if (data1[param] > data2[param]) return -1;
 	else if (data1[param] < data2[param]) return 1;
 	else return 0;
 }
+/**
+ * @param {string} param
+ * @param {Object} data1
+ * @param {Object} data2
+ * @returns {number}
+ */
 function sortAsc(param, data1, data2) {
 	if (data1[param] > data2[param]) return 1;
 	else if (data1[param] < data2[param]) return -1;
 	else return 0;
 }
 
-// Get page size not counting AFC templates and comments
+/**
+ * Get page size not counting AFC templates and comments
+ * @param {string} text
+ * @returns {number}
+ */
 function AfcDraftSize(text) {
 	text = text.replace(/<!--.*?-->/sg, ''); // remove comments
 	let wkt = new bot.wikitext(text);
@@ -97,6 +134,10 @@ function AfcDraftSize(text) {
 	return wkt.getText().length;
 }
 
+/**
+ * @param {string} text
+ * @returns {string}
+ */
 function preprocessDraftForExtract(text) {
 	let wkt = new bot.wikitext(text);
 	wkt.parseTemplates({
@@ -110,8 +151,13 @@ function preprocessDraftForExtract(text) {
 	return wkt.getText();
 }
 
+/**
+ * @param {bot.page} page
+ * @param {string} text
+ * @returns {Promise}
+ */
 async function saveWithBlacklistHandling(page, text) {
-	await page.save(text, 'Updating G13 report').catch(async err => {
+	return page.save(text, 'Updating G13 report').catch(async err => {
 		if (err.code === 'spamblacklist') {
 			for (let site of err.response.error.spamblacklist.matches) {
 				text = text.replace(
@@ -130,8 +176,9 @@ module.exports = {
 	getWikidataShortdescs,
 	normaliseShortdesc,
 	populateOresQualityRatings,
-	comparators: { promote, demote, sortAsc, sortDesc },
+	comparators: {promote, demote, sortAsc, sortDesc},
 	AfcDraftSize,
 	preprocessDraftForExtract,
 	saveWithBlacklistHandling
 };
+
