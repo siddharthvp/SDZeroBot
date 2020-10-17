@@ -1,5 +1,6 @@
 const {mwn, bot, log, xdate, argv, utils, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
+const {normaliseShortdesc} = require('../tasks/commons');
 
 process.chdir(__dirname);
 
@@ -41,7 +42,7 @@ process.chdir(__dirname);
 						afd_date = new xdate(afd_template.getValue('timestamp')).format('YYYY-MM-DD');
 					} else if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
 						afd_date = new xdate(
-							afd_template.getValue('year'), 
+							afd_template.getValue('year'),
 							xdate.localeData.months.indexOf(afd_template.getValue('month')),
 							afd_template.getValue('day')
 						).format('YYYY-MM-DD');
@@ -51,14 +52,8 @@ process.chdir(__dirname);
 				tableInfo[pg.title] = {
 					afd_date: afd_date,
 					afd_page: afd_page,
-					shortdesc: pg.description
+					shortdesc: normaliseShortdesc(pg.description)
 				};
-				// cut out noise
-				if (pg.description === 'Wikimedia list article') {
-					tableInfo[pg.title].shortdesc = '';
-				} else if (pg.description === 'Disambiguation page providing links to topics that could be referred to by the same search term') {
-					tableInfo[pg.title].shortdesc = 'Disambiguation page';
-				}
 			});
 
 			log('[S] Got articles');
@@ -193,7 +188,7 @@ process.chdir(__dirname);
 				if (afd_data[afd_title]) {
 					var {concern, keeps, deletes, relists, relist_date} = afd_data[afd_title];
 					afd_cell += ` (${keeps} k, ${deletes} d)`;
-					if (relists) { // skip if no relists 
+					if (relists) { // skip if no relists
 						afd_cell += ` (${relists} relist${relists > 1 ? 's' : ''})`;
 					}
 					afd_cell += ` (<small>${concern}</small>)`;

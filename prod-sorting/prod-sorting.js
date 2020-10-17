@@ -1,6 +1,6 @@
-const {bot, mwn, log, argv, utils, emailOnError} = require('../botbase');
+const {bot, TextExtractor, mwn, log, argv, utils, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
-const TextExtractor = require('../TextExtractor')(bot);
+const {normaliseShortdesc} = require('../tasks/commons');
 
 process.chdir(__dirname);
 
@@ -61,14 +61,8 @@ process.chdir(__dirname);
 					concern: prod_concern || '[Failed to parse]',
 					prod_date: prod_date || '[Failed to parse]',
 					extract: TextExtractor.getExtract(pg.revisions[0].content, 250, 500),
-					shortdesc: pg.description
+					shortdesc: normaliseShortdesc(pg.description)
 				};
-				// cut out noise
-				if (pg.description === 'Wikimedia list article') {
-					tableInfo[pg.title].shortdesc = '';
-				} else if (pg.description === 'Disambiguation page providing links to topics that could be referred to by the same search term') {
-					tableInfo[pg.title].shortdesc = 'Disambiguation page';
-				}
 			});
 		});
 		log('[S] Got API result');

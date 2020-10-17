@@ -1,6 +1,5 @@
-const {log, argv, mwn, bot, enwikidb, utils, emailOnError} = require('../botbase');
-const TextExtractor = require('../TextExtractor')(bot);
-const {getWikidataShortdescs} = require('../tasks/commons');
+const {log, argv, TextExtractor, mwn, bot, enwikidb, utils, emailOnError} = require('../botbase');
+const {getWikidataShortdescs, normaliseShortdesc} = require('../tasks/commons');
 
 process.chdir(__dirname);
 
@@ -61,7 +60,7 @@ process.chdir(__dirname);
 		utils.saveObject('tableInfo', tableInfo);
 	}
 
-	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+	var accessdate = new bot.date().format('D MMMM YYYY');
 
 	/* GET DATA FROM ORES */
 
@@ -137,13 +136,7 @@ process.chdir(__dirname);
 		}
 		if (page.description) {
 			pagesWithShortDescs++;
-			tableInfo[page.title].shortdesc = page.description;
-			// cut out noise
-			if (page.description === 'Wikimedia list article') {
-				tableInfo[page.title].shortdesc = '';
-			} else if (page.description === 'Disambiguation page providing links to topics that could be referred to by the same search term') {
-				tableInfo[page.title].shortdesc = 'Disambiguation page';
-			}
+			tableInfo[page.title].shortdesc = normaliseShortdesc(page.description);
 		}
 	}
 	log(`[S] Fetched page contents and short descriptions`);
@@ -356,8 +349,10 @@ ${replagMessage}
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
 
-	bot.batchOperation(Object.keys(sorter), createSubpage, 1).then(() => {
+	await bot.batchOperation(Object.keys(sorter), createSubpage, 1).then(() => {
 		log('[i] Finished');
 	});
+
+	log(`[i] Finished`);
 
 })().catch(err => emailOnError(err, 'npp-sorting'));

@@ -18,12 +18,23 @@ async function getWikidataShortdescs(titles, tableInfo) {
 	})) {
 		// eslint-disable-next-line no-unused-vars
 		for (let [_id, {labels, descriptions}] of Object.entries(json.entities)) {
-			let tableentry = tableInfo[labels?.en.value];
+			let tableentry = tableInfo[labels?.en?.value];
 			if (!tableentry || tableentry.shortdesc) {
 				continue;
 			}
 			tableentry.shortdesc = descriptions?.en?.value;
 		}
+	}
+}
+
+function normaliseShortdesc(shortdesc) {
+	if (!shortdesc || shortdesc === 'Wikimedia list article') {
+		return '';
+	} else if (shortdesc === 'Disambiguation page providing links to topics that could be referred to by the same search' +
+		' term') {
+		return 'Disambiguation page';
+	} else {
+		return shortdesc;
 	}
 }
 
@@ -117,6 +128,7 @@ async function saveWithBlacklistHandling(page, text) {
 
 module.exports = {
 	getWikidataShortdescs,
+	normaliseShortdesc,
 	populateOresQualityRatings,
 	comparators: { promote, demote, sortAsc, sortDesc },
 	AfcDraftSize,
