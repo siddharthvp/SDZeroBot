@@ -27,7 +27,7 @@ async function getWikidataShortdescs(titles, tableInfo) {
 			if (!tableentry || tableentry.shortdesc) {
 				continue;
 			}
-			tableentry.shortdesc = descriptions?.en?.value;
+			tableentry.shortdesc = normaliseShortdesc(descriptions?.en?.value);
 		}
 	}
 }

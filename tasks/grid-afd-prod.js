@@ -1,7 +1,7 @@
-const {mwn, bot, emailOnError} = require('../botbase');
-const TextExtractor = require('../TextExtractor')(bot);
+const {mwn, bot, TextExtractor, emailOnError} = require('../botbase');
+const {getWikidataShortdescs, normaliseShortdesc} = require('./commons');
 
-var months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 function pad(num) {
 	return num < 10 ? '0' + num : num;
 }
@@ -60,11 +60,13 @@ function parseArticleForPROD(pagetext) {
 			afdtable[pg.title] = {
 				afd_date,
 				afd_page,
-				shortdesc: pg.description,
+				shortdesc: normaliseShortdesc(pg.description),
 				extract: TextExtractor.getExtract(text)
 			};
 		});
 	});
+
+	await getWikidataShortdescs(Object.gets(afdtable), afdtable);
 
 	await bot.continuedQuery({
 		"action": "query",
@@ -80,12 +82,14 @@ function parseArticleForPROD(pagetext) {
 		pages.forEach(pg => {
 			var text = pg.revisions[0].content;
 			prodtable[pg.title] = {
-				shortdesc: pg.description,
+				shortdesc: normaliseShortdesc(pg.description),
 				extract: TextExtractor.getExtract(text),
 				prod_date: parseArticleForPROD(text)
 			};
 		});
 	});
+
+	await getWikidataShortdescs(Object.gets(prodtable), prodtable);
 
 	var fnMakeTableAfD = function(afdtable) {
 		var table = new mwn.table({ sortable: true });

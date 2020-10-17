@@ -1,14 +1,14 @@
 const {bot, log, xdate, argv} = require('../botbase');
 
 (async function() {
-	
+
 log(`[i] Started`);
 
 await bot.getTokensAndSiteInfo();
 
 let report = new bot.page('User:JJMC89 bot/report/Draftifications/monthly');
 
-let revisions = await report.history('content|timestamp', 35);
+let revisions = (await report.history('content|timestamp', 20));
 
 const tmpRgx = /\{\{[dD]rafts moved from mainspace.*?\}\}/;
 
@@ -23,6 +23,7 @@ for (let rev of revisions) {
 		let draftname = move.Target.replace(/^\[\[/, '').replace(/\]\]$/, '');
 		let draft = new bot.page(draftname);
 		if (draft.namespace !== 118) {
+			log(`[i] Skipped ${draft} as it's not a draft`);
 			continue;
 		}
 
@@ -31,6 +32,7 @@ for (let rev of revisions) {
 				log(`[+] Editing ${draft.toText()}`);
 				let text = rev.content;
 				if (/^#redirect/i.test(text)) {
+					log(`[i] Skipped ${draft} as it's a redirect`);
 					return;
 				}
 				text = text.replace(tmpRgx, `{{Drafts moved from mainspace|date=${month}}}`);
@@ -38,19 +40,24 @@ for (let rev of revisions) {
 					text += `\n\n{{Drafts moved from mainspace|date=${month}}}`;
 				}
 				return {
-					text, 
+					text,
 					summary: `Draft moved from mainspace (${month})`,
 					minor: true
 				};
+			}).then(data => {
+				if (!data.nochange) {
+					log(`[S] Edited ${draft}: ${JSON.stringify(data)}`);
+				}
 			}).catch(err => {
 				if (err.code === 'nocreate-missing') {
+					log(`[i] Skipped ${draft} as missing`);
 					return;
 				} else {
 					return Promise.reject(err);
 				}
 			});
 		}
-		
+
 	}
 }
 
