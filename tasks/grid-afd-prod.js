@@ -89,7 +89,7 @@ function parseArticleForPROD(pagetext) {
 		});
 	});
 
-	await getWikidataShortdescs(Object.gets(prodtable), prodtable);
+	await getWikidataShortdescs(Object.keys(prodtable), prodtable);
 
 	var fnMakeTableAfD = function(afdtable) {
 		var table = new mwn.table({ sortable: true });

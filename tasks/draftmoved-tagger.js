@@ -1,4 +1,6 @@
-const {bot, log, xdate, argv} = require('../botbase');
+// jsub -N tag -mem 1g ~/bin/node ~/SDZeroBot/tasks/draftmoved-tagger.js
+
+const {bot, log, argv} = require('../botbase');
 
 (async function() {
 
@@ -14,7 +16,7 @@ const tmpRgx = /\{\{[dD]rafts moved from mainspace.*?\}\}/;
 
 for (let rev of revisions) {
 
-	let month = new xdate(rev.timestamp).subtract(1, 'month').format('MMMM YYYY');
+	let month = new bot.date(rev.timestamp).subtract(1, 'month').format('MMMM YYYY');
 
 	let moves = bot.wikitext.parseTable(rev.content.slice(rev.content.indexOf('{|'), rev.content.lastIndexOf('|}') +  2));
 	log(`[+] Parsed ${moves.length} moves for ${month}`);
@@ -29,18 +31,24 @@ for (let rev of revisions) {
 
 		if (!argv.dry) {
 			await draft.edit(rev => {
-				log(`[+] Editing ${draft.toText()}`);
 				let text = rev.content;
 				if (/^#redirect/i.test(text)) {
 					log(`[i] Skipped ${draft} as it's a redirect`);
 					return;
 				}
-				text = text.replace(tmpRgx, `{{Drafts moved from mainspace|date=${month}}}`);
-				if (!tmpRgx.test(text)) {
-					text += `\n\n{{Drafts moved from mainspace|date=${month}}}`;
+				let replaced = false;
+				let newtext = text.replace(tmpRgx, () => {
+					replaced = true;
+					return `{{Drafts moved from mainspace|date=${month}}}`;
+				});
+				if (!replaced) {
+					newtext += `\n\n{{Drafts moved from mainspace|date=${month}}}`;
+				} else if (newtext === text) {
+					log(`Skipped ${draft} as correct tag already present`);
+					return;
 				}
 				return {
-					text,
+					text: newtext,
 					summary: `Draft moved from mainspace (${month})`,
 					minor: true
 				};
@@ -56,6 +64,7 @@ for (let rev of revisions) {
 					return Promise.reject(err);
 				}
 			});
+			await bot.sleep(5000);
 		}
 
 	}
