@@ -2,7 +2,7 @@ const {bot, mwn, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 /**
- * @param {string} titles
+ * @param {string[]} titles
  * @param {Object} tableInfo
  * @returns {Promise<void>}
  */
@@ -47,6 +47,10 @@ function normaliseShortdesc(shortdesc) {
 	}
 }
 
+/**
+ * @param {Object} tableInfo
+ * @returns {Promise<void>}
+ */
 async function populateOresQualityRatings(tableInfo) {
 	let revidTitleMap = Object.entries(tableInfo).reduce((map, [title, data]) => {
 		if (data.revid) {

@@ -66,7 +66,7 @@ function parseArticleForPROD(pagetext) {
 		});
 	});
 
-	await getWikidataShortdescs(Object.gets(afdtable), afdtable);
+	await getWikidataShortdescs(Object.keys(afdtable), afdtable);
 
 	await bot.continuedQuery({
 		"action": "query",
