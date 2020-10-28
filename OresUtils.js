@@ -13,8 +13,9 @@ module.exports = {
 	 * drafttopic, articlequality, etc
 	 * @param {Array} revids - Array of revision IDs
 	 * @param {Array} errors - list of errors, modified in-place
+	 * @param {boolean} isRetry
 	 * @returns {Promise<Object>}
-	 * { 
+	 * {
 	 * 	"34242343": {
 	 * 		"drafttopic": [],
 	 * 		"articlequality": "C"
@@ -25,7 +26,7 @@ module.exports = {
 	 * 	}
 	 * }
 	 */
-	queryRevisions: async function(models, revids, errors) {
+	queryRevisions: async function queryRevisions(models, revids, errors, isRetry) {
 		var oresdata = {};
 		var chunks = utils.arrayChunk(revids, 50);
 		for (let i = 0; i < chunks.length; i++) {
@@ -49,6 +50,12 @@ module.exports = {
 						oresdata[revid][model] = data[model].score.prediction;
 					});
 				});
+			}).catch(function(err) {
+				// Try again the whole thing (FIXME)
+				if (!isRetry) {
+					return queryRevisions(models, revids, errors, true);
+				}
+				return Promise.reject(err);
 			});
 		}
 		return oresdata;
@@ -99,7 +106,7 @@ module.exports = {
 					for (var i = 0; i < topics.length; i++) {
 						if (topics[i] !== topic && topics[i].startsWith(metatopic)) {
 							return;
-						} 
+						}
 					}
 				}
 				if (sorter[topic]) {
