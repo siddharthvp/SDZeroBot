@@ -24,10 +24,10 @@ bot.wikitext.parseTemplates(await earwigReport.text(), {
 	};
 });
 
-log(`[i] Found ${Object.keys(tableInfo).length} pages declined yesterday`); 
+log(`[i] Found ${Object.keys(tableInfo).length} pages declined yesterday`);
 
 
-// In theory, we can request all the details of upto 500 pages in 1 API call, but 
+// In theory, we can request all the details of upto 500 pages in 1 API call, but
 // send in batches of 100 to avoid the slim possibility of hitting the max API response size limit
 await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), async (pageSet) => {
 
@@ -35,13 +35,13 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 		"prop": "revisions|info|description|templates|categories",
 		"rvprop": "content|timestamp",
 		"tltemplates": [
-			"Template:COI", 
-			"Template:Undisclosed paid", 
+			"Template:COI",
+			"Template:Undisclosed paid",
 			"Template:Connected contributor",
 			"Template:Drafts moved from mainspace"
 		],
 		"clcategories": [
-			"Category:Rejected AfC submissions", 
+			"Category:Rejected AfC submissions",
 			"Category:Promising draft articles"
 		],
 		"tllimit": "max",
@@ -99,7 +99,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 	return !data.skip;
 }).map(([title, data]) => {
 	// Synthesise any new parameters from the data here
-	data.short = data.size < 500;
+	data.short = data.size < 500; // thankfully undefined < 500 is false
 	return [title, data];
 
 }).sort(([_title1, data1], [_title2, data2]) => { // eslint-disable-line no-unused-vars
@@ -114,7 +114,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 		demote('short', data1, data2) ||
 		demote('rejected', data1, data2) ||
 		demote('unsourced', data1, data2) ||
-		demote('oresBad', data1, data2) || // many false positives 
+		demote('oresBad', data1, data2) || // many false positives
 		sortDesc('oresRating', data1, data2) ||
 		sortDesc('size', data1, data2)
 	);
@@ -135,7 +135,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
 		data.extract || '',
 		data.declines ?? '',
-		data.short ? `<span class=short>${data.size}</span>` : data.size,
+		data.short ? `<span class=short>${data.size}</span>` : (data.size || ''),
 		notes.join('<br>'),
 	]);
 });
@@ -164,7 +164,7 @@ await page.save(wikitext, 'Updating').catch(async err => {
 		await page.save(wikitext, 'Updating');
 	} else {
 		return Promise.reject(err);
-	} 
+	}
 });
 
 log(`[i] Finished`);

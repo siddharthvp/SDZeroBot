@@ -132,7 +132,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 	return !data.skip;
 }).map(([title, data]) => {
 	// Synthesise any new parameters from the data here
-	data.short = data.size < 500;
+	data.short = data.size < 500; // thankfully undefined < 500 is false
 	return [title, data];
 
 }).sort(([_title1, data1], [_title2, data2]) => { // eslint-disable-line no-unused-vars
@@ -167,7 +167,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 		`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
 		data.extract || '',
 		data.declines ?? '',
-		data.short ? `<span class=short>${data.size}</span>` : data.size,
+		data.short ? `<span class=short>${data.size}</span>` : (data.size || ''),
 		notes.join('<br>'),
 	]);
 });

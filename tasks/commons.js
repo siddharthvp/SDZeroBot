@@ -105,6 +105,7 @@ function demote(param, data1, data2) {
  * @returns {number}
  */
 function sortDesc(param, data1, data2) {
+	if (data1[param] === undefined || data1[param] === undefined) return 0;
 	if (data1[param] > data2[param]) return -1;
 	else if (data1[param] < data2[param]) return 1;
 	else return 0;
@@ -116,6 +117,7 @@ function sortDesc(param, data1, data2) {
  * @returns {number}
  */
 function sortAsc(param, data1, data2) {
+	if (data1[param] === undefined || data1[param] === undefined) return 0;
 	if (data1[param] > data2[param]) return 1;
 	else if (data1[param] < data2[param]) return -1;
 	else return 0;
