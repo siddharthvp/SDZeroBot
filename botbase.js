@@ -88,7 +88,10 @@ class db { // abstract class
 			await this.connect();
 		}
 		this.inUse = true;
-		const result = await this.conn.query(...args);
+		const result = await this.conn.query(...args).catch(err => {
+			console.log(`err.code:`, err.code);
+			return Promise.reject(err);
+		});
 		this.inUse = false;
 		return result[0].map(row => {
 			Object.keys(row).forEach(prop => {
