@@ -13,7 +13,6 @@ module.exports = {
 	 * drafttopic, articlequality, etc
 	 * @param {Array} revids - Array of revision IDs
 	 * @param {Array} errors - list of errors, modified in-place
-	 * @param {boolean} isRetry
 	 * @returns {Promise<Object>}
 	 * {
 	 * 	"34242343": {
@@ -26,20 +25,20 @@ module.exports = {
 	 * 	}
 	 * }
 	 */
-	queryRevisions: async function queryRevisions(models, revids, errors, isRetry) {
+	queryRevisions: async function(models, revids, errors) {
 		var oresdata = {};
-		var chunks = utils.arrayChunk(revids, 50);
-		for (let i = 0; i < chunks.length; i++) {
-			await bot.rawRequest({
+		var sets = utils.arrayChunk(revids, 50);
+		await bot.seriesBatchOperation(sets, (set, i) => {
+			return bot.rawRequest({
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
 				params: {
 					models: models.join('|'),
-					revids: chunks[i].join('|')
+					revids: set.join('|')
 				},
 				responseType: 'json'
 			}).then(function(json) {
-				log(`[+][${i+1}/${chunks.length}] Ores API call ${i+1} succeeded.`);
+				log(`[+][${i+1}/${sets.length}] Ores API call ${i+1} succeeded.`);
 				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
 					oresdata[revid] = {};
 					models.forEach(model => {
@@ -50,14 +49,8 @@ module.exports = {
 						oresdata[revid][model] = data[model].score.prediction;
 					});
 				});
-			}).catch(function(err) {
-				// Try again the whole thing (FIXME)
-				if (!isRetry) {
-					return queryRevisions(models, revids, errors, true);
-				}
-				return Promise.reject(err);
 			});
-		}
+		}, 0, 2);
 		return oresdata;
 	},
 
