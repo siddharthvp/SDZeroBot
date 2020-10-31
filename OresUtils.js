@@ -25,10 +25,10 @@ module.exports = {
 	 * 	}
 	 * }
 	 */
-	queryRevisions: async function(models, revids, errors) {
+	queryRevisions: function(models, revids, errors) {
 		var oresdata = {};
 		var sets = utils.arrayChunk(revids, 50);
-		await bot.seriesBatchOperation(sets, (set, i) => {
+		return bot.seriesBatchOperation(sets, (set, i) => {
 			return bot.rawRequest({
 				method: 'get',
 				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
@@ -50,8 +50,13 @@ module.exports = {
 					});
 				});
 			});
-		}, 0, 2);
-		return oresdata;
+		}, 0, 2).then(({failures}) => {
+			// fail if all ORES calls didn't succeed eventually
+			if (failures.length) { // Object.keys(failures).length
+				return Promise.reject();
+			}
+			return oresdata;
+		});
 	},
 
 	/**
