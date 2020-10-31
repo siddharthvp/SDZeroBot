@@ -1,5 +1,5 @@
 const {fs, bot, log, TextExtractor, enwikidb, emailOnError, mwn, utils, argv} = require('../botbase');
-const {getWikidataShortdescs, populateOresQualityRatings, comparators, AfcDraftSize, preprocessDraftForExtract, saveWithBlacklistHandling} = require('./commons');
+const {populateWikidataShortdescs, populateOresQualityRatings, comparators, AfcDraftSize, preprocessDraftForExtract, saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
 
@@ -112,7 +112,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 await populateOresQualityRatings(tableInfo);
 
 // Wikidata short descriptions
-await getWikidataShortdescs(Object.keys(tableInfo), tableInfo);
+await populateWikidataShortdescs(tableInfo);
 
 let table = new mwn.table({
 	style: 'overflow-wrap: anywhere'

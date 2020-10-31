@@ -2,11 +2,10 @@ const {bot, mwn, log, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
 
 /**
- * @param {string[]} titles
  * @param {Object} tableInfo
  * @returns {Promise<void>}
  */
-async function getWikidataShortdescs(titles, tableInfo) {
+async function populateWikidataShortdescs(tableInfo) {
 	/* GET WIKIDATA SHORTDESCS */
 	const wdbot = new mwn({
 		...bot.options,
@@ -17,7 +16,7 @@ async function getWikidataShortdescs(titles, tableInfo) {
 	for await (let json of wdbot.massQueryGen({
 		"action": "wbgetentities",
 		"sites": "enwiki",
-		"titles": titles,
+		"titles": Object.keys(tableInfo),
 		"props": "descriptions|labels",
 		"languages": "en",
 	})) {
@@ -179,7 +178,7 @@ async function saveWithBlacklistHandling(page, text) {
 }
 
 module.exports = {
-	getWikidataShortdescs,
+	populateWikidataShortdescs,
 	normaliseShortdesc,
 	populateOresQualityRatings,
 	comparators: {promote, demote, sortAsc, sortDesc},

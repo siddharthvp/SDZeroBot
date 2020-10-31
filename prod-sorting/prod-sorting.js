@@ -1,6 +1,6 @@
 const {bot, TextExtractor, mwn, log, argv, utils, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
-const {normaliseShortdesc} = require('../tasks/commons');
+const {populateWikidataShortdescs, normaliseShortdesc} = require('../tasks/commons');
 
 process.chdir(__dirname);
 
@@ -28,9 +28,6 @@ process.chdir(__dirname);
 			revidsTitles = {};
 			tableInfo = {};
 			var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
-			var formatTimeStamp = function(ts) {
-				return `${ts.slice(0,4)}-${ts.slice(4,6)}-${ts.slice(6,8)} ${ts.slice(8, 10)}:${ts.slice(10, 12)}`;
-			};
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
 				var prod_template, prod_blp, prod_date, prod_concern;
@@ -55,7 +52,7 @@ process.chdir(__dirname);
 					if (prod_nom) {
 						prod_concern += ` ({{u|${prod_nom}}})`;
 					}
-					prod_date = formatTimeStamp(prod_template.getValue('timestamp') || '');
+					prod_date = new bot.date(prod_template.getValue('timestamp')).format('YYYY-MM-DD HH:mm');
 				}
 				tableInfo[pg.title] = {
 					concern: prod_concern || '[Failed to parse]',
@@ -70,6 +67,8 @@ process.chdir(__dirname);
 		utils.saveObject('revidsTitles', revidsTitles);
 		utils.saveObject('tableInfo', tableInfo);
 	}
+
+	await populateWikidataShortdescs(tableInfo);
 
 
 	/* GET DATA FROM ORES */

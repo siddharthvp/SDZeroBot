@@ -1,6 +1,6 @@
-const {mwn, bot, log, xdate, argv, utils, emailOnError} = require('../botbase');
+const {mwn, bot, log, argv, utils, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
-const {normaliseShortdesc} = require('../tasks/commons');
+const {normaliseShortdesc, populateWikidataShortdescs} = require('../tasks/commons');
 
 process.chdir(__dirname);
 
@@ -39,11 +39,11 @@ process.chdir(__dirname);
 				var afd_date, afd_page;
 				if (afd_template) {
 					if (afd_template.getValue('timestamp')) {
-						afd_date = new xdate(afd_template.getValue('timestamp')).format('YYYY-MM-DD');
+						afd_date = new bot.date(afd_template.getValue('timestamp')).format('YYYY-MM-DD');
 					} else if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
-						afd_date = new xdate(
+						afd_date = new bot.date(
 							afd_template.getValue('year'),
-							xdate.localeData.months.indexOf(afd_template.getValue('month')),
+							bot.date.localeData.months.indexOf(afd_template.getValue('month')),
 							afd_template.getValue('day')
 						).format('YYYY-MM-DD');
 					}
@@ -62,6 +62,8 @@ process.chdir(__dirname);
 			utils.saveObject('tableInfo', tableInfo);
 		});
 	}
+
+	await populateWikidataShortdescs(tableInfo);
 
 	var afd_data = {};
 
@@ -106,7 +108,7 @@ process.chdir(__dirname);
 		log('[S] Got AfDs');
 	});
 
-	var accessdate = new xdate().format('D MMMM YYYY');
+	var accessdate = new bot.date().format('D MMMM YYYY');
 
 
 	/* GET DATA FROM ORES */
@@ -195,7 +197,7 @@ process.chdir(__dirname);
 
 					// over-write date with date of last relist
 					if (relists && relist_date) {
-						tabledata.afd_date = new xdate(relist_date).format('YYYY-MM-DD');
+						tabledata.afd_date = new bot.date(relist_date).format('YYYY-MM-DD');
 					}
 
 					// parse the date from concern it hadn't been parsed from the template earlier
@@ -203,7 +205,7 @@ process.chdir(__dirname);
 					if (!tabledata.afd_date) {
 						var datematch = concern.match(/\d{2}:\d{2} \d{1,2} \w+ \d{4} \(UTC\)/);
 						if (datematch) {
-							tabledata.afd_date = new xdate(datematch[0]).format('YYYY-MM-DD');
+							tabledata.afd_date = new bot.date(datematch[0]).format('YYYY-MM-DD');
 						}
 					}
 				}

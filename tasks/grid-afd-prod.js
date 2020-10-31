@@ -1,5 +1,5 @@
 const {mwn, bot, TextExtractor, emailOnError} = require('../botbase');
-const {getWikidataShortdescs, normaliseShortdesc} = require('./commons');
+const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 
 const months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 function pad(num) {
@@ -66,7 +66,7 @@ function parseArticleForPROD(pagetext) {
 		});
 	});
 
-	await getWikidataShortdescs(Object.keys(afdtable), afdtable);
+	await populateWikidataShortdescs(afdtable);
 
 	await bot.continuedQuery({
 		"action": "query",
@@ -89,7 +89,7 @@ function parseArticleForPROD(pagetext) {
 		});
 	});
 
-	await getWikidataShortdescs(Object.keys(prodtable), prodtable);
+	await populateWikidataShortdescs(prodtable);
 
 	var fnMakeTableAfD = function(afdtable) {
 		var table = new mwn.table({ sortable: true });

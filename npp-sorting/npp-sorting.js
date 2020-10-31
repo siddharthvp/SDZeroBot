@@ -1,6 +1,6 @@
 const {log, argv, TextExtractor, mwn, bot, enwikidb, utils, emailOnError} = require('../botbase');
 const OresUtils = require('../OresUtils');
-const {getWikidataShortdescs, normaliseShortdesc} = require('../tasks/commons');
+const {populateWikidataShortdescs, normaliseShortdesc} = require('../tasks/commons');
 
 process.chdir(__dirname);
 
@@ -114,7 +114,7 @@ process.chdir(__dirname);
 	log(`[S] Found ${pagesWithShortDescs} pages with short descriptions`);
 
 	// populate wikidata shortdescs into tableInfo
-	await getWikidataShortdescs(Object.values(revidsTitles), tableInfo);
+	await populateWikidataShortdescs(tableInfo);
 
 	/* GET DATA ABOUT PRIOR AFD */
 	var afds = {};
