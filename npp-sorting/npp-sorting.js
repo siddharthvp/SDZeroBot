@@ -1,4 +1,5 @@
 const {log, argv, TextExtractor, mwn, bot, enwikidb, utils, emailOnError} = require('../botbase');
+const OresUtils = require('../OresUtils');
 const {getWikidataShortdescs, normaliseShortdesc} = require('../tasks/commons');
 
 process.chdir(__dirname);
@@ -68,43 +69,13 @@ process.chdir(__dirname);
 	if (argv.size) {
 		pagelist = pagelist.slice(0, argv.size);
 	}
-	var chunks = utils.arrayChunk(pagelist, 50);
 	var oresdata = {};
 
 	if (argv.noores) {
 		oresdata = require('./oresdata');
 	} else {
 		var errors = [];
-		var queryOres = function(revids, i) {
-
-			return bot.rawRequest({
-				method: 'get',
-				url: 'https://ores.wikimedia.org/v3/scores/enwiki/',
-				params: {
-					models: 'articlequality|draftquality|drafttopic',
-					revids: revids.join('|')
-				},
-				responseType: 'json'
-			}).then(function(json) {
-				log(`[+][${i}/${chunks.length}] Ores API call ${i} succeeded.`);
-				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
-					if (data.articlequality.error) {
-						errors.push(revid);
-						return;
-					}
-					oresdata[revid] = {
-						articlequality: data.articlequality.score.prediction,
-						draftquality: data.draftquality.score.prediction,
-						drafttopic: data.drafttopic.score.prediction,
-					}
-				});
-			});
-
-		};
-
-		for (var i = 0; i < chunks.length; i++) {
-			await queryOres(chunks[i], i+1); // sequential calls
-		}
+		oresdata = await OresUtils.queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
 
 		utils.saveObject('oresdata', oresdata);
 		utils.saveObject('errors', errors);
@@ -258,15 +229,12 @@ process.chdir(__dirname);
 				summary: 'Updating report'
 			};
 		}).then(result => {
-			if (result) {
-				if (result.nochange) {
-					log(`[W] No change made for User:SDZeroBot/NPP sorting`);
-				}
-			}  else {
-				log(`[W] No data returned on success response`);
+			if (result.nochange) {
+				log(`[W] No change made for User:SDZeroBot/NPP sorting`);
 			}
 		}).catch(err => {
 			log(`[E] Failed to save main page: ${err}`);
+			emailOnError(err, 'npp-sorting (main page)');
 		});
 	};
 	await makeMainPage();
