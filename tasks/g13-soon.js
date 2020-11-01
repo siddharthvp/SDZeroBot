@@ -43,7 +43,7 @@ const OresUtils = require('../OresUtils');
 	let revidsTitles = {};
 	let tableInfo = {};
 	result.forEach(row => {
-		var pagename = new bot.title(row.page_title, row.page_namespace).toText();
+		var pagename = bot.title.makeTitle(row.page_namespace, row.page_title).toText();
 		revidsTitles[row.page_latest] = pagename
 		tableInfo[pagename] = {
 			ts: row.rev_timestamp
@@ -69,8 +69,8 @@ const OresUtils = require('../OresUtils');
 	// using search instead of parsing page content means we get it
 	// even if a redirect to the template was used
 
-	const coi_result = await bot.search(`hastemplate:"COI"`, 'max', '', { 
-		srnamespace: '118', 
+	const coi_result = await bot.search(`hastemplate:"COI"`, 'max', '', {
+		srnamespace: '118',
 		srsort: 'last_edit_asc'
 	});
 	coi_result.forEach(page => {
@@ -78,8 +78,8 @@ const OresUtils = require('../OresUtils');
 	});
 	log(`[i] Found ${Object.keys(coi).length} drafts with COI tag`);
 
-	const upe_result = await bot.search(`hastemplate:"Undisclosed paid"`, 'max', '', { 
-		srnamespace: '118', 
+	const upe_result = await bot.search(`hastemplate:"Undisclosed paid"`, 'max', '', {
+		srnamespace: '118',
 		srsort: 'last_edit_asc'
 	});
 	upe_result.forEach(page => {

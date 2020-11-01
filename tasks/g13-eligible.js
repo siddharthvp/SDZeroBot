@@ -39,7 +39,7 @@ log('[S] Got DB query result');
 await bot.getTokensAndSiteInfo();
 
 result.forEach(row => {
-	let pagename = new bot.title(row.page_title, row.page_namespace).toText();
+	let pagename = bot.title.makeTitle(row.page_namespace, row.page_title).toText();
 	tableInfo[pagename] = {
 		ts: row.rev_timestamp
 	};
