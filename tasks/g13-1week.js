@@ -121,8 +121,8 @@ table.addHeaders([
 	{label: 'Last edit (UTC)', style: 'width: 5em'},
 	{label: 'Draft', style: 'width: 15em'},
 	{label: 'Excerpt' },
-	{label: '# declines', style: 'width: 4em'},
-	{label: 'Size', style: 'width: 2em'},
+	{label: '# declines', style: 'width: 5em'},
+	{label: 'Size', style: 'width: 3em'},
 	{label: 'Notes', style: 'width: 5em'}
 ]);
 
