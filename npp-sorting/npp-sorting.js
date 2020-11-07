@@ -220,7 +220,12 @@ process.chdir(__dirname);
 				}
 				var topic = match[1];
 				var sorterKey = sorterKeys.find(e => e === topic || (isStarred(e) && meta(e) === topic));
-				var count = sorter[sorterKey].length;
+				var items = sorter[sorterKey];
+				if (!items) {
+					log(`[E] sorter[${sorterKey}] is undefined`);
+					return;
+				}
+				var count = items.length;
 				text = text.replace(line, line.replace(/\(\d+\)/, `(${count})`));
 			});
 

@@ -52,8 +52,11 @@ module.exports = {
 			});
 		}, 0, 2).then(({failures}) => {
 			// fail if all ORES calls didn't succeed eventually
-			if (failures.length) { // Object.keys(failures).length
-				return Promise.reject();
+			if (Object.keys(failures).length) {
+				return bot.rejectWithError({
+					code: 'ores',
+					info: 'ORES error'
+				});
 			}
 			return oresdata;
 		});

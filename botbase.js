@@ -6,7 +6,7 @@ const assert = require('assert');
 
 let mwn;
 try {
-	mwn = require('../mwn/src/bot');
+	mwn = require('../mwn/build/bot').mwn;
 } catch(err) {
 	// duplication of process.on() and emailOnError() as those can't be used before
 	// mwn has loaded
