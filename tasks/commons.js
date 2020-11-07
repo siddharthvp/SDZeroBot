@@ -166,7 +166,7 @@ async function saveWithBlacklistHandling(page, text) {
 		if (err.code === 'spamblacklist') {
 			for (let site of err.response.error.spamblacklist.matches) {
 				text = text.replace(
-					new RegExp('https?:\\/\\/' + site, 'g'),
+					new RegExp('https?:\\/\\/\\S*' + site, 'g'),
 					site
 				);
 			}
