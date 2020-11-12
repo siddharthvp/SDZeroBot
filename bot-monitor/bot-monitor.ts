@@ -61,6 +61,9 @@ export class Monitor {
 	lastSeen: MwnDate;
 	// last checked edit where no edit was matching
 	lastSeenNot: MwnDate;
+	// SQLite DB row
+	lastSeenDb: { name: string, rulehash: string, checkts: string, lastseents: string, notseen: number } | undefined;
+
 
 	static pingpage = 'Wikipedia:Bot activity monitor/Pings'
 	static configpage = 'Wikipedia:Bot activity monitor/config.json'
@@ -82,10 +85,7 @@ export class Monitor {
 		}
 	}
 
-	static getFromDate(duration, times = 1): MwnDate {
-		if (!duration) {
-			throw new RuleError('No duration specified');
-		}
+	static getFromDate(duration = '1 day', times = 1): MwnDate {
 		try {
 			let durationParts = duration.split(' ');
 			let num = parseInt(durationParts[0]);
@@ -118,21 +118,20 @@ export class Monitor {
 			throw new RuleError(`Invalid minEdits: ${rule.minEdits}: must be a numbeer`);
 		}
 
-		debug(`[i] parsed ${this.name}`);
 		return {
 			bot: rule.bot,
 			task: rule.task || '',
 			action: rule.action || 'edit',
 			namespace: rule.namespace,
-			duration: rule.duration,
+			duration: rule.duration || '1 day',
 			fromDate,
 			titleRegex: rule.pages && (rule.pages.startsWith('#') ?
-				new RegExp(rule.pages.slice(1)) :
+				new RegExp('^' + rule.pages.slice(1) + '$') :
 				new RegExp('^' + mwn.util.escapeRegExp(rule.pages) + '$')
 			),
 			summaryRegex: rule.summary && (rule.summary.startsWith('#') ?
-				new RegExp(rule.summary.slice(1)) :
-				new RegExp(mwn.util.escapeRegExp(rule.summary))
+				new RegExp('^' + rule.summary.slice(1) + '$') :
+				new RegExp('^' + mwn.util.escapeRegExp(rule.summary) + '$')
 			),
 			alertMode: rule.alertMode || 'talkpage',
 			alertPage: rule.alertpage || 'User talk:' + rule.bot,
@@ -144,6 +143,7 @@ export class Monitor {
 	}
 
 	async checkActions() {
+		this.lastSeenDb = await ChecksDb.getLastSeen(this.rawRule);
 		let check = this.rule.action === 'edit' ? await this.checkContribs() : await this.checkLogs();
 		Tabulator.add(this, check);
 		if (!check) { // Not OK
@@ -157,7 +157,7 @@ export class Monitor {
 		debug(`[i] Checking edits of ${this.rule.bot}`);
 		var ucParams: ApiQueryUserContribsParams = {
 			ucnamespace: this.rule.namespace,
-			ucend: this.rule.fromDate,
+			ucend: moreRecent(new bot.date(this.lastSeenDb?.checkts), this.rule.fromDate),
 			ucprop: ['title', 'comment', 'timestamp'],
 			uclimit: 100 // items retrieved in one API call
 		};
@@ -170,53 +170,15 @@ export class Monitor {
 			}
 		}
 		// If we reach here, something's off with the task, find the last matching action
-		await this.getLastSeenEdit(ucParams);
+		await this.getLastSeen(ucParams, false);
 		return false;
-	}
-
-	async getLastSeenEdit(ucParams: ApiQueryUserContribsParams) {
-		let json = await bot.request({
-			action: 'query',
-			list: 'usercontribs',
-			ucuser: this.rule.bot,
-			...ucParams,
-			uclimit: 'max',
-			ucstart: this.rule.fromDate,
-			ucend: undefined
-		});
-		let contribs = json.query.usercontribs;
-		for (let edit of contribs) {
-			if (this.checkEdit(edit)) {
-				this.lastSeen = new bot.date(edit.timestamp);
-				return;
-			}
-		}
-		// No matching action found yet, go back three times the duration in time
-		// to see if something matches. Useful when the bot has made a lot of unrelated
-		// edits in a short while
-		let lastContrib = contribs[contribs.length - 1];
-		let lastSeenNot = lastContrib.timestamp;
-		for await (let edit of new bot.user(this.rule.bot).contribsGen({
-			...ucParams,
-			ucstart: lastContrib.timestamp,
-			// don't go too far back further in time
-			ucend: Monitor.getFromDate(this.rule.duration, 4)
-		})) {
-			if (this.checkEdit(edit)) {
-				this.lastSeen = new bot.date(edit.timestamp);
-				return;
-			} else {
-				lastSeenNot = edit.timestamp;
-			}
-		}
-		this.lastSeenNot = new bot.date(lastSeenNot);
 	}
 
 	async checkLogs() {
 		debug(`[i] Checking logs of ${this.rule.bot}`);
 		let apiParams: ApiQueryLogEventsParams = {
 			leprop: ['title', 'comment', 'timestamp'],
-			leend: this.rule.fromDate,
+			leend: moreRecent(new bot.date(this.lastSeenDb?.checkts), this.rule.fromDate),
 			lelimit: 100 // items retrieved in one API call
 		};
 		// if multiple namespaces are given, can't filter them via the API
@@ -240,17 +202,8 @@ export class Monitor {
 					}
 				}
 			}
-			// find the time of last matching edit
-			for await (let action of new bot.user(this.rule.bot).logsGen({
-				...apiParams,
-				lestart: this.rule.fromDate,
-				leend: Monitor.getFromDate(this.rule.duration, 4)
-			})) {
-				if (this.checkLogEvent(action)) {
-					this.lastSeen = new bot.date(action.timestamp);
-					return false;
-				}
-			}
+			await this.getLastSeen(apiParams, true);
+			return false;
 		} catch (e) {
 			// badvalue: for unrecognized letype
 			// unknown_leaction: for unrecognized leaction
@@ -259,6 +212,78 @@ export class Monitor {
 			} else throw e;
 		}
 	}
+
+	async getLastSeen(apiParams: ApiQueryLogEventsParams | ApiQueryUserContribsParams, forLogs: boolean) {
+		debug(`[i] Getting last seen of ${this.name}`);
+		function listParams(params) {
+			let prefix = forLogs ? 'le' : 'uc';
+			let fixedParams = {};
+			for (let [key, val] of Object.entries(params)) {
+				fixedParams[prefix + key] = val;
+			}
+			return fixedParams;
+		}
+
+		let json = await bot.request({
+			action: 'query',
+			list: forLogs ? 'logevents' : 'usercontribs',
+			...apiParams,
+			...listParams({
+				user: this.rule.bot,
+				limit: 'max',
+				start: this.rule.fromDate,
+				end: this.lastSeenDb?.checkts // could be undefined, which fits
+			})
+		});
+		let actions = json.query.usercontribs || json.query.logevents;
+		let checkAction = forLogs ? this.checkLogEvent.bind(this) : this.checkEdit.bind(this);
+		for (let action of actions) {
+			if (checkAction(action)) {
+				this.lastSeen = new bot.date(action.timestamp);
+				await ChecksDb.updateLastSeen(this.rawRule, action.timestamp);
+				return;
+			}
+		}
+		if (this.lastSeenDb) {
+			debug(`[i] Filling in last seen from db`);
+			if (this.lastSeenDb.notseen) {
+				this.lastSeenNot = new bot.date(this.lastSeenDb.lastseents);
+			} else {
+				this.lastSeen = new bot.date(this.lastSeenDb.lastseents);
+			}
+			return;
+		}
+
+		// We reach here only if lastSeen was not stored in db,
+		// which means we queried with end=undefined above
+		let lastAction = actions[actions.length - 1];
+		if (!lastAction) {
+			// There are no edits at all! A "never seen" situation.
+			// Likely a mis-configured rule. Don't set any lastSeen
+			// related prop. Tabulator shows no edits since beginning of time
+			return;
+		}
+		debug(`[i] Still getting last seen of ${this.name}: Try with time`);
+		let lastSeenNot = lastAction.timestamp;
+		for await (let action of new bot.user(this.rule.bot)[forLogs ? 'logsGen' : 'contribsGen']({
+			...apiParams,
+			...listParams({
+				start: lastAction.timestamp,
+				end: Monitor.getFromDate(this.rule.duration, 4)
+			})
+		})) {
+			if (checkAction(action)) {
+				this.lastSeen = new bot.date(action.timestamp);
+				await ChecksDb.updateLastSeen(this.rawRule, action.timestamp);
+				return;
+			} else {
+				lastSeenNot = action.timestamp;
+			}
+		}
+		this.lastSeenNot = new bot.date(lastSeenNot);
+		await ChecksDb.updateLastSeen(this.rawRule, lastSeenNot, true);
+	}
+
 
 	checkEdit(edit: UserContribution) {
 		return (
@@ -288,7 +313,7 @@ export class Monitor {
 			await this.alertEmail();
 		} else if (this.rule.alertMode === 'ping') {
 			await this.alertPing();
-		} else {
+		} else if (!this.rule.alertMode) {
 			throw new RuleError(`Invalid alert mode: ${this.rule.alertMode}: must be "talkpage", "email" or "ping"`);
 		}
 	}
@@ -382,3 +407,12 @@ export async function fetchRules(): Promise<RawRule[]> {
 }
 
 
+function moreRecent(date1, date2) {
+	// relies on the fact that new Date(undefined) is an invalid date
+	if (!date1.isValid()) {
+		return date2;
+	} else if (!date2.isValid()) {
+		return date1;
+	}
+	return date1.isAfter(date2) ? date1: date2;
+}

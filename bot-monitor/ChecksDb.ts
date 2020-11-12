@@ -15,31 +15,66 @@ export class ChecksDb {
 			filename: './last_checks.db',
 			driver: sqlite3.Database
 		});
-		await this.db.run(`CREATE TABLE IF NOT EXISTS checks(
+		await this.db.run(`CREATE TABLE IF NOT EXISTS last_good(
             name varbinary(255) PRIMARY KEY,
             rulehash varbinary(60), 
             ts varbinary(25) NOT NULL
         )`);
+		await this.db.run(`CREATE TABLE IF NOT EXISTS last_seen(	
+			name varbinary(255) PRIMARY KEY,
+			rulehash varbinary(60),
+			checkts varbinary(25),
+			lastseents varbinary(25),
+			notseen integer
+		)`);
 		debug(`[S] Opened database connection`);
 	}
 
 	static async update(rule: RawRule, ts: string) {
-		await this.db.run(`INSERT OR REPLACE INTO checks VALUES(?, ?, ?)`, [
+		await this.db.run(`INSERT OR REPLACE INTO last_good VALUES(?, ?, ?)`, [
 			`${rule.bot}: ${rule.task}`,
 			hash.sha1(rule),
 			ts // ISO timestamp
 		]);
 	}
 
+	/**
+	 * The timestamp stored as last_good from a previous run is the one starting from which if
+	 * we look at the actions, we can say the bot task is on track. If this time happens to be later
+	 * than the time since which we are to begin checking for actions, we can pre-emptively say
+	 * the task is on track without any API calls, saving a lot of time.
+	 * @param rule
+	 */
 	static async checkCached(rule: RawRule) {
 		if (argv.noignore) {
 			return false;
 		}
-		const last = await this.db.get(`SELECT * FROM checks WHERE name = ?`, [
+		const last = await this.db.get(`SELECT * FROM last_good WHERE name = ?`, [
 			`${rule.bot}: ${rule.task}`
 		]);
 		return last &&
 			last.rulehash === hash.sha1(rule) && // check that the rule itself hasn't changed
 			new bot.date(last.ts).isAfter(Monitor.getFromDate(rule.duration));
+	}
+
+
+	static async getLastSeen(rule: RawRule) {
+		let lastSeen = await this.db.get(`SELECT * FROM last_seen WHERE name = ?`, [
+			`${rule.bot}: ${rule.task}`
+		]);
+		// If the rule was changed, discard it (namespace/pages/summary config could have changed)
+		if (lastSeen && lastSeen.rulehash === hash.sha1(rule)) {
+			return lastSeen;
+		} // else returns undefined
+	}
+
+	static async updateLastSeen(rule: RawRule, ts: string, notSeen?: boolean) {
+		await this.db.run(`INSERT OR REPLACE INTO last_seen VALUES(?, ?, ?, ?, ?)`, [
+			`${rule.bot}: ${rule.task}`,
+			hash.sha1(rule),
+			new bot.date().toISOString(),
+			ts,
+			notSeen ? 1 : 0
+		]);
 	}
 }

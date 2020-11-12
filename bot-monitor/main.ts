@@ -1,4 +1,4 @@
-import {argv, bot, emailOnError, fs, path} from "../botbase";
+import {bot, emailOnError, fs, path} from "../botbase";
 import {fetchRules, Monitor} from "./bot-monitor";
 import {Tabulator} from "./Tabulator";
 import {ChecksDb} from "./ChecksDb";
