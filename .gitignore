@@ -1,6 +1,7 @@
 *.json
 *.txt
 *.db
+!tsconfig.json
 !package.json
 !package-lock.json
 node_modules/

@@ -3,6 +3,8 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../.idea/SDZeroBot.iml" filepath="$PROJECT_DIR$/../.idea/SDZeroBot.iml" />
+      <module fileurl="file://$PROJECT_DIR$/bot-monitor/.idea/bot-monitor.iml" filepath="$PROJECT_DIR$/bot-monitor/.idea/bot-monitor.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../mwn/.idea/mwn.iml" filepath="$PROJECT_DIR$/../mwn/.idea/mwn.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/toolforge-sync.iml" filepath="$PROJECT_DIR$/.idea/toolforge-sync.iml" />
     </modules>
   </component>
