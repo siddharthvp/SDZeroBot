@@ -33,7 +33,7 @@ export class Tabulator {
 			log(`[W] ${rule.bot}: ${rule.task}: ${msg}`);
 		}
 		this.table.addRow([
-			rule.bot,
+			`[[User:${rule.bot}|${rule.bot}]]`,
 			rule.task,
 			success ? '{{tick}}' : `{{cross}} ${msg}`
 		]);
@@ -48,7 +48,7 @@ export class Tabulator {
 				'Configuration error'
 			]);
 			this.invalidRules.forEach(({task, reason}) => table.addRow([task, reason]));
-			let msg = `The following entries at [[${Monitor.configpage}]] are malformed. Please fix:\n`;
+			msg = `The following entries at [[${Monitor.configpage}]] are malformed. Please fix:\n`;
 			msg += table.getText();
 		} else {
 			msg = '{{tick}} No configuration errors';

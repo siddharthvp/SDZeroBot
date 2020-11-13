@@ -1,4 +1,4 @@
-import {argv, bot} from "../botbase";
+import {argv, bot, emailOnError} from "../botbase";
 import {debug, Monitor, RawRule} from "./bot-monitor";
 
 // Only a small amount of data is stored. Probably not worth using ToolsDB.
@@ -30,12 +30,22 @@ export class ChecksDb {
 		debug(`[S] Opened database connection`);
 	}
 
+	// Robustify this? This value still stands the risk of being the same for two tasks.
+	// Should we use the SHA1 hash as the primary key?
+	static getDbKey(rule: RawRule) {
+		return `${rule.bot}: ${rule.task}`.slice(0, 250);
+	}
+
+	static handleError(err: Error) {
+		emailOnError(err, 'bot-monitor checksDb (non-fatal)');
+	}
+
 	static async update(rule: RawRule, ts: string) {
 		await this.db.run(`INSERT OR REPLACE INTO last_good VALUES(?, ?, ?)`, [
-			`${rule.bot}: ${rule.task}`,
+			this.getDbKey(rule),
 			hash.sha1(rule),
 			ts // ISO timestamp
-		]);
+		]).catch(this.handleError);
 	}
 
 	/**
@@ -50,8 +60,8 @@ export class ChecksDb {
 			return false;
 		}
 		const last = await this.db.get(`SELECT * FROM last_good WHERE name = ?`, [
-			`${rule.bot}: ${rule.task}`
-		]);
+			this.getDbKey(rule),
+		]).catch(this.handleError); // on error, last remains undefined
 		return last &&
 			last.rulehash === hash.sha1(rule) && // check that the rule itself hasn't changed
 			new bot.date(last.ts).isAfter(Monitor.getFromDate(rule.duration));
@@ -60,8 +70,8 @@ export class ChecksDb {
 
 	static async getLastSeen(rule: RawRule) {
 		let lastSeen = await this.db.get(`SELECT * FROM last_seen WHERE name = ?`, [
-			`${rule.bot}: ${rule.task}`
-		]);
+			this.getDbKey(rule),
+		]).catch(this.handleError); // on error, lastSeen remains undefined
 		// If the rule was changed, discard it (namespace/pages/summary config could have changed)
 		if (lastSeen && lastSeen.rulehash === hash.sha1(rule)) {
 			return lastSeen;
@@ -70,11 +80,11 @@ export class ChecksDb {
 
 	static async updateLastSeen(rule: RawRule, ts: string, notSeen?: boolean) {
 		await this.db.run(`INSERT OR REPLACE INTO last_seen VALUES(?, ?, ?, ?, ?)`, [
-			`${rule.bot}: ${rule.task}`,
+			this.getDbKey(rule),
 			hash.sha1(rule),
 			new bot.date().toISOString(),
 			ts,
 			notSeen ? 1 : 0
-		]);
+		]).catch(this.handleError);
 	}
 }
