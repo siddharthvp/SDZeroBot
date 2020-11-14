@@ -1,6 +1,5 @@
 import {bot} from "../botbase";
-import {Monitor, getBotOperator, Rule, RawRule} from "./bot-monitor";
-import {ChecksDb} from "./ChecksDb";
+import {Monitor, getBotOperator, ChecksDb, RawRule, Rule} from './internal'
 
 import {expect} from 'chai';
 

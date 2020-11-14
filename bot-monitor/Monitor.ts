@@ -1,55 +1,9 @@
-import {argv, bot, emailOnError, log, mwn, fs, path} from '../botbase';
+import {bot, emailOnError, log} from '../botbase';
 import {MwnDate} from "../../mwn/src/bot";
 import {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
 import {LogEvent, UserContribution} from "../../mwn/src/user";
 
-import {Tabulator} from "./Tabulator";
-import {ChecksDb} from "./ChecksDb";
-
-export interface RawRule {
-	bot: string
-	task: string
-	action: string
-	namespace: number | number[]
-	pages: string
-	summary: string
-	minEdits: number
-	duration: string
-	alertMode: 'email' | 'talkpage' | 'ping'
-	alertpage: string
-	emailuser: string
-	header: string
-	pingUser: string
-}
-export interface Rule {
-	bot: string
-	task: string
-	action: string
-	namespace: number | number[]
-	titleRegex?: RegExp
-	summaryRegex?: RegExp
-	minEdits: number
-	duration: string
-	fromDate: MwnDate
-	alertMode: 'email' | 'talkpage' | 'ping'
-	alertPage: string
-	emailUser: string
-	header: string
-	pingUser: string
-}
-
-class RuleError extends Error {
-	constructor(msg) {
-		super(msg);
-	}
-}
-
-export function debug(str) {
-	if (argv.verbose) {
-		log(str);
-	}
-}
-
+import {Alert, ChecksDb, debug, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './internal'
 
 export class Monitor {
 	name: string
@@ -64,8 +18,6 @@ export class Monitor {
 	// SQLite DB row
 	lastSeenDb: { name: string, rulehash: string, checkts: string, lastseents: string, notseen: number } | undefined;
 
-
-	static pingpage = 'Wikipedia:Bot activity monitor/Pings'
 	static configpage = 'Wikipedia:Bot activity monitor/config.json'
 
 	async monitor(rule: RawRule) {
@@ -78,76 +30,11 @@ export class Monitor {
 				log(`[i] Skipped check for ${rule.task}`);
 				return;
 			}
-			this.rule = await this.parseRule(rule);
+			this.rule = parseRule(rule);
 			await this.checkActions();
 		} catch (err) {
 			return this.handleError(err);
 		}
-	}
-
-	static getFromDate(duration = '1 day', times = 1): MwnDate {
-		try {
-			let durationParts = duration.split(' ');
-			let num = parseInt(durationParts[0]);
-			let unit = durationParts[1];
-			// Add support for weeks which MwnDate doesn't support (using 1 week = 7 days)
-			// moment does support it directly, but moment doesn't raise an error on
-			// invalid durations – it just keeps the date object unaltered, so it isn't
-			// suitable here
-			if (/weeks?/.test(unit)) {
-				unit = 'days';
-				num *= 7;
-			}
-			// @ts-ignore
-			return new bot.date().subtract(num * times, unit);
-		} catch(err) {
-			throw new RuleError(`Invalid duration: ${duration}: ${err.message}`);
-		}
-	}
-
-	async parseRule(rule: RawRule): Promise<Rule> {
-		let fromDate = Monitor.getFromDate(rule.duration);
-
-		if (typeof rule.namespace === 'string') {
-			throw new RuleError(`Invalid namespace: ${rule.namespace}`);
-		}
-		if (!rule.bot) {
-			throw new RuleError(`No bot account specified!`);
-		}
-		if (rule.alertpage) {
-			let title = bot.title.newFromText(rule.alertpage);
-			if (!title) {
-				throw new RuleError(`Invalid alert page: ${rule.alertpage}`);
-			} else if (title.namespace === 0) {
-				throw new RuleError(`Invalid alert page: ${rule.alertpage}`);
-			}
-		}
-		if (rule.minEdits && typeof rule.minEdits !== 'number') {
-			throw new RuleError(`Invalid minEdits: ${rule.minEdits}: must be a numbeer`);
-		}
-
-		return {
-			bot: rule.bot,
-			task: rule.task || '',
-			action: rule.action || 'edit',
-			namespace: rule.namespace,
-			duration: rule.duration || '1 day',
-			fromDate,
-			titleRegex: rule.pages && (rule.pages.startsWith('#') ?
-				new RegExp('^' + rule.pages.slice(1) + '$') :
-				new RegExp('^' + mwn.util.escapeRegExp(rule.pages) + '$')
-			),
-			summaryRegex: rule.summary && (rule.summary.startsWith('#') ?
-				new RegExp('^' + rule.summary.slice(1) + '$') :
-				new RegExp('^' + mwn.util.escapeRegExp(rule.summary) + '$')
-			),
-			alertMode: rule.alertMode || 'talkpage',
-			alertPage: rule.alertpage || 'User talk:' + rule.bot,
-			emailUser: rule.emailuser || rule.bot,
-			pingUser: rule.pingUser,
-			header: rule.header,
-			minEdits: rule.minEdits || 1
-		};
 	}
 
 	async checkActions() {
@@ -155,7 +42,8 @@ export class Monitor {
 		let check = this.rule.action === 'edit' ? await this.checkContribs() : await this.checkLogs();
 		Tabulator.add(this, check);
 		if (!check) { // Not OK
-			await this.alert();
+			// await this.alert();
+			await new Alert(this).alert();
 		} else { // OK
 			log(`[S] ${this.rule.task} on track`);
 		}
@@ -277,7 +165,7 @@ export class Monitor {
 			...apiParams,
 			...listParams({
 				start: lastAction.timestamp,
-				end: Monitor.getFromDate(this.rule.duration, 4)
+				end: getFromDate(this.rule.duration, 4)
 			})
 		})) {
 			if (checkAction(action)) {
@@ -308,76 +196,6 @@ export class Monitor {
 		);
 	}
 
-
-	async alert() {
-		log(`Failing: ${this.name}: only ${this.actions} actions, expected at least ${this.rule.minEdits}`);
-		if (argv.dry) {
-			return;
-		}
-
-		if (this.rule.alertMode === 'talkpage') {
-			await this.alertTalkPage();
-		} else if (this.rule.alertMode === 'email') {
-			await this.alertEmail();
-		} else if (this.rule.alertMode === 'ping') {
-			await this.alertPing();
-		} else if (!this.rule.alertMode) {
-			throw new RuleError(`Invalid alert mode: ${this.rule.alertMode}: must be "talkpage", "email" or "ping"`);
-		}
-	}
-
-	async alertTalkPage() {
-		await new bot.page(this.rule.alertPage).newSection(
-			this.getHeader(),
-			this.getMessage() + ' ~~~~',
-			{redirect: true, nocreate: true}
-		).catch(err => {
-			if (err.code === 'missingtitle') {
-				throw new RuleError(`Missing alert page: ${this.rule.alertPage}`);
-			} else if (err.code === 'protectedpage') {
-				throw new RuleError(`Alert page is protected: ${this.rule.alertPage}`);
-			} else throw err;
-		});
-	}
-
-	async alertEmail() {
-		await new bot.user(this.rule.emailUser).email(
-			this.getHeader(),
-			this.getMessage(),
-			{ccme: true}
-		).catch(err => {
-			if (err.code === 'notarget') {
-				throw new RuleError(`Invalid username for email: ${this.rule.emailUser}`);
-			} else if (err.code === 'nowikiemail') {
-				throw new RuleError(`Email is disabled for ${this.rule.emailUser}`);
-			} else throw err;
-		});
-	}
-
-	async alertPing() {
-		let pingUser = this.rule.pingUser || await getBotOperator(this.rule.bot) || this.rule.bot;
-		await new bot.page(Monitor.pingpage).edit((rev) => {
-			return {
-				appendtext: `{{re|${pingUser}}} ${this.rule.bot}'s task ${this.rule.task} failed: found ${this.actions} ${this.rule.action === 'edit' ? 'edits' : 'log actions'} against ${this.rule.minEdits} expected.`,
-				summary: `Reporting [[:User:${this.rule.bot}|${this.rule.bot}]]: ${this.rule.task}`
-			}
-		})
-	}
-
-	getHeader() {
-		if (typeof this.rule.header === 'string') {
-			return this.rule.header
-				.replace('$TASK', this.rule.task.replace(/\$/g, '$$$$'))
-				.replace('$BOT', this.rule.bot.replace(/\$/g, '$$$$'));
-		}
-		return `${this.rule.task} failure`; // default
-	}
-
-	getMessage() {
-		return `The bot task ${this.name} failed to run per the requirements specified at [[${Monitor.configpage}]]. Found only ${this.actions} ${this.rule.action === 'edit' ? 'edits' : 'log actions'}, expected ${this.rule.minEdits}.`;
-	}
-
-
 	handleError(err) {
 		if (err instanceof RuleError) {
 			// It's the user's fault
@@ -389,29 +207,6 @@ export class Monitor {
 		}
 	}
 
-}
-
-export async function getBotOperator(botName: string) {
-	try {
-		const userpage = await new bot.user(botName).userpage.text();
-		const rgx = /\{\{[bB]ot\s*\|\s*([^|}]*)/;
-		const match = rgx.exec(userpage);
-		if (!match) {
-			return null;
-		}
-		return match[1];
-	} catch (e) {
-		if (e.code !== 'missingtitle') {
-			log(`[E] Unexpected error getting operator name: ${e}`);
-		}
-		return null;
-	}
-}
-
-export async function fetchRules(): Promise<RawRule[]> {
-	return !argv.fake ?
-		await bot.parseJsonPage(Monitor.configpage) :
-		JSON.parse(fs.readFileSync(path.join(__dirname, 'fake-config.json')).toString())
 }
 
 

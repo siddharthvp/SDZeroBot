@@ -1,5 +1,6 @@
 import {bot, mwn, log, argv} from "../botbase";
-import {Monitor} from "./bot-monitor";
+import {Monitor} from './internal';
+
 import moment = require("moment");
 
 export class Tabulator {
@@ -64,6 +65,6 @@ export class Tabulator {
 }
 
 // plural s or not
-export function s(num: number) {
+function s(num: number) {
 	return num === 1 ? '' : 's';
 }

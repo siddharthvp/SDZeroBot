@@ -1,7 +1,6 @@
 import {bot, emailOnError, fs, path} from "../botbase";
-import {fetchRules, Monitor} from "./bot-monitor";
-import {Tabulator} from "./Tabulator";
-import {ChecksDb} from "./ChecksDb";
+
+import {fetchRules, Monitor, Tabulator, ChecksDb} from './internal'
 
 (async function () {
 

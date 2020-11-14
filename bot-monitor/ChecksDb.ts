@@ -1,10 +1,10 @@
 import {argv, bot, emailOnError} from "../botbase";
-import {debug, Monitor, RawRule} from "./bot-monitor";
+import {RawRule, debug, getFromDate} from './internal'
 
 // Only a small amount of data is stored. Probably not worth using ToolsDB.
 import * as sqlite from "sqlite";
-import * as sqlite3 from "sqlite3";
 
+import * as sqlite3 from "sqlite3";
 import hash = require('object-hash');
 
 export class ChecksDb {
@@ -64,7 +64,7 @@ export class ChecksDb {
 		]).catch(this.handleError); // on error, last remains undefined
 		return last &&
 			last.rulehash === hash.sha1(rule) && // check that the rule itself hasn't changed
-			new bot.date(last.ts).isAfter(Monitor.getFromDate(rule.duration));
+			new bot.date(last.ts).isAfter(getFromDate(rule.duration));
 	}
 
 
