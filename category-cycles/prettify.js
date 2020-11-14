@@ -49,7 +49,7 @@ let cycles = require('./cycles.json').sort((a, b) => a.length - b.length);
 	for (let cycle of cycles) {
 		page += '*' + cycle.map(e => `[[:Category:${map[e]}|${map[e]}]]`).join(' → ') + '\n';
 		if (page.length > PAGE_SIZE_MAX_LIMIT) {
-			await bot.save(wiki_page_name(page_number), page)
+			await bot.save(wiki_page_name(page_number), page, 'Updating category cycles')
 				.then(() => log(`[+] Saved ${wiki_page_name(page_number)}`));
 			page_number++;
 			page = PAGE_LEAD;
