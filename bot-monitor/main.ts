@@ -4,6 +4,8 @@ import {fetchRules, Monitor, Tabulator, ChecksDb} from './internal'
 
 (async function () {
 
+    process.chdir(__dirname);
+
     await bot.getTokensAndSiteInfo();
     await ChecksDb.connect();
 

@@ -199,7 +199,6 @@ export class Monitor {
 	handleError(err) {
 		if (err instanceof RuleError) {
 			// It's the user's fault
-			// TODO: notify on-wiki
 			log(`[W] Invalid rule for ${this.name}: ${err.message}`);
 			Tabulator.invalidRules.push({task: this.name, reason: err.message})
 		} else {

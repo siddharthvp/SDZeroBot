@@ -17,7 +17,7 @@ export function getFromDate(duration = '1 day', times = 1): MwnDate {
         }
         // @ts-ignore
         return new bot.date().subtract(num * times, unit);
-    } catch(err) {
+    } catch (err) {
         throw new RuleError(`Invalid duration: ${duration}: ${err.message}`);
     }
 }
