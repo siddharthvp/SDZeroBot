@@ -1,53 +1,52 @@
-"use strict";
 /** Base file to reduce the amount of boilerplate code in each file */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextExtractor = exports.utils = exports.log = exports.emailOnError = exports.xdate = exports.argv = exports.assert = exports.path = exports.fs = exports.toolsdb = exports.enwikidb = exports.db = exports.mysql = exports.mwn = exports.bot = void 0;
-const fs = require("fs");
-exports.fs = fs;
-const path = require("path");
-exports.path = path;
-const assert = require("assert");
-exports.assert = assert;
+
+import fs = require('fs');
+import path = require('path');
+import assert = require('assert');
+
 let log;
-exports.log = log;
+
 /** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
-const emailOnError = function (err, taskname) {
+const emailOnError = function (err: Error, taskname: string) {
     if (typeof log !== 'undefined') { // Check if mwn has loaded
         log('[E] Fatal error');
-    }
-    else { // imitate!
+    } else { // imitate!
         console.log(`[${new Date().toISOString()}] [E] Fatal error`);
     }
     console.log(err);
-    require('child_process').exec(`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`, () => { } // Emailing failed, must be a non-toolforge environ
+    require('child_process').exec(
+        `echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
+        () => {} // Emailing failed, must be a non-toolforge environ
     );
     // exit normally
 };
-exports.emailOnError = emailOnError;
+
 // Errors occurring inside async functions are caught by emailOnError(),
 // this is only for anything else, such as failing imports
-process.on('uncaughtException', function (err) {
+process.on('uncaughtException', function(err) {
     if (process.argv[1]) {
         var taskname = path.basename(process.argv[1]);
         emailOnError(err, taskname);
-    }
-    else { // else we're probably running in the console
+    } else { // else we're probably running in the console
         console.log(err);
     }
 });
-const mwn_1 = require("../mwn");
-Object.defineProperty(exports, "mwn", { enumerable: true, get: function () { return mwn_1.mwn; } });
+
+import {mwn} from '../mwn';
+
 /** Colorised and dated console logging. Powered by Semlog, a dependency of mwn */
-exports.log = log = mwn_1.mwn.log;
+log = mwn.log;
+
 /** Parsed console arguments */
 const argv = require('minimist')(process.argv.slice(2));
-exports.argv = argv;
+
 /** Date library, deprecated (now available in mwn) */
 const xdate = require('./xdate');
-exports.xdate = xdate;
+
 /** bot account and databse access credentials */
 const auth = require('./.auth');
-const bot = new mwn_1.mwn({
+
+const bot = new mwn({
     apiUrl: 'https://en.wikipedia.org/w/api.php',
     username: auth.bot_username,
     password: auth.bot_password,
@@ -62,31 +61,30 @@ const bot = new mwn_1.mwn({
     },
     userAgent: 'w:en:User:SDZeroBot'
 });
-exports.bot = bot;
+
 bot.initOAuth();
-const mysql = require("mysql2/promise");
-exports.mysql = mysql;
-class db {
-    constructor() {
-        this.connected = false;
-    }
+
+import * as mysql from 'mysql2/promise';
+
+abstract class db {
+    conn: mysql.Connection
+    config: mysql.ConnectionOptions
+    connected = false
+
     async connect(isRetry = false) {
         try {
             this.conn = await mysql.createConnection(this.config);
-        }
-        catch (e) {
+        } catch(e) {
             if (!isRetry) { // retry, but only once
                 log(`[W] ${e.code}, retrying in 5 seconds...`);
                 await bot.sleep(5000);
                 return this.connect(true);
-            }
-            else
-                throw e;
+            } else throw e;
         }
         this.connected = true;
         return this;
     }
-    async query(...args) {
+    async query(...args: any[]) {
         if (!this.connected) {
             await this.connect();
         }
@@ -103,7 +101,7 @@ class db {
             return row;
         });
     }
-    async run(...args) {
+    async run(...args: any[]) {
         if (!this.connected) {
             await this.connect();
         }
@@ -120,8 +118,9 @@ class db {
         this.connected = false;
     }
 }
-exports.db = db;
+
 class enwikidb extends db {
+    replagHours: number
     constructor() {
         super();
         this.config = {
@@ -130,8 +129,11 @@ class enwikidb extends db {
             user: auth.db_user,
             password: auth.db_password,
             database: 'enwiki_p',
+            //timezone: 'Z',
+            //stringifyObjects: true
         };
     }
+
     async getReplagHours() {
         const lastrev = await this.query(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
         const lastrevtime = new bot.date(lastrev[0].ts);
@@ -147,7 +149,7 @@ class enwikidb extends db {
         return this.replagHours > threshold ? `{{hatnote|Replica database lag is high. Changes newer than ${this.replagHours} hours may not be reflected.}}\n` : '';
     }
 }
-exports.enwikidb = enwikidb;
+
 class toolsdb extends db {
     constructor(dbname) {
         super();
@@ -157,21 +159,23 @@ class toolsdb extends db {
             user: auth.db_user,
             password: auth.db_password,
             database: 's54328__' + dbname
-        };
+        }
     }
 }
-exports.toolsdb = toolsdb;
+
 const TextExtractor = require('./TextExtractor')(bot);
-exports.TextExtractor = TextExtractor;
+
 const utils = {
-    saveObject: function (filename, obj) {
+    saveObject: function(filename, obj) {
         fs.writeFileSync('./' + filename + '.json', JSON.stringify(obj, null, 2));
     },
-    logObject: function (obj) {
+
+    logObject: function(obj) {
         return console.log(JSON.stringify(obj, null, 2));
     },
+
     // copied from https://en.wikipedia.org/wiki/MediaWiki:Gadget-twinkleblock.js
-    makeSentence: function (arr) {
+    makeSentence: function(arr) {
         if (arr.length < 3) {
             return arr.join(' and ');
         }
@@ -179,7 +183,7 @@ const utils = {
         return arr.join(', ') + ' and ' + last;
     },
     // copied from https://en.wikipedia.org/wiki/MediaWiki:Gadget-morebits.js
-    arrayChunk: function (arr, size) {
+    arrayChunk: function(arr, size) {
         var result = [];
         var current;
         for (var i = 0; i < arr.length; ++i) {
@@ -192,4 +196,5 @@ const utils = {
         return result;
     }
 };
-exports.utils = utils;
+
+export {bot, mwn, mysql, db, enwikidb, toolsdb, fs, path, assert, argv, xdate, emailOnError, log, utils, TextExtractor };
