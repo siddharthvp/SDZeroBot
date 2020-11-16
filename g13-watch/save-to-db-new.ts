@@ -9,6 +9,7 @@ const auth = require('../.auth');
 async function main() {
 
 	await bot.getSiteInfo();
+	log(`[S] Started`);
 
 	// Create a pool, but almost all the time only one connection will be used
 	// Each pool connection is released immediately after use
@@ -36,6 +37,7 @@ async function main() {
 
 	const firstrow = await pool.query(`SELECT ts FROM g13 ORDER BY ts DESC LIMIT 1`)[0];
 
+	log(`[i] firstrow ts: ${firstrow.ts}`);
 	let stream = new bot.stream('recentchange', {
 		since: firstrow ?
 			new bot.date(firstrow.ts * 1000):
