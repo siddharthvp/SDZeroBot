@@ -1,10 +1,22 @@
 // start job using: npm run start
 
-import {fs, bot, log, toolsdb, emailOnError, mysql} from '../botbase';
+import {fs, bot, log, mysql, argv} from '../botbase';
 
 const {preprocessDraftForExtract} = require('../tasks/commons');
 const TextExtractor = require('../TextExtractor')(bot);
 const auth = require('../.auth');
+
+function logError(err) {
+	fs.appendFileSync('./errlog.txt', `[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${err.stack}`);
+}
+function logWarning(evt) {
+	try{
+		const stringified = JSON.stringify(evt, null, 2);
+		fs.appendFileSync('./warnlog.txt', `[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}: ${stringified}`);
+	} catch(e) { // JSON.stringify fails on circular object
+		logError(e);
+	}
+}
 
 async function main() {
 
@@ -20,28 +32,32 @@ async function main() {
 		port: 3306,
 		database: 's54328__g13watch_p',
 		waitForConnections: true,
-		connectionLimit: 5,
-		queueLimit: 10
+		connectionLimit: 5
 	});
 
 	await pool.execute(`
 		CREATE TABLE IF NOT EXISTS g13(
-			name varchar(255) unique,
-			description varchar(255),
-			excerpt blob,
-			size int,
-			ts int not null
+			name VARCHAR(255) UNIQUE,
+			description VARCHAR(255),
+			excerpt BLOB,
+			size INT,
+			ts TIMESTAMP NOT NULL
 		) COLLATE 'utf8_unicode_ci'
 	`); // use utf8_unicode_ci so that MariaDb allows a varchar(255) field to have unique constraint
 	// max index column size is 767 bytes. 255*3 = 765 bytes with utf8, 255*4 = 1020 bytes with utf8mb4
 
-	const firstrow = await pool.query(`SELECT ts FROM g13 ORDER BY ts DESC LIMIT 1`)[0];
+	// SELECT statement here returns a JS Date object
+	const firstrowts = new bot.date((await pool.query(`SELECT ts FROM g13 ORDER BY ts DESC LIMIT 1`))?.[0]?.[0]?.ts);
+	const tsUsable = firstrowts.isValid() && new bot.date().subtract(7, 'days').isBefore(firstrowts);
+	log(`[i] firstrow ts: ${firstrowts}: ${tsUsable}`);
 
-	log(`[i] firstrow ts: ${firstrow.ts}`);
 	let stream = new bot.stream('recentchange', {
-		since: firstrow ?
-			new bot.date(firstrow.ts * 1000):
-			new bot.date().subtract(20, 'minutes')
+		since: !argv.fromNow && tsUsable ? firstrowts: new bot.date().subtract(2, 'minutes'),
+		onerror: evt => {
+			log(`[W] event source encountered error: ${evt}`);
+			console.log(evt);
+			logWarning(evt);
+		}
 	});
 
 	stream.addListener({
@@ -55,25 +71,21 @@ async function main() {
 		}
 
 		let title = match[1];
-		let ts = data.timestamp;
-		log(`[+] Page ${title} at ${new bot.date(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
+		// data.timestamp is *seconds* since epoch
+		// This date object will be passed to db
+		let ts = data.timestamp ? new bot.date(data.timestamp * 1000) : null;
+		log(`[+] Page ${title} at ${ts}`);
 		let pagedata = await bot.read(title, {
 			prop: 'revisions|description',
 			rvprop: 'content|size'
 		});
-		let text = pagedata?.revisions[0]?.content;
-		let size = pagedata.revisions[0].size;
-		let desc = pagedata.description;
+		let text = pagedata?.revisions?.[0]?.content ?? null;
+		let size = pagedata?.revisions?.[0].size ?? null;
+		let desc = pagedata?.description ?? null;
 		if (desc && desc.size > 255) {
 			desc = desc.slice(0, 250) + ' ...';
 		}
 		let extract = TextExtractor.getExtract(text, 300, 550, preprocessDraftForExtract);
-
-		fs.appendFile(
-			__dirname + '/db-new.txt',
-			JSON.stringify([title, desc, extract, size, ts]) + '\n',
-			console.log
-		);
 
 		let conn;
 		try {
@@ -84,14 +96,18 @@ async function main() {
 				log(`[W] ${title} entered category more than once`);
 				return;
 			}
-			emailOnError(err, 'g13-watch-db');
+			logError(err);
 		} finally {
 			await conn.release();
 		}
 	});
 }
 
-while (true) {
-	main().catch(err => emailOnError(err, 'g13-watch-db'));
+async function go() {
+	await main().catch(err => {
+		logError(err);
+		go();
+	});
 }
 
+go();

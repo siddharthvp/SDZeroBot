@@ -14,8 +14,8 @@ const {saveWithBlacklistHandling} = require('../tasks/commons');
 	table.addHeaders([
 		{label: 'Date', style: 'width: 5em'},
 		{label: 'Draft', style: 'width: 18em'},
-		{label: 'Size', style: 'width: 4em'},
-		{label: 'Excerpt'}
+		{label: 'Excerpt'},
+		{label: 'Size', style: 'width: 4em'}
 	]);
 
 	let end = new bot.date().setUTCHours(0,0,0,0);
@@ -23,24 +23,23 @@ const {saveWithBlacklistHandling} = require('../tasks/commons');
 
 	const result = await db.query(`
 		SELECT * FROM g13
-		WHERE ts > ?
-		AND ts < ?
+		WHERE ts BETWEEN ? AND ?
 	`, [
-		start.getTime() / 1000,
-		end.getTime() / 1000
+		start.format('YYYY-MM-DD HH:mm:ss'),
+		end.format('YYYY-MM-DD HH:mm:ss')
 	]);
 
 	result.forEach(row => {
 		let page = `[[${row.name}]]`;
-		if (row.desc) {
-			page += ` <small>${row.desc}</small>`
+		if (row.description) {
+			page += ` <small>${row.description}</small>`
 		}
 
 		table.addRow([
-			new bot.date(row.ts * 1000).format('YYYY-MM-DD HH:mm'),
+			new bot.date(row.ts).format('YYYY-MM-DD HH:mm'),
 			page,
-			row.size,
-			row.excerpt || ''
+			row.excerpt || '',
+			row.size
 		]);
 	});
 
