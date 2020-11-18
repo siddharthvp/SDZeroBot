@@ -7,12 +7,12 @@ const TextExtractor = require('../TextExtractor')(bot);
 const auth = require('../.auth');
 
 function logError(err) {
-	fs.appendFileSync('./errlog.txt', `[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${err.stack}`);
+	fs.appendFileSync('./errlog.txt', `\n[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${err.stack}`);
 }
 function logWarning(evt) {
 	try{
 		const stringified = JSON.stringify(evt, null, 2);
-		fs.appendFileSync('./warnlog.txt', `[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}: ${stringified}`);
+		fs.appendFileSync('./warnlog.txt', `\n[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}: ${stringified}`);
 	} catch(e) { // JSON.stringify fails on circular object
 		logError(e);
 	}
@@ -21,6 +21,8 @@ function logWarning(evt) {
 async function main() {
 
 	await bot.getSiteInfo();
+	process.chdir(__dirname); // errlog and warnlog should go to /g13-watch
+
 	log(`[S] Started`);
 
 	// Create a pool, but almost all the time only one connection will be used

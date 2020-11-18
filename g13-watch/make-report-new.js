@@ -56,7 +56,7 @@ const {saveWithBlacklistHandling} = require('../tasks/commons');
 		}).join(' - ') + ' - {{history|2=older}}';
 	} catch (e) {}
 
-	let text = `{{/header|count=${result.length}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>`
+	let text = `{{/header|count=${result.length}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>`
 		+ `\n\n${wikitable}`;
 
 	await saveWithBlacklistHandling(page, text);
