@@ -1,98 +1,106 @@
+"use strict";
 // start job using: npm run start
-
-const {bot, log, xdate, emailOnError} = require('../botbase');
-const EventSource = require('eventsource');
-const TextExtractor = require('../TextExtractor')(bot);
-const sqlite3 = require('sqlite3');
-const sqlite = require('sqlite');
-
-process.chdir(__dirname);
-
-
-async function main() {
-
-	await bot.getSiteInfo();
-
-	const db = await sqlite.open({
-		filename: './g13.db',
-		driver: sqlite3.Database
-	});
-
-	log('[S] Connected to the g13 database.');
-
-	const res = await db.get(`SELECT * FROM sqlite_master WHERE type='table'`);
-	if (!res) {
-		await db.run(`CREATE TABLE g13(
-			name varbinary(255) unique, 
-			desc varbinary(500),
-			excerpt varbinary(1500),
-			ts int not null
-		)`);
-	}
-
-	const firstrow = await db.get(`SELECT ts FROM g13 ORDER BY ts DESC`);
-	
-	const lastTs = firstrow ? new Date(firstrow.ts * 1000).toISOString() : 
-		(function() { var d = new xdate(); d.setUTCHours(0, 0, 0, 0); return d.toISOString(); })();
-
-	const stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange?since=' + lastTs, {
-		headers: {
-			'User-Agent': 'w:en:User:SDZeroBot'
-		}
-	});
-	stream.onopen = function() {
-		log('[S] Opened eventsource connection');
-	};
-	stream.onerror = function(event) {
-		log('[E] Error: eventsource connection');
-		console.log('--- Encountered error', event);
-		// should we throw here?
-	};
-
-	stream.onmessage = async function(event) {
-		let data = JSON.parse(event.data);
-		if (data.wiki !== 'enwiki') return;
-		if (data.type !== 'categorize') return;
-		if (data.title !== 'Category:Candidates for speedy deletion as abandoned drafts or AfC submissions') return;
-
-		let match = /^\[\[:(.*?)\]\] added/.exec(data.comment);
-		if (!match) {
-			return;
-		}
-		let title = match[1];
-		let ts = data.timestamp;
-		log(`[+] Page ${title} at ${new xdate(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
-		let pagedata = await bot.read(title, {prop: 'revisions|description'});
-		let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
-		let desc = pagedata.description;
-		let extract = text && TextExtractor.getExtract(text, 300, 550, function preprocessHook(text) {
-			let wkt = new bot.wikitext(text);
-			wkt.parseTemplates({
-				namePredicate: name => {
-					return /infobox/i.test(name) || name === 'AFC submission';
-				}
-			});
-			for (let template of wkt.templates) {
-				wkt.removeEntity(template);
-			}
-			return wkt.getText();
-		});
-
-		try {
-			await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?)`, [title, desc, extract, ts]);
-		} catch (err) {
-			// amazing how this library doesn't have object-oriented error handling ...
-			if (err.message.startsWith('SQLITE_CONSTRAINT: UNIQUE constraint failed: g13.name')) {
-				log(`[W] ${title} entered category more than once`);
-				return;
-			}
-			throw err;
-		}
-	};
-	
+Object.defineProperty(exports, "__esModule", { value: true });
+const botbase_1 = require("../botbase");
+const { preprocessDraftForExtract } = require('../tasks/commons');
+const TextExtractor = require('../TextExtractor')(botbase_1.bot);
+const auth = require('../.auth');
+function logError(err) {
+    botbase_1.fs.appendFileSync('./errlog.txt', `\n[${new botbase_1.bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${err.stack}`);
 }
-
-main().catch(err => {
-	emailOnError(err, 'g13-watch-db');
-	main();
-});
+function logWarning(evt) {
+    try {
+        const stringified = JSON.stringify(evt, null, 2);
+        botbase_1.fs.appendFileSync('./warnlog.txt', `\n[${new botbase_1.bot.date().format('YYYY-MM-DD HH:mm:ss')}: ${stringified}`);
+    }
+    catch (e) { // JSON.stringify fails on circular object
+        logError(e);
+    }
+}
+async function main() {
+    await botbase_1.bot.getSiteInfo();
+    process.chdir(__dirname); // errlog and warnlog should go to /g13-watch
+    botbase_1.log(`[S] Started`);
+    // Create a pool, but almost all the time only one connection will be used
+    // Each pool connection is released immediately after use
+    const pool = botbase_1.mysql.createPool({
+        host: 'tools.db.svc.eqiad.wmflabs',
+        user: auth.db_user,
+        password: auth.db_password,
+        port: 3306,
+        database: 's54328__g13watch_p',
+        waitForConnections: true,
+        connectionLimit: 5
+    });
+    await pool.execute(`
+		CREATE TABLE IF NOT EXISTS g13(
+			name VARCHAR(255) UNIQUE,
+			description VARCHAR(255),
+			excerpt BLOB,
+			size INT,
+			ts TIMESTAMP NOT NULL
+		) COLLATE 'utf8_unicode_ci'
+	`); // use utf8_unicode_ci so that MariaDb allows a varchar(255) field to have unique constraint
+    // max index column size is 767 bytes. 255*3 = 765 bytes with utf8, 255*4 = 1020 bytes with utf8mb4
+    // SELECT statement here returns a JS Date object
+    const firstrowts = new botbase_1.bot.date((await pool.query(`SELECT ts FROM g13 ORDER BY ts DESC LIMIT 1`))?.[0]?.[0]?.ts);
+    const tsUsable = firstrowts.isValid() && new botbase_1.bot.date().subtract(7, 'days').isBefore(firstrowts);
+    botbase_1.log(`[i] firstrow ts: ${firstrowts}: ${tsUsable}`);
+    let stream = new botbase_1.bot.stream('recentchange', {
+        since: !botbase_1.argv.fromNow && tsUsable ? firstrowts : new botbase_1.bot.date().subtract(2, 'minutes'),
+        onerror: evt => {
+            botbase_1.log(`[W] event source encountered error: ${evt}`);
+            console.log(evt);
+            logWarning(evt);
+        }
+    });
+    stream.addListener({
+        wiki: 'enwiki',
+        type: 'categorize',
+        title: 'Category:Candidates for speedy deletion as abandoned drafts or AfC submissions'
+    }, async (data) => {
+        let match = /^\[\[:(.*?)\]\] added/.exec(data.comment);
+        if (!match) {
+            return;
+        }
+        let title = match[1];
+        // data.timestamp is *seconds* since epoch
+        // This date object will be passed to db
+        let ts = data.timestamp ? new botbase_1.bot.date(data.timestamp * 1000) : null;
+        botbase_1.log(`[+] Page ${title} at ${ts}`);
+        let pagedata = await botbase_1.bot.read(title, {
+            prop: 'revisions|description',
+            rvprop: 'content|size'
+        });
+        let text = pagedata?.revisions?.[0]?.content ?? null;
+        let size = pagedata?.revisions?.[0].size ?? null;
+        let desc = pagedata?.description ?? null;
+        if (desc && desc.size > 255) {
+            desc = desc.slice(0, 250) + ' ...';
+        }
+        let extract = TextExtractor.getExtract(text, 300, 550, preprocessDraftForExtract);
+        let conn;
+        try {
+            conn = await pool.getConnection();
+            await conn.execute(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
+        }
+        catch (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+                botbase_1.log(`[W] ${title} entered category more than once`);
+                return;
+            }
+            logError(err);
+        }
+        finally {
+            await conn.release();
+        }
+    });
+}
+async function go() {
+    await main().catch(err => {
+        logError(err);
+        go();
+    });
+}
+go();
+//# sourceMappingURL=save-to-db-new.js.map
