@@ -49,7 +49,7 @@ async function main() {
     let stream = new botbase_1.bot.stream('recentchange', {
         since: !botbase_1.argv.fromNow && tsUsable ? firstrowts : new botbase_1.bot.date().subtract(2, 'minutes'),
         onerror: evt => {
-            botbase_1.log(`[W] event source encountered error: ${evt}`);
+            botbase_1.log(`[W] event source encountered error:`);
             console.log(evt);
             logWarning(evt);
         }
@@ -103,4 +103,3 @@ async function go() {
     });
 }
 go();
-//# sourceMappingURL=save-to-db-new.js.map

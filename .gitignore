@@ -7,4 +7,7 @@
 node_modules/
 .auth.js
 */core
-.idea/*
+
+# JetBrains
+*.iml
+vcs.xml

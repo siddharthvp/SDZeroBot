@@ -6,6 +6,7 @@
         <serverdata>
           <mappings>
             <mapping deploy="/SDZeroBot" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/mwn" local="$PROJECT_DIR$/../mwn" web="/" />
           </mappings>
         </serverdata>
       </paths>

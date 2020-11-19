@@ -1,7 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="g13-1week" type="NodeJSConfigurationType" application-parameters="--nodb --sandbox" path-to-node="sshConfig://sd@login.toolforge.org:22 key/data/project/sdzerobot/bin/node" path-to-js-file="tasks/g13-1week.js" working-dir="$PROJECT_DIR$">
-    <method v="2">
-      <option name="FwBeforeLaunchTask" enabled="true" />
-    </method>
-  </configuration>
-</component>

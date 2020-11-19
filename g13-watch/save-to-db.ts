@@ -56,7 +56,7 @@ async function main() {
 	let stream = new bot.stream('recentchange', {
 		since: !argv.fromNow && tsUsable ? firstrowts: new bot.date().subtract(2, 'minutes'),
 		onerror: evt => {
-			log(`[W] event source encountered error: ${evt}`);
+			log(`[W] event source encountered error:`);
 			console.log(evt);
 			logWarning(evt);
 		}

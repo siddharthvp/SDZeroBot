@@ -39,7 +39,7 @@ const {saveWithBlacklistHandling} = require('../tasks/commons');
 			new bot.date(row.ts).format('YYYY-MM-DD HH:mm'),
 			page,
 			row.excerpt || '',
-			row.size
+			row.size || ''
 		]);
 	});
 
