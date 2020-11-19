@@ -6,7 +6,7 @@ const {AfcDraftSize, populateWikidataShortdescs, populateOresQualityRatings, com
 log(`[i] Started`);
 await bot.getTokensAndSiteInfo();
 
-let earwigReport = new bot.page('Template:AFC statistics/declined');
+let earwigReport = new bot.page('Template:AfC statistics/declined');
 let yesterday = new bot.date().subtract(1, 'day');
 let tableInfo = {};
 
@@ -62,12 +62,12 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			desc: pg.description,
 			coi: templates.includes('COI') || templates.includes('Connected contributor'),
 			upe: templates.includes('Undisclosed paid'),
-			declines: text.match(/\{\{AFC submission\|d/g)?.length || 0,
+			declines: text.match(/\{\{A[fF]C submission\|d/g)?.length || 0,
 			rejected: categories.includes('Rejected AfC submissions'),
 			draftified: templates.includes('Drafts moved from mainspace'),
 			promising: categories.includes('Promising draft articles'),
-			blank: /\{\{AFC submission\|d\|blank/.test(text),
-			test: /\{\{AFC submission\|d\|test/.test(text),
+			blank: /\{\{A[fF]C submission\|d\|blank/.test(text),
+			test: /\{\{A[fF]C submission\|d\|test/.test(text),
 			size: AfcDraftSize(text),
 			unsourced: !/<ref/i.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text),
 		});
@@ -140,7 +140,7 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 	]);
 });
 
-let page = new bot.page('User:SDZeroBot/Declined AFCs' + (argv.sandbox ? '/sandbox' : ''));
+let page = new bot.page('User:SDZeroBot/Recent AfC declines' + (argv.sandbox ? '/sandbox' : ''));
 
 let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
 	let date = new bot.date(rev.timestamp).subtract(24, 'hours');

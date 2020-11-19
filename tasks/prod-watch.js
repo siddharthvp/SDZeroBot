@@ -8,7 +8,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 	var userlink = function(user) {
 		return `[[User:${user}|${user}]]`;
 	}
-	
+
 	var small = function(comment) {
 		return `<small>${comment}</small>`;
 	}
@@ -16,7 +16,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 	async function main(date, subpage) {
 
 		var pages = {};
-		
+
 		var deprodded = new Set(),
 			afdkept = new Set(),
 			afdstillopen = new Set(),
@@ -25,7 +25,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 			others = new Set(),
 			movedpagefollowed = new Set(),
 			faileddeprodget = new Set();
-		
+
 		await grid.history('content', 1, {
 			rvstart: date.toISOString(),
 		}).then(revs => {
@@ -33,7 +33,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 			var wikitable = rev.content.slice(rev.content.indexOf('{|'));
 			var parsedtable = bot.wikitext.parseTable(wikitable);
 			log(`Found ${parsedtable.length} rows in revision`);
-		
+
 			for (let item of parsedtable) {
 				let pagename = item.Article.replace(/<small>.*?<\/small>/, '')
 					.replace(/\[\[(.*?)\]\]/, '$1').trim();
@@ -43,47 +43,47 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 				};
 			}
 		});
-		
+
 		let totalcount = Object.keys(pages).length;
 		log(`[S] extracted pages from grid. Found ${totalcount} pages`);
-		
+
 		// Get PROD concern as well from User:SDZeroBot/PROD sorting ?
-		
+
 		var prodRgx = /\{\{(Proposed deletion|Prod blp)\/dated/;
 		var redirectRgx = /^\s*#redirect\s*\[\[(.*?)\]\]/i;
-		
+
 		await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
 			let pageobj = new bot.page(page);
-		
+
 			return pageobj.history('comment|user|content|timestamp', 50, {
 				rvsection: 0
 			}).then(revs => {
 				let currenttext = revs[0].content;
-		
+
 				let prodRgxMatch = currenttext.match(prodRgx);
 				if (prodRgxMatch) {
 					others.add(page);
 					pages[page].note = `Page still has a PROD tag`;
 					return;
 				}
-		
+
 				let redirectRgxMatch = currenttext.match(redirectRgx);
 				if (redirectRgxMatch) {
 					pages[page].redirecttarget = redirectRgxMatch[1];
-		
+
 					// check who redirected it and why
 					let prevuser = null, prevcomment = null;
-		
+
 					for (let rev of revs) {
-		
+
 						if (!redirectRgx.test(rev.content)) { // not a redirect
-		
+
 							pages[page].note = `Redirected to [[${pages[page].redirecttarget}]] by ${userlink(prevuser)}: ${small(prevcomment)}`;
 							others.add(page);
 							return; // TODO: also find out who de-prodded it, if different
-		
+
 						} else { // redirect, check if this edit is a page move
-		
+
 							let moveCommentRgx = new RegExp(
 								`^${mwn.util.escapeRegExp(rev.user)} moved page \\[\\[${mwn.util.escapeRegExp(page)}\\]\\] to \\[\\[(.*?)\\]\\]`
 							);
@@ -91,14 +91,14 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 							if (match) {
 								// indeed this was a page move, open the target page now
 								let target = match[1];
-		
+
 								// non-mainspace target (draftspace?), don't follow
 								if (bot.title.newFromText(target).namespace !== 0) {
 									pages[page].note = rev.comment; // this will have full desc of what happend
 									others.add(page);
 									return;
 								}
-		
+
 								pages[target] = pages[page]; // copy over data
 								// update title, keeping the shortdesc
 								pages[target].article = pages[page].article.replace(/^\[\[.*?\]\]/, '[[' + target + ']]');
@@ -109,7 +109,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 						prevuser = rev.user;
 						prevcomment = rev.comment;
 					}
-		
+
 					// if we reach here check if it was recreated after deletion (most likely)
 					return pageobj.logs('user|comment|timestamp', 1, 'delete/delete').then(logs => {
 						let firstrev = revs[revs.length-1];
@@ -118,16 +118,16 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 							pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(logs[0].comment)}\n\n` +
 							`Recreated as redirect by ${userlink(firstrev.user)}: ${small(firstrev.comment)}`;
 							others.add(page);
-		
+
 						} else {
 							pages[page].note = `[Could not determine status]`;
 							others.add(page);
 							return;
 						}
 					});
-		
+
 				}
-		
+
 				// check who de-prodded it
 				let prevuser = null, prevcomment = null;
 				for (let rev of revs) {
@@ -135,7 +135,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 						pages[page].deproder = prevuser;
 						pages[page].comment = prevcomment;
 						pages[page].note = `De-prodded by ${userlink(pages[page].deproder)} with comment: <small>${pages[page].comment || ''}</small>`;
-		
+
 						// check if it was AFD'd later after de-prodding
 						return bot.search('prefix:Wikipedia:Articles for deletion/' + page, 5, '', {
 							srsort: 'create_timestamp_desc' // get most recent afd first if there are multiple
@@ -162,7 +162,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 									}
 								});
 							}
-		
+
 							// if we get here, that means we didn't find any AfDs
 							deprodded.add(page);
 						});
@@ -170,7 +170,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 					prevuser = rev.user;
 					prevcomment = rev.comment;
 				}
-		
+
 				// if we reach here check if it was recreated after deletion (most likely)
 				// duplicates some code above for the redirect case
 				return pageobj.logs('user|comment|timestamp', 1, 'delete/delete').then(logs => {
@@ -180,7 +180,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 						pages[page].note = `Deleted by ${logs[0].user}: ${small(logs[0].comment)}\n\n` +
 						`Recreated by ${userlink(firstrev.user)}: ${small(firstrev.comment)}`;
 						others.add(page);
-		
+
 					} else {
 						log(`[W] Failed to get de-prodding of ${page}`);
 						pages[page].note = `[Could not determine status]`;
@@ -188,18 +188,18 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 						faileddeprodget.add(page);
 					}
 				});
-		
+
 			}).catch(err => {
 				if (err.code !== 'missingarticle') {
 					return Promise.reject(err);
 				}
 				// Article doesn't exist. Check deletion log
 				return pageobj.logs(null, 1, 'delete/delete').then(logs => {
-		
+
 					if (logs.length) {
 						// let prod_comment_rgx = 'Expired [[WP:PROD|PROD]], concern was:';
 						// let isProd = logs[0].comment.startsWith(prod_comment_rgx);
-						
+
 						let afd_comment_rgx = /^\[\[Wikipedia:Articles for deletion\//;
 						let isAfd = afd_comment_rgx.test(logs[0].comment);
 						pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(logs[0].comment)}`;
@@ -208,7 +208,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 						} else {
 							deleted.add(page);
 						}
-		
+
 					} else {
 						// Nothing in the deletion log? Check move log then
 						return pageobj.logs('details|user|comment', 1, 'move').then(movelogs => {
@@ -223,14 +223,14 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 									others.add(page);
 								} else {
 									let target = move.params.target_title;
-		
+
 									// non-mainspace target, don't follow
 									if (bot.title.newFromText(target).namespace !== 0) {
 										pages[page].note = `Moved to [[${target}]] by ${userlink(move.user)}: ${small(move.comment)}`;
 										others.add(page);
 										return;
 									}
-		
+
 									// follow the redirect
 									pages[target] = pages[page]; // copy over data
 									// update title, keeping the shortdesc
@@ -244,21 +244,21 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 				});
 			});
 		}, 10, 2).then(ret => {
-		
+
 			log(`[E] failures:`);
 			console.log(ret.failures);
-		
+
 		});
-		
+
 		log(`[S] analysis complete`);
-		
+
 		// console.log('De-prodded: ' + JSON.stringify([...deprodded], null, 2));
 		console.log('afddeleted: ' + JSON.stringify([...afddeleted], null, 2));
 		console.log('others: ' + JSON.stringify([...others], null, 2));
 		console.log('movedpagefollowed: ' + JSON.stringify([...movedpagefollowed], null, 2));
 		console.log('faileddeprodget: ' + JSON.stringify([...faileddeprodget], null, 2));
-		
-		
+
+
 		var makeTable = function(header3, set) {
 			var table = new mwn.table();
 			table.addHeaders([
@@ -275,16 +275,16 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 			}
 			return table.getText();
 		};
-		
+
 		let deprodtable = makeTable('De-prodding', deprodded);
 		let afdstillopentable = makeTable('De-prodding and AfD', afdstillopen);
 		let afdkepttable = makeTable('De-prodding and AfD', afdkept);
 		let afddeletedtable = makeTable('Deletion', afddeleted);
 		let deletedtable = makeTable('Deletion', deleted);
 		let othertable = makeTable('Others', others);
-		
+
 		let text =
-		
+
 		`{{User:SDZeroBot/PROD Watch/header|count=${totalcount}|date=${date.format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 		
 		==De-prods (${deprodded.size})==
@@ -304,9 +304,9 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 		==Deleted (${deleted.size})==
 		${deletedtable}
 		`.replace(/^\t\t/mg, ''); // remove tabs because of the indentation in this file
-		
+
 		await bot.save(`User:SDZeroBot/PROD Watch/${subpage}`, text, 'Updating report');
-		
+
 	}
 
 	// Triggers:
