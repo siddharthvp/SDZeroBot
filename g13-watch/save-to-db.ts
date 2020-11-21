@@ -18,13 +18,7 @@ function logWarning(evt) {
 	}
 }
 
-async function main() {
-
-	await bot.getSiteInfo();
-	process.chdir(__dirname); // errlog and warnlog should go to /g13-watch
-
-	log(`[S] Started`);
-
+async function initDb() {
 	// Create a pool, but almost all the time only one connection will be used
 	// Each pool connection is released immediately after use
 	const pool = mysql.createPool({
@@ -48,6 +42,11 @@ async function main() {
 	`); // use utf8_unicode_ci so that MariaDb allows a varchar(255) field to have unique constraint
 	// max index column size is 767 bytes. 255*3 = 765 bytes with utf8, 255*4 = 1020 bytes with utf8mb4
 
+	return pool;
+}
+
+async function initEventStream(pool) {
+
 	// SELECT statement here returns a JS Date object
 	const firstrowts = new bot.date((await pool.query(`SELECT ts FROM g13 ORDER BY ts DESC LIMIT 1`))?.[0]?.[0]?.ts);
 	const tsUsable = firstrowts.isValid() && new bot.date().subtract(7, 'days').isBefore(firstrowts);
@@ -55,9 +54,13 @@ async function main() {
 
 	let stream = new bot.stream('recentchange', {
 		since: !argv.fromNow && tsUsable ? firstrowts: new bot.date().subtract(2, 'minutes'),
-		onerror: evt => {
+		onerror: async evt => {
 			log(`[W] event source encountered error:`);
 			console.log(evt);
+			if (evt.status === 429) {
+				await bot.sleep(5000);
+				initEventStream(pool);
+			}
 			logWarning(evt);
 		}
 	});
@@ -103,6 +106,17 @@ async function main() {
 			await conn.release();
 		}
 	});
+}
+
+async function main() {
+	log(`[S] Started`);
+
+	await bot.getSiteInfo();
+	const pool = await initDb();
+
+	process.chdir(__dirname); // errlog and warnlog should go to /g13-watch
+
+	initEventStream(pool);
 }
 
 async function go() {
