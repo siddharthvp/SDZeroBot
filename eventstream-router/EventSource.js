@@ -1,5 +1,7 @@
 /**
- * Forked from https://github.com/EventSource/eventsource
+ * Forked from npm eventsource module
+ * https://github.com/EventSource/eventsource
+ * (MIT license)
  */
 
 var original = require('original');

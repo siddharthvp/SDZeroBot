@@ -1,0 +1,7 @@
+{
+	"scripts": {
+		"start": "jstart -N stream -mem 2g ~/bin/node ~/SDZeroBot/eventstream-router/main.js",
+		"stop": "jstop stream",
+		"restart": "npm run stop && sleep 10 && npm run start"
+	}
+}

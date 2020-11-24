@@ -1,8 +1,6 @@
 const {fs, bot, log, argv} = require('../botbase');
 const EventSource = require('./EventSource');
 
-// TODO: separate main.js logs with route worker logs
-
 function logError(err, task) {
 	let taskFmt = task ? `[${task}]` : '';
 	let stringified;
@@ -57,8 +55,8 @@ class Route {
 		try {
 			exported = require('./' + file);
 		} catch (e) {
-			console.error(`Invalid route ${this.name}: require() failed`);
-			console.error(e);
+			log(`Invalid route ${this.name}: require() failed`);
+			log(e);
 			this.isValid = false;
 			return;
 		}
@@ -68,7 +66,7 @@ class Route {
 
 		this.isValid = typeof this.filter === 'function' && typeof this.worker === 'function';
 		if (!this.isValid) {
-			console.error(`Ignoring ${this.name}: filter or worker is not a function`);
+			log(`Ignoring ${this.name}: filter or worker is not a function`);
 			return;
 		}
 		this.ready = new Promise((resolve, reject) => {
@@ -107,7 +105,7 @@ setInterval(function () {
 }, lastSeenUpdateInterval);
 
 async function main() {
-	debug('[S] Restarted main');
+	log('[S] Restarted main');
 
 	let lastTs;
 	try {
@@ -128,7 +126,7 @@ async function main() {
 	stream.onopen = function () {
 		// EventStreams API drops connection every 15 minutes ([[phab:T242767]])
 		// So this will be invoked every time that happens.
-		log(`[i] Connected`);
+		log(`[i] Reconnected`);
 	}
 	stream.onerror = function (evt) {
 		if (evt.type === 'error' && evt.message === undefined) {
@@ -138,11 +136,15 @@ async function main() {
 		log(`[W] Event source encountered error:`);
 		console.log(evt);
 		logError(evt);
-		// if (evt.status === 429) { // Too Many Requests, the underlying library doesn't restart by itself
-		// 	bot.sleep(5000).then(() => {
-		// 		return go(); // restart
-		// 	});
-		// }
+
+		// TODO: handle other errors, ensure auto-reconnection
+
+		if (evt.status === 429) { // Too Many Requests, the underlying library doesn't reconnect by itself
+			stream.close(); // just to be safe that there aren't two parallel connections
+			bot.sleep(5000).then(() => {
+				return go(); // restart
+			});
+		}
 	}
 	stream.onmessage = function (event) {
 		let data = JSON.parse(event.data);
