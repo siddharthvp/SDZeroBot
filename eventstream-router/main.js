@@ -1,25 +1,26 @@
 const {fs, bot, log, argv} = require('../botbase');
 const EventSource = require('./EventSource');
 
-const errorLog = fs.createWriteStream('./errlog.txt', { flags: 'a', encoding: 'utf8' });
-const warningLog = fs.createWriteStream('./warnlog.txt', { flags: 'a', encoding: 'utf8' });
+// TODO: separate main.js logs with route worker logs
 
 function logError(err, task) {
-	let dateFmt = `[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}]`;
 	let taskFmt = task ? `[${task}]` : '';
-	let toLog = `${dateFmt}${taskFmt} ${err.stack}`;
-	console.log(toLog);
-	// fs.appendFile is inefficient for writing to large files as it loads the whole
-	// file into memory
-	errorLog.write(toLog);
+	let stringified;
+	if (err.stack) {
+		log(`${taskFmt} ${err.stack}`);
+	} else if (stringified = stringifyObject(err)) {
+		log(`${taskFmt} ${stringified}`);
+	} else {
+		log(`${taskFmt}`);
+		log(err);
+	}
 }
-
-function logWarning(evt) {
+// JSON.stringify throws on a cyclic object
+function stringifyObject(obj) {
 	try {
-		const stringified = JSON.stringify(evt, null, 2);
-		warningLog.write(`\n[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}: ${stringified}`);
-	} catch (e) { // JSON.stringify throws if the object has circular links
-		logError(e);
+		return JSON.stringify(obj, null, 2);
+	} catch (e) {
+		return null;
 	}
 }
 
@@ -126,21 +127,22 @@ async function main() {
 		});
 	stream.onopen = function () {
 		// EventStreams API drops connection every 15 minutes ([[phab:T242767]])
-		// So this will be invoked every time that happens. Avoid console littering.
+		// So this will be invoked every time that happens.
+		log(`[i] Connected`);
 	}
 	stream.onerror = function (evt) {
-		log(`[W] event source encountered error:`);
-		if (evt.type === 'error' && evt.type === undefined) {
+		if (evt.type === 'error' && evt.message === undefined) {
 			// The every 15 minute connection drop?
-			return; // no unnecessary logging, EventSource automatically reconnects.
+			return; // EventSource automatically reconnects. No unnecessary logging.
 		}
+		log(`[W] Event source encountered error:`);
 		console.log(evt);
-		logWarning(evt);
-		if (evt.status === 429) { // Too Many Requests, the underlying library doesn't restart by itself
-			bot.sleep(5000).then(() => {
-				return go(); // restart
-			});
-		}
+		logError(evt);
+		// if (evt.status === 429) { // Too Many Requests, the underlying library doesn't restart by itself
+		// 	bot.sleep(5000).then(() => {
+		// 		return go(); // restart
+		// 	});
+		// }
 	}
 	stream.onmessage = function (event) {
 		let data = JSON.parse(event.data);
