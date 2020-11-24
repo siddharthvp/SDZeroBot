@@ -73,7 +73,7 @@ Object.entries(oresdata).forEach(async function([revid, {drafttopic}]) {
 		.map(topic => {
 			// convert topic string to normalised form
 			return topic
-				.replace(/[A-Z]/g, match => match[0].toLowerCase()) 
+				.replace(/[A-Z]/g, match => match[0].toLowerCase())
 				.replace(/ /g, '-')
 				.replace(/&/g, 'and')
 		})
@@ -84,28 +84,28 @@ Object.entries(oresdata).forEach(async function([revid, {drafttopic}]) {
 	if (!argv.dry) {
 		await bot.edit(title, rev => {
 			let text = rev.content
-	
+
 			// remove first if already exists
 			text = text.replace(/\{\{[dD]raft topics\|[^}]*?\}\}\n?/g, '')
-			
+
 			// add template
 			text = text.trim() + `\n\n${template}`
-	
+
 			return {
 				text: text,
 				summary: `Draft topics: ${topics.join(', ')}`,
 				minor: 1
 			}
 		}).catch(err => {
-			if (err.code === 'missingarticle') {
+			if (err.code === 'missingtitle') {
 				log(`[W] ${title} has been deleted`)
 			} else {
 				emailOnError(err, 'draft-sorter non-fatal')
 				// keep going
 			}
 		})
-	} 
-	
+	}
+
 
 });
 

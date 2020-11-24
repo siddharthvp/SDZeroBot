@@ -1,4 +1,4 @@
-const {bot, mwn, log} = require('../botbase');
+const {bot, mwn, log, emailOnError} = require('../botbase');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async function() {
@@ -59,7 +59,7 @@ await bot.batchOperation(prpages, prpage => {
 			commenters: editors - 1,
 		});
 	}, err => {
-		if (err.code === 'missingarticle') {
+		if (err.code === 'missingtitle') {
 			Object.assign(data[article], {
 				prmissing: true
 			});
@@ -101,4 +101,4 @@ ${TextExtractor.finalSanitise(table.getText())}
 await bot.save('User:SDZeroBot/Peer reviews', wikitext, 'Updating');
 log(`[i] Finished`);
 
-})();
+})().catch(err => emailOnError(err, 'peer-review'));

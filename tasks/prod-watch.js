@@ -190,7 +190,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 				});
 
 			}).catch(err => {
-				if (err.code !== 'missingarticle') {
+				if (err.code !== 'missingtitle') {
 					return Promise.reject(err);
 				}
 				// Article doesn't exist. Check deletion log

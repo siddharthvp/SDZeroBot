@@ -68,7 +68,7 @@ for (let edit of actions) {
 	// revision. The description can also be fetched in the same call.
 	let page = new bot.page(edit.title),
 		shortdesc;
-	
+
 	try {
 		let revs = await page.history('content', 10, {
 			rvsection: '0'
@@ -84,7 +84,7 @@ for (let edit of actions) {
 		}
 		shortdesc = await page.getDescription();
 	} catch(err) {
-		if (err.code === 'missingarticle') {
+		if (err.code === 'missingtitle') {
 			edit.excerpt = `[Page deleted. Can't get extract]`;
 		}  else {
 			log(`[W] Error on fetching history or description: ${err.stack}`);
