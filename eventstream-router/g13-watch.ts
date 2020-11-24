@@ -1,33 +1,18 @@
-import {fs, bot, mysql, argv} from '../botbase';
+import {fs, bot, toolsdb} from '../botbase';
 import {streamLog} from './utils';
 const {preprocessDraftForExtract} = require('../tasks/commons');
 const TextExtractor = require('../TextExtractor')(bot);
-const auth = require('../.auth');
 
-let log, pool;
+let log, db;
 
 export async function init() {
 	log = streamLog.bind(fs.createWriteStream('./g13-watch.out', {flags: 'a', encoding: 'utf8'}));
 
 	log(`[S] Started`);
 	await bot.getSiteInfo();
-	pool = await initDb();
-}
 
-async function initDb() {
-	// Create a pool, but almost all the time only one connection will be used
-	// Each pool connection is released immediately after use
-	const pool = mysql.createPool({
-		host: 'tools.db.svc.eqiad.wmflabs',
-		user: auth.db_user,
-		password: auth.db_password,
-		port: 3306,
-		database: 's54328__g13watch_p',
-		waitForConnections: true,
-		connectionLimit: 5
-	});
-
-	await pool.execute(`
+	db = new toolsdb('g13watch_p').init();
+	await db.run(`
 		CREATE TABLE IF NOT EXISTS g13(
 			name VARCHAR(255) UNIQUE,
 			description VARCHAR(255),
@@ -37,8 +22,6 @@ async function initDb() {
 		) COLLATE 'utf8_unicode_ci'
 	`); // use utf8_unicode_ci so that MariaDb allows a varchar(255) field to have unique constraint
 	// max index column size is 767 bytes. 255*3 = 765 bytes with utf8, 255*4 = 1020 bytes with utf8mb4
-
-	return pool;
 }
 
 export function filter(data) {
@@ -62,25 +45,21 @@ export async function worker(data) {
 		prop: 'revisions|description',
 		rvprop: 'content|size'
 	});
-	let text = pagedata?.revisions?.[0]?.content ?? null;
-	let size = pagedata?.revisions?.[0].size ?? null;
-	let desc = pagedata?.description ?? null;
+	let text = pagedata?.revisions?.[0]?.content;
+	let size = pagedata?.revisions?.[0].size;
+	let desc = pagedata?.description;
 	if (desc && desc.size > 255) {
 		desc = desc.slice(0, 250) + ' ...';
 	}
 	let extract = TextExtractor.getExtract(text, 300, 550, preprocessDraftForExtract);
 
-	let conn;
 	try {
-		conn = await pool.getConnection();
-		await conn.execute(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
+		await db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);
 	} catch (err) {
 		if (err.code === 'ER_DUP_ENTRY') {
 			log(`[W] ${title} entered category more than once`);
 			return;
 		}
 		log(err);
-	} finally {
-		await conn.release();
 	}
 }

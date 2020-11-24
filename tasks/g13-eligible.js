@@ -9,7 +9,7 @@ let tableInfo = {};
 
 const startTs = new bot.date().subtract(6, 'months').setUTCHours(0,0,0,0).format('YYYYMMDDHHmmss');
 
-const db = await new enwikidb().connect();
+const db = new enwikidb().init();
 const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-eligible-db.json').toString()) :
 	await db.query(`
 	SELECT DISTINCT page_namespace, page_title, rev_timestamp

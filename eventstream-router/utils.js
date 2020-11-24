@@ -27,4 +27,3 @@ function stringifyObject(obj) {
         return null;
     }
 }
-//# sourceMappingURL=utils.js.map

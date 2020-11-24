@@ -2,35 +2,43 @@ import {log, bot} from './botbase';
 import * as mysql from 'mysql2/promise';
 const auth = require('./.auth');
 
-abstract class db {
-	conn: mysql.Connection
-	config: mysql.ConnectionOptions
-	connected = false
+// TODO: error handling
 
-	async connect(isRetry = false) {
-		try {
-			this.conn = await mysql.createConnection(this.config);
-		} catch(e) {
-			if (!isRetry) { // retry, but only once
-				log(`[W] ${e.code}, retrying in 5 seconds...`);
-				await bot.sleep(5000);
-				return this.connect(true);
-			} else throw e;
-		}
-		this.connected = true;
+abstract class db {
+	pool: mysql.Pool
+	config: mysql.PoolOptions
+
+	init() {
+		this.pool = mysql.createPool({
+			port: 3306,
+			user: auth.db_user,
+			password: auth.db_password,
+			waitForConnections: true,
+			connectionLimit: 5,
+			//timezone: 'Z',
+			...this.config
+		});
+
+		// Toolforge policy does not allow holding idle connections
+		// Destroy connections on 5 seconds of inactivity. This avoids holding
+		// idle connections and at the same time avoids the performance issue in
+		// creating new connections for every query in a sequential set
+		this.pool.on('release',  (connection) => {
+			connection.inactiveTimeout = setTimeout(() => {
+				connection.destroy();
+			}, 5000);
+		});
+		this.pool.on('acquire', function (connection) {
+			clearTimeout(connection.inactiveTimeout);
+		});
+
 		return this;
 	}
 	async query(...args: any[]) {
-		if (!this.connected) {
-			await this.connect();
-		}
-		const result = await this.conn.query(...args).catch(err => {
-			console.log(`err.code:`, err.code);
-			return Promise.reject(err);
-		});
+		const result = await this.pool.query(...args);
 		return result[0].map(row => {
 			Object.keys(row).forEach(prop => {
-				if (row[prop]) {
+				if (row[prop] instanceof Buffer) {
 					row[prop] = row[prop].toString();
 				}
 			});
@@ -38,35 +46,22 @@ abstract class db {
 		});
 	}
 	async run(...args: any[]) {
-		if (!this.connected) {
-			await this.connect();
-		}
 		// convert `undefined`s in bind parameters to null
 		if (args[1] instanceof Array) {
 			args[1] = args[1].map(item => item === undefined ? null : item);
 		}
-		const result = await this.conn.execute(...args);
-		return result;
-	}
-	// Always call end() when no more database operations are immediately required
-	async end() {
-		await this.conn.end();
-		this.connected = false;
+		return await this.pool.execute(...args);
 	}
 }
 
 class enwikidb extends db {
 	replagHours: number
-	constructor() {
+	constructor(customOptions = {}) {
 		super();
 		this.config = {
 			host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
-			port: 3306,
-			user: auth.db_user,
-			password: auth.db_password,
 			database: 'enwiki_p',
-			//timezone: 'Z',
-			//stringifyObjects: true
+			...customOptions
 		};
 	}
 
@@ -87,15 +82,14 @@ class enwikidb extends db {
 }
 
 class toolsdb extends db {
-	constructor(dbname) {
+	constructor(dbname, customOptions = {}) {
 		super();
 		this.config = {
 			host: 'tools.db.svc.eqiad.wmflabs',
-			port: 3306,
-			user: auth.db_user,
-			password: auth.db_password,
-			database: 's54328__' + dbname
-		}
+			database: 's54328__' + dbname,
+			...customOptions
+		};
 	}
 }
+
 export {mysql, db, enwikidb, toolsdb};

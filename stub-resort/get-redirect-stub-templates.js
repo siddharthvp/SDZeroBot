@@ -1,7 +1,7 @@
 const {enwikidb, utils} = require('../botbase');
 
 (async () => {
-	let db = await new enwikidb().connect();
+	let db = new enwikidb().init();
 	const result = await db.query(`
 		SELECT page_title, rd_title FROM redirect
 		INNER JOIN page
@@ -10,11 +10,11 @@ const {enwikidb, utils} = require('../botbase');
 		AND page_title like "%-stub"
 	`);
 	await db.end();
-	
+
 	let map = {};
 	result.forEach(row => {
 		map[row.page_title] = row.rd_title;
 	});
-	
+
 	utils.saveObject('redirect-stub-templates', map);
 })();

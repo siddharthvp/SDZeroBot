@@ -7,7 +7,7 @@ const {saveWithBlacklistHandling} = require('../tasks/commons');
 
 	await bot.getTokensAndSiteInfo();
 
-	const db = await new toolsdb('g13watch_p').connect();
+	const db = new toolsdb('g13watch_p').init();
 	log('[S] Connected to the g13 database.');
 
 	let table = new mwn.table();

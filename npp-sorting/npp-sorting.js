@@ -19,7 +19,7 @@ process.chdir(__dirname);
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
-		sql = await new enwikidb().connect();
+		sql = new enwikidb().init();
 		await sql.getReplagHours();
 		const result = await sql.query(`
 			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
