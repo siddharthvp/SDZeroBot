@@ -40,7 +40,7 @@ class Notifier {
 			}
 			log(`[i] Finished`);
 		} catch(e) {
-			emailOnError(e, 'notifier');
+			emailOnError(e, 'afd-notifier (non-fatal)');
 		} finally {
 			await notifier.notifyUsers();
 			let wikitext = `~~~~~\n\n${notifier.table.getText()}`;
@@ -102,6 +102,9 @@ class Notifier {
 		log(`[S] Got list of ${Object.keys(this.afds).length} AfDs`);
 
 		(await bot.read(Object.keys(this.afds))).map(pg => {
+			if (pg.missing) {
+				return;
+			}
 			this.afds[pg.title] = pg.revisions[0].content;
 		});
 
@@ -191,8 +194,10 @@ class Notifier {
 		} catch(err) {
 			if (/does not exist/.test(err.message)) {
 				log(`[W] ${article} does not exist`);
-				return [];
+			} else {
+				emailOnError(err, 'afd-notifier (non-fatal)');
 			}
+			return [];
 		}
 	}
 

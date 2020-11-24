@@ -26,7 +26,7 @@ class Notifier {
             botbase_1.log(`[i] Finished`);
         }
         catch (e) {
-            botbase_1.emailOnError(e, 'notifier');
+            botbase_1.emailOnError(e, 'afd-notifier (non-fatal)');
         }
         finally {
             await notifier.notifyUsers();
@@ -82,6 +82,9 @@ class Notifier {
         }
         botbase_1.log(`[S] Got list of ${Object.keys(this.afds).length} AfDs`);
         (await botbase_1.bot.read(Object.keys(this.afds))).map(pg => {
+            if (pg.missing) {
+                return;
+            }
             this.afds[pg.title] = pg.revisions[0].content;
         });
         botbase_1.log(`[S] Got content of AfDs`);
@@ -162,8 +165,11 @@ class Notifier {
         catch (err) {
             if (/does not exist/.test(err.message)) {
                 botbase_1.log(`[W] ${article} does not exist`);
-                return [];
             }
+            else {
+                botbase_1.emailOnError(err, 'afd-notifier (non-fatal)');
+            }
+            return [];
         }
     }
     /**
