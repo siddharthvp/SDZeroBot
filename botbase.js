@@ -1,17 +1,19 @@
 "use strict";
 /** Base file to reduce the amount of boilerplate code in each file */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TextExtractor = exports.utils = exports.log = exports.emailOnError = exports.xdate = exports.argv = exports.assert = exports.path = exports.fs = exports.toolsdb = exports.enwikidb = exports.db = exports.mysql = exports.mwn = exports.bot = void 0;
+exports.utils = exports.toolsdb = exports.enwikidb = exports.db = exports.mysql = exports.TextExtractor = exports.log = exports.bot = exports.mwn = exports.xdate = exports.argv = exports.emailOnError = exports.child_process = exports.assert = exports.path = exports.fs = void 0;
 const fs = require("fs");
 exports.fs = fs;
 const path = require("path");
 exports.path = path;
 const assert = require("assert");
 exports.assert = assert;
+const child_process = require("child_process");
+exports.child_process = child_process;
 let log;
 exports.log = log;
 /** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
-const emailOnError = function (err, taskname) {
+exports.emailOnError = function (err, taskname) {
     if (typeof log !== 'undefined') { // Check if mwn has loaded
         log('[E] Fatal error');
     }
@@ -19,17 +21,16 @@ const emailOnError = function (err, taskname) {
         console.log(`[${new Date().toISOString()}] [E] Fatal error`);
     }
     console.log(err);
-    require('child_process').exec(`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`, () => { } // Emailing failed, must be a non-toolforge environ
+    child_process.exec(`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`, () => { } // Emailing failed, must be a non-toolforge environ
     );
     // exit normally
 };
-exports.emailOnError = emailOnError;
 // Errors occurring inside async functions are caught by emailOnError(),
 // this is only for anything else, such as failing imports
 process.on('uncaughtException', function (err) {
     if (process.argv[1]) {
         var taskname = path.basename(process.argv[1]);
-        emailOnError(err, taskname);
+        exports.emailOnError(err, taskname);
     }
     else { // else we're probably running in the console
         console.log(err);
@@ -40,12 +41,10 @@ Object.defineProperty(exports, "mwn", { enumerable: true, get: function () { ret
 /** Colorised and dated console logging. Powered by Semlog, a dependency of mwn */
 exports.log = log = mwn_1.mwn.log;
 /** Parsed console arguments */
-const argv = require('minimist')(process.argv.slice(2));
-exports.argv = argv;
+exports.argv = require('minimist')(process.argv.slice(2));
 /** Date library, deprecated (now available in mwn) */
-const xdate = require('./xdate');
-exports.xdate = xdate;
-/** bot account and databse access credentials */
+exports.xdate = require('./xdate');
+/** bot account and database access credentials */
 const auth = require('./.auth');
 const bot = new mwn_1.mwn({
     apiUrl: 'https://en.wikipedia.org/w/api.php',
@@ -60,110 +59,18 @@ const bot = new mwn_1.mwn({
     defaultParams: {
         assert: 'bot'
     },
+    maxRetries: 7,
     userAgent: 'w:en:User:SDZeroBot'
 });
 exports.bot = bot;
 bot.initOAuth();
-const mysql = require("mysql2/promise");
-exports.mysql = mysql;
-class db {
-    constructor() {
-        this.connected = false;
-    }
-    async connect(isRetry = false) {
-        try {
-            this.conn = await mysql.createConnection(this.config);
-        }
-        catch (e) {
-            if (!isRetry) { // retry, but only once
-                log(`[W] ${e.code}, retrying in 5 seconds...`);
-                await bot.sleep(5000);
-                return this.connect(true);
-            }
-            else
-                throw e;
-        }
-        this.connected = true;
-        return this;
-    }
-    async query(...args) {
-        if (!this.connected) {
-            await this.connect();
-        }
-        const result = await this.conn.query(...args).catch(err => {
-            console.log(`err.code:`, err.code);
-            return Promise.reject(err);
-        });
-        return result[0].map(row => {
-            Object.keys(row).forEach(prop => {
-                if (row[prop]) {
-                    row[prop] = row[prop].toString();
-                }
-            });
-            return row;
-        });
-    }
-    async run(...args) {
-        if (!this.connected) {
-            await this.connect();
-        }
-        // convert `undefined`s in bind parameters to null
-        if (args[1] instanceof Array) {
-            args[1] = args[1].map(item => item === undefined ? null : item);
-        }
-        const result = await this.conn.execute(...args);
-        return result;
-    }
-    // Always call end() when no more database operations are immediately required
-    async end() {
-        await this.conn.end();
-        this.connected = false;
-    }
-}
-exports.db = db;
-class enwikidb extends db {
-    constructor() {
-        super();
-        this.config = {
-            host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
-            port: 3306,
-            user: auth.db_user,
-            password: auth.db_password,
-            database: 'enwiki_p',
-        };
-    }
-    async getReplagHours() {
-        const lastrev = await this.query(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
-        const lastrevtime = new bot.date(lastrev[0].ts);
-        this.replagHours = Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60);
-        return this.replagHours;
-    }
-    /**
-     * Return replag hatnote wikitext. Remember getReplagHours() must have been called before.
-     * @param {number} threshold - generate message only if replag hours is greater than this
-     * @returns {string}
-     */
-    makeReplagMessage(threshold) {
-        return this.replagHours > threshold ? `{{hatnote|Replica database lag is high. Changes newer than ${this.replagHours} hours may not be reflected.}}\n` : '';
-    }
-}
-exports.enwikidb = enwikidb;
-class toolsdb extends db {
-    constructor(dbname) {
-        super();
-        this.config = {
-            host: 'tools.db.svc.eqiad.wmflabs',
-            port: 3306,
-            user: auth.db_user,
-            password: auth.db_password,
-            database: 's54328__' + dbname
-        };
-    }
-}
-exports.toolsdb = toolsdb;
-const TextExtractor = require('./TextExtractor')(bot);
-exports.TextExtractor = TextExtractor;
-const utils = {
+exports.TextExtractor = require('./TextExtractor')(bot);
+var db_1 = require("./db");
+Object.defineProperty(exports, "mysql", { enumerable: true, get: function () { return db_1.mysql; } });
+Object.defineProperty(exports, "db", { enumerable: true, get: function () { return db_1.db; } });
+Object.defineProperty(exports, "enwikidb", { enumerable: true, get: function () { return db_1.enwikidb; } });
+Object.defineProperty(exports, "toolsdb", { enumerable: true, get: function () { return db_1.toolsdb; } });
+exports.utils = {
     saveObject: function (filename, obj) {
         fs.writeFileSync('./' + filename + '.json', JSON.stringify(obj, null, 2));
     },
@@ -192,4 +99,3 @@ const utils = {
         return result;
     }
 };
-exports.utils = utils;
