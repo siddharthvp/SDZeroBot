@@ -11,7 +11,7 @@ function logError(err) {
 function logWarning(evt) {
     try {
         const stringified = JSON.stringify(evt, null, 2);
-        botbase_1.fs.appendFileSync('./warnlog.txt', `\n[${new botbase_1.bot.date().format('YYYY-MM-DD HH:mm:ss')}: ${stringified}`);
+        botbase_1.fs.appendFileSync('./warnlog.txt', `\n[${new botbase_1.bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${stringified}`);
     }
     catch (e) { // JSON.stringify fails on circular object
         logError(e);
@@ -114,4 +114,3 @@ async function go() {
     });
 }
 go();
-//# sourceMappingURL=save-to-db.js.map

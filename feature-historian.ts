@@ -51,8 +51,8 @@ for await (let pg of reader) {
 	let faXActionParams = template.parameters.filter(p => /^fa[cr]/i.test(p.value.trim()));
 	let nums = faXActionParams.map(p => {
 		let numMatch = String(p.name).match(/\d+$/);
-		return numMatch && numMatch[0];
-	}).filter(e => e).sort();
+		return numMatch && parseInt(numMatch[0]);
+	}).filter(e => e).sort((a, b) => a < b ? -1 : 1);
 
 	if (nums.length === 0) {
 		noFaXParams.push(pg.title.slice('Talk:'.length));

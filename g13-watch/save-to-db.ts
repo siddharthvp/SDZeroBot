@@ -12,7 +12,7 @@ function logError(err) {
 function logWarning(evt) {
 	try{
 		const stringified = JSON.stringify(evt, null, 2);
-		fs.appendFileSync('./warnlog.txt', `\n[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}: ${stringified}`);
+		fs.appendFileSync('./warnlog.txt', `\n[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${stringified}`);
 	} catch(e) { // JSON.stringify fails on circular object
 		logError(e);
 	}

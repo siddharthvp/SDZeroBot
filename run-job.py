@@ -10,7 +10,7 @@ except IndexError:
 	sys.exit(1)
 
 with open('/data/project/sdzerobot/SDZeroBot/crontab', 'r') as crontab:
-	lines = crontab.read().splitlines() 
+	lines = crontab.read().splitlines()
 	lines = [line for line in lines if not line.startswith('#') and line.strip() is not '']
 	for line in lines:
 		job = line.split()[8].lower()
