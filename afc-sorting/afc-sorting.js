@@ -13,7 +13,7 @@ process.chdir(__dirname);
 		revidsTitles = require('./revidsTitles');
 		tableInfo = require('./tableInfo');
 	} else {
-		sql = await new enwikidb().connect();
+		sql = new enwikidb().init();
 		await sql.getReplagHours();
 		const result = await sql.query(`
 			SELECT page_title, page_latest, cl_sortkey_prefix, page_len, actor_name, rev_timestamp, user_editcount
@@ -42,7 +42,7 @@ process.chdir(__dirname);
 				creation_date: formatDateString(row.rev_timestamp),
 				bytecount: row.page_len,
 				creator: row.actor_name,
-				creatorEdits: row.user_editcount || ''			
+				creatorEdits: row.user_editcount || ''
 			};
 		});
 		utils.saveObject('revidsTitles', revidsTitles);
@@ -78,7 +78,7 @@ process.chdir(__dirname);
 
 	await bot.getTokensAndSiteInfo();
 
-	var UserSQLReport = await new bot.page('User:SQL/AFC-Ores').text().catch(console.log); 
+	var UserSQLReport = await new bot.page('User:SQL/AFC-Ores').text().catch(console.log);
 	fs.writeFileSync('./UserSQLReport.txt', UserSQLReport, console.log);
 
 	var entriesFound = 0;
@@ -129,7 +129,7 @@ process.chdir(__dirname);
 	});
 
 	log(`[i] Found ${Object.keys(undisclosedpaid).length} drafts with undisclosed-paid tag`);
-	
+
 
 
 	/* GET DATA FOR NUMBER OF DECLINES */

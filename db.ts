@@ -34,6 +34,7 @@ abstract class db {
 
 		return this;
 	}
+
 	async query(...args: any[]) {
 		const result = await this.pool.query(...args);
 		return result[0].map(row => {
@@ -45,12 +46,18 @@ abstract class db {
 			return row;
 		});
 	}
+
 	async run(...args: any[]) {
 		// convert `undefined`s in bind parameters to null
 		if (args[1] instanceof Array) {
 			args[1] = args[1].map(item => item === undefined ? null : item);
 		}
 		return await this.pool.execute(...args);
+	}
+
+	// To be called when use of db is over
+	async end() {
+		await this.pool.end();
 	}
 }
 

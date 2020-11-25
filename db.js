@@ -49,6 +49,10 @@ class db {
         }
         return await this.pool.execute(...args);
     }
+    // To be called when use of db is over
+    async end() {
+        await this.pool.end();
+    }
 }
 exports.db = db;
 class enwikidb extends db {
