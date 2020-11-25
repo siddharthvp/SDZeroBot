@@ -1,20 +1,20 @@
 /**
- * @param {mwn} bot 
+ * @param {mwn} bot
  */
 module.exports = function(bot) {
 
 	class TextExtractor {
 
 		/**
-		 * Get wikitext extract. If you want plain text or HTML extracts, consider using 
+		 * Get wikitext extract. If you want plain text or HTML extracts, consider using
 		 * the TextExtracts API instead.
 		 * @param {string} pagetext - full page text
 		 * @param {number} [charLimit] - cut off the extract at this many readable characters, or wherever
 		 * the sentence ends after this limit
 		 * @param {number} [hardUpperLimit] - cut off the extract at this many readable characters even if
 		 * the sentence hasn't ended
-		 * @param {Function} [preprocessHook] - optional function to work on the text at the 
-		 * beginnning
+		 * @param {Function} [preprocessHook] - optional function to work on the text at the
+		 * beginning
 		 */
 		static getExtract(pagetext, charLimit, hardUpperLimit, preprocessHook) {
 
@@ -29,16 +29,16 @@ module.exports = function(bot) {
 
 			// Remove images. Can't be done correctly with just regex as there could be wikilinks
 			// in the captions.
-			extract = TextExtractor.removeImages(pagetext);
+			extract = this.removeImages(extract);
 
 			// Remove templates beginning on a new line, such as infoboxes.
-			// These ocassionally contain parameters with part of the content
+			// These occasionally contain parameters with part of the content
 			// beginning on a newline not starting with a | or * or # or !
 			// thus can't be handled with the line regex.
-			extract = TextExtractor.removeTemplatesOnNewlines(extract);
+			extract = this.removeTemplatesOnNewlines(extract);
 
 			// Remove some other templates too
-			extract = TextExtractor.removeTemplates(extract, ['efn', 'refn']);
+			extract = this.removeTemplates(extract, ['efn', 'refn']);
 
 			extract = extract
 				.replace(/<!--.*?-->/sg, '')
@@ -67,7 +67,7 @@ module.exports = function(bot) {
 				if (extract.length > charLimit) {
 					var match = sentenceEnd.exec(extract);
 					while (match) {
-						if (TextExtractor.effCharCount(extract.slice(0, match.index)) > charLimit) {
+						if (this.effCharCount(extract.slice(0, match.index)) > charLimit) {
 							extract = extract.slice(0, match.index + 1);
 							break;
 						} else {
@@ -78,7 +78,7 @@ module.exports = function(bot) {
 			}
 
 			if (hardUpperLimit) {
-				if (TextExtractor.effCharCount(extract) > hardUpperLimit) {
+				if (this.effCharCount(extract) > hardUpperLimit) {
 					extract = extract.slice(0, hardUpperLimit) + ' ...';
 				}
 			}
@@ -111,12 +111,12 @@ module.exports = function(bot) {
 		}
 
 		/**
-		 * @param {string} text 
-		 * @param {string[]} templates 
+		 * @param {string} text
+		 * @param {string[]} templates
 		 */
 		static removeTemplates(text, templates) {
 			var wkt = new bot.wikitext(text);
-			// TODO: Things to think about: how to generate ONE regex that matches all the given 
+			// TODO: Things to think about: how to generate ONE regex that matches all the given
 			// templates and which is as efficient as possible? That is, for 'efn' and 'refn'
 			// the regex generated should be /[rR]?[eE]?fn/ (as efn is a substring of refn)
 			// Can this be solved using the longest common subsequence problem?
@@ -147,7 +147,7 @@ module.exports = function(bot) {
 
 		/**
 		 * Do away with some of the more bizarre stuff from page extracts that aren't worth
-		 * checking for on a per-page basis 
+		 * checking for on a per-page basis
 		 * Minimise the amount of removals done here, since if the extract was cut off, it may
 		 * happen one of the regexes below will match across two different extracts.
 		 * @param {string} content
