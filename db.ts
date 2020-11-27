@@ -23,7 +23,7 @@ abstract class db {
 		// Destroy connections on 5 seconds of inactivity. This avoids holding
 		// idle connections and at the same time avoids the performance issue in
 		// creating new connections for every query in a sequential set
-		this.pool.on('release',  (connection) => {
+		this.pool.on('release', (connection) => {
 			connection.inactiveTimeout = setTimeout(() => {
 				connection.destroy();
 			}, 5000);
@@ -35,8 +35,21 @@ abstract class db {
 		return this;
 	}
 
+	async getConnection() {
+		try {
+			return await this.pool.getConnection();
+		} catch (e) { // try again
+			log(`[W] ${e.code}: retrying in 5 seconds...`);
+			await bot.sleep(5000);
+			return await this.pool.getConnection();
+		}
+	}
+
 	async query(...args: any[]) {
-		const result = await this.pool.query(...args);
+		let conn = await this.getConnection();
+		const result = await conn.query(...args).finally(() => {
+			conn.release();
+		});
 		return result[0].map(row => {
 			Object.keys(row).forEach(prop => {
 				if (row[prop] instanceof Buffer) {
@@ -52,7 +65,10 @@ abstract class db {
 		if (args[1] instanceof Array) {
 			args[1] = args[1].map(item => item === undefined ? null : item);
 		}
-		return await this.pool.execute(...args);
+		let conn = await this.getConnection();
+		return await conn.execute(...args).finally(() => {
+			conn.release();
+		});
 	}
 
 	// To be called when use of db is over
