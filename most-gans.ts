@@ -67,7 +67,7 @@ import {bot, log, mwn, toolsdb} from './botbase';
 		return a[1] < b[1] ? 1 : -1;
 	}).slice(0, 500).forEach((r, idx) => {
 		wikitable.addRow([
-			String(idx),
+			String(idx + 1),
 			`[[User:${r[0]}|${r[0]}]]`,
 			String(r[1])
 		]);
