@@ -31,8 +31,21 @@ class db {
         });
         return this;
     }
+    async getConnection() {
+        try {
+            return await this.pool.getConnection();
+        }
+        catch (e) { // try again
+            botbase_1.log(`[W] ${e.code}: retrying in 5 seconds...`);
+            await botbase_1.bot.sleep(5000);
+            return await this.pool.getConnection();
+        }
+    }
     async query(...args) {
-        const result = await this.pool.query(...args);
+        let conn = await this.getConnection();
+        const result = await conn.query(...args).finally(() => {
+            conn.release();
+        });
         return result[0].map(row => {
             Object.keys(row).forEach(prop => {
                 if (row[prop] instanceof Buffer) {
@@ -47,7 +60,10 @@ class db {
         if (args[1] instanceof Array) {
             args[1] = args[1].map(item => item === undefined ? null : item);
         }
-        return await this.pool.execute(...args);
+        let conn = await this.getConnection();
+        return await conn.execute(...args).finally(() => {
+            conn.release();
+        });
     }
     // To be called when use of db is over
     async end() {
@@ -91,3 +107,4 @@ class toolsdb extends db {
     }
 }
 exports.toolsdb = toolsdb;
+//# sourceMappingURL=db.js.map
