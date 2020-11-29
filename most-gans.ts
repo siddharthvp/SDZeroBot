@@ -21,7 +21,9 @@ import {bot, log, mwn, toolsdb} from './botbase';
 	let table: {[user: string]: number} = {};
 	let authorNotFound = [];
 	let db = new toolsdb('goodarticles_p').init();
-	await db.run(`CREATE TABLE IF NOT EXISTS nominators( article VARCHAR(255), nominator VARCHAR(255) )`);
+	await db.run(`CREATE TABLE IF NOT EXISTS nominators( 
+    	article VARCHAR(255), nominator VARCHAR(255), PRIMARY KEY (article)
+    )`);
 	await bot.batchOperation(articles, async (article) => {
 		let talkpage = new bot.page(new bot.page(article).getTalkPage());
 		let talkpageedits = talkpage.historyGen(
