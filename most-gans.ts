@@ -1,8 +1,9 @@
-import {bot, log, mwn} from './botbase';
+import {bot, log, mwn, toolsdb} from './botbase';
 
 (async function () {
 	await bot.getTokensAndSiteInfo();
 	bot.options.suppressAPIWarnings = true;
+	bot.options.defaultParams.maxlag = 999;
 
 	let articles = (await bot.continuedQuery({
 		"action": "query",
@@ -16,9 +17,11 @@ import {bot, log, mwn} from './botbase';
 		}, []);
 	}));
 
-	const GANregex = /\{\{GA ?(candidate|n(om(inee)?)?)(\|.*?)?\}\}/i;
+	const GANregex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
 	let table: {[user: string]: number} = {};
 	let authorNotFound = [];
+	let db = new toolsdb('goodarticles_p').init();
+	await db.run(`CREATE TABLE IF NOT EXISTS nominators( article VARCHAR(255), nominator VARCHAR(255) )`);
 	await bot.batchOperation(articles, async (article) => {
 		let talkpage = new bot.page(new bot.page(article).getTalkPage());
 		let talkpageedits = talkpage.historyGen(
@@ -44,6 +47,7 @@ import {bot, log, mwn} from './botbase';
 			return Promise.reject();
 		} else {
 			log(`[S] ${article}: found ${GA_user}`);
+			db.run(`REPLACE INTO nominators VALUES(?, ?)`, [article, GA_user]);
 			if (table[GA_user]) table[GA_user]++;
 			else table[GA_user] = 1;
 			return Promise.resolve();
@@ -51,15 +55,20 @@ import {bot, log, mwn} from './botbase';
 	}, 40, 0);
 
 	await bot.sleep(600000);
+	db.end();
 	await bot.getTokensAndSiteInfo();
 
 	let wikitable = new mwn.table();
-	wikitable.addHeaders(['User', 'Count']);
+	wikitable.addHeaders(['Rank', 'User', 'Count']);
 
 	Object.entries(table).sort((a, b) => {
 		return a[1] < b[1] ? 1 : -1;
-	}).slice(0, 500).forEach(r => {
-		wikitable.addRow([ `[[User:${r[0]}|${r[0]}]]`, String(r[1]) ]);
+	}).slice(0, 500).forEach((r, idx) => {
+		wikitable.addRow([
+			String(idx),
+			`[[User:${r[0]}|${r[0]}]]`,
+			String(r[1])
+		]);
 	});
 
 	await bot.save('User:SDZeroBot/Wikipedians by most GANs',
