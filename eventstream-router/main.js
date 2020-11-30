@@ -142,7 +142,7 @@ async function main() {
 		if (evt.status === 429) { // Too Many Requests, the underlying library doesn't reconnect by itself
 			stream.close(); // just to be safe that there aren't two parallel connections
 			bot.sleep(5000).then(() => {
-				return go(); // restart
+				return start(); // restart
 			});
 		}
 	}
@@ -165,11 +165,11 @@ async function main() {
 	}
 }
 
-async function go() {
+async function start() {
 	await main().catch(err => {
 		logError(err);
-		go();
+		start();
 	});
 }
 
-go();
+start();

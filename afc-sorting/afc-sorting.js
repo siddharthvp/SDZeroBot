@@ -97,8 +97,7 @@ process.chdir(__dirname);
 	for await (let data of bot.massQueryGen({
 		"action": "query",
 		"prop": "description",
-		"titles": Object.keys(tableInfo),
-		"rvprop": "content"
+		"titles": Object.keys(tableInfo)
 	})) {
 
 		data.query.pages.forEach(pg => {
