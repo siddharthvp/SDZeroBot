@@ -10,7 +10,7 @@ function logError(err, task) {
 		log(`${taskFmt} ${stringified}`);
 	} else {
 		log(`${taskFmt}`);
-		log(err);
+		console.log(err);
 	}
 }
 // JSON.stringify throws on a cyclic object
@@ -134,7 +134,6 @@ async function main() {
 			return; // EventSource automatically reconnects. No unnecessary logging.
 		}
 		log(`[W] Event source encountered error:`);
-		console.log(evt);
 		logError(evt);
 
 		// TODO: handle other errors, ensure auto-reconnection
