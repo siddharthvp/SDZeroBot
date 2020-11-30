@@ -22,7 +22,7 @@ exports.init = init;
 function filter(data) {
     return data.wiki === 'enwiki' &&
         data.type === 'categorize' &&
-        data.title === 'Category:Good_articles';
+        data.title === 'Category:Good articles';
 }
 exports.filter = filter;
 async function worker(data) {
@@ -41,7 +41,7 @@ async function worker(data) {
 }
 exports.worker = worker;
 async function processAddition(article) {
-    const GANregex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
+    const GANregex = /\{\{(GA ?(c(andidate)?|n(om(inee)?)?)|Good article nominee)\s*(\||\}\})/i;
     let talkpage = new botbase_1.bot.page(new botbase_1.bot.page(article).getTalkPage());
     let talkpageedits = talkpage.historyGen(['content', 'user', 'timestamp'], 100, { rvsection: '0', rvlimit: 100 } // one-pass
     );

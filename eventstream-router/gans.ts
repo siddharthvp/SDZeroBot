@@ -23,7 +23,7 @@ export async function init() {
 export function filter(data) {
 	return data.wiki === 'enwiki' &&
 		data.type === 'categorize' &&
-		data.title === 'Category:Good_articles';
+		data.title === 'Category:Good articles';
 }
 
 export async function worker(data) {
@@ -40,7 +40,7 @@ export async function worker(data) {
 }
 
 async function processAddition(article) {
-	const GANregex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
+	const GANregex = /\{\{(GA ?(c(andidate)?|n(om(inee)?)?)|Good article nominee)\s*(\||\}\})/i;
 	let talkpage = new bot.page(new bot.page(article).getTalkPage());
 	let talkpageedits = talkpage.historyGen(
 		['content', 'user', 'timestamp'],
