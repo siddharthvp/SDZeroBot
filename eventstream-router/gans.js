@@ -59,16 +59,17 @@ async function processAddition(article) {
         }
     }
     if (!GA_user) {
-        log(`[E] "${article}": nominator not found`);
+        log(`[E] New GA [[${article}]]: nominator not found`);
         // whine
     }
     else {
-        log(`[S] "${article}": found "${GA_user}"`);
+        log(`[S] Adding [[${article}]]: nominator "${GA_user}"`);
         db.run(`REPLACE INTO nominators VALUES(?, ?)`, [article, GA_user]);
         return Promise.resolve();
     }
 }
 async function processRemoval(article) {
+    log(`[S] Removing [[${article}]] from database`);
     db.run(`DELETE FROM nominators WHERE article = ?`, [article]);
 }
 //# sourceMappingURL=gans.js.map
