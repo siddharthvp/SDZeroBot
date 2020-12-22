@@ -156,6 +156,8 @@ module.exports = function(bot) {
 			return content.replace(/\[\[Category:.*?\]\]/gi, '')
 				// these are just bad
 				.replace(/__[A-Z]+__/g, '')
+				// Openings of any unclosed ref tags
+				.replace(/<ref[^<]*?(>|(?=\n))/gi, '')
 				// Harvard referencing
 				.replace(/\{\{[sS]fnp?\|.*?\}\}/g, '')
 				// shortcut for named ref invocation
