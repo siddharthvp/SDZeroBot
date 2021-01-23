@@ -86,7 +86,7 @@ let table = new mwn.table({
 });
 table.addHeaders([
 	{label: 'Draft', style: 'width: 15em'},
-	{label: 'Excerpt', style: 'width: 17em' },
+	{label: 'Excerpt'},
 	{label: '# declines', style: 'width: 5em'},
 	{label: 'Size', style: 'width: 3em'},
 	{label: 'Notes', style: 'width: 5em'},
