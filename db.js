@@ -107,4 +107,3 @@ class toolsdb extends db {
     }
 }
 exports.toolsdb = toolsdb;
-//# sourceMappingURL=db.js.map

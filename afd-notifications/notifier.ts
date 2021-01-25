@@ -212,7 +212,7 @@ class Notifier {
 		try {
 			json = await bot.rawRequest({
 				url: `https://api.wikiwho.net/en/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(title)}/?editor=true`
-			});
+			}).then(response => response.data);
 		} catch(err) {
 			throw new Error(err?.response?.data?.Error);
 		}

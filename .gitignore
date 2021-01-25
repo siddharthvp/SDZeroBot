@@ -1,13 +1,13 @@
 *.json
 *.txt
 *.db
+*.out
+*.js.map
 !tsconfig.json
 !package.json
 !package-lock.json
 node_modules/
 .auth.js
 */core
+.idea/*
 
-# JetBrains
-*.iml
-vcs.xml
