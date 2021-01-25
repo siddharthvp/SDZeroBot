@@ -9,9 +9,9 @@ async function populateWikidataShortdescs(tableInfo) {
 	/* GET WIKIDATA SHORTDESCS */
 	const wdbot = new mwn({
 		...bot.options,
-		apiUrl: 'https://www.wikidata.org/w/api.php',
-		hasApiHighLimit: false
+		apiUrl: 'https://www.wikidata.org/w/api.php'
 	});
+	wdbot.options.defaultParams.maxlag = 1000; // disable maxlag, we are not doing any write operations
 	delete wdbot.options.defaultParams.assert;
 	for await (let json of wdbot.massQueryGen({
 		"action": "wbgetentities",
