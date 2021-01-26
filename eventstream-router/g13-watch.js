@@ -7,7 +7,7 @@ const { preprocessDraftForExtract } = require('../tasks/commons');
 const TextExtractor = require('../TextExtractor')(botbase_1.bot);
 let log, db;
 async function init() {
-    log = utils_1.streamLog.bind(botbase_1.fs.createWriteStream('./g13-watch.out', { flags: 'a', encoding: 'utf8' }));
+    log = utils_1.createLogStream('./g13-watch.out');
     log(`[S] Started`);
     await botbase_1.bot.getSiteInfo();
     db = new botbase_1.toolsdb('g13watch_p').init();

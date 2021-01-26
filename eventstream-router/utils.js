@@ -1,23 +1,27 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.streamLog = void 0;
+exports.stringifyObject = exports.createLogStream = void 0;
 const botbase_1 = require("../botbase");
-// Should be bound to a writable stream with options { flags: 'a', encoding: 'utf8' }
-// before use
-function streamLog(msg) {
-    let ts = new botbase_1.bot.date().format('YYYY-MM-DD HH:mm:ss');
-    let stringified;
-    if (typeof msg === 'string') {
-        this.write(`[${ts}] ${msg}\n`);
-    }
-    else if (stringified = stringifyObject(msg)) {
-        this.write(`[${ts}] ${stringified}\n`);
-    }
-    else {
-        this.write(`[${ts}] [Non-stringifiable object!]\n`);
-    }
+function createLogStream(file) {
+    let stream = botbase_1.fs.createWriteStream(file, {
+        flags: 'a',
+        encoding: 'utf8'
+    });
+    return function (msg) {
+        let ts = new botbase_1.bot.date().format('YYYY-MM-DD HH:mm:ss');
+        let stringified;
+        if (typeof msg === 'string') {
+            stream.write(`[${ts}] ${msg}\n`);
+        }
+        else if (stringified = stringifyObject(msg)) {
+            stream.write(`[${ts}] ${stringified}\n`);
+        }
+        else {
+            stream.write(`[${ts}] [Non-stringifiable object!]\n`);
+        }
+    };
 }
-exports.streamLog = streamLog;
+exports.createLogStream = createLogStream;
 // JSON.stringify throws on a cyclic object
 function stringifyObject(obj) {
     try {
@@ -27,4 +31,5 @@ function stringifyObject(obj) {
         return null;
     }
 }
+exports.stringifyObject = stringifyObject;
 //# sourceMappingURL=utils.js.map

@@ -1,10 +1,11 @@
-import {fs, bot, toolsdb} from '../botbase';
-import {streamLog} from './utils';
+import {bot, toolsdb} from '../botbase';
+import {createLogStream} from './utils';
+import type {eventData} from './main';
 
 let log, db;
 
 export async function init() {
-	log = streamLog.bind(fs.createWriteStream('./gans.out', {flags: 'a', encoding: 'utf8'}));
+	log = createLogStream('./gans.out');
 
 	log(`[S] Started`);
 	await bot.getSiteInfo();
@@ -26,7 +27,7 @@ export function filter(data) {
 		data.title === 'Category:Good articles';
 }
 
-export async function worker(data) {
+export async function worker(data: eventData) {
 	let match = /^\[\[:(.*?)\]\] (added|removed)/.exec(data.comment);
 	let article = match[1];
 	if (match[2] === 'added') {

@@ -1,12 +1,13 @@
-import {fs, bot, toolsdb} from '../botbase';
-import {streamLog} from './utils';
+import {bot, toolsdb} from '../botbase';
+import {createLogStream} from './utils';
+import type {eventData} from './main';
 const {preprocessDraftForExtract} = require('../tasks/commons');
 const TextExtractor = require('../TextExtractor')(bot);
 
 let log, db;
 
 export async function init() {
-	log = streamLog.bind(fs.createWriteStream('./g13-watch.out', {flags: 'a', encoding: 'utf8'}));
+	log = createLogStream('./g13-watch.out');
 
 	log(`[S] Started`);
 	await bot.getSiteInfo();
@@ -30,7 +31,7 @@ export function filter(data) {
 		data.title === 'Category:Candidates for speedy deletion as abandoned drafts or AfC submissions';
 }
 
-export async function worker(data) {
+export async function worker(data: eventData) {
 	let match = /^\[\[:(.*?)\]\] added/.exec(data.comment);
 	if (!match) {
 		return;

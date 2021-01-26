@@ -5,7 +5,7 @@ const botbase_1 = require("../botbase");
 const utils_1 = require("./utils");
 let log, db;
 async function init() {
-    log = utils_1.streamLog.bind(botbase_1.fs.createWriteStream('./gans.out', { flags: 'a', encoding: 'utf8' }));
+    log = utils_1.createLogStream('./gans.out');
     log(`[S] Started`);
     await botbase_1.bot.getSiteInfo();
     db = new botbase_1.toolsdb('goodarticles_p').init();
