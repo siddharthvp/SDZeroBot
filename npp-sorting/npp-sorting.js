@@ -264,11 +264,11 @@ ${replagMessage}
 {| class="wikitable sortable"
 |-
 ! scope="col" style="width: 5em;" | Created
-! scope="col" style="width: 18em;" | Article
-! scope="col" style="max-width: 28em;" | Extract
+! scope="col" style="width: 15em;" | Article
+! Extract
 ! scope="col" style="width: 3em;" | Class
-! scope="col" style="max-width: 14em;" | Creator (# edits)
-! Notes
+! scope="col" style="width: 10em;" | Creator (# edits)
+! scope="col" style="width: 4em;" | Notes
 `;
 
 		sorter[topic].forEach(function(page) {
