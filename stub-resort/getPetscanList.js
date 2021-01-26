@@ -10,6 +10,6 @@ module.exports = function(url) {
 		url: url,
 		responseType: 'json'
 	}).then(res => {
-		return res['*'][0].a['*'];
+		return res.data['*'][0].a['*'];
 	});
 };

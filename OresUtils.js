@@ -37,7 +37,8 @@ module.exports = {
 					revids: set.join('|')
 				},
 				responseType: 'json'
-			}).then(function(json) {
+			}).then(function(response) {
+				let json = response.data;
 				log(`[+][${i+1}/${sets.length}] Ores API call ${i+1} succeeded.`);
 				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
 					oresdata[revid] = {};
