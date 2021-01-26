@@ -59,7 +59,7 @@ const {saveWithBlacklistHandling} = require('../tasks/commons');
 	let text = `{{/header|count=${result.length}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>`
 		+ `\n\n${wikitable}`;
 
-	await saveWithBlacklistHandling(page, text);
+	await saveWithBlacklistHandling(page, text, 'Updating G13 report');
 
 	// Delete data more than 3 days old:
 	await db.run(`DELETE FROM g13 WHERE ts < ?`, [

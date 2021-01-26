@@ -173,7 +173,7 @@ let wikitext =
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 
-await saveWithBlacklistHandling(page, wikitext);
+await saveWithBlacklistHandling(page, wikitext, 'Updating G13 report');
 
 log(`[i] Finished`);
 

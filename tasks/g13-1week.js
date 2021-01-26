@@ -189,7 +189,7 @@ ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;
 
-await saveWithBlacklistHandling(page, wikitext);
+await saveWithBlacklistHandling(page, wikitext, 'Updating G13 report');
 
 log(`[i] Finished`);
 

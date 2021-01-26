@@ -159,9 +159,10 @@ function preprocessDraftForExtract(text) {
 /**
  * @param {bot.page} page
  * @param {string} text
+ * @param {string} summary
  * @returns {Promise}
  */
-async function saveWithBlacklistHandling(page, text) {
+async function saveWithBlacklistHandling(page, text, summary) {
 	return page.save(text, 'Updating G13 report').catch(async err => {
 		if (err.code === 'spamblacklist') {
 			for (let site of err.response.error.spamblacklist.matches) {
@@ -170,7 +171,7 @@ async function saveWithBlacklistHandling(page, text) {
 					site
 				);
 			}
-			await page.save(text, 'Updating G13 report');
+			await page.save(text, summary);
 		} else {
 			return Promise.reject(err);
 		}

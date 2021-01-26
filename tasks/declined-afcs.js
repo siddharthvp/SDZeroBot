@@ -1,5 +1,6 @@
 const {argv, bot, log, TextExtractor, emailOnError, mwn, utils} = require('../botbase');
-const {AfcDraftSize, populateWikidataShortdescs, populateOresQualityRatings, comparators, preprocessDraftForExtract} = require('./commons');
+const {AfcDraftSize, populateWikidataShortdescs, populateOresQualityRatings, comparators,
+	preprocessDraftForExtract, saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
 
@@ -153,19 +154,7 @@ ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;
 
-await page.save(wikitext, 'Updating').catch(async err => {
-	if (err.code === 'spamblacklist') {
-		for (let site of err.response.error.spamblacklist.matches) {
-			wikitext = wikitext.replace(
-				new RegExp('https?:\\/\\/' + site, 'g'),
-				site
-			);
-		}
-		await page.save(wikitext, 'Updating');
-	} else {
-		return Promise.reject(err);
-	}
-});
+await saveWithBlacklistHandling(page, wikitext, 'Updating');
 
 log(`[i] Finished`);
 

@@ -1,5 +1,5 @@
 const {mwn, bot, TextExtractor, emailOnError} = require('../botbase');
-const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
+const {populateWikidataShortdescs, normaliseShortdesc, saveWithBlacklistHandling} = require('./commons');
 
 const months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 function pad(num) {
@@ -125,7 +125,7 @@ function parseArticleForPROD(pagetext) {
 			TextExtractor.finalSanitise(table.getText());
 	};
 
-	await bot.save('User:SDZeroBot/AfD grid', fnMakeTableAfD(afdtable), 'Updating');
-	await bot.save('User:SDZeroBot/PROD grid', fnMakeTablePROD(prodtable), 'Updating');
+	await saveWithBlacklistHandling(new bot.page('User:SDZeroBot/AfD grid'), fnMakeTableAfD(afdtable), 'Updating');
+	await saveWithBlacklistHandling(new bot.page('User:SDZeroBot/PROD grid'), fnMakeTablePROD(prodtable), 'Updating');
 
 })().catch(err => emailOnError(err, 'grid-afd-prod'));
