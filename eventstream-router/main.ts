@@ -1,7 +1,7 @@
 import {fs, bot, log, argv} from '../botbase';
 import EventSource = require('./EventSource');
 
-function logError(err, task?) {
+export function logError(err, task?) {
 	let taskFmt = task ? `[${task}]` : '';
 	let stringified;
 	if (err.stack) {
@@ -13,8 +13,9 @@ function logError(err, task?) {
 		console.log(err);
 	}
 }
+
 // JSON.stringify throws on a cyclic object
-function stringifyObject(obj) {
+export function stringifyObject(obj) {
 	try {
 		return JSON.stringify(obj, null, 2);
 	} catch (e) {
@@ -22,7 +23,7 @@ function stringifyObject(obj) {
 	}
 }
 
-function debug(msg) {
+export function debug(msg) {
 	if (argv.debug) {
 		log(msg);
 	}
@@ -82,59 +83,96 @@ export interface eventData {
 /**
  * REGISTER ROUTES
  *
- * A route is a JS file that exports a filter function and a worker function.
- * The worker should be idempotent, that is, it must handle the scenario of the
- * same event being passed to it multiple times, which could occur due to
- * reconnections.
+ * A route should default export a class extending Route, which defines the
+ * filter and worker methods. The worker should be idempotent, that is, it
+ * must handle the scenario of the same event being passed to it multiple times,
+ * which could occur due to reconnections.
  *
  * NOTE: Route files should NOT contain any process.chdir() statements!
  * Avoid executing code at the top level, put any required initializations
- * in an exported init() method, which can be async.
+ * in the class init() method, which can be async.
  *
  */
 
-class Route {
-	 name: string
-	 worker: ((data: eventData) => any)
-	 filter: ((data: eventData) => boolean)
-	 init: (() => any)
-	 isValid: boolean
-	 ready: Promise<void>
+export abstract class Route {
+	name: string;
+	log: ((msg: any) => void);
 
-	constructor(file) {
+	init(): void | Promise<void> {
+		this.log = this.createLogStream('./' + this.name + '.out');
+	}
+
+	filter(data: eventData): boolean {
+		return true;
+	}
+
+	abstract worker(data: eventData);
+
+	createLogStream(file: string) {
+		let stream = fs.createWriteStream(file, {
+			flags: 'a',
+			encoding: 'utf8'
+		});
+
+		return function (msg) {
+			let ts = new bot.date().format('YYYY-MM-DD HH:mm:ss');
+			let stringified;
+			if (typeof msg === 'string') {
+				stream.write(`[${ts}] ${msg}\n`);
+			} else if (stringified = stringifyObject(msg)) {
+				stream.write(`[${ts}] ${stringified}\n`);
+			} else {
+				stream.write(`[${ts}] [Non-stringifiable object!]\n`);
+			}
+		};
+	}
+}
+
+class RouteValidator {
+	name: string;
+	worker: ((data: eventData) => any)
+	filter: ((data: eventData) => boolean)
+	init: (() => any)
+	isValid: boolean
+	ready: Promise<void>
+
+	validate(file) {
 		this.name = file;
-		let exported;
+		let route;
 		try {
-			exported = require('./' + file);
+			let routeCls = require('./' + file).default;
+			route = new routeCls();
+			route.name = file;
 		} catch (e) {
-			log(`Invalid route ${this.name}: require() failed`);
+			log(`Invalid route ${file}: require failed`);
 			log(e);
 			this.isValid = false;
 			return;
 		}
-		this.worker = exported.worker;
-		this.filter = exported.filter;
-		this.init = exported.init;
+		this.worker = route.worker.bind(route);
+		this.filter = route.filter.bind(route);
+		this.init = route.init.bind(route);
 
-		this.isValid = typeof this.filter === 'function' && typeof this.worker === 'function';
-		if (!this.isValid) {
-			log(`Ignoring ${this.name}: filter or worker is not a function`);
+		if (typeof this.filter !== 'function' || typeof this.worker !== 'function') {
+			log(`Invalid route ${route.name}: filter or worker is not a function`);
+			this.isValid = false;
 			return;
 		}
 		this.ready = new Promise((resolve, reject) => {
 			if (typeof this.init !== 'function') {
 				resolve();
-				debug(`[i] Initialized ${this.name} with no initializer`);
+				debug(`[i] Initialized ${route.name} with no initializer`);
 			} else {
 				Promise.resolve(this.init()).then(() => {
 					resolve();
-					debug(`[S] Initialized ${this.name}`);
+					debug(`[S] Initialized ${route.name}`);
 				}, (err) => {
 					reject();
-					logError(err, this.name);
+					logError(err, route.name);
 				});
 			}
 		});
+		return this;
 	}
 }
 
@@ -142,11 +180,9 @@ log(`[S] Started`);
 
 process.chdir(__dirname);
 // For development, specify a file as "-r filename" and only that route will be
-// registered, otherwise all files in the directory are registered.
-let files = argv.r ? [argv.r] : fs.readdirSync('.').filter(file => {
-	return file.endsWith('.js') && file !== 'main.js';
-});
-let routes = files.map(file => new Route(file)).filter(route => route.isValid);
+// registered, otherwise all files in routes.json are registered.
+let files: string[] = argv.r ? [argv.r] : require('./routes.json');
+let routes: RouteValidator[] = files.map(file => new RouteValidator().validate(file)).filter(route => route.isValid);
 
 // Number of milliseconds after which lastSeenTs is to be saved to file
 const lastSeenUpdateInterval = 1000;
@@ -175,11 +211,13 @@ async function main() {
 				'User-Agent': bot.options.userAgent
 			}
 		});
+
 	stream.onopen = function () {
 		// EventStreams API drops connection every 15 minutes ([[phab:T242767]])
 		// So this will be invoked every time that happens.
 		log(`[i] Reconnected`);
 	}
+
 	stream.onerror = function (evt) {
 		if (evt.type === 'error' && evt.message === undefined) {
 			// The every 15 minute connection drop?
@@ -197,6 +235,7 @@ async function main() {
 			});
 		}
 	}
+
 	stream.onmessage = function (event) {
 		let data = JSON.parse(event.data);
 		lastSeenTs = data.timestamp;

@@ -2,6 +2,7 @@
  * Forked from npm eventsource module
  * https://github.com/EventSource/eventsource
  * (MIT license)
+ * TODO: document patches made
  */
 
 var original = require('original');
