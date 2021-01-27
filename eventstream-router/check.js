@@ -1,9 +1,10 @@
 const {emailOnError} = require('../botbase');
 const {exec, execSync} = require('child_process');
 
-const testRgx = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[i\] Reconnected/;
+const testRgx = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[i\] Reconnected/g;
 const tail = execSync('tail -100 /data/project/sdzerobot/stream.out').toString();
 
+// eslint-disable-next-line no-empty
 let match; for (match of tail.matchAll(testRgx)) {} // now match is the last matched
 
 let date = new Date(match[1]);
