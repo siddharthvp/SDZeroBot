@@ -165,7 +165,7 @@ function preprocessDraftForExtract(text) {
 async function saveWithBlacklistHandling(page, text, summary) {
 	return page.save(text, 'Updating G13 report').catch(async err => {
 		if (err.code === 'spamblacklist') {
-			for (let site of err.response.error.spamblacklist.matches) {
+			for (let site of err.spamblacklist.matches) {
 				text = text.replace(
 					new RegExp('https?:\\/\\/\\S*' + site, 'gi'),
 					site
