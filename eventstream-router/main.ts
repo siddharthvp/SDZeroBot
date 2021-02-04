@@ -1,33 +1,6 @@
-import {fs, bot, log, argv} from '../botbase';
+import {argv, bot, fs, log} from '../botbase';
+import {debug, logError} from "./utils";
 import EventSource = require('./EventSource');
-
-export function logError(err, task?) {
-	let taskFmt = task ? `[${task}]` : '';
-	let stringified;
-	if (err.stack) {
-		log(`${taskFmt} ${err.stack}`);
-	} else if (stringified = stringifyObject(err)) {
-		log(`${taskFmt} ${stringified}`);
-	} else {
-		log(`${taskFmt}`);
-		console.log(err);
-	}
-}
-
-// JSON.stringify throws on a cyclic object
-export function stringifyObject(obj) {
-	try {
-		return JSON.stringify(obj, null, 2);
-	} catch (e) {
-		return null;
-	}
-}
-
-export function debug(msg) {
-	if (argv.debug) {
-		log(msg);
-	}
-}
 
 export interface eventData {
 	$schema: string
@@ -80,54 +53,6 @@ export interface eventData {
 	log_action_comment: string
 }
 
-/**
- * REGISTER ROUTES
- *
- * A route should default export a class extending Route, which defines the
- * filter and worker methods. The worker should be idempotent, that is, it
- * must handle the scenario of the same event being passed to it multiple times,
- * which could occur due to reconnections.
- *
- * NOTE: Route files should NOT contain any process.chdir() statements!
- * Avoid executing code at the top level, put any required initializations
- * in the class init() method, which can be async.
- *
- */
-
-export abstract class Route {
-	name: string;
-	log: ((msg: any) => void);
-
-	init(): void | Promise<void> {
-		this.log = this.createLogStream('./' + this.name + '.out');
-	}
-
-	filter(data: eventData): boolean {
-		return true;
-	}
-
-	abstract worker(data: eventData);
-
-	createLogStream(file: string) {
-		let stream = fs.createWriteStream(file, {
-			flags: 'a',
-			encoding: 'utf8'
-		});
-
-		return function (msg) {
-			let ts = new bot.date().format('YYYY-MM-DD HH:mm:ss');
-			let stringified;
-			if (typeof msg === 'string') {
-				stream.write(`[${ts}] ${msg}\n`);
-			} else if (stringified = stringifyObject(msg)) {
-				stream.write(`[${ts}] ${stringified}\n`);
-			} else {
-				stream.write(`[${ts}] [Non-stringifiable object!]\n`);
-			}
-		};
-	}
-}
-
 class RouteValidator {
 	name: string;
 	worker: ((data: eventData) => any)
@@ -137,12 +62,12 @@ class RouteValidator {
 	ready: Promise<void>
 
 	validate(file) {
-		this.name = file;
+		this.name = file.replace(/\.js$/, '');
 		let route;
 		try {
 			let routeCls = require('./' + file).default;
 			route = new routeCls();
-			route.name = file;
+			route.name = this.name;
 		} catch (e) {
 			log(`Invalid route ${file}: require failed`);
 			log(e);
@@ -172,6 +97,7 @@ class RouteValidator {
 				});
 			}
 		});
+		this.isValid = true;
 		return this;
 	}
 }
@@ -182,15 +108,27 @@ process.chdir(__dirname);
 // For development, specify a file as "-r filename" and only that route will be
 // registered, otherwise all files in routes.json are registered.
 let files: string[] = argv.r ? [argv.r] : require('./routes.json');
-let routes: RouteValidator[] = files.map(file => new RouteValidator().validate(file)).filter(route => route.isValid);
+let routes: RouteValidator[] = files.map(file => {
+	return new RouteValidator().validate(file);
+}).filter(route => {
+	return route.isValid;
+});
 
 // Number of milliseconds after which lastSeenTs is to be saved to file
 const lastSeenUpdateInterval = 1000;
 
 let lastSeenTs;
+let lastSeenFile = fs.createWriteStream('./last-seen.txt', {
+	encoding: 'utf8'
+});
 setInterval(function () {
-	fs.writeFile('./last-seen.txt', String(lastSeenTs), err => err && console.log(err));
+	lastSeenFile.write(String(lastSeenTs));
 }, lastSeenUpdateInterval);
+
+let routerLog = fs.createWriteStream('./routerlog.out', {
+	flags: 'a',
+	encoding: 'utf8'
+});
 
 async function main() {
 	log('[S] Restarted main');
@@ -237,7 +175,7 @@ async function main() {
 	}
 
 	stream.onmessage = function (event) {
-		let data = JSON.parse(event.data);
+		let data: eventData = JSON.parse(event.data);
 		lastSeenTs = data.timestamp;
 		for (let route of routes) {
 			// the filter method is only invoked after the init(), so that init()
@@ -245,6 +183,7 @@ async function main() {
 			route.ready.then(() => {
 				try {
 					if (route.filter(data)) {
+						routerLog.write(`Routing to ${route.name}: ${data.title}@${data.wiki}\n`);
 						route.worker(data);
 					}
 				} catch (e) {

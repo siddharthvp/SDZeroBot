@@ -1,5 +1,5 @@
-import {Route} from "./main";
 import {bot, toolsdb} from '../botbase';
+import {Route} from "./route";
 
 export default class gans extends Route {
 	db: toolsdb;

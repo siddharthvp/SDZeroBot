@@ -1,5 +1,5 @@
-import {Route} from './main';
 import {bot, toolsdb, TextExtractor} from '../botbase';
+import {Route} from "./route";
 const {preprocessDraftForExtract} = require('../tasks/commons');
 
 export default class g13Watch extends Route {
