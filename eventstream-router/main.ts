@@ -119,6 +119,7 @@ const lastSeenUpdateInterval = 1000;
 
 let lastSeenTs;
 let lastSeenFile = fs.createWriteStream('./last-seen.txt', {
+	flags: 'w',
 	encoding: 'utf8'
 });
 setInterval(function () {
