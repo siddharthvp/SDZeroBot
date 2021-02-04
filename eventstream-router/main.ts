@@ -118,12 +118,8 @@ let routes: RouteValidator[] = files.map(file => {
 const lastSeenUpdateInterval = 1000;
 
 let lastSeenTs;
-let lastSeenFile = fs.createWriteStream('./last-seen.txt', {
-	flags: 'w',
-	encoding: 'utf8'
-});
 setInterval(function () {
-	lastSeenFile.write(String(lastSeenTs));
+	fs.writeFile('./last-seen.txt', String(lastSeenTs), err => err && console.log(err));
 }, lastSeenUpdateInterval);
 
 let routerLog = fs.createWriteStream('./routerlog.out', {
