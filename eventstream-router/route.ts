@@ -1,6 +1,5 @@
-import {bot, fs} from "../botbase";
 import type {eventData} from "./main";
-import {stringifyObject} from "./utils";
+import {createLogStream} from "./utils";
 
 /**
  * REGISTER ROUTES
@@ -21,7 +20,7 @@ export abstract class Route {
 	log: ((msg: any) => void);
 
 	init(): void | Promise<void> {
-		this.log = this.createLogStream('./' + this.name + '.out');
+		this.log = createLogStream('./' + this.name + '.out');
 	}
 
 	filter(data: eventData): boolean {
@@ -29,23 +28,4 @@ export abstract class Route {
 	}
 
 	abstract worker(data: eventData);
-
-	createLogStream(file: string) {
-		let stream = fs.createWriteStream(file, {
-			flags: 'a',
-			encoding: 'utf8'
-		});
-
-		return function (msg) {
-			let ts = new bot.date().format('YYYY-MM-DD HH:mm:ss');
-			let stringified;
-			if (typeof msg === 'string') {
-				stream.write(`[${ts}] ${msg}\n`);
-			} else if (stringified = stringifyObject(msg)) {
-				stream.write(`[${ts}] ${stringified}\n`);
-			} else {
-				stream.write(`[${ts}] [Non-stringifiable object!]\n`);
-			}
-		};
-	}
 }

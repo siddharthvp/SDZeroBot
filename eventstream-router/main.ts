@@ -1,5 +1,5 @@
 import {argv, bot, fs, log} from '../botbase';
-import {debug, logError} from "./utils";
+import {createLogStream, debug, logError} from "./utils";
 import EventSource = require('./EventSource');
 
 export interface eventData {
@@ -122,10 +122,7 @@ setInterval(function () {
 	fs.writeFile('./last-seen.txt', String(lastSeenTs), err => err && console.log(err));
 }, lastSeenUpdateInterval);
 
-let routerLog = fs.createWriteStream('./routerlog.out', {
-	flags: 'a',
-	encoding: 'utf8'
-});
+let routerLog = createLogStream('./routerlog.out');
 
 async function main() {
 	log('[S] Restarted main');
@@ -161,14 +158,13 @@ async function main() {
 		log(`[W] Event source encountered error:`);
 		logError(evt);
 
-		// TODO: handle other errors, ensure auto-reconnection
-
 		if (evt.status === 429) { // Too Many Requests, the underlying library doesn't reconnect by itself
 			stream.close(); // just to be safe that there aren't two parallel connections
 			bot.sleep(5000).then(() => {
 				return start(); // restart
 			});
 		}
+		// TODO: handle other errors, ensure auto-reconnection
 	}
 
 	stream.onmessage = function (event) {
@@ -180,7 +176,7 @@ async function main() {
 			route.ready.then(() => {
 				try {
 					if (route.filter(data)) {
-						routerLog.write(`Routing to ${route.name}: ${data.title}@${data.wiki}\n`);
+						routerLog(`Routing to ${route.name}: ${data.title}@${data.wiki}`);
 						route.worker(data);
 					}
 				} catch (e) {

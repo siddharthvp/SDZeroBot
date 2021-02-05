@@ -1,4 +1,23 @@
-import {argv, log} from "../botbase";
+import {argv, bot, fs, log} from "../botbase";
+
+export function createLogStream(file: string) {
+	let stream = fs.createWriteStream(file, {
+		flags: 'a',
+		encoding: 'utf8'
+	});
+
+	return function (msg) {
+		let ts = new bot.date().format('YYYY-MM-DD HH:mm:ss');
+		let stringified;
+		if (typeof msg === 'string') {
+			stream.write(`[${ts}] ${msg}\n`);
+		} else if (stringified = stringifyObject(msg)) {
+			stream.write(`[${ts}] ${stringified}\n`);
+		} else {
+			stream.write(`[${ts}] [Non-stringifiable object!]\n`);
+		}
+	};
+}
 
 export function logError(err, task?) {
 	let taskFmt = task ? `[${task}]` : '';
