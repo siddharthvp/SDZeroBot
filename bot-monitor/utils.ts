@@ -1,5 +1,5 @@
 import {argv, bot, log} from "../botbase";
-import {MwnDate} from "../../mwn/src";
+import {MwnDate} from "../../mwn";
 import {RuleError} from "./internal";
 
 export function getFromDate(duration = '1 day', times = 1): MwnDate {

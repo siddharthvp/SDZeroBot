@@ -1,5 +1,5 @@
 import {bot, emailOnError, log} from '../botbase';
-import {MwnDate} from "../../mwn/src/bot";
+import {MwnDate} from "../../mwn";
 import {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
 import {LogEvent, UserContribution} from "../../mwn/src/user";
 

@@ -1,5 +1,5 @@
 import {argv, bot, fs, mwn, path} from "../botbase";
-import {MwnDate} from "../../mwn/src";
+import {MwnDate} from "../../mwn";
 import {getFromDate, Monitor} from "./internal";
 
 export interface RawRule {
