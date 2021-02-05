@@ -1,11 +1,14 @@
 "use strict";
+/**
+ * Efficient interface to access ToolsDB.
+ * Automatically handles transient connection errors.
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.toolsdb = exports.enwikidb = exports.db = exports.mysql = void 0;
 const botbase_1 = require("./botbase");
 const mysql = require("mysql2/promise");
 exports.mysql = mysql;
 const auth = require('./.auth');
-// TODO: error handling
 class db {
     init() {
         this.pool = mysql.createPool({

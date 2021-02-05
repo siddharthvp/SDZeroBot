@@ -1,8 +1,11 @@
+/**
+ * Efficient interface to access ToolsDB.
+ * Automatically handles transient connection errors.
+ */
+
 import {log, bot} from './botbase';
 import * as mysql from 'mysql2/promise';
 const auth = require('./.auth');
-
-// TODO: error handling
 
 abstract class db {
 	pool: mysql.Pool

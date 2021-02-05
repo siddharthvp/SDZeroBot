@@ -1,3 +1,6 @@
+// DEPRECATED. This file is no longer used.
+// See eventstream-router/g13-watch.ts instead
+
 // start job using: npm run start
 
 import {fs, bot, log, mysql, argv} from '../botbase';

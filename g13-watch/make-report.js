@@ -62,7 +62,7 @@ const {saveWithBlacklistHandling} = require('../tasks/commons');
 	await saveWithBlacklistHandling(page, text, 'Updating G13 report');
 
 	// Delete data more than 3 days old:
-	await db.run(`DELETE FROM g13 WHERE ts < ?`, [
+	await db.run(`DELETE FROM g13 WHERE ts < FROM_UNIXTIME(?)`, [
 		Math.round(new bot.date().subtract(72, 'hours').getTime() / 1000)
 	]);
 	db.end();
