@@ -57,7 +57,7 @@ process.chdir(__dirname);
 
 		// ignore these, skipping the api calls
 		if (['common.js', 'vector.js', 'monobook.js', 'timeless.js', 'modern.js',
-		'cologneblue.js', 'twinkleoptions.js'].includes(subpagename)) {
+		'cologneblue.js', 'minerva.js', 'twinkleoptions.js'].includes(subpagename)) {
 			table[title] = {
 				total: -1,
 				active: -1
@@ -68,7 +68,7 @@ process.chdir(__dirname);
 		return bot.continuedQuery({  // only 1 or 2
 			"action": "query",
 			"list": "search",
-			"srsearch": '"' + title + '" intitle:/(common|vector|monobook|modern|timeless|cologneblue)\\.js/',
+			"srsearch": '"' + title + '" intitle:/(common|vector|monobook|modern|timeless|minerva|cologneblue)\\.js/',
 			"srnamespace": "2",
 			"srlimit": "max",
 			"srinfo": "totalhits",
