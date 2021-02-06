@@ -488,3 +488,4 @@ Notifier.init().catch(err => botbase_1.emailOnError(err, 'afd-notifier'));
 // 		});
 // 		return data;
 // 	})().then(res => res.users)
+//# sourceMappingURL=notifier.js.map
