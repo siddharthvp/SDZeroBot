@@ -355,7 +355,8 @@ class Notifier {
                 await botbase_1.bot.request({
                     action: 'edit',
                     title: 'User talk:' + username,
-                    bot: 1,
+                    bot: true,
+                    redirect: true,
                     summary: articles.length === 1 ?
                         `Nomination of [[${articles[0]}]] for deletion at [[${afd}|AfD]]` :
                         `Nomination of [[${articles[0]}]] and other articles for deletion at [[${afd}|AfD]]`,
