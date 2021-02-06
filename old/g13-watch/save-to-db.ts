@@ -3,11 +3,11 @@
 
 // start job using: npm run start
 
-import {fs, bot, log, mysql, argv} from '../botbase';
+import {fs, bot, log, mysql, argv} from '../../botbase';
 
-const {preprocessDraftForExtract} = require('../tasks/commons');
-const TextExtractor = require('../TextExtractor')(bot);
-const auth = require('../.auth');
+const {preprocessDraftForExtract} = require('../../reports/commons');
+const TextExtractor = require('../../TextExtractor')(bot);
+const auth = require('../../.auth');
 
 function logError(err) {
 	fs.appendFileSync('./errlog.txt', `\n[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${err.stack}`);

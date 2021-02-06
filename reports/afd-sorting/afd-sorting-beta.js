@@ -1,6 +1,5 @@
-const {mwn, bot, log, argv, utils, emailOnError} = require('../botbase');
-const OresUtils = require('../OresUtils');
-const {normaliseShortdesc, populateWikidataShortdescs} = require('../tasks/commons');
+const {mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
+const OresUtils = require('../../OresUtils');
 
 process.chdir(__dirname);
 
@@ -14,8 +13,8 @@ process.chdir(__dirname);
 	var revidsTitles, tableInfo;
 
 	if (argv.noapiget) { // for debugging
-		revidsTitles = require('revidsTitles');
-		tableInfo = utils.saveObject('tableInfo');
+		revidsTitles = require('./revidsTitles');
+		tableInfo = require('./tableInfo');
 	} else {
 		await bot.continuedQuery({
 			"action": "query",
@@ -30,30 +29,30 @@ process.chdir(__dirname);
 			revidsTitles = {};
 			tableInfo = {};
 			var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+			var months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+			var pad = num => num < 10 ? '0' + num : num;
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var afd_template = new bot.wikitext(pg.revisions[0].content).parseTemplates({
-					count: 1,
-					namePredicate: name => name === 'Article for deletion/dated' || name === 'AfDM'
-				})[0];
-				var afd_date, afd_page;
+				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
+				var afd_template, afd_date, afd_page;
+				afd_template = templates.find(t => t.name === 'Article for deletion/dated' || t.name === 'AfDM');
 				if (afd_template) {
-					if (afd_template.getValue('timestamp')) {
-						afd_date = new bot.date(afd_template.getValue('timestamp')).format('YYYY-MM-DD');
-					} else if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
-						afd_date = new bot.date(
-							afd_template.getValue('year'),
-							bot.date.localeData.months.indexOf(afd_template.getValue('month')),
-							afd_template.getValue('day')
-						).format('YYYY-MM-DD');
+					if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
+						afd_date = `${afd_template.getValue('year')}-${pad(months.indexOf(afd_template.getValue('month')))}-${pad(afd_template.getValue('day'))}`;
 					}
 					afd_page = afd_template.getValue('page');
 				}
 				tableInfo[pg.title] = {
 					afd_date: afd_date,
 					afd_page: afd_page,
-					shortdesc: normaliseShortdesc(pg.description)
+					shortdesc: pg.description
 				};
+				// cut out noise
+				if (pg.description === 'Wikimedia list article') {
+					tableInfo[pg.title].shortdesc = '';
+				} else if (pg.description === 'Disambiguation page providing links to topics that could be referred to by the same search term') {
+					tableInfo[pg.title].shortdesc = 'Disambiguation page';
+				}
 			});
 
 			log('[S] Got articles');
@@ -63,7 +62,15 @@ process.chdir(__dirname);
 		});
 	}
 
-	await populateWikidataShortdescs(tableInfo);
+	var multiPageData = {};
+	Object.entries(tableInfo).forEach(([title, {afd_page}]) => {
+		if (multiPageData[afd_page]) {
+			multiPageData[afd_page].push(title);
+		} else {
+			multiPageData[afd_page] = [ title ];
+		}
+	});
+	utils.saveObject('multiPageData', multiPageData);
 
 	var afd_data = {};
 
@@ -94,21 +101,12 @@ process.chdir(__dirname);
 					deletes++;
 				}
 			});
-
-			// find number of relists and last relist date
-			var rgx = /div class="xfd_relist".*?(\d{2}:\d{2}, \d{1,2} \w+ \d{4} \(UTC\))/sg;
-			var match, relists = 0, relist_date;
-			while (match = rgx.exec(text)) { // eslint-disable-line no-cond-assign
-				relists++;
-				relist_date = match[1];
-			}
-
-			afd_data[pg.title] = { concern, keeps, deletes, relists, relist_date };
+			afd_data[pg.title] = { concern, keeps, deletes };
 		});
 		log('[S] Got AfDs');
 	});
 
-	var accessdate = new bot.date().format('D MMMM YYYY');
+	var accessdate = new Date().toLocaleString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 
 
 	/* GET DATA FROM ORES */
@@ -164,62 +162,71 @@ process.chdir(__dirname);
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
+	var article_entry = (title, shortdesc) => {
+		return `[[${title}]] ${shortdesc ? `(<small>${shortdesc}</small>)` : ''}`;
+	}
+
 	var createSection = function(topic) {
 		var pagetitle = topic;
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new mwn.table({
-			style: 'overflow-wrap: anywhere'
-		});
+		var table = new mwn.table({ sortable: true, multiline: true });
 		table.addHeaders([
 			`scope="col" style="width: 5em;" | AfD date`,
 			`scope="col" style="width: 19em;" | Article`,
 			`AfD nomination`
 		]);
 
-		sorter[topic].map(function(page) {
+		sorter[topic].forEach(function(page, idx, arr) {
+			if (page.skip && page.skip.includes(topic)) {
+				return;
+			}
 			var tabledata = tableInfo[page.title];
-			var afd_cell;
+			var afd_cell, article_cell;
 			if (tabledata.afd_page) {
+				if (multiPageData[tabledata.afd_page].length > 1) {
+					article_cell = "'''Multiple articles:'''\n";
+					for (let pg of multiPageData[tabledata.afd_page]) {
+						var pgObj = arr.find(p => p.title === pg);
+						if (pgObj) {
+							!pgObj.skip ? (pgObj.skip = [topic]) : pgObj.skip.push(topic);
+							article_cell += '* ' + article_entry(pgObj.title, tableInfo[pgObj.title].shortdesc) + '\n';
+						} else {
+							log(`[E] ${pg} not found`);
+						}
+					}
+				} else {
+					article_cell = article_entry(page.title, tabledata.shortdesc);
+				}
 				var afd_title = `Wikipedia:Articles for deletion/${tabledata.afd_page
 					// decode XML entities (Twinkle ugliness)
 					.replace(/&#(\d+);/g, (_, numStr) => String.fromCharCode(parseInt(numStr, 10)))}`;
 
 				afd_cell = `[[${afd_title}|AfD]]`;
 				if (afd_data[afd_title]) {
-					var {concern, keeps, deletes, relists, relist_date} = afd_data[afd_title];
-					afd_cell += ` (${keeps} k, ${deletes} d)`;
-					if (relists) { // skip if no relists
-						afd_cell += ` (${relists} relist${relists > 1 ? 's' : ''})`;
-					}
-					afd_cell += ` (<small>${concern}</small>)`;
+					var {concern, keeps, deletes} = afd_data[afd_title];
+					afd_cell += ` (${keeps} k, ${deletes} d) (<small>${concern}</small>)`;
 
-					// over-write date with date of last relist
-					if (relists && relist_date) {
-						tabledata.afd_date = new bot.date(relist_date).format('YYYY-MM-DD');
-					}
-
-					// parse the date from concern it hadn't been parsed from the template earlier
-					// or from relisting
+					// parse the date if it hadn't been parsed from the template earlier
 					if (!tabledata.afd_date) {
-						var datematch = concern.match(/\d{2}:\d{2} \d{1,2} \w+ \d{4} \(UTC\)/);
+						var datematch = concern.match(/(\d{2}:\d{2}),( \d{1,2} \w+ \d{4} )\(UTC\)/);
 						if (datematch) {
-							tabledata.afd_date = new bot.date(datematch[0]).format('YYYY-MM-DD');
+							var dateobj = new Date(datematch[1] + datematch[2] + 'UTC');
+							if (!isNaN(dateobj.getTime())) {
+								tabledata.afd_date = dateobj.toISOString().slice(0, 10);
+							}
 						}
 					}
 				}
 			}
 
-			return [
+			table.addRow([
 				tabledata.afd_date || '[Failed to parse]',
-				`[[${page.title}]] ${tabledata.shortdesc ? `(<small>${tabledata.shortdesc}</small>)` : ''}`,
+				article_cell,
 				afd_cell || `[Couldn't find open AfD]`
-			]
-
-		// sort rows by AfD date
-		}).sort((row1, row2) => row1[0] < row2[0] ? -1 : 1)
-		.forEach(row => table.addRow(row));
+			]);
+		});
 
 		return [pagetitle, table.getText()];
 	};
@@ -227,7 +234,7 @@ process.chdir(__dirname);
 	var makeMainPage = function() {
 		var count = Object.keys(revidsTitles).length;
 
-		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
+		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
@@ -236,12 +243,11 @@ process.chdir(__dirname);
 		content += '\n{{reflist-talk}}';
 
 		if (!argv.dry) {
-			return bot.save('User:SDZeroBot/AfD sorting', content, 'Updating report');
+			return bot.save('User:SDZeroBot/AfD sorting/beta', content, 'Updating report');
 		}
 
 	}
 	await makeMainPage();
 
-	log('[i] Finished');
 
 })().catch(err => emailOnError(err, 'afd-sorting'));

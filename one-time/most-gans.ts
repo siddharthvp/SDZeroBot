@@ -1,4 +1,4 @@
-import {bot, log, mwn, toolsdb} from './botbase';
+import {bot, log, mwn, toolsdb} from '../botbase';
 
 (async function () {
 	await bot.getTokensAndSiteInfo();

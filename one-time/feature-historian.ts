@@ -1,4 +1,4 @@
-import {bot, fs, log, mwn} from './botbase.js';
+import {bot, fs, log, mwn} from '../botbase.js';
 
 (async function () {
 

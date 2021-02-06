@@ -1,4 +1,4 @@
-const {utils, bot} = require('../botbase');
+const {utils, bot} = require('../../botbase');
 
 bot.login().then(() => {
 

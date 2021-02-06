@@ -1,7 +1,8 @@
-// npm run make
+// This report relies on ToolsDB g13watch_p database maintained using
+// eventstream-router/g13-watch.ts
 
 const {bot, log, toolsdb, emailOnError, mwn} = require('../botbase');
-const {saveWithBlacklistHandling} = require('../tasks/commons');
+const {saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
 

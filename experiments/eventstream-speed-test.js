@@ -1,4 +1,4 @@
-const {bot, fs, log} = require('./botbase');
+const {bot, fs, log} = require('../botbase');
 
 fs.writeFileSync('speed-data', '', console.log);
 

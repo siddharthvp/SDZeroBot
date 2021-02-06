@@ -1,6 +1,6 @@
 // npm run view
 
-const {log, toolsdb} = require('../botbase');
+const {log, toolsdb} = require('../../botbase');
 
 (async function() {
 

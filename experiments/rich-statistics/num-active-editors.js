@@ -1,4 +1,4 @@
-const {bot, mwn, log} = require('../botbase');
+const {bot, mwn, log} = require('../../botbase');
 
 (async function() {
 

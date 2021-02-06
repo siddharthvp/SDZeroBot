@@ -1,6 +1,6 @@
-const {log, argv, TextExtractor, mwn, bot, enwikidb, utils, emailOnError} = require('../botbase');
-const OresUtils = require('../OresUtils');
-const {populateWikidataShortdescs, normaliseShortdesc} = require('../tasks/commons');
+const {log, argv, TextExtractor, mwn, bot, enwikidb, utils, emailOnError} = require('../../botbase');
+const OresUtils = require('../../OresUtils');
+const {populateWikidataShortdescs, normaliseShortdesc} = require('../commons');
 
 process.chdir(__dirname);
 
