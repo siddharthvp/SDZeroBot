@@ -30,3 +30,5 @@ export default class Task extends Route {
 ```
 
 and add the js file name to `routes.json`.
+
+Run `npm restart` on the toolforge host for any code changes to take effect.
