@@ -20,9 +20,14 @@ if (minutesDiff > 30) {
 	emailOnError(err, 'stream');
 
 	process.chdir(__dirname);
-	exec("npm run restart", (error) => {
+	exec('npm restart', (error, stdout, stderr) => {
 		if (error) {
-			emailOnError(error, "stream-restart");
+			emailOnError(error, 'stream-restart');
+		}
+		if (stderr) {
+			let err = new Error('npm restart raised an error');
+			err.stack = stderr;
+			emailOnError(err, 'stream-restart');
 		}
 	});
 }

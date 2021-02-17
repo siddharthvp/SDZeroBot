@@ -76,4 +76,4 @@
 
 0   0   *   *   *  jsub -quiet -N job-g13-save 	-mem 1g	 ~/bin/node ~/SDZeroBot/reports/g13-watch-save.js
 
-15  *   *   *   *  jsub -quiet -N stream-check           ~/bin/node ~/SDZeroBot/eventstream-router/check.js
+15  *   *   *   *  jsub -quiet -N stream-check  -mem 4g  ~/bin/node ~/SDZeroBot/eventstream-router/check.js
