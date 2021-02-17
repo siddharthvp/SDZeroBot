@@ -37,7 +37,6 @@ export default class gans extends Route {
 		let talkpage = new bot.page(new bot.page(article).getTalkPage());
 		let talkpageedits = talkpage.historyGen(
 			['content', 'user', 'timestamp'],
-			100,
 			{ rvsection: '0', rvlimit: 100 } // one-pass
 		);
 		let GA_template_seen = false, GA_user = null;

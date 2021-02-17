@@ -2,14 +2,13 @@
 
 import fs = require('fs');
 import path = require('path');
-import assert = require('assert');
 import child_process = require('child_process');
-export {fs, path, assert, child_process};
+export {fs, path, child_process};
 
 let log;
 
 /** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
-export const emailOnError = function (err: Error, taskname: string) {
+export function emailOnError(err: Error, taskname: string) {
     if (typeof log !== 'undefined') { // Check if mwn has loaded
         log('[E] Fatal error');
     } else { // imitate!
@@ -21,7 +20,7 @@ export const emailOnError = function (err: Error, taskname: string) {
         () => {} // Emailing failed, must be a non-toolforge environ
     );
     // exit normally
-};
+}
 
 // Errors occurring inside async functions are caught by emailOnError(),
 // this is only for anything else, such as failing imports

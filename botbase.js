@@ -1,19 +1,17 @@
 "use strict";
 /** Base file to reduce the amount of boilerplate code in each file */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.utils = exports.toolsdb = exports.enwikidb = exports.db = exports.mysql = exports.TextExtractor = exports.log = exports.bot = exports.mwn = exports.xdate = exports.argv = exports.emailOnError = exports.child_process = exports.assert = exports.path = exports.fs = void 0;
+exports.utils = exports.toolsdb = exports.enwikidb = exports.db = exports.mysql = exports.TextExtractor = exports.log = exports.bot = exports.mwn = exports.xdate = exports.argv = exports.emailOnError = exports.child_process = exports.path = exports.fs = void 0;
 const fs = require("fs");
 exports.fs = fs;
 const path = require("path");
 exports.path = path;
-const assert = require("assert");
-exports.assert = assert;
 const child_process = require("child_process");
 exports.child_process = child_process;
 let log;
 exports.log = log;
 /** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
-exports.emailOnError = function (err, taskname) {
+function emailOnError(err, taskname) {
     if (typeof log !== 'undefined') { // Check if mwn has loaded
         log('[E] Fatal error');
     }
@@ -24,13 +22,14 @@ exports.emailOnError = function (err, taskname) {
     child_process.exec(`echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`, () => { } // Emailing failed, must be a non-toolforge environ
     );
     // exit normally
-};
+}
+exports.emailOnError = emailOnError;
 // Errors occurring inside async functions are caught by emailOnError(),
 // this is only for anything else, such as failing imports
 process.on('uncaughtException', function (err) {
     if (process.argv[1]) {
         var taskname = path.basename(process.argv[1]);
-        exports.emailOnError(err, taskname);
+        emailOnError(err, taskname);
     }
     else { // else we're probably running in the console
         console.log(err);
