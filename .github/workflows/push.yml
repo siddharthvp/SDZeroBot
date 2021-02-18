@@ -14,7 +14,17 @@ jobs:
           command: >-
             cd /data/project/sdzerobot/SDZeroBot || exit;
             git -C ../mwn pull;
-            git pull && npm install && npm run build;
+            git pull;
+            if [[ $? -ne 0 ]]; then
+              exit 1;
+            fi
+            if [[ "$(git diff --name-only HEAD HEAD~1 | grep package.json)" -ne "" ]]; then
+              npm install;
+              if [[ $? -ne 0 ]]; then
+                exit 1;
+              fi
+            fi
+            npm run build;
             if [[ $? -ne 0 ]]; then
               exit 1;
             fi
