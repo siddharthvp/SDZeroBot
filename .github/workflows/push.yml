@@ -1,0 +1,22 @@
+name: Toolforge
+
+on: push
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: garygrossgarten/github-action-ssh@release
+        with:
+          command: >-
+            cd /data/project/sdzerobot/SDZeroBot || exit;
+            git -C ../mwn pull;
+            git pull && npm run build;
+            if [[ $? -ne 0 ]]; then
+              exit 1;
+            fi
+          host: login.toolforge.org
+          username: ${{ secrets.TOOLFORGE_USERNAME }}
+          privateKey: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
+
