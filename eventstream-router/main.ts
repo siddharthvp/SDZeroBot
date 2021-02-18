@@ -1,6 +1,6 @@
 import {argv, bot, fs, log} from '../botbase';
 import {createLogStream, debug, logError} from "./utils";
-import EventSource = require('./EventSource');
+import * as EventSource from './EventSource';
 
 export interface eventData {
 	$schema: string

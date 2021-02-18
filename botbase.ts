@@ -1,8 +1,8 @@
 /** Base file to reduce the amount of boilerplate code in each file */
 
-import fs = require('fs');
-import path = require('path');
-import child_process = require('child_process');
+import * as fs from 'fs';
+import * as path from 'path';
+import * as child_process from 'child_process';
 export {fs, path, child_process};
 
 let log;

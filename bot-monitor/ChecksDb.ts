@@ -5,7 +5,7 @@ import {RawRule, debug, getFromDate} from './internal'
 import * as sqlite from "sqlite";
 
 import * as sqlite3 from "sqlite3";
-import hash = require('object-hash');
+import * as hash from 'object-hash';
 
 export class ChecksDb {
 	static db: sqlite.Database

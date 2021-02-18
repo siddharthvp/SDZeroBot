@@ -6,7 +6,7 @@
   "scripts": {
     "push": "eslint . && git push",
     "update": "git pull && crontab crontab && git -C ../mwn pull",
-    "build-base": "tsc botbase.ts -t ES2018 -m commonjs"
+    "build": "babel . --extensions \".ts\" --out-dir ."
   },
   "author": "Siddharth VP",
   "license": "MIT",
@@ -27,6 +27,10 @@
     "sqlite3": "^5.0.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.12.16",
+    "@babel/core": "^7.12.16",
+    "@babel/plugin-transform-modules-commonjs": "^7.12.13",
+    "@babel/preset-typescript": "^7.12.16",
     "@types/mocha": "^8.0.4",
     "chai": "^4.2.0",
     "eslint": "^7.10.0",
