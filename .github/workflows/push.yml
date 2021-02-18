@@ -1,6 +1,8 @@
 name: Toolforge
 
-on: push
+on:
+  - push
+  - workflow_dispatch
 
 jobs:
   push:
