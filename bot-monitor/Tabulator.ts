@@ -1,7 +1,7 @@
 import {bot, mwn, log, argv} from "../botbase";
 import {Monitor} from './internal';
 
-import moment = require("moment");
+import * as moment from "moment";
 
 export class Tabulator {
 	static rootpage = 'user:SD0001/Bot activity monitor';
