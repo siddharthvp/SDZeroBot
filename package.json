@@ -5,7 +5,8 @@
   "main": "",
   "scripts": {
     "update": "git pull && crontab crontab && cd ../mwn && git pull && npm run quickbuild",
-    "build": "babel . --extensions \".ts\" --out-dir ."
+    "build": "babel . --extensions \".ts\" --out-dir .",
+    "tsc": "tsc"
   },
   "author": "Siddharth VP",
   "license": "MIT",
