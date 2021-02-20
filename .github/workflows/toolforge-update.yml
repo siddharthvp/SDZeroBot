@@ -5,11 +5,11 @@ on:
   - workflow_dispatch
 
 jobs:
-  push:
+  update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: garygrossgarten/github-action-ssh@2b10f41
+      - uses: garygrossgarten/github-action-ssh@2b10f41b5a33808f6d24eafd253296766308b7c4
         with:
           command: >-
             cd /data/project/sdzerobot/mwn || exit 1;
