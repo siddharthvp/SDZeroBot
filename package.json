@@ -4,8 +4,7 @@
   "description": "",
   "main": "",
   "scripts": {
-    "push": "eslint . && git push",
-    "update": "git pull && crontab crontab && git -C ../mwn pull",
+    "update": "git pull && crontab crontab && cd ../mwn && git pull && npm run quickbuild",
     "build": "babel . --extensions \".ts\" --out-dir ."
   },
   "author": "Siddharth VP",
@@ -20,6 +19,7 @@
     "eventsource": "^1.0.7",
     "jsdom": "^16.2.1",
     "minimist": "^1.2.5",
+    "moment": "^2.29.1",
     "mwn": "0.9.0",
     "mysql2": "^2.1.0",
     "object-hash": "^2.0.3",
