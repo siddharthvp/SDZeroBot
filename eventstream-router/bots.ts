@@ -29,6 +29,7 @@ export default class Task extends Route {
 		console.log(sanitisedCmt);
 
 		let words = sanitisedCmt.split(/\s/g);
+
 		words = words.filter(word => {
 			return !/bots?/i.test(word) && !/task/i.test(word);
 		});
