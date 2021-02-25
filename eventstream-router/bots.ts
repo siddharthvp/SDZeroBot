@@ -26,7 +26,7 @@ export default class Task extends Route {
 			.replace(/\d/g, '')
 			.trim();
 
-		console.log(sanitisedCmt);
+		this.log(sanitisedCmt);
 
 		let words = sanitisedCmt.split(/\s/g);
 
@@ -44,6 +44,6 @@ export default class Task extends Route {
 			this.bots[data.user][start] = true;
 		}
 
-		console.log(`${data.user}: ${start} [on ${data.title}]\n`);
+		this.log(`${data.user}: ${start} [on ${data.title}]\n`);
 	}
 }
