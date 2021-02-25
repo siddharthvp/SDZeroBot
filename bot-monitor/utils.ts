@@ -1,8 +1,8 @@
 import {argv, bot, log} from "../botbase";
 import {MwnDate} from "../../mwn";
-import {RuleError} from "./internal";
+import {RuleError} from "./index";
 
-export function getFromDate(duration = '1 day', times = 1): MwnDate {
+export function getFromDate(duration: string, times = 1): MwnDate {
     try {
         let durationParts = duration.split(' ');
         let num = parseInt(durationParts[0]);

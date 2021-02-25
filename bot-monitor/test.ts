@@ -1,7 +1,18 @@
 import {bot} from "../botbase";
-import {Monitor, getBotOperator, ChecksDb, RawRule, Rule} from './internal'
+import {Monitor, getBotOperator, ChecksDb, RawRule, Rule, fetchRules} from './index'
 
 import {expect} from 'chai';
+
+describe('Rule', async function () {
+    before(function () {
+        return bot.getSiteInfo();
+    });
+    it('fetchRules', async () => {
+       const rules = await fetchRules();
+       expect(rules).to.be.instanceOf(Array).of.length.greaterThan(10);
+    });
+
+});
 
 describe('Monitor', async function () {
     before(function () {

@@ -1,13 +1,15 @@
 import {bot, emailOnError, fs, path} from "../botbase";
 
-import {fetchRules, Monitor, Tabulator, ChecksDb} from './internal'
+import {fetchRules, Monitor, Tabulator, ChecksDb} from './index'
 
 (async function () {
 
     process.chdir(__dirname);
 
-    await bot.getTokensAndSiteInfo();
-    await ChecksDb.connect();
+    await Promise.all([
+        bot.getTokensAndSiteInfo(),
+        ChecksDb.connect()
+    ]);
 
     const rules = await fetchRules();
 

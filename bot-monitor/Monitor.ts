@@ -3,7 +3,7 @@ import {MwnDate} from "../../mwn";
 import {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
 import {LogEvent, UserContribution} from "../../mwn/src/user";
 
-import {Alert, ChecksDb, debug, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './internal'
+import {Alert, ChecksDb, debug, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
 
 export class Monitor {
 	name: string
@@ -43,7 +43,7 @@ export class Monitor {
 		Tabulator.add(this, check);
 		if (!check) { // Not OK
 			// await this.alert();
-			await new Alert(this).alert();
+			// await new Alert(this).alert();
 		} else { // OK
 			log(`[S] ${this.rule.task} on track`);
 		}

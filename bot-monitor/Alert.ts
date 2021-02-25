@@ -1,5 +1,5 @@
 import {argv, bot, log} from "../botbase";
-import {Rule, RuleError, Monitor} from "./internal";
+import {Rule, RuleError, Monitor} from "./index";
 
 // TODO: avoid redundant notifications
 
@@ -18,6 +18,7 @@ export class Alert {
     }
 
     async alert() {
+        return;
         if (argv.dry || !this.rule.alertMode) {
             return;
         }

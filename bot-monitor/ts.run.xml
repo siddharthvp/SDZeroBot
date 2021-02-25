@@ -1,7 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ts-run" type="NodeJSConfigurationType" application-parameters="--fake --dry --verbose" node-parameters="-r ts-node/register" path-to-js-file="main.ts" working-dir="$PROJECT_DIR$/../toolforge-sync/bot-monitor">
-    <method v="2">
-      <option name="TypeScript.Before.Run" enabled="true" FAIL_ON_ERROR="false" CONFIG_PATH="$PROJECT_DIR$/../toolforge-sync/bot-monitor/tsconfig.json" />
-    </method>
+  <configuration default="false" name="ts-run-botmonitor" type="NodeJSConfigurationType" application-parameters="--verbose  --dry" node-parameters="-r ts-node/register" path-to-js-file="main.ts" working-dir="$PROJECT_DIR$/bot-monitor">
+    <method v="2" />
   </configuration>
 </component>

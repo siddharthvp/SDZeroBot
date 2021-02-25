@@ -1,10 +1,10 @@
 import {bot, mwn, log, argv} from "../botbase";
-import {Monitor} from './internal';
+import {Monitor} from './index';
 
 import * as moment from "moment";
 
 export class Tabulator {
-	static rootpage = 'user:SD0001/Bot activity monitor';
+	static rootpage = 'user:SD0001/Bot activity monitor' + (argv.fake ? '/sandbox' : '');
 
 	static table: InstanceType<typeof mwn.table>;
 	static invalidRules: { task: string, reason: string }[] = []
@@ -59,6 +59,9 @@ export class Tabulator {
 
 	static async postResults() {
 		let text = Tabulator.table.getText();
+		if (argv.dry) {
+			return console.log(text);
+		}
 		await new bot.page(this.rootpage + '/Report').save(text, `Updating ${argv.fake ? '(testing)': ''}`);
 		await Tabulator.whineAboutRuleErrors();
 	}
