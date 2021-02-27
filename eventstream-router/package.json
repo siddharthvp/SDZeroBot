@@ -1,11 +1,7 @@
 {
 	"scripts": {
-		"build": "npx tsc || echo",
-		"start": "npm run build && jstart -N stream -mem 2g ~/bin/node ~/SDZeroBot/eventstream-router/main.js",
-		"stop": "jstop stream",
+		"start": "jstart -N stream -mem 2g ~/bin/node ~/SDZeroBot/eventstream-router/main.js",
+		"stop": "jstop stream || echo",
 		"restart": "npm run stop && sleep 10 && npm run start"
-	},
-	"dependencies": {
-		"typescript": "^4.1.3"
 	}
 }
