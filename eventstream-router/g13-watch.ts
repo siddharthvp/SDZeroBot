@@ -44,7 +44,6 @@ export default class g13Watch extends Route {
 			prop: 'revisions|description',
 			rvprop: 'content|size'
 		});
-
 		let text = pagedata?.revisions?.[0]?.content;
 		let size = pagedata?.revisions?.[0].size;
 		let desc = pagedata?.description;
