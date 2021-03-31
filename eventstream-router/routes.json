@@ -1,5 +1,6 @@
 [
 	"g13-watch.js",
 	"gans.js",
-	"bots.js"
+	"bots.js",
+	"bot-activity-monitor.js"
 ]

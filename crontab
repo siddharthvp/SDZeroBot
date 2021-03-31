@@ -78,4 +78,4 @@
 
 15  *   *   *   *  jsub -quiet -N stream-check  -mem 4g  ~/bin/node ~/SDZeroBot/eventstream-router/check.js
 
-20  *   *   *   *  jsub -quiet -N stream-check  -mem 2g  ~/bin/node ~/SDZeroBot/bot-monitor/main.js
+20  *   *   *   *  jsub -quiet -N bot-monitor  -mem 2g  ~/bin/node ~/SDZeroBot/bot-monitor/main.js
