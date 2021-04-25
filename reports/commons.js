@@ -163,7 +163,7 @@ function preprocessDraftForExtract(text) {
  * @returns {Promise}
  */
 async function saveWithBlacklistHandling(page, text, summary) {
-	return page.save(text, 'Updating G13 report').catch(async err => {
+	return page.save(text, summary).catch(async err => {
 		if (err.code === 'spamblacklist') {
 			for (let site of err.spamblacklist.matches) {
 				text = text.replace(
