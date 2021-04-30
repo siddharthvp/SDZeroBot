@@ -1,5 +1,5 @@
-const {mwn, bot, log, emailOnError} = require('../botbase');
-const TextExtractor = require('../TextExtractor')(bot);
+const {mwn, bot, log, emailOnError, TextExtractor} = require('../botbase');
+const {formatSummary} = require('./commons');
 
 (async function() {
 
@@ -44,12 +44,6 @@ const isRedirect = function(text) {
 	// with wikidata
 	return /^#?redirect\s*\[\[/i.test(text);
 };
-
-const formatSummary = function(text) {
-	return text
-		.replace(/\{\{.*?\}\}/g, '<nowiki>$&</nowiki>')
-		.replace(/\[\[((?:Category|File|Image):.*?)\]\]/gi, '[[:$1]]');
-}
 
 let count = 0;
 

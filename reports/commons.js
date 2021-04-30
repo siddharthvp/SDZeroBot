@@ -178,6 +178,20 @@ async function saveWithBlacklistHandling(page, text, summary) {
 	});
 }
 
+/**
+ * Format edit summary for inclusion in a bot report
+ * @param {string} text
+ * @returns {string}
+ */
+function formatSummary(text) {
+	if (!text) { // no summary given or revdelled/suppressed summary
+		return '';
+	}
+	return text
+		.replace(/\{\{.*?\}\}/g, '<nowiki>$&</nowiki>')
+		.replace(/\[\[((?:Category|File|Image):.*?)\]\]/gi, '[[:$1]]');
+}
+
 module.exports = {
 	populateWikidataShortdescs,
 	normaliseShortdesc,
@@ -185,6 +199,7 @@ module.exports = {
 	comparators: {promote, demote, sortAsc, sortDesc},
 	AfcDraftSize,
 	preprocessDraftForExtract,
-	saveWithBlacklistHandling
+	saveWithBlacklistHandling,
+	formatSummary
 };
 

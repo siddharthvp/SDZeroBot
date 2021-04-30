@@ -1,11 +1,11 @@
-const {bot, mwn, log, xdate, utils, emailOnError} = require('../botbase');
-const TextExtractor = require('../TextExtractor')(bot);
+const {bot, mwn, log, xdate, utils, emailOnError, TextExtractor} = require('../botbase');
+const {formatSummary} = require('./commons');
 
 (async () => {
 
 	await bot.getTokensAndSiteInfo();
 
-	var ts1 = new xdate().subtract(8, 'days'); 
+	var ts1 = new xdate().subtract(8, 'days');
 	ts1.setHours(0, 0, 0, 0);
 	var ts2 = new xdate().subtract(1, 'day');
 	ts2.setHours(0, 0, 0, 0);
@@ -142,13 +142,13 @@ const TextExtractor = require('../TextExtractor')(bot);
 			`[[${page}]] <small>(moved from [[${data.source}]])</small>`,
 			`<small>${data.excerpt || ''}</small>`,
 			`[[User:${data.user}|${user}]]`,
-			`<small>${data.comment || ''}</small>`,
+			`<small>${formatSummary(data.comment)}</small>`,
 		]);
 	}
-	
+
 	let text = `{{/header|count=${Object.keys(tableInfo).length}|date1=${ts1.format('D MMMM YYYY')}|date2=${ts2.format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>` +
-	`\n\n` + TextExtractor.finalSanitise(maintable.getText()) + 
-	`\n\n==Moved back or deleted==` + 
+	`\n\n` + TextExtractor.finalSanitise(maintable.getText()) +
+	`\n\n==Moved back or deleted==` +
 	`\n` + TextExtractor.finalSanitise(footertable.getText());
 
 	await bot.save('User:SDZeroBot/Draftify Watch', text, 'Updating report');

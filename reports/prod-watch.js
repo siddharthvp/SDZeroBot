@@ -1,4 +1,5 @@
 const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
+const {formatSummary} = require('./commons');
 
 (async function() {
 
@@ -9,8 +10,8 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 		return `[[User:${user}|${user}]]`;
 	}
 
-	var small = function(comment) {
-		return `<small>${comment}</small>`;
+	var formatComment = function(comment) {
+		return `<small>${formatSummary(comment)}</small>`;
 	}
 
 	async function main(date, subpage) {
@@ -78,7 +79,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 
 						if (!redirectRgx.test(rev.content)) { // not a redirect
 
-							pages[page].note = `Redirected to [[${pages[page].redirecttarget}]] by ${userlink(prevuser)}: ${small(prevcomment)}`;
+							pages[page].note = `Redirected to [[${pages[page].redirecttarget}]] by ${userlink(prevuser)}: ${formatComment(prevcomment)}`;
 							others.add(page);
 							return; // TODO: also find out who de-prodded it, if different
 
@@ -115,14 +116,13 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 						let firstrev = revs[revs.length-1];
 						if (logs.length && new Date(logs[0].timestamp) < new Date(firstrev.timestamp)) {
 							// yes
-							pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(logs[0].comment)}\n\n` +
-							`Recreated as redirect by ${userlink(firstrev.user)}: ${small(firstrev.comment)}`;
+							pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${formatComment(logs[0].comment)}\n\n` +
+							`Recreated as redirect by ${userlink(firstrev.user)}: ${formatComment(firstrev.comment)}`;
 							others.add(page);
 
 						} else {
 							pages[page].note = `[Could not determine status]`;
 							others.add(page);
-							return;
 						}
 					});
 
@@ -134,7 +134,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 					if (prodRgx.test(rev.content)) {
 						pages[page].deproder = prevuser;
 						pages[page].comment = prevcomment;
-						pages[page].note = `De-prodded by ${userlink(pages[page].deproder)} with comment: <small>${pages[page].comment || ''}</small>`;
+						pages[page].note = `De-prodded by ${userlink(pages[page].deproder)} with comment: ${formatComment(pages[page].comment)}`;
 
 						// check if it was AFD'd later after de-prodding
 						return bot.search('prefix:Wikipedia:Articles for deletion/' + page, 5, '', {
@@ -177,8 +177,8 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 					var firstrev = revs[revs.length-1];
 					if (logs.length && new Date(logs[0].timestamp) < new Date(firstrev.timestamp)) {
 						// yes
-						pages[page].note = `Deleted by ${logs[0].user}: ${small(logs[0].comment)}\n\n` +
-						`Recreated by ${userlink(firstrev.user)}: ${small(firstrev.comment)}`;
+						pages[page].note = `Deleted by ${logs[0].user}: ${formatComment(logs[0].comment)}\n\n` +
+						`Recreated by ${userlink(firstrev.user)}: ${formatComment(firstrev.comment)}`;
 						others.add(page);
 
 					} else {
@@ -202,7 +202,7 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 
 						let afd_comment_rgx = /^\[\[Wikipedia:Articles for deletion\//;
 						let isAfd = afd_comment_rgx.test(logs[0].comment);
-						pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${small(logs[0].comment)}`;
+						pages[page].note = `Deleted by ${userlink(logs[0].user)}: ${formatComment(logs[0].comment)}`;
 						if (isAfd) {
 							afddeleted.add(page);
 						} else {
@@ -219,14 +219,14 @@ const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
 							} else {
 								let move = movelogs[0];
 								if (move.params.target_title === 'Draft:' + page) {
-									pages[page].note = `Draftified to [[${move.params.target_title}]] by ${userlink(move.user)}: ${small(move.comment)}`;
+									pages[page].note = `Draftified to [[${move.params.target_title}]] by ${userlink(move.user)}: ${formatComment(move.comment)}`;
 									others.add(page);
 								} else {
 									let target = move.params.target_title;
 
 									// non-mainspace target, don't follow
 									if (bot.title.newFromText(target).namespace !== 0) {
-										pages[page].note = `Moved to [[${target}]] by ${userlink(move.user)}: ${small(move.comment)}`;
+										pages[page].note = `Moved to [[${target}]] by ${userlink(move.user)}: ${formatComment(move.comment)}`;
 										others.add(page);
 										return;
 									}
