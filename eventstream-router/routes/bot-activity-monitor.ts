@@ -1,4 +1,4 @@
-import {Route} from "./route";
+import {Route} from "../route";
 import {exec} from 'child_process';
 
 export default class Task extends Route {
@@ -9,7 +9,7 @@ export default class Task extends Route {
 
 	filter(data): boolean {
 		return data.wiki === 'enwiki' &&
-			data.title === 'Wikipedia:Bot activity monitor/config';
+			data.title === 'Wikipedia:Bot activity monitor/Configurations';
 	}
 
 	async worker(data) {

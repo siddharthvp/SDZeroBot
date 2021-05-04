@@ -65,7 +65,7 @@ class RouteValidator {
 		this.name = file.replace(/\.js$/, '');
 		let route;
 		try {
-			let routeCls = require('./' + file).default;
+			let routeCls = require('./routes/' + file).default;
 			route = new routeCls();
 			route.name = this.name;
 		} catch (e) {
