@@ -1,4 +1,4 @@
-import {argv, bot, log} from "../botbase";
+import {bot} from "../botbase";
 import {MwnDate} from "../../mwn";
 import {RuleError} from "./index";
 
@@ -22,8 +22,3 @@ export function getFromDate(duration: string, times = 1): MwnDate {
     }
 }
 
-export function debug(str) {
-    if (argv.verbose) {
-        log(str);
-    }
-}

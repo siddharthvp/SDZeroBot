@@ -4,7 +4,7 @@ import {Monitor} from './index';
 import * as moment from "moment";
 
 export class Tabulator {
-	static rootpage = 'user:SD0001/Bot activity monitor' + (argv.fake ? '/sandbox' : '');
+	static rootpage = 'Wikipedia:Bot activity monitor' + (argv.fake ? '/sandbox' : '');
 
 	static table: InstanceType<typeof mwn.table>;
 	static invalidRules: { task: string, reason: string }[] = []
@@ -58,7 +58,10 @@ export class Tabulator {
 	}
 
 	static async postResults() {
-		let text = Tabulator.table.getText();
+		let text = '<noinclude>' + mwn.template('/header', {
+			errcount: this.invalidRules.length ? String(this.invalidRules.length) : null
+		}) + '</noinclude>' +
+			`<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n` + Tabulator.table.getText();
 		if (argv.dry) {
 			return console.log(text);
 		}

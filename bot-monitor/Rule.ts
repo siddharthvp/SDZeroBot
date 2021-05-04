@@ -1,6 +1,6 @@
 import {argv, bot, fs, mwn, path} from "../botbase";
 import {MwnDate} from "../../mwn";
-import {getFromDate, Monitor} from "./index";
+import {getFromDate} from "./index";
 
 export type BotConfigParam =
     | 'bot'
@@ -46,7 +46,7 @@ export class RuleError extends Error {
 
 export async function fetchRules(): Promise<RawRule[]> {
     let text = !argv.fake ?
-        await new bot.page('WP:Bot activity monitor/config').text() :
+        await new bot.page('Wikipedia:Bot activity monitor/Configurations').text() :
         fs.readFileSync(path.join(__dirname, 'fake-config.wikitext')).toString();
 
     let templates = new bot.wikitext(text).parseTemplates({

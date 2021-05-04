@@ -1,5 +1,5 @@
-import {argv, bot, emailOnError} from "../botbase";
-import {RawRule, debug, getFromDate} from './index'
+import {argv, bot, emailOnError, log} from "../botbase";
+import {RawRule, getFromDate} from './index'
 
 // Only a small amount of data is stored. Probably not worth using ToolsDB.
 import * as sqlite from "sqlite";
@@ -38,7 +38,7 @@ class Db extends SqliteDb {
 			lastseents varbinary(25),
 			notseen integer
 		)`);
-		debug(`[S] Opened database connection`);
+		log(`[V] Opened database connection`);
 	}
 
 	// Robustify this? This value still stands the risk of being the same for two tasks.

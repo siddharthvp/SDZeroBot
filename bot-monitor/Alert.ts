@@ -11,14 +11,13 @@ export class Alert {
     static pingpage = 'Wikipedia:Bot activity monitor/Pings'
 
     constructor(monitor: Monitor) {
-        // ah, the boilerplate
-        this.rule = monitor.rule;
-        this.name = monitor.name;
-        this.actions = monitor.actions;
+        Object.assign(this, monitor);
     }
 
     async alert() {
+        // Alerts completely disabled for now:
         return;
+
         if (argv.dry || !this.rule.alertMode) {
             return;
         }

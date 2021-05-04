@@ -3,7 +3,7 @@ import {MwnDate} from "../../mwn";
 import {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
 import {LogEvent, UserContribution} from "../../mwn/src/user";
 
-import {Alert, ChecksDb, debug, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
+import {Alert, ChecksDb, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
 
 export class Monitor {
 	name: string
@@ -18,11 +18,11 @@ export class Monitor {
 	// SQLite DB row
 	lastSeenDb: { name: string, rulehash: string, checkts: string, lastseents: string, notseen: number } | undefined;
 
-	static configpage = 'Wikipedia:Bot activity monitor/config.json'
+	static configpage = 'Wikipedia:Bot activity monitor/Configurations';
 
 	async monitor(rule: RawRule) {
 		this.name = (rule.bot || '[UNNAMED BOT]') + (rule.task ? ': ' + rule.task : '');
-		debug(`[i] Checking ${this.name}`);
+		log(`[V] Checking ${this.name}`);
 		this.rawRule = rule;
 		try {
 			if (await ChecksDb.checkCached(rule)) {
@@ -42,15 +42,14 @@ export class Monitor {
 		let check = this.rule.action === 'edit' ? await this.checkContribs() : await this.checkLogs();
 		Tabulator.add(this, check);
 		if (!check) { // Not OK
-			// await this.alert();
-			// await new Alert(this).alert();
+			await new Alert(this).alert();
 		} else { // OK
 			log(`[S] ${this.rule.task} on track`);
 		}
 	}
 
 	async checkContribs() {
-		debug(`[i] Checking edits of ${this.rule.bot}`);
+		log(`[V] Checking edits of ${this.rule.bot}`);
 		var ucParams: ApiQueryUserContribsParams = {
 			ucnamespace: this.rule.namespace,
 			ucend: moreRecent(new bot.date(this.lastSeenDb?.checkts), this.rule.fromDate),
@@ -71,7 +70,7 @@ export class Monitor {
 	}
 
 	async checkLogs() {
-		debug(`[i] Checking logs of ${this.rule.bot}`);
+		log(`[V] Checking logs of ${this.rule.bot}`);
 		let apiParams: ApiQueryLogEventsParams = {
 			leprop: ['title', 'comment', 'timestamp'],
 			leend: moreRecent(new bot.date(this.lastSeenDb?.checkts), this.rule.fromDate),
@@ -110,7 +109,7 @@ export class Monitor {
 	}
 
 	async getLastSeen(apiParams: ApiQueryLogEventsParams | ApiQueryUserContribsParams, forLogs: boolean) {
-		debug(`[i] Getting last seen of ${this.name}`);
+		log(`[V] Getting last seen of ${this.name}`);
 		function listParams(params) {
 			let prefix = forLogs ? 'le' : 'uc';
 			let fixedParams = {};
@@ -141,7 +140,7 @@ export class Monitor {
 			}
 		}
 		if (this.lastSeenDb) {
-			debug(`[i] Filling in last seen from db`);
+			log(`[V] Filling in last seen from db`);
 			if (this.lastSeenDb.notseen) {
 				this.lastSeenNot = new bot.date(this.lastSeenDb.lastseents);
 			} else {
@@ -159,7 +158,7 @@ export class Monitor {
 			// related prop. Tabulator shows no edits since beginning of time
 			return;
 		}
-		debug(`[i] Still getting last seen of ${this.name}: Try with time`);
+		log(`[V] Still getting last seen of ${this.name}: Try with time`);
 		let lastSeenNot = lastAction.timestamp;
 		for await (let action of new bot.user(this.rule.bot)[forLogs ? 'logsGen' : 'contribsGen']({
 			...apiParams,
