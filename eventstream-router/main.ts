@@ -2,6 +2,8 @@ import {argv, bot, fs, log} from '../botbase';
 import {createLogStream, debug, logError} from "./utils";
 import * as EventSource from './EventSource';
 
+// TODO: improve logging
+
 export interface eventData {
 	$schema: string
 	meta: {
@@ -114,25 +116,42 @@ let routes: RouteValidator[] = files.map(file => {
 	return route.isValid;
 });
 
-// Number of milliseconds after which lastSeenTs is to be saved to file
-const lastSeenUpdateInterval = 1000;
+// XXX: consider saving to Redis rather than to NFS every 1 second?
+class LastSeen {
+	ts: number;
 
-let lastSeenTs;
-setInterval(function () {
-	fs.writeFile('./last-seen.txt', String(lastSeenTs), err => err && console.log(err));
-}, lastSeenUpdateInterval);
+	// Number of milliseconds after which lastSeenTs is to be saved to file
+	updateInterval = 1000;
+
+	file = './last-seen.txt';
+
+	constructor() {
+		setInterval(() => {
+			fs.writeFile(this.file, String(this.ts), err => err && console.log(err));
+		}, this.updateInterval);
+	}
+	read() {
+		try {
+			return parseInt(fs.readFileSync(this.file).toString());
+		} catch (e) {
+			return NaN;
+		}
+	}
+	get() {
+		return new bot.date(
+			((typeof this.ts === 'number') ? this.ts : lastSeen.read())
+			* 1000
+		);
+	}
+}
+const lastSeen = new LastSeen();
 
 let routerLog = createLogStream('./routerlog.out');
 
 async function main() {
 	log('[S] Restarted main');
 
-	let lastTs;
-	try {
-		lastTs = (typeof lastSeenTs === 'number') ? lastSeenTs * 1000 :
-			parseInt(fs.readFileSync('./last-seen.txt').toString()) * 1000;
-	} catch (e) {}
-	const ts = new bot.date(lastTs);
+	const ts = lastSeen.get();
 	const tsUsable = ts.isValid() && new bot.date().subtract(7, 'days').isBefore(ts);
 	log(`[i] lastSeenTs: ${ts}: ${tsUsable}`);
 
@@ -169,7 +188,7 @@ async function main() {
 
 	stream.onmessage = function (event) {
 		let data: eventData = JSON.parse(event.data);
-		lastSeenTs = data.timestamp;
+		lastSeen.ts = data.timestamp;
 		for (let route of routes) {
 			// the filter method is only invoked after the init(), so that init()
 			// can change the filter function
