@@ -1,8 +1,8 @@
 import { argv, bot, emailOnError, enwikidb, log, mwn } from "../botbase";
-import { readFile, writeFile } from "../filesystem";
 import { Template } from "../../mwn/build/wikitext";
 import { BOT_NAME, FAKE_INPUT_FILE, FAKE_OUTPUT_FILE, QUERY_TIMEOUT, TEMPLATE_END } from "./consts";
 import { spawn } from "child_process";
+import { lowerFirst, readFile, writeFile } from "../utils";
 
 let db = new enwikidb({
 	connectionLimit: 10
@@ -233,7 +233,7 @@ export class Query {
 		let beginTemplateEndIdx = beginTemplateStartIdx + this.template.wikitext.length;
 		let endTemplateStartIdx = text.indexOf(`{{${TEMPLATE_END}}}`, beginTemplateEndIdx);
 		if (endTemplateStartIdx === -1) { // caps, XXX
-			endTemplateStartIdx = text.indexOf(`{{${lowerfirst(TEMPLATE_END)}}}`, beginTemplateEndIdx);
+			endTemplateStartIdx = text.indexOf(`{{${lowerFirst(TEMPLATE_END)}}}`, beginTemplateEndIdx);
 		}
 		let textToReplace = text.slice(
 			beginTemplateEndIdx,
@@ -262,6 +262,3 @@ export class SQLError extends Error {
 // hacky way to prevent further execution in process(), but not actually report as error
 export class HandledError extends Error {}
 
-function lowerfirst(str: string) {
-	return str[0].toLowerCase() + str.slice(1);
-}

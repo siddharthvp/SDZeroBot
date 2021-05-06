@@ -67,30 +67,5 @@ export const TextExtractor = require('./TextExtractor')(bot);
 
 export {mysql, db, enwikidb, toolsdb} from './db';
 
-export const utils = {
-    saveObject: function(filename, obj) {
-        fs.writeFileSync('./' + filename + '.json', JSON.stringify(obj, null, 2));
-    },
-
-    logObject: function(obj) {
-        return console.log(JSON.stringify(obj, null, 2));
-    },
-
-    // copied from https://en.wikipedia.org/wiki/MediaWiki:Gadget-twinkleblock.js
-    makeSentence: function(arr) {
-        if (arr.length < 3) {
-            return arr.join(' and ');
-        }
-        var last = arr.pop();
-        return arr.join(', ') + ' and ' + last;
-    },
-
-    arrayChunk: function(arr, size) {
-        var numChunks = Math.ceil(arr.length / size);
-        var result = new Array(numChunks);
-        for (var i = 0; i < numChunks; i++) {
-            result[i] = arr.slice(i * size, (i + 1) * size);
-        }
-        return result;
-    }
-};
+// exported like this for compatibility; better import utils directly
+export * as utils from './utils';

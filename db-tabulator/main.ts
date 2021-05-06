@@ -1,7 +1,7 @@
 import { argv, bot, log } from "../botbase";
 import { fetchQueries, processQueries } from "./io";
-import { writeFile } from "../filesystem";
 import { FAKE_OUTPUT_FILE } from "./consts";
+import { writeFile } from "../utils";
 
 /**
  * Specs:
