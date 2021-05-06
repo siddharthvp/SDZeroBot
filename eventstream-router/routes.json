@@ -1,5 +1,5 @@
-[
-	"g13-watch.js",
-	"gans.js",
-	"bot-activity-monitor.js"
-]
+{
+	"g13-watch": "./routes/g13-watch",
+	"gans": "./routes/gans",
+	"bot-activity-monitor": "./routes/bot-activity-monitor"
+}

@@ -1,3 +1,9 @@
+/**
+ * Script to check every half an hour that the
+ * stream process is still working, and restart
+ * it if it isn't.
+ */
+
 const {emailOnError} = require('../botbase');
 const {exec, execSync} = require('child_process');
 

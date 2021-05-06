@@ -1,152 +1,38 @@
-import {argv, bot, fs, log} from '../botbase';
-import {createLogStream, debug, logError} from "./utils";
+import { argv, bot, log, path } from '../botbase';
 import * as EventSource from './EventSource';
+import { RouteValidator } from "./RouteValidator";
+import { RecentChangeStreamEvent } from "./RecentChangeStreamEvent";
+import { LastSeen } from "./LastSeen";
+import { createLogStream, logError, pageFromCategoryEvent } from "./utils";
 
 // TODO: improve logging
-
-export interface eventData {
-	$schema: string
-	meta: {
-		uri: string
-		request_id: string
-		id: string
-		dt: string
-		domain: string
-		stream: string
-		topic: string
-		partition: number
-		offset: number
-	}
-
-	type: 'edit' | 'log' | 'categorize' | 'new'
-
-	namespace: number
-	title: string
-	comment: string
-	parsedcomment: string
-	timestamp: number
-	user: string
-	bot: boolean
-	wiki: string
-	server_url: string
-	server_name: string
-	server_script_path: string
-
-	// present for type=edit, categorize, new
-	id: number
-
-	// present type=edit, new
-	minor: boolean
-	patrolled: boolean
-	length: {
-		old: number // not present for type=new
-		new: number
-	}
-	revision: {
-		old: number // not present for type=new
-		new: number
-	}
-
-	// present for type=log
-	log_id: number
-	log_type: string
-	log_action: string
-	log_params: any
-	log_action_comment: string
-}
-
-class RouteValidator {
-	name: string;
-	worker: ((data: eventData) => any)
-	filter: ((data: eventData) => boolean)
-	init: (() => any)
-	isValid: boolean
-	ready: Promise<void>
-
-	validate(file) {
-		this.name = file.replace(/\.js$/, '');
-		let route;
-		try {
-			let routeCls = require('./routes/' + file).default;
-			route = new routeCls();
-			route.name = this.name;
-		} catch (e) {
-			log(`Invalid route ${file}: require failed`);
-			log(e);
-			this.isValid = false;
-			return;
-		}
-		this.worker = route.worker.bind(route);
-		this.filter = route.filter.bind(route);
-		this.init = route.init.bind(route);
-
-		if (typeof this.filter !== 'function' || typeof this.worker !== 'function') {
-			log(`Invalid route ${route.name}: filter or worker is not a function`);
-			this.isValid = false;
-			return;
-		}
-		this.ready = new Promise((resolve, reject) => {
-			if (typeof this.init !== 'function') {
-				resolve();
-				debug(`[i] Initialized ${route.name} with no initializer`);
-			} else {
-				Promise.resolve(this.init()).then(() => {
-					resolve();
-					debug(`[S] Initialized ${route.name}`);
-				}, (err) => {
-					reject();
-					logError(err, route.name);
-				});
-			}
-		});
-		this.isValid = true;
-		return this;
-	}
-}
 
 log(`[S] Started`);
 
 process.chdir(__dirname);
+
 // For development, specify a file as "-r filename" and only that route will be
 // registered, otherwise all files in routes.json are registered.
-let files: string[] = argv.r ? [argv.r] : require('./routes.json');
-let routes: RouteValidator[] = files.map(file => {
-	return new RouteValidator().validate(file);
+let files: Record<string, string> = argv.r ? { [path.basename(argv.r)]: argv.r } : require('./routes.json');
+let routes: RouteValidator[] = Object.entries(files).map(([name, file]) => {
+	return new RouteValidator(name).validate(file);
 }).filter(route => {
 	return route.isValid;
 });
 
-// XXX: consider saving to Redis rather than to NFS every 1 second?
-class LastSeen {
-	ts: number;
-
-	// Number of milliseconds after which lastSeenTs is to be saved to file
-	updateInterval = 1000;
-
-	file = './last-seen.txt';
-
-	constructor() {
-		setInterval(() => {
-			fs.writeFile(this.file, String(this.ts), err => err && console.log(err));
-		}, this.updateInterval);
-	}
-	read() {
-		try {
-			return parseInt(fs.readFileSync(this.file).toString());
-		} catch (e) {
-			return NaN;
-		}
-	}
-	get() {
-		return new bot.date(
-			((typeof this.ts === 'number') ? this.ts : lastSeen.read())
-			* 1000
-		);
-	}
-}
 const lastSeen = new LastSeen();
 
-let routerLog = createLogStream('./routerlog.out');
+const routerLog = createLogStream('./routerlog.out');
+function addToRouterLog(routeName: string, data: RecentChangeStreamEvent) {
+	let catNote = '';
+	if (data.type === 'categorize') {
+		let page = pageFromCategoryEvent(data);
+		if (page) {
+			catNote = (page.added ? '+' : '–') + page.title + '@';
+		}
+	}
+	routerLog(`Routing to ${routeName}: ${catNote}${data.title}@${data.wiki}`);
+}
 
 async function main() {
 	log('[S] Restarted main');
@@ -187,7 +73,7 @@ async function main() {
 	}
 
 	stream.onmessage = function (event) {
-		let data: eventData = JSON.parse(event.data);
+		let data: RecentChangeStreamEvent = JSON.parse(event.data);
 		lastSeen.ts = data.timestamp;
 		for (let route of routes) {
 			// the filter method is only invoked after the init(), so that init()
@@ -195,7 +81,7 @@ async function main() {
 			route.ready.then(() => {
 				try {
 					if (route.filter(data)) {
-						routerLog(`Routing to ${route.name}: ${data.title}@${data.wiki}`);
+						addToRouterLog(route.name, data);
 						route.worker(data);
 					}
 				} catch (e) {

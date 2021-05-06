@@ -1,5 +1,6 @@
 import {bot, toolsdb, TextExtractor} from '../../botbase';
-import {Route} from "../route";
+import {Route} from "../Route";
+import {pageFromCategoryEvent} from "../utils";
 const {preprocessDraftForExtract} = require('../../reports/commons');
 
 export default class g13Watch extends Route {
@@ -30,12 +31,11 @@ export default class g13Watch extends Route {
 	}
 
 	async worker(data) {
-		let match = /^\[\[:(.*?)\]\] added/.exec(data.comment);
-		if (!match) {
+		let page = pageFromCategoryEvent(data);
+		if (!page || !page.added) {
 			return;
 		}
-
-		let title = match[1];
+		let title = page.title;
 		// data.timestamp is *seconds* since epoch
 		// This date object will be passed to db
 		let ts = data.timestamp ? new bot.date(data.timestamp * 1000) : null;

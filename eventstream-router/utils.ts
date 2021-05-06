@@ -1,4 +1,5 @@
-import {argv, bot, fs, log} from "../botbase";
+import { argv, bot, fs, log } from "../botbase";
+import { RecentChangeStreamEvent } from "./RecentChangeStreamEvent";
 
 export function createLogStream(file: string) {
 	let stream = fs.createWriteStream(file, {
@@ -39,6 +40,18 @@ export function stringifyObject(obj) {
 	} catch (e) {
 		return null;
 	}
+}
+
+export function pageFromCategoryEvent(data: RecentChangeStreamEvent) {
+	let match = /^\[\[:(.*?)\]\] (added|removed)/.exec(data.comment);
+	if (!match) {
+		return null;
+	}
+	return {
+		title: match[1],
+		added: match[2] === 'added',
+		removed: match[2] === 'removed'
+	};
 }
 
 export function debug(msg) {

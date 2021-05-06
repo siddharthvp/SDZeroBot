@@ -1,5 +1,5 @@
-import type {eventData} from "./main";
-import {createLogStream} from "./utils";
+import { createLogStream } from "./utils";
+import { RecentChangeStreamEvent } from "./RecentChangeStreamEvent";
 
 /**
  * REGISTER ROUTES
@@ -23,9 +23,9 @@ export abstract class Route {
 		this.log = createLogStream('./' + this.name + '.out');
 	}
 
-	filter(data: eventData): boolean {
+	filter(data: RecentChangeStreamEvent): boolean {
 		return true;
 	}
 
-	abstract worker(data: eventData);
+	abstract worker(data: RecentChangeStreamEvent);
 }

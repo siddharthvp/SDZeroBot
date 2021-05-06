@@ -1,4 +1,4 @@
-import {Route} from "../route";
+import {Route} from "../Route";
 import {exec} from 'child_process';
 
 export default class Task extends Route {

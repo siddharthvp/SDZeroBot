@@ -1,5 +1,5 @@
 import {bot, toolsdb} from '../../botbase';
-import {Route} from "../route";
+import {Route} from "../Route";
 
 export default class gans extends Route {
 	db: toolsdb;
@@ -27,7 +27,7 @@ export default class gans extends Route {
 			this.processRemoval(article);
 		} else {
 			// should never happen
-			return Promise.reject(`${article} neither an additon nor removal?`);
+			return Promise.reject(`${article} neither an addition nor removal?`);
 		}
 	}
 
