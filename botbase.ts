@@ -68,4 +68,5 @@ export const TextExtractor = require('./TextExtractor')(bot);
 export {mysql, db, enwikidb, toolsdb} from './db';
 
 // exported like this for compatibility; better import utils directly
-export * as utils from './utils';
+import * as utils from './utils';
+export {utils};
