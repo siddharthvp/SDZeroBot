@@ -14,7 +14,7 @@ export abstract class db {
 
 	init() {
 		this.pool = mysql.createPool({
-			port: 3306,
+			port: process.env.LOCAL ? 4711 : 3306,
 			user: auth.db_user,
 			password: auth.db_password,
 			waitForConnections: true,
@@ -86,7 +86,7 @@ export class enwikidb extends db {
 	constructor(customOptions = {}) {
 		super();
 		this.config = {
-			host: 'enwiki.analytics.db.svc.eqiad.wmflabs',
+			host: process.env.LOCAL ? '127.0.0.1' : 'enwiki.analytics.db.svc.eqiad.wmflabs',
 			database: 'enwiki_p',
 			...customOptions
 		};
@@ -112,7 +112,7 @@ export class toolsdb extends db {
 	constructor(dbname, customOptions = {}) {
 		super();
 		this.config = {
-			host: 'tools.db.svc.eqiad.wmflabs',
+			host: process.env.LOCAL ? '127.0.0.1' : 'tools.db.svc.eqiad.wmflabs',
 			database: 's54328__' + dbname,
 			...customOptions
 		};
