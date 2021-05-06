@@ -1,5 +1,4 @@
 import {bot, log, emailOnError, mwn, argv} from '../botbase';
-import {ApiEditPageParams} from "mwn/build/api_params";
 
 const PercentDefault = 0.25;
 const ByteDefault = 1000;

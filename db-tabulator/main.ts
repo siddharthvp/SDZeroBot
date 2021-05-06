@@ -1,40 +1,39 @@
-import { argv, bot, emailOnError, log } from "../botbase";
-import { fetchQueries } from "./input";
+import { argv, bot, log } from "../botbase";
+import { fetchQueries, processQueries } from "./io";
 import { writeFile } from "../filesystem";
 import { FAKE_OUTPUT_FILE } from "./consts";
 
 /**
  * Specs:
  *
- * MVP:
- * Support linkification of items --done
+ * Done:
+ * Support linkification of items
  * Report back query errors to the user
  * Support multiple tables on a page
- *
- * Improvements:
  * Support setting table attributes and widths for each column
- * Support article extracts
  * Report the first results immediately on setup (Use EventStream)
+ *
+ * Pending:
+ * Support article extracts
+ * Setup web endpoint to generate reports on demand
  *
  */
 
 (async function () {
 
 	log(`[i] Started`);
+
 	process.chdir(__dirname);
 
 	await bot.getTokensAndSiteInfo();
-
-	const queries = await fetchQueries();
-	log(`[S] Fetched queries`);
 
 	if (argv.fake) {
 		writeFile(FAKE_OUTPUT_FILE, '');
 	}
 
-	await bot.batchOperation(queries, async (query) => {
-		log(`[i] Processing page ${query.page}`);
-		await query.process();
-	}, 10);
+	const queries = await fetchQueries();
+	log(`[S] Fetched queries`);
+
+	await processQueries(queries);
 
 })();

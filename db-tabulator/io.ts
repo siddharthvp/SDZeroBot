@@ -13,10 +13,23 @@ export async function fetchQueries() {
 		if (pg.ns === 0) { // sanity check: don't work in mainspace
 			continue;
 		}
+		// Only work in bot/op userspaces until BRFA approval
+		if (!pg.title.startsWith('User:SD0001/') && !pg.title.startsWith('User:SDZeroBot/')) {
+			continue;
+		}
 		let text = pg.revisions[0].content;
 		queries = queries.concat(getQueriesFromText(text, pg.title));
 	}
 	return queries;
+}
+
+export async function fetchQueriesForPage(page: string) {
+	// Only work in bot/op userspaces until BRFA approval
+	if (!page.startsWith('User:SD0001/') && page.startsWith('User:SDZeroBot/')) {
+		return;
+	}
+	let text = (await bot.read(page)).revisions[0].content;
+	return getQueriesFromText(text, page);
 }
 
 function getQueriesFromText(text: string, title: string) {
@@ -32,3 +45,9 @@ function getQueriesFromText(text: string, title: string) {
 	});
 }
 
+export async function processQueries(queries: Query[]) {
+	await bot.batchOperation(queries, async (query) => {
+		log(`[i] Processing page ${query.page}`);
+		await query.process();
+	}, 10);
+}
