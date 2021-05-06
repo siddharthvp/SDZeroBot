@@ -28,15 +28,22 @@ export class Query {
 
 	async process() {
 		try {
-			this.parseQuery(this.template);
+			try {
+				this.parseQuery(this.template);
+			} catch (err) {
+				if (err instanceof InputError) {
+					return this.saveWithError(err.message);
+				} else throw err;
+			}
+			const result = await this.runQuery();
+			const resultText = this.formatResults(result);
+			await this.save(resultText);
 		} catch (err) {
-			if (err instanceof InputError) {
-				return this.saveWithError(err.message);
-			} else throw err;
+			emailOnError(err, 'quarry2wp');
+			log(`[E] Unexpected error:`);
+			log(err);
+			throw err; // propagate error
 		}
-		const result = await this.runQuery();
-		const resultText = this.formatResults(result);
-		await this.save(resultText);
 	}
 
 	parseQuery(template: Template) {
@@ -75,8 +82,6 @@ export class Query {
 				} else if (err.errno === 1040) {
 					// too many connections (should not happen)
 					log(`[E] Too Many Connections Error!`);
-					log(err);
-					emailOnError(err, 'quarry2wp');
 					throw err;
 				} else {
 					message += `Consider using Quarry to to test your SQL.`;
@@ -185,9 +190,8 @@ export class Query {
 
 	}
 
-	async saveWithError(message: string): Promise<never> {
+	async saveWithError(message: string) {
 		await this.save(`{{error|[${message}]}}`, true);
-		return Promise.reject();
 	}
 
 	insertResultIntoPageText(text: string, queryResult: string) {

@@ -32,15 +32,9 @@ import { FAKE_OUTPUT_FILE } from "./consts";
 		writeFile(FAKE_OUTPUT_FILE, '');
 	}
 
-	bot.batchOperation(queries, async (query) => {
+	await bot.batchOperation(queries, async (query) => {
 		log(`[i] Processing page ${query.page}`);
-		await query.process().catch(err => {
-			emailOnError(err, 'quarry2wp');
-			log(`[E] Unexpected error:`);
-			log(err);
-			throw err;
-		});
-	}, 10, 0);
-
+		await query.process();
+	}, 10);
 
 })();

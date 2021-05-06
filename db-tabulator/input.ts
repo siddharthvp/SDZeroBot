@@ -10,6 +10,9 @@ export async function fetchQueries() {
 	let queries: Query[] = [];
 	let pages = (await new bot.page(TEMPLATE).transclusions());
 	for await (let pg of bot.readGen(pages)) {
+		if (pg.ns === 0) { // sanity check: don't work in mainspace
+			continue;
+		}
 		let text = pg.revisions[0].content;
 		queries = queries.concat(getQueriesFromText(text, pg.title));
 	}
