@@ -5,15 +5,11 @@ import * as path from 'path';
 import * as child_process from 'child_process';
 export {fs, path, child_process};
 
-let log;
-
 /** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
 export function emailOnError(err: Error, taskname: string) {
-    if (typeof log !== 'undefined') { // Check if mwn has loaded
-        log('[E] Fatal error');
-    } else { // imitate!
-        console.log(`[${new Date().toISOString()}] [E] Fatal error`);
-    }
+    // datetime similar to what mwn log produces, but can't use that directly as mwn may not have loaded
+    const dateTimeString = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    console.log(`[${dateTimeString}] [E] Fatal error`);
     console.log(err);
     child_process.exec(
         `echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
@@ -34,9 +30,10 @@ process.on('uncaughtException', function(err) {
 });
 
 import {mwn} from '../mwn';
+export {mwn};
 
-/** Colorised and dated console logging. Powered by Semlog, a dependency of mwn */
-log = mwn.log;
+/** Colorised and dated console logging. */
+export const log = mwn.log;
 
 /** Parsed console arguments */
 export const argv = require('minimist')(process.argv.slice(2));
@@ -47,7 +44,7 @@ export const xdate = require('./xdate');
 /** bot account and database access credentials */
 const auth = require('./.auth');
 
-const bot = new mwn({
+export const bot = new mwn({
     apiUrl: 'https://en.wikipedia.org/w/api.php',
     username: auth.bot_username,
     password: auth.bot_password,
@@ -65,8 +62,6 @@ const bot = new mwn({
 });
 
 bot.initOAuth();
-
-export {mwn, bot, log};
 
 export const TextExtractor = require('./TextExtractor')(bot);
 
@@ -89,16 +84,12 @@ export const utils = {
         var last = arr.pop();
         return arr.join(', ') + ' and ' + last;
     },
-    // copied from https://en.wikipedia.org/wiki/MediaWiki:Gadget-morebits.js
+
     arrayChunk: function(arr, size) {
-        var result = [];
-        var current;
-        for (var i = 0; i < arr.length; ++i) {
-            if (i % size === 0) { // when 'i' is 0, this is always true, so we start by creating one.
-                current = [];
-                result.push(current);
-            }
-            current.push(arr[i]);
+        var numChunks = Math.ceil(arr.length / size);
+        var result = new Array(numChunks);
+        for (var i = 0; i < numChunks; i++) {
+            result[i] = arr.slice(i * size, (i + 1) * size);
         }
         return result;
     }

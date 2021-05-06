@@ -6,8 +6,9 @@
 import {log, bot} from './botbase';
 import * as mysql from 'mysql2/promise';
 const auth = require('./.auth');
+export {mysql};
 
-abstract class db {
+export abstract class db {
 	pool: mysql.Pool
 	config: mysql.PoolOptions
 
@@ -48,7 +49,7 @@ abstract class db {
 		}
 	}
 
-	async query(...args: any[]) {
+	async query(...args: any[]): Promise<Array<Record<string, string | number | null>>> {
 		let conn = await this.getConnection();
 		const result = await conn.query(...args).finally(() => {
 			conn.release();
@@ -80,7 +81,7 @@ abstract class db {
 	}
 }
 
-class enwikidb extends db {
+export class enwikidb extends db {
 	replagHours: number
 	constructor(customOptions = {}) {
 		super();
@@ -107,7 +108,7 @@ class enwikidb extends db {
 	}
 }
 
-class toolsdb extends db {
+export class toolsdb extends db {
 	constructor(dbname, customOptions = {}) {
 		super();
 		this.config = {
@@ -117,5 +118,3 @@ class toolsdb extends db {
 		};
 	}
 }
-
-export {mysql, db, enwikidb, toolsdb};
