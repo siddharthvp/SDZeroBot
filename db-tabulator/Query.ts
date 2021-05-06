@@ -19,7 +19,6 @@ export class Query {
 	template: Template;
 	sql: string;
 	wikilinkConfig: {columnIndex: number, namespace: number, showNamespace: boolean}[] | null;
-	widths: number[];
 
 	constructor(template: Template, page: string) {
 		this.page = page;
@@ -39,6 +38,7 @@ export class Query {
 			const resultText = this.formatResults(result);
 			await this.save(resultText);
 		} catch (err) {
+			if (err instanceof HandledError) return;
 			emailOnError(err, 'quarry2wp');
 			log(`[E] Unexpected error:`);
 			log(err);
@@ -84,7 +84,7 @@ export class Query {
 					log(`[E] Too Many Connections Error!`);
 					throw err;
 				} else {
-					message += `Consider using Quarry to to test your SQL.`;
+					message += `– Consider using [https://quarry.wmflabs.org/ Quarry] to to test your SQL.`;
 				}
 				return this.saveWithError(message);
 			} else {
@@ -112,7 +112,10 @@ export class Query {
 
 	formatResults(result) {
 
-		let table = new mwn.table();
+		let table = new mwn.table({
+			style: this.template.getValue('table_style') || 'overflow-wrap: anywhere'
+		});
+
 		if (result.length === 0) {
 			return 'No items retrieved.'; // XXX
 		}
@@ -120,6 +123,23 @@ export class Query {
 		// for(let {column, ns, colIdx} of this.excerptFields) {
 		// 	this.columns.splice(colIdx, 0, 'Excerpt'); // XXX: make that customisable!
 		// }
+
+		let warnings = [];
+
+		this.template.getValue('remove_underscores')?.split(',').forEach(num => {
+			let columnIndex = parseInt(num.trim());
+			if (!isNaN(columnIndex)) {
+				result = result.map((row) => {
+					return Object.fromEntries(Object.entries(row).map(([key, value], colIdx) => {
+						if (columnIndex === colIdx + 1) {
+							return [key, value.replace(/_/g, ' ')];
+						} else {
+							return [key, value];
+						}
+					}));
+				});
+			}
+		});
 
 		// Add links
 		this.wikilinkConfig?.forEach(({columnIndex, namespace, showNamespace}) => {
@@ -137,13 +157,22 @@ export class Query {
 			});
 		});
 
-		table.addHeaders(Object.keys(result[0]).map((columnName) => {
-			let columnConfig = {
-				label: columnName
+		let widths = this.template.getValue('widths')?.split(',').map(e => {
+			let [colIdx, width] = e.split(':');
+			return {
+				column: parseInt(colIdx),
+				width: width
 			};
-			// if (this.widths[idx]) {
-			// 	columnConfig.style = `width: ${this.widths[idx]};`;
-			// }
+		});
+
+		table.addHeaders(Object.keys(result[0]).map((columnName, columnIndex) => {
+			let columnConfig: {label: string, style?: string} = {
+				label: columnName,
+			};
+			let width = widths.find(e => e.column === columnIndex + 1)?.width;
+			if (width) {
+				columnConfig.style = `width: ${width}`;
+			}
 			return columnConfig;
 		}));
 
@@ -192,6 +221,7 @@ export class Query {
 
 	async saveWithError(message: string) {
 		await this.save(`{{error|[${message}]}}`, true);
+		throw new HandledError();
 	}
 
 	insertResultIntoPageText(text: string, queryResult: string) {
@@ -220,7 +250,6 @@ export class InputError extends Error {
 	}
 }
 
-
 export class SQLError extends Error {
 	code: string;
 	errno: number;
@@ -229,6 +258,9 @@ export class SQLError extends Error {
 	sqlState: string;
 	sqlMessage: string;
 }
+
+// hacky way to prevent further execution in process(), but not actually report as error
+export class HandledError extends Error {}
 
 function lowerfirst(str: string) {
 	return str[0].toLowerCase() + str.slice(1);
