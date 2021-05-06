@@ -21,7 +21,7 @@ export class RouteValidator {
 			route = new routeCls();
 			route.name = this.name;
 		} catch (e) {
-			log(`Invalid route "${file}": require failed`);
+			log(`[E] Invalid route "${file}": require failed`);
 			log(e);
 			this.isValid = false;
 			return;
@@ -31,7 +31,7 @@ export class RouteValidator {
 		this.init = route.init.bind(route);
 
 		if (typeof this.filter !== 'function' || typeof this.worker !== 'function') {
-			log(`Invalid route ${route.name}: filter or worker is not a function`);
+			log(`[E] Invalid route ${route.name}: filter or worker is not a function`);
 			this.isValid = false;
 			return;
 		}

@@ -1,5 +1,5 @@
 // DEPRECATED. This file is no longer used.
-// See eventstream-router/g13-watch.ts instead
+// See reports/g13-watch instead
 
 // start job using: npm run start
 

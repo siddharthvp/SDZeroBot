@@ -1,5 +1,5 @@
 {
-	"g13-watch": "./routes/g13-watch",
+	"g13-watch": "../reports/g13-watch/eventstream-watch",
 	"gans": "./routes/gans",
-	"bot-activity-monitor": "./routes/bot-activity-monitor"
+	"bot-activity-monitor": "../bot-monitor/eventstream-trigger"
 }

@@ -30,7 +30,7 @@ jobs:
                 crontab crontab;
               fi;
               if [[ "$(git diff --name-only HEAD HEAD~1 | grep eventstream-router | wc -l)" -gt 0 ]]; then
-                cd eventstream-router && npm restart;
+                cd eventstream-router && npm run validate && npm restart;
               fi;
             '
           host: login.toolforge.org
