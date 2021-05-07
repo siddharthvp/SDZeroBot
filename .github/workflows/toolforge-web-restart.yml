@@ -1,0 +1,20 @@
+name: Toolforge
+
+on:
+  - workflow_dispatch
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: garygrossgarten/github-action-ssh@2b10f41b5a33808f6d24eafd253296766308b7c4
+        with:
+          command: >-
+            become sdzerobot bash -c '
+              cd /data/project/sdzerobot/www/js && npm run deploy;
+            '
+          host: login.toolforge.org
+          username: sd
+          privateKey: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
+

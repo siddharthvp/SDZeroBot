@@ -1,0 +1,25 @@
+{
+  "name": "sdzerobotweb",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "/data/project/sdzerobot/bin/node server.js",
+    "test": "nodemon server.ts",
+    "restart": "webservice --backend kubernetes node10 restart",
+    "logs": "kubectl logs -f $(kubectl get pods | tail -1 | cut -d ' ' -f 1)"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "hbs": "~4.0.4",
+    "http-errors": "~1.6.3",
+    "morgan": "~1.9.1"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.2",
+    "@types/hbs": "^4.0.1",
+    "@types/http-errors": "^1.8.0",
+    "@types/morgan": "^1.9.2",
+    "nodemon": "^2.0.7"
+  }
+}

@@ -25,12 +25,21 @@ jobs:
               if [[ "$(git diff --name-only HEAD HEAD~1 | grep package.json | wc -l)" -gt 0 ]]; then
                 npm install || exit 1;
               fi;
-              npm run build || exit 1;
+              npm run tsc;
               if [[ "$(git diff --name-only HEAD HEAD~1 | grep crontab | wc -l)" -gt 0 ]]; then
                 crontab crontab;
               fi;
               if [[ "$(git diff --name-only HEAD HEAD~1 | grep eventstream-router | wc -l)" -gt 0 ]]; then
                 cd eventstream-router && npm run validate && npm restart;
+              fi;
+              if [[ "$(git diff --name-only HEAD HEAD~1 | grep "webservice/" | wc -l)" -gt 0 ]]; then
+                if [[ "$(git diff --name-only HEAD HEAD~1 | grep "webservice/package.json" | wc -l)" -gt 0 ]]; then
+                  cd /data/project/sdzerobot/SDZeroBot/webservice && npm install --only=production;
+                fi;
+                cd /data/project/sdzerobot && rsync -avu --delete "SDZeroBot/webservice/" "www/js";
+                cd /data/project/sdzerobot/www/js && npm restart;
+              elif [[ "$(git diff --name-only HEAD HEAD~1 | grep "web-endpoint" | wc -l)" -gt 0 ]]; then
+                cd /data/project/sdzerobot/www/js && npm restart;
               fi;
             '
           host: login.toolforge.org
