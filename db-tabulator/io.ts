@@ -26,9 +26,12 @@ export async function fetchQueries() {
 export async function fetchQueriesForPage(page: string) {
 	// Only work in bot/op userspaces until BRFA approval
 	if (!page.startsWith('User:SD0001/') && page.startsWith('User:SDZeroBot/')) {
-		return;
+		return [];
 	}
-	let text = (await bot.read(page)).revisions[0].content;
+	let text = (await bot.read(page))?.revisions?.[0]?.content;
+	if (!text) {
+		return [];
+	}
 	return getQueriesFromText(text, page);
 }
 

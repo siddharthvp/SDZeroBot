@@ -1,8 +1,8 @@
-import { argv, bot, emailOnError, enwikidb, log, mwn } from "../botbase";
+import { argv, bot, emailOnError, enwikidb, log, mwn, TextExtractor } from "../botbase";
 import { Template } from "../../mwn/build/wikitext";
 import { BOT_NAME, FAKE_INPUT_FILE, FAKE_OUTPUT_FILE, QUERY_TIMEOUT, TEMPLATE_END } from "./consts";
 import { spawn } from "child_process";
-import { lowerFirst, readFile, writeFile } from "../utils";
+import { arrayChunk, lowerFirst, readFile, writeFile } from "../utils";
 
 let db = new enwikidb({
 	connectionLimit: 10
@@ -18,7 +18,9 @@ export class Query {
 	page: string;
 	template: Template;
 	sql: string;
-	wikilinkConfig: {columnIndex: number, namespace: number, showNamespace: boolean}[] | null;
+	wikilinkConfig: Array<{columnIndex: number, namespace: number, showNamespace: boolean}>;
+	excerptConfig: Array<{srcIndex: number, destIndex: number, namespace: number, charLimit: number, charHardLimit: number}>;
+	warnings: string[] = [];
 
 	constructor(template: Template, page: string) {
 		this.page = page;
@@ -27,15 +29,9 @@ export class Query {
 
 	async process() {
 		try {
-			try {
-				this.parseQuery(this.template);
-			} catch (err) {
-				if (err instanceof InputError) {
-					return this.saveWithError(err.message);
-				} else throw err;
-			}
+			this.parseQuery();
 			const result = await this.runQuery();
-			const resultText = this.formatResults(result);
+			const resultText = await this.formatResults(result);
 			await this.save(resultText);
 		} catch (err) {
 			if (err instanceof HandledError) return;
@@ -46,26 +42,58 @@ export class Query {
 		}
 	}
 
-	parseQuery(template: Template) {
-		this.sql = template.getValue('sql');
+	getTemplateValue(param: string) {
+		return this.template.getValue(param)?.replace(/<!--.*?-->/g, '').trim();
+	}
 
-		this.wikilinkConfig = template.getValue('wikilinks')
+	parseQuery() {
+		// remove semicolons to disallow multiple SQL statements used together
+		this.sql = this.getTemplateValue('sql').replace(/;/g, '');
+
+		this.wikilinkConfig = this.getTemplateValue('wikilinks')
 			?.split(',')
 			.map(e => {
 				const [columnIndex, namespace, showHide] = e.trim().split(':');
-				const config = {
+				return {
 					columnIndex: parseInt(columnIndex),
 					namespace: namespace ? parseInt(namespace) : 0,
 					showNamespace: showHide === 'show'
 				};
+			})
+			.filter(config => {
 				if (isNaN(config.namespace)) {
-					throw new InputError(`Invalid namespace number: ${config.namespace}. See [[WP:NS]] for namespace numbers`);
+					this.warnings.push(`Invalid namespace number: ${config.namespace}. Refer to [[WP:NS]] for namespace numbers`);
+					return false;
+				} else if (isNaN(config.columnIndex)) {
+					this.warnings.push(`Invalid column number: ${config.columnIndex}.`);
+					return false;
 				}
-				if (isNaN(config.columnIndex)) {
-					throw new InputError(`Invalid column number: ${config.columnIndex}.`);
+				return true;
+			}) || [];
+
+		this.excerptConfig = this.getTemplateValue('excerpts')
+			?.split(',')
+			.map(e => {
+				const [srcIndex, destIndex, namespace, charLimit, charHardLimit] = e.trim().split(':');
+				const config = {
+					srcIndex: parseInt(srcIndex),
+					destIndex: destIndex ? parseInt(destIndex) : parseInt(srcIndex) + 1,
+					namespace: namespace ? parseInt(namespace) : 0,
+					charLimit: charLimit ? parseInt(charLimit) : 250,
+					charHardLimit: charHardLimit ? parseInt(charHardLimit) : 500
+				};
+				if (
+					isNaN(config.srcIndex) || isNaN(config.destIndex) || isNaN(config.namespace) ||
+					isNaN(config.charLimit) || isNaN(config.charHardLimit)
+				) {
+					this.warnings.push(`Invalid excerpt config: one or more numeral values found in: <code>${e}</code>. Ignoring.`);
+					return null;
+				} else {
+					return config;
 				}
-				return config;
-			});
+			})
+			.filter(e => e) // filter out nulls
+			|| [];
 	}
 
 	async runQuery() {
@@ -73,18 +101,18 @@ export class Query {
 		return db.query(query).catch(async (err: SQLError) => {
 			if (err.code === 'ECONNREFUSED' && process.env.LOCAL) {
 				return this.spawnLocalSSHTunnel();
-			} else if (err.errno) {
-				// SQL server error
-				let message = 'SQL Error: ' + err.sqlMessage;
+			} else if (err.sql) {
+				// SQL server error?
+				let message = `SQL Error: ${err.code || ''}: ${err.sqlMessage || ''}`;
 				if (err.errno === 1969) {
 					// max_statement_time exceeded
-					message += `- ${BOT_NAME} applies a timeout of ${QUERY_TIMEOUT} seconds on all queries.`;
+					message += ` - ${BOT_NAME} applies a timeout of ${QUERY_TIMEOUT} seconds on all queries.`;
 				} else if (err.errno === 1040) {
 					// too many connections (should not happen)
 					log(`[E] Too Many Connections Error!`);
 					throw err;
 				} else {
-					message += `– Consider using [https://quarry.wmflabs.org/ Quarry] to to test your SQL.`;
+					message += ` – Consider using [https://quarry.wmflabs.org/ Quarry] to to test your SQL.`;
 				}
 				return this.saveWithError(message);
 			} else {
@@ -93,7 +121,7 @@ export class Query {
 		});
 	}
 
-	// For local dev
+	// For local development
 	static sshTunnelSpawned = false;
 	async spawnLocalSSHTunnel() {
 		if (Query.sshTunnelSpawned) {
@@ -110,54 +138,110 @@ export class Query {
 		return this.runQuery();
 	}
 
-	formatResults(result) {
+	transformColumn(result: Array<Record<string, string>>, columnIdx: number, transformer: (cell: string) => string): Array<Record<string, string>> {
+		return result.map((row) => {
+			return Object.fromEntries(Object.entries(row).map(([key, value], colIdx) => {
+				if (columnIdx === colIdx + 1) {
+					return [key, transformer(value)];
+				} else {
+					return [key, value];
+				}
+			}));
+		});
+	}
+
+	/**
+	 * Add column at given `columnIdx`. Move existing columns at columnIdx and later one place rightwards.
+	 */
+	addColumn(result: Array<Record<string, string>>, columnIdx: number, contents: string[]): Array<Record<string, string>> {
+		return result.map((row, idx) => {
+			let newRow = Object.entries(row);
+			newRow.splice(columnIdx - 1, 0, ['Excerpt', contents[idx]]);
+			return Object.fromEntries(newRow);
+		});
+	}
+
+	async fetchExcerpts(pages: string[], charLimit: number, charHardLimit: number): Promise<string[]> {
+		let excerpts: Record<string, string> = {};
+		for (let pageSet of arrayChunk(pages, 100)) {
+			for await (let pg of bot.readGen(pageSet, {
+				rvsection: 0,
+				redirects: false
+			})) {
+				if (pg.invalid || pg.missing) {
+					excerpts[pg.title] = '';
+				} else {
+					excerpts[pg.title] = TextExtractor.getExtract(pg.revisions[0].content, charLimit, charHardLimit);
+				}
+			}
+		}
+		// Order of pages in API output will be different from the order we have
+		return pages.map(pg => {
+			// XXX: will page name in pages array always match pg.title from API?
+			if (excerpts[pg] !== undefined) {
+				return '<small>' + excerpts[pg] + '</small>';
+			} else {
+				log(`[W] no excerpt found for ${pg} while processing query on ${this.page}`);
+				return '';
+			}
+		});
+	}
+
+	async formatResults(result) {
 
 		let table = new mwn.table({
-			style: this.template.getValue('table_style') || 'overflow-wrap: anywhere'
+			style: this.getTemplateValue('table_style') || 'overflow-wrap: anywhere'
 		});
 
 		if (result.length === 0) {
 			return 'No items retrieved.'; // XXX
 		}
 
-		// for(let {column, ns, colIdx} of this.excerptFields) {
-		// 	this.columns.splice(colIdx, 0, 'Excerpt'); // XXX: make that customisable!
-		// }
+		let numColumns = Object.keys(result[0]).length;
+		for (let i = 1; i <= numColumns; i++) {
+			// Stringify everything
+			result = this.transformColumn(result, i, (value: string | number | null | Date) => {
+				if (value === null) return '';
+				if (value instanceof Date) return value.toISOString(); // is this ever possible?
+				return String(value);
+			});
+		}
 
-		let warnings = [];
+		// Add excerpts
+		for (let {srcIndex, destIndex, namespace, charLimit, charHardLimit} of this.excerptConfig) {
+			result = this.transformColumn(result, srcIndex, pageName => pageName.replace(/_/g, ' '));
+			const listOfPages = result.map(row => new bot.page(Object.values(row)[srcIndex - 1], namespace).toText());
+			const excerpts = await this.fetchExcerpts(listOfPages, charLimit, charHardLimit);
+			result = this.addColumn(result, destIndex, excerpts);
+		}
 
-		this.template.getValue('remove_underscores')?.split(',').forEach(num => {
-			let columnIndex = parseInt(num.trim());
-			if (!isNaN(columnIndex)) {
-				result = result.map((row) => {
-					return Object.fromEntries(Object.entries(row).map(([key, value], colIdx) => {
-						if (columnIndex === colIdx + 1) {
-							return [key, value.replace(/_/g, ' ')];
-						} else {
-							return [key, value];
-						}
-					}));
-				});
-			}
-		});
+		// Number of columns increased due to excerpts
+		numColumns += this.excerptConfig.length;
 
 		// Add links
-		this.wikilinkConfig?.forEach(({columnIndex, namespace, showNamespace}) => {
-			result = result.map((row) => {
-				return Object.fromEntries(Object.entries(row).map(([key, value], colIdx) => {
-					if (columnIndex === colIdx + 1) {
-						let pageName = new bot.title(value, namespace).toText();
-						return showNamespace
-							? [key, `[[${pageName}]]`]
-							: [key, `[[${pageName}|${value}]]`];
-					} else {
-						return [key, value];
-					}
-				}));
+		this.wikilinkConfig.forEach(({columnIndex, namespace, showNamespace}) => {
+			result = this.transformColumn(result, columnIndex, value => {
+				try {
+					let pageName = new bot.title(value, namespace).toText();
+					return showNamespace ? `[[${pageName}]]` : `[[${pageName}|${value.replace(/_/g, ' ')}]]`;
+				} catch (e) {
+					return value.replace(/_/g, ' ');
+				}
 			});
 		});
 
-		let widths = this.template.getValue('widths')?.split(',').map(e => {
+		this.getTemplateValue('remove_underscores')?.split(',').forEach(num => {
+			let columnIndex = parseInt(num.trim());
+			if (isNaN(columnIndex)) {
+				this.warnings.push(`Found non-numeral value in <code>remove_underscores</code>: "${num}". Ignoring. Please use a comma-separated list of column numbers`);
+			} else if (columnIndex > numColumns) {
+				this.warnings.push(`Found "${num}" in <code>remove_underscores</code> though the table only has ${numColumns} column{{subst:plural:${numColumns}||s}}. Ignoring.`);
+			} else {
+				result = this.transformColumn(result, columnIndex, value => value.replace(/_/g, ' '));
+			}
+		});
+
+		let widths = this.getTemplateValue('widths')?.split(',').map(e => {
 			let [colIdx, width] = e.split(':');
 			return {
 				column: parseInt(colIdx),
@@ -176,10 +260,12 @@ export class Query {
 			return columnConfig;
 		}));
 
-		for(let row of result) {
+		for (let row of result) {
 			table.addRow(Object.values(row));
 		}
-		return table.getText() + '\n' +
+
+		return this.warnings.map(text => `[WARN: ${text}]\n\n`).join('') +
+			table.getText() + '\n' +
 			'----\n' +
 			'&sum; ' + result.length + ' items.\n';
 	}
@@ -211,7 +297,8 @@ export class Query {
 			}
 			// In case of errors like `contenttoobig` we can still edit the page
 			// to add the error message, but not in case of errors like protectedpage
-			log(`[W] Couldn't save to ${this.page} due to error ${err.code}`);
+			log(`[E] Couldn't save to ${this.page} due to error ${err.code}`);
+			log(err);
 			if (err.code !== 'protectedpage') {
 				return this.saveWithError(err.message);
 			} else throw err;

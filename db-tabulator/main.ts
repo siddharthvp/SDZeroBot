@@ -12,10 +12,11 @@ import { writeFile } from "../utils";
  * Support multiple tables on a page
  * Support setting table attributes and widths for each column
  * Report the first results immediately on setup (Use EventStream)
+ * Support article extracts
+ * Setup webservice endpoint to generate reports on demand
  *
  * Pending:
- * Support article extracts
- * Setup web endpoint to generate reports on demand
+ * Support linkification with ns numbers from another column
  *
  */
 
