@@ -1,6 +1,5 @@
 import * as express from "express";
-import { fetchQueriesForPage, processQueries } from "./io";
-import { TEMPLATE } from "./consts";
+import { fetchQueriesForPage, processQueries, TEMPLATE } from "./app";
 
 const router = express.Router();
 

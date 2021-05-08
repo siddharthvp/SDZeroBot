@@ -1,7 +1,6 @@
 import { Route } from "../eventstream-router/Route";
 import { pageFromCategoryEvent } from "../eventstream-router/utils";
-import { fetchQueriesForPage, processQueries } from "./io";
-import { SUBSCRIPTIONS_CATEGORY } from "./consts";
+import { fetchQueriesForPage, processQueries, SUBSCRIPTIONS_CATEGORY } from "./app";
 
 export default class Task extends Route {
 	async init() {
