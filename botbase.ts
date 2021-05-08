@@ -9,7 +9,7 @@ export {fs, path, child_process};
 export function emailOnError(err: Error, taskname: string) {
     // datetime similar to what mwn log produces, but can't use that directly as mwn may not have loaded
     const dateTimeString = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    console.log(`[${dateTimeString}] [E] Fatal error`);
+    console.log(`\x1b[31m%s\x1b[0m`, `[${dateTimeString}] [E] Fatal error`);
     console.log(err);
     child_process.exec(
         `echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,

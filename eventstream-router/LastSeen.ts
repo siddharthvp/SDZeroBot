@@ -5,7 +5,7 @@ export class LastSeen {
 	ts: number;
 
 	// Number of milliseconds after which lastSeenTs is to be saved to file
-	updateInterval = 1000;
+	readonly updateInterval = 1000;
 
 	file = './last-seen.txt';
 

@@ -256,7 +256,12 @@ class Query {
 		// Add excerpts
 		for (let {srcIndex, destIndex, namespace, charLimit, charHardLimit} of this.excerptConfig) {
 			result = this.transformColumn(result, srcIndex, pageName => pageName.replace(/_/g, ' '));
-			const listOfPages = result.map(row => new bot.page(Object.values(row)[srcIndex - 1], namespace).toText());
+			const listOfPages = result.map(row => {
+				try {
+					return new bot.page(Object.values(row)[srcIndex - 1] as string, namespace).toText()
+				} catch (e) { return '::'; } // new bot.page() failing, use invalid page name so that
+				// fetchExcerpts return empty string extract
+			});
 			const excerpts = await this.fetchExcerpts(listOfPages, charLimit, charHardLimit);
 			result = this.addColumn(result, destIndex, excerpts);
 		}
