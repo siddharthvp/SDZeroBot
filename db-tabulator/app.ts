@@ -327,7 +327,7 @@ export class Query {
 		return this.warnings.map(text => `[WARN: ${text}]\n\n`).join('') +
 			table.getText() + '\n' +
 			'----\n' +
-			'&sum; ' + result.length + ' items.\n';
+			'&sum; ' + result.length + ' items.';
 	}
 
 	async save(queryResult: string, isError = false) {
@@ -362,7 +362,7 @@ export class Query {
 			log(`[E] Couldn't save to ${this.page} due to error ${err.code}`);
 			log(err);
 			if (err.code !== 'protectedpage') {
-				return this.saveWithError(err.message);
+				return this.saveWithError(`Error while saving report: ${err.message}`);
 			} else throw err;
 		}
 
@@ -389,7 +389,7 @@ export class Query {
 			endTemplateStartIdx === -1 ? undefined : endTemplateStartIdx
 		);
 		return text.slice(0, beginTemplateEndIdx) +
-			text.slice(beginTemplateEndIdx).replace(textToReplace, '\n' + queryResult.replace(/\$/g, '$$$$'));
+			text.slice(beginTemplateEndIdx).replace(textToReplace, '\n' + queryResult.replace(/\$/g, '$$$$') + '\n');
 	}
 }
 
