@@ -1,6 +1,5 @@
 import { argv, bot, emailOnError, enwikidb, log, mwn, TextExtractor } from "../botbase";
 import { Template } from "../../mwn/build/wikitext";
-import { spawn } from "child_process";
 import { arrayChunk, lowerFirst, readFile, writeFile } from "../utils";
 
 export const BOT_NAME = 'SDZeroBot';
@@ -76,7 +75,7 @@ export async function processQueriesForPage(queries: Query[]) {
 	}
 }
 
-export class Query {
+class Query {
 
 	/// Step 1. Parse the query
 	/// Step 2. Run the query
@@ -104,8 +103,6 @@ export class Query {
 		} catch (err) {
 			if (err instanceof HandledError) return;
 			emailOnError(err, 'quarry2wp');
-			log(`[E] Unexpected error:`);
-			log(err);
 			throw err; // propagate error
 		}
 	}
@@ -167,9 +164,7 @@ export class Query {
 	async runQuery() {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.sql.trim()}`;
 		return db.query(query).catch(async (err: SQLError) => {
-			if (err.code === 'ECONNREFUSED' && process.env.LOCAL) {
-				return this.spawnLocalSSHTunnel();
-			} else if (err.sqlMessage) {
+			if (err.sqlMessage) {
 				// SQL server error
 				let message = `SQL Error: ${err.code || ''}: ${err.sqlMessage}`;
 				if (err.errno === 1969) {
@@ -187,23 +182,6 @@ export class Query {
 				throw err;
 			}
 		});
-	}
-
-	// For local development
-	static sshTunnelSpawned = false;
-	async spawnLocalSSHTunnel() {
-		if (Query.sshTunnelSpawned) {
-			await bot.sleep(3000);
-			return this.runQuery();
-		}
-		log('[i] No local SSH tunnel? Spawning...');
-		// relies on "ssh toolforge" command connecting successfully
-		spawn('ssh', ['-L', '4711:enwiki.analytics.db.svc.eqiad.wmflabs:3306', 'toolforge'], {
-			detached: true
-		});
-		Query.sshTunnelSpawned = true;
-		await bot.sleep(3000);
-		return this.runQuery();
 	}
 
 	transformColumn(result: Array<Record<string, string>>, columnIdx: number, transformer: (cell: string) => string): Array<Record<string, string>> {
@@ -321,7 +299,7 @@ export class Query {
 			let columnConfig: {label: string, style?: string} = {
 				label: columnName,
 			};
-			let width = widths.find(e => e.column === columnIndex + 1)?.width;
+			let width = widths?.find(e => e.column === columnIndex + 1)?.width;
 			if (width) {
 				columnConfig.style = `width: ${width}`;
 			}
@@ -350,8 +328,6 @@ export class Query {
 			);
 			return;
 		}
-		// Appears to cause occasional issues when two pages are being edited at same time.
-		// Sometimes the first edit is overwritten.
 		try {
 			await page.edit(rev => {
 				let text = rev.content;
@@ -401,7 +377,7 @@ export class Query {
 	}
 }
 
-export class SQLError extends Error {
+class SQLError extends Error {
 	code: string;
 	errno: number;
 	fatal: boolean;
@@ -411,4 +387,4 @@ export class SQLError extends Error {
 }
 
 // hacky way to prevent further execution in process(), but not actually report as error
-export class HandledError extends Error {}
+class HandledError extends Error {}
