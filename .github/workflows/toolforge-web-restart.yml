@@ -12,7 +12,7 @@ jobs:
         with:
           command: >-
             become sdzerobot bash -c '
-              cd /data/project/sdzerobot/www/js && npm run deploy;
+              cd /data/project/sdzerobot/www/js && npm restart;
             '
           host: login.toolforge.org
           username: sd

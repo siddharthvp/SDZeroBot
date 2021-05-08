@@ -101,9 +101,9 @@ export class Query {
 		return db.query(query).catch(async (err: SQLError) => {
 			if (err.code === 'ECONNREFUSED' && process.env.LOCAL) {
 				return this.spawnLocalSSHTunnel();
-			} else if (err.sql) {
-				// SQL server error?
-				let message = `SQL Error: ${err.code || ''}: ${err.sqlMessage || ''}`;
+			} else if (err.sqlMessage) {
+				// SQL server error
+				let message = `SQL Error: ${err.code || ''}: ${err.sqlMessage}`;
 				if (err.errno === 1969) {
 					// max_statement_time exceeded
 					message += ` - ${BOT_NAME} applies a timeout of ${QUERY_TIMEOUT} seconds on all queries.`;
