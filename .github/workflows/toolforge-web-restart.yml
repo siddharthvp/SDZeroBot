@@ -1,4 +1,4 @@
-name: Toolforge
+name: web-restart
 
 on:
   - workflow_dispatch

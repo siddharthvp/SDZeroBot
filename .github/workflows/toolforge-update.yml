@@ -36,12 +36,12 @@ jobs:
                 crontab crontab;
               fi;
               # Covers everything in eventstream-router/ and external files with "eventstream" in name
-              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c eventstream)" -gt 0 ]]; then
+              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep eventstream | wc -l)" -gt 0 ]]; then
                 echo "Restarting eventstream-router ...";
                 cd eventstream-router && npm run validate && npm restart;
               fi;
-              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "webservice/")" -gt 0 ]]; then
-                if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "webservice/package.json")" -gt 0 ]]; then
+              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep "webservice/" | wc -l)" -gt 0 ]]; then
+                if [[ "$(git diff --name-only HEAD HEAD@{1} | grep "webservice/package.json" | wc -l)" -gt 0 ]]; then
                   echo "Running npm install for SDZeroBot/webservice ...";
                   cd /data/project/sdzerobot/SDZeroBot/webservice && npm install --only=production;
                 fi;
@@ -49,7 +49,7 @@ jobs:
                 cd /data/project/sdzerobot && rsync -avu --delete "SDZeroBot/webservice/" "www/js";
                 echo "Restarting SDZeroBot webservice ...";
                 cd /data/project/sdzerobot/www/js && npm restart;
-              elif [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "web-endpoint")" -gt 0 ]]; then
+              elif [[ "$(git diff --name-only HEAD HEAD@{1} | grep "web-endpoint" | wc -l)" -gt 0 ]]; then
                 echo "Restarting SDZeroBot webservice ...";
                 cd /data/project/sdzerobot/www/js && npm restart;
               fi;

@@ -70,7 +70,7 @@
 
 0   1   *   *   *  jsub -quiet -N job-rwatch 	-mem 2g  ~/bin/node ~/SDZeroBot/reports/redirectify-watch.js
 
-30  3   *   *   2  jsub -quiet -N job-peer    	-mem 2g  ~/bin/node ~/SDZeroBot/reports/peer-review.js
+30  3   *   *   2  jsub -quiet -N job-peer    	-mem 1g  ~/bin/node ~/SDZeroBot/reports/peer-review.js
 
 0   6   *   *   *  jsub -quiet -N job-unref 	-mem 2g  ~/bin/node ~/SDZeroBot/reports/unreferenced-blps.js
 
