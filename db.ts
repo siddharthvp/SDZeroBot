@@ -5,6 +5,7 @@
 
 import {log, bot} from './botbase';
 import * as mysql from 'mysql2/promise';
+import {spawn} from "child_process";
 const auth = require('./.auth');
 export {mysql};
 
@@ -116,5 +117,17 @@ export class toolsdb extends db {
 			database: 's54328__' + dbname,
 			...customOptions
 		};
+	}
+}
+
+export async function createLocalSSHTunnel(host: string) {
+	if (process.env.LOCAL) {
+		log('[i] Spawning local SSH tunnel ...');
+		// relies on "ssh toolforge" command connecting successfully
+		spawn('ssh', ['-L', `4711:${host}:3306`, 'toolforge'], {
+			detached: true
+		});
+		process.env.LOCAL = 'true';
+		await bot.sleep(4000);
 	}
 }

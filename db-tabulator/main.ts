@@ -1,7 +1,7 @@
 import { argv, bot, log } from "../botbase";
 import { writeFile } from "../utils";
 import { FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
-import { spawn } from "child_process";
+import { createLocalSSHTunnel } from "../db";
 
 /**
  * Specs:
@@ -28,16 +28,7 @@ import { spawn } from "child_process";
 
 	await Promise.all([
 		bot.getTokensAndSiteInfo(),
-		(async () => {
-			if (process.env.LOCAL) {
-				log('[i] Spawning local SSH tunnel ...');
-				// relies on "ssh toolforge" command connecting successfully
-				spawn('ssh', ['-L', '4711:enwiki.analytics.db.svc.eqiad.wmflabs:3306', 'toolforge'], {
-					detached: true
-				});
-				await bot.sleep(4000);
-			}
-		})()
+		process.env.LOCAL && createLocalSSHTunnel('enwiki.analytics.db.svc.eqiad.wmflabs')
 	]);
 
 	if (argv.fake) {
@@ -49,6 +40,7 @@ import { spawn } from "child_process";
 
 	await processQueries(queries);
 
+	// createSSHTunnel creates a detached process that prevents natural exit
 	if (process.env.LOCAL) {
 		process.exit();
 	}
