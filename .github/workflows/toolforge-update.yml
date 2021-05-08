@@ -15,7 +15,7 @@ jobs:
             become sdzerobot bash -c '
               cd /data/project/sdzerobot/mwn || exit 1;
               if [[ "$(git pull | grep -c "Already up to date")" -eq 0 ]]; then
-                if [[ "$(git diff --name-only HEAD HEAD~1 | grep -c package.json)" -gt 0 ]]; then
+                if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
                   echo "Running npm install for mwn ...";
                   npm install || exit 1;
                 fi;
@@ -25,23 +25,23 @@ jobs:
               cd /data/project/sdzerobot/SDZeroBot || exit 1;
               echo "Pulling SDZeroBot ...";
               git pull || exit 1;
-              if [[ "$(git diff --name-only HEAD HEAD~1 | grep -c package.json)" -gt 0 ]]; then
+              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
                 echo "Running npm install for SDZeroBot ...";
                 npm install || exit 1;
               fi;
               echo "Building SDZeroBot ...";
               npm run tsc;
-              if [[ "$(git diff --name-only HEAD HEAD~1 | grep -c crontab)" -gt 0 ]]; then
-                echo "Updating the crontab ..."
+              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c crontab)" -gt 0 ]]; then
+                echo "Updating the crontab ...";
                 crontab crontab;
               fi;
               # Covers everything in eventstream-router/ and external files with "eventstream" in name
-              if [[ "$(git diff --name-only HEAD HEAD~1 | grep -c eventstream)" -gt 0 ]]; then
+              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c eventstream)" -gt 0 ]]; then
                 echo "Restarting eventstream-router ...";
                 cd eventstream-router && npm run validate && npm restart;
               fi;
-              if [[ "$(git diff --name-only HEAD HEAD~1 | grep -c "webservice/")" -gt 0 ]]; then
-                if [[ "$(git diff --name-only HEAD HEAD~1 | grep -c "webservice/package.json")" -gt 0 ]]; then
+              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "webservice/")" -gt 0 ]]; then
+                if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "webservice/package.json")" -gt 0 ]]; then
                   echo "Running npm install for SDZeroBot/webservice ...";
                   cd /data/project/sdzerobot/SDZeroBot/webservice && npm install --only=production;
                 fi;
@@ -49,7 +49,7 @@ jobs:
                 cd /data/project/sdzerobot && rsync -avu --delete "SDZeroBot/webservice/" "www/js";
                 echo "Restarting SDZeroBot webservice ...";
                 cd /data/project/sdzerobot/www/js && npm restart;
-              elif [[ "$(git diff --name-only HEAD HEAD~1 | grep -c "web-endpoint")" -gt 0 ]]; then
+              elif [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "web-endpoint")" -gt 0 ]]; then
                 echo "Restarting SDZeroBot webservice ...";
                 cd /data/project/sdzerobot/www/js && npm restart;
               fi;

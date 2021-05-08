@@ -31,4 +31,4 @@ export default class Task extends Route {
 
 and register it in `routes.json`.
 
-Run `npm restart` on the toolforge host for any code changes to take effect. This automatically takes place through the GitHub Action workflow whenever code changes to this directory are pushed.
+Run `npm restart` on the toolforge host for any code changes to take effect. This automatically takes place through the GitHub Action workflow whenever the pulled commits have edits to any file whose name including path contains "eventstream". 
