@@ -1,5 +1,5 @@
 import * as express from "express";
-import { fetchQueriesForPage, processQueries, TEMPLATE } from "./app";
+import { fetchQueriesForPage, processQueriesForPage, TEMPLATE } from "./app";
 
 const router = express.Router();
 
@@ -10,10 +10,10 @@ router.get('/', async function (req, res, next) {
 	res.render('database-report', {
 		page,
 		template: TEMPLATE,
-		noQueries: queries.length === 0
+		noQueries: !!queries
 	});
-	if (queries.length) {
-		await processQueries(queries);
+	if (queries) {
+		await processQueriesForPage(queries);
 	}
 });
 

@@ -1,6 +1,6 @@
 import { Route } from "../eventstream-router/Route";
 import { pageFromCategoryEvent } from "../eventstream-router/utils";
-import { fetchQueriesForPage, processQueries, SUBSCRIPTIONS_CATEGORY } from "./app";
+import { fetchQueriesForPage, processQueriesForPage, SUBSCRIPTIONS_CATEGORY } from "./app";
 
 export default class Task extends Route {
 	async init() {
@@ -20,6 +20,6 @@ export default class Task extends Route {
 
 		this.log(`[+] Triggering db-lister for ${page.title} due to addition to category at ${data.timestamp}`);
 		const queries = await fetchQueriesForPage(page.title);
-		await processQueries(queries);
+		await processQueriesForPage(queries);
 	}
 }

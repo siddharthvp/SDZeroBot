@@ -15,12 +15,12 @@ const db = new enwikidb({
 	connectionLimit: 10
 }).init();
 
-export async function fetchQueries() {
+export async function fetchQueries(): Promise<Record<string, Query[]>> {
 	if (argv.fake) {
 		let text = readFile(FAKE_INPUT_FILE);
-		return getQueriesFromText(text, 'Fake-Configs');
+		return { 'Fake-Configs': getQueriesFromText(text, 'Fake-Configs') };
 	}
-	let queries: Query[] = [];
+	let allQueries: Record<string, Query[]> = {};
 	let pages = (await new bot.page(TEMPLATE).transclusions());
 	for await (let pg of bot.readGen(pages)) {
 		if (pg.ns === 0) { // sanity check: don't work in mainspace
@@ -31,24 +31,12 @@ export async function fetchQueries() {
 			continue;
 		}
 		let text = pg.revisions[0].content;
-		queries = queries.concat(getQueriesFromText(text, pg.title));
+		allQueries[pg.title] = getQueriesFromText(text, pg.title);
 	}
-	return queries;
+	return allQueries;
 }
 
-export async function fetchQueriesForPage(page: string) {
-	// Only work in bot/op userspaces until BRFA approval
-	if (!page.startsWith('User:SD0001/') && page.startsWith('User:SDZeroBot/')) {
-		return [];
-	}
-	let text = (await bot.read(page))?.revisions?.[0]?.content;
-	if (!text) {
-		return [];
-	}
-	return getQueriesFromText(text, page);
-}
-
-function getQueriesFromText(text: string, title: string) {
+function getQueriesFromText(text: string, title: string): Query[] {
 	let templates = bot.wikitext.parseTemplates(text, {
 		namePredicate: name => name === TEMPLATE
 	});
@@ -56,16 +44,36 @@ function getQueriesFromText(text: string, title: string) {
 		log(`[E] Failed to parse template on ${title}`);
 		return [];
 	}
-	return templates.map(template => {
-		return new Query(template, title);
-	});
+	return templates.map(template => new Query(template, title));
 }
 
-export async function processQueries(queries: Query[]) {
-	await bot.batchOperation(queries, async (query) => {
-		log(`[i] Processing page ${query.page}`);
-		await query.process();
+export async function processQueries(allQueries: Record<string, Query[]>) {
+	await bot.batchOperation(Object.entries(allQueries), async ([page, queries]) => {
+		log(`[+] Processing page ${page}`);
+		await processQueriesForPage(queries);
 	}, 10);
+}
+
+export async function fetchQueriesForPage(page: string): Promise<Query[]> {
+	// Only work in bot/op userspaces until BRFA approval
+	if (!page.startsWith('User:SD0001/') && page.startsWith('User:SDZeroBot/')) {
+		return null;
+	}
+	let text = (await bot.read(page))?.revisions?.[0]?.content;
+	if (!text) {
+		return null;
+	}
+	return getQueriesFromText(text, page);
+}
+
+// All queries are on same page. Processing is done sequentially
+// to avoid edit-conflicting with self.
+export async function processQueriesForPage(queries: Query[]) {
+	let index = 0;
+	for (let query of queries) {
+		if (++index !== 1) log(`[+] Processing query ${index} on ${query.page}`);
+		await query.process();
+	}
 }
 
 export class Query {
