@@ -81,3 +81,5 @@
 20  *   *   *   *  jsub -quiet -N bot-monitor  -mem 2g  ~/bin/node ~/SDZeroBot/bot-monitor/main.js
 
 25  4   *   *   *  jsub -quiet -N db-tabulator  -mem 4g  ~/bin/node ~/SDZeroBot/db-tabulator/main.js
+
+8  16   *   *   *  jsub -quiet -N gans-list              ~/bin/node ~/SDZeroBot/most-gans/gans-lister.js

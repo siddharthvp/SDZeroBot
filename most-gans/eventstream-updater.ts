@@ -1,6 +1,9 @@
-import {bot, toolsdb} from '../../botbase';
-import {Route} from "../Route";
+import {bot, toolsdb} from '../botbase';
+import {Route} from "../eventstream-router/Route";
 
+/**
+ * Keep the db updated with new GA promotions and demotions.
+ */
 export default class gans extends Route {
 	db: toolsdb;
 
@@ -66,4 +69,3 @@ export default class gans extends Route {
 		this.db.run(`DELETE FROM nominators WHERE article = ?`, [article]);
 	}
 }
-
