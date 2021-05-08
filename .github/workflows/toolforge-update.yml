@@ -16,29 +16,40 @@ jobs:
               cd /data/project/sdzerobot/mwn || exit 1;
               if [[ "$(git pull | grep "Already up to date" | wc -l)" -eq 0 ]]; then
                 if [[ "$(git diff --name-only HEAD HEAD~1 | grep package.json | wc -l)" -gt 0 ]]; then
+                  echo "Running npm install for mwn ...";
                   npm install || exit 1;
                 fi;
+                echo "Building mwn ...";
                 npm run quickbuild;
               fi;
               cd /data/project/sdzerobot/SDZeroBot || exit 1;
+              echo "Pulling SDZeroBot ...";
               git pull || exit 1;
               if [[ "$(git diff --name-only HEAD HEAD~1 | grep package.json | wc -l)" -gt 0 ]]; then
+                echo "Running npm install for SDZeroBot ...";
                 npm install || exit 1;
               fi;
+              echo "Building SDZeroBot ...";
               npm run tsc;
               if [[ "$(git diff --name-only HEAD HEAD~1 | grep crontab | wc -l)" -gt 0 ]]; then
+                echo "Updating the crontab ..."
                 crontab crontab;
               fi;
               if [[ "$(git diff --name-only HEAD HEAD~1 | grep eventstream-router | wc -l)" -gt 0 ]]; then
+                echo "Restarting eventstream-router ...";
                 cd eventstream-router && npm run validate && npm restart;
               fi;
               if [[ "$(git diff --name-only HEAD HEAD~1 | grep "webservice/" | wc -l)" -gt 0 ]]; then
                 if [[ "$(git diff --name-only HEAD HEAD~1 | grep "webservice/package.json" | wc -l)" -gt 0 ]]; then
+                  echo "Running npm install for SDZeroBot/webservice ...";
                   cd /data/project/sdzerobot/SDZeroBot/webservice && npm install --only=production;
                 fi;
+                echo "Syncing SDZeroBot/webservice with www/js ...";
                 cd /data/project/sdzerobot && rsync -avu --delete "SDZeroBot/webservice/" "www/js";
+                echo "Restarting SDZeroBot webservice ...";
                 cd /data/project/sdzerobot/www/js && npm restart;
               elif [[ "$(git diff --name-only HEAD HEAD~1 | grep "web-endpoint" | wc -l)" -gt 0 ]]; then
+                echo "Restarting SDZeroBot webservice ...";
                 cd /data/project/sdzerobot/www/js && npm restart;
               fi;
             '

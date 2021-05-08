@@ -3,7 +3,7 @@ import { exec } from "child_process";
 
 const router = express.Router();
 
-router.get('/', function (req, res, next) {
+router.get('/', (req, res, next) => {
 	let {type, log, lines} = req.query as {type: string; log: string; lines: string};
 	if (
 		(type !== 'out' && type !== 'err') ||

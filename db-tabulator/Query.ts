@@ -282,6 +282,8 @@ export class Query {
 			);
 			return;
 		}
+		// Appears to cause occasional issues when two pages are being edited at same time.
+		// Sometimes the first edit is overwritten.
 		try {
 			await page.edit(rev => {
 				let text = rev.content;
@@ -312,10 +314,10 @@ export class Query {
 	}
 
 	insertResultIntoPageText(text: string, queryResult: string) {
+		// Does not support the case of two template uses with very same wikitext
 		let beginTemplateStartIdx = text.indexOf(this.template.wikitext);
 		if (beginTemplateStartIdx === -1) {
-			// edit conflict?
-			throw new Error('Failed to find config');
+			throw new Error(`Failed to find template in wikitext on page ${this.page}`);
 		}
 		let beginTemplateEndIdx = beginTemplateStartIdx + this.template.wikitext.length;
 		let endTemplateStartIdx = text.indexOf(`{{${TEMPLATE_END}}}`, beginTemplateEndIdx);
@@ -328,12 +330,6 @@ export class Query {
 		);
 		return text.slice(0, beginTemplateEndIdx) +
 			text.slice(beginTemplateEndIdx).replace(textToReplace, '\n' + queryResult.replace(/\$/g, '$$$$'));
-	}
-}
-
-export class InputError extends Error {
-	constructor(msg) {
-		super(msg);
 	}
 }
 
