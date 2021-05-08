@@ -11,12 +11,12 @@ export default class Task extends Route {
 	filter(data): boolean {
 		return data.wiki === 'enwiki' &&
 			data.type === 'categorize' &&
-			data.title === SUBSCRIPTIONS_CATEGORY;
+			data.title === 'Category:' + SUBSCRIPTIONS_CATEGORY;
 	}
 
 	async worker(data) {
 		let page = pageFromCategoryEvent(data);
-		if (page.removed) return;
+		if (!page.added) return;
 
 		this.log(`[+] Triggering db-lister for ${page.title} due to addition to category at ${data.timestamp}`);
 		const queries = await fetchQueriesForPage(page.title);
