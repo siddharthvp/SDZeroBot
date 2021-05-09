@@ -1,7 +1,7 @@
 import { argv, bot, log } from "../botbase";
 import { writeFile } from "../utils";
 import { FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
-import { createLocalSSHTunnel } from "../db";
+import { createLocalSSHTunnel, ENWIKI_DB_HOST } from "../db";
 
 /**
  * Specs:
@@ -28,7 +28,7 @@ import { createLocalSSHTunnel } from "../db";
 
 	await Promise.all([
 		bot.getTokensAndSiteInfo(),
-		process.env.LOCAL && createLocalSSHTunnel('enwiki.analytics.db.svc.eqiad.wmflabs')
+		process.env.LOCAL && createLocalSSHTunnel(ENWIKI_DB_HOST)
 	]);
 
 	if (argv.fake) {

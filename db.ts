@@ -3,10 +3,13 @@
  * Automatically handles transient connection errors.
  */
 
-import { log, bot, AuthManager } from './botbase';
+import {log, bot, AuthManager} from './botbase';
 import * as mysql from 'mysql2/promise';
 import {spawn} from "child_process";
 export {mysql};
+
+export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.eqiad.wmflabs';
+export const TOOLS_DB_HOST = 'tools.db.svc.eqiad.wmflabs';
 
 export abstract class db {
 	pool: mysql.Pool
@@ -82,10 +85,10 @@ export abstract class db {
 
 export class enwikidb extends db {
 	replagHours: number
-	constructor(customOptions = {}) {
+	constructor(customOptions: mysql.PoolOptions = {}) {
 		super();
 		this.config = {
-			host: process.env.LOCAL ? '127.0.0.1' : 'enwiki.analytics.db.svc.eqiad.wmflabs',
+			host: process.env.LOCAL ? '127.0.0.1' : ENWIKI_DB_HOST,
 			database: 'enwiki_p',
 			...customOptions
 		};
@@ -108,24 +111,23 @@ export class enwikidb extends db {
 }
 
 export class toolsdb extends db {
-	constructor(dbname, customOptions = {}) {
+	constructor(dbname, customOptions: mysql.PoolOptions = {}) {
 		super();
 		this.config = {
-			host: process.env.LOCAL ? '127.0.0.1' : 'tools.db.svc.eqiad.wmflabs',
+			host: process.env.LOCAL ? '127.0.0.1' : TOOLS_DB_HOST,
 			database: 's54328__' + dbname,
 			...customOptions
 		};
 	}
 }
 
-export async function createLocalSSHTunnel(host: string) {
+export async function createLocalSSHTunnel(host: string, localPort = 4711, remotePort = 3306) {
 	if (process.env.LOCAL) {
 		log('[i] Spawning local SSH tunnel ...');
 		// relies on "ssh toolforge" command connecting successfully
-		spawn('ssh', ['-L', `4711:${host}:3306`, 'toolforge'], {
+		spawn('ssh', ['-L', `${localPort}:${host}:${remotePort}`, 'toolforge'], {
 			detached: true
 		});
-		process.env.LOCAL = 'true';
 		await bot.sleep(4000);
 	}
 }

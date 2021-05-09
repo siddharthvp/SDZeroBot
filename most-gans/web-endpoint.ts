@@ -1,9 +1,16 @@
 import * as express from "express";
-import { createLocalSSHTunnel, toolsdb } from '../db';
+import { createLocalSSHTunnel, TOOLS_DB_HOST, toolsdb } from '../db';
+import { AuthManager } from "../botbase";
 
 const router = express.Router();
 
-createLocalSSHTunnel('tools.db.svc.eqiad.wmflabs');
+createLocalSSHTunnel(TOOLS_DB_HOST);
+
+// readonly db instance
+const db = new toolsdb('goodarticles_p', {
+	...AuthManager.get('summary-generator'),
+	connectionLimit: 20
+}).init();
 
 router.get('/', async function (req, res, next) {
 
@@ -15,7 +22,6 @@ router.get('/', async function (req, res, next) {
 
 	const user = decodeURIComponent(req.query.user as string);
 
-	const db = new toolsdb('goodarticles_p').init();
 	const result = await db.query(`
         select article from nominators
         where nominator = ? 	

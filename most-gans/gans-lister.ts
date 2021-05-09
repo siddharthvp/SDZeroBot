@@ -1,9 +1,9 @@
 import { bot, log, mwn } from '../botbase';
-import { createLocalSSHTunnel, toolsdb } from '../db';
+import { createLocalSSHTunnel, TOOLS_DB_HOST, toolsdb } from '../db';
 
 (async function () {
 
-	await createLocalSSHTunnel('tools.db.svc.eqiad.wmflabs');
+	await createLocalSSHTunnel(TOOLS_DB_HOST);
 	let db = new toolsdb('goodarticles_p').init();
 	let result = await db.query(`
         select nominator, count(*) as count

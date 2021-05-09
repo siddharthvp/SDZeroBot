@@ -1,5 +1,4 @@
 import { bot, log, mwn, toolsdb } from '../botbase';
-import { createLocalSSHTunnel } from "../db";
 
 (async function () {
 	await bot.getSiteInfo();
@@ -17,10 +16,6 @@ import { createLocalSSHTunnel } from "../db";
 			return articles.concat(json.query.categorymembers.map(pg => pg.title));
 		}, []);
 	}));
-
-	if (process.env.LOCAL) {
-		await createLocalSSHTunnel('tools.db.svc.eqiad.wmflabs');
-	}
 
 	const GANregex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
 	let table: { [user: string]: number } = {};
@@ -86,5 +81,7 @@ import { createLocalSSHTunnel } from "../db";
 	
 ${authorNotFound.map(p => `*[[${p}]]`).join('\n')}
 `);
+
+	process.exit();
 
 })();
