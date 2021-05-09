@@ -1,12 +1,16 @@
 // This report relies on ToolsDB g13watch_p database maintained using
 // eventstream-watch.ts
 
-const {bot, log, toolsdb, emailOnError, mwn} = require('../../botbase');
-const {saveWithBlacklistHandling} = require('../commons');
+import { bot, emailOnError, log, mwn } from "../../botbase";
+import { createLocalSSHTunnel, toolsdb, TOOLS_DB_HOST } from "../../db";
+const { saveWithBlacklistHandling } = require('../commons');
 
 (async function() {
 
-	await bot.getTokensAndSiteInfo();
+	await Promise.all([
+		bot.getTokensAndSiteInfo(),
+		createLocalSSHTunnel(TOOLS_DB_HOST)
+	]);
 
 	const db = new toolsdb('g13watch_p').init();
 	log('[S] Connected to the g13 database.');
@@ -51,7 +55,7 @@ const {saveWithBlacklistHandling} = require('../commons');
 
 	let oldlinks = '';
 	try {
-		oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
+		oldlinks = (await page.history(['timestamp', 'ids'], 3)).map(rev => {
 			let date = new bot.date(rev.timestamp).subtract(24, 'hours');
 			return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 		}).join(' - ') + ' - {{history|2=older}}';

@@ -1,4 +1,5 @@
-import {bot, toolsdb, TextExtractor} from '../../botbase';
+import {bot, TextExtractor} from '../../botbase';
+import {createLocalSSHTunnel, toolsdb, TOOLS_DB_HOST} from "../../db";
 import {Route} from "../../eventstream-router/Route";
 import {pageFromCategoryEvent} from "../../eventstream-router/utils";
 const {preprocessDraftForExtract} = require('../commons');
@@ -11,6 +12,7 @@ export default class g13Watch extends Route {
 		this.log(`[S] Started`);
 		await bot.getSiteInfo();
 
+		await createLocalSSHTunnel(TOOLS_DB_HOST);
 		this.db = new toolsdb('g13watch_p').init();
 		await this.db.run(`
 			CREATE TABLE IF NOT EXISTS g13(
