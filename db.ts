@@ -3,10 +3,9 @@
  * Automatically handles transient connection errors.
  */
 
-import {log, bot} from './botbase';
+import { log, bot, AuthManager } from './botbase';
 import * as mysql from 'mysql2/promise';
 import {spawn} from "child_process";
-const auth = require('./.auth');
 export {mysql};
 
 export abstract class db {
@@ -16,8 +15,7 @@ export abstract class db {
 	init() {
 		this.pool = mysql.createPool({
 			port: process.env.LOCAL ? 4711 : 3306,
-			user: auth.db_user,
-			password: auth.db_password,
+			...AuthManager.get('sdzerobot'),
 			waitForConnections: true,
 			connectionLimit: 5,
 			//timezone: 'Z',

@@ -43,17 +43,16 @@ export const xdate = require('./xdate');
 
 /** bot account and database access credentials */
 const auth = require('./.auth');
+export class AuthManager {
+    static get(account: string) {
+        return auth[account];
+    }
+}
 
 export const bot = new mwn({
     apiUrl: 'https://en.wikipedia.org/w/api.php',
-    username: auth.bot_username,
-    password: auth.bot_password,
-    OAuthCredentials: {
-        consumerToken: auth.oauth_consumer_token,
-        consumerSecret: auth.oauth_consumer_secret,
-        accessToken: auth.oauth_access_token,
-        accessSecret: auth.oauth_access_secret,
-    },
+    ...AuthManager.get('SDZeroBot:bp1'),
+    OAuthCredentials: AuthManager.get('SDZeroBot:oauth1'),
     defaultParams: {
         assert: 'bot'
     },
