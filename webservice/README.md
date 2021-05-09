@@ -1,6 +1,6 @@
 ## SDZeroBot webservice
 
-An Express.js app. Access via https://sdzerobot.toolforge.org. Test locally by running `npm test` and visiting http://localhost:3000 though some aspects may not work due to reliance on toolforge DB or filesystem. 
+An Express.js app. Access via https://sdzerobot.toolforge.org. Test locally by running `npm test` and visiting http://localhost:3000.
 
 The `toolforge-update` workflow syncs this directory with `www/js` on the host. 
 
