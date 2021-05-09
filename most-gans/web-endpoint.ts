@@ -6,6 +6,13 @@ const router = express.Router();
 createLocalSSHTunnel('tools.db.svc.eqiad.wmflabs');
 
 router.get('/', async function (req, res, next) {
+
+	if (!req.query.user) {
+		// Landing page
+		res.render('gans-landing');
+		return;
+	}
+
 	const user = decodeURIComponent(req.query.user as string);
 
 	const db = new toolsdb('goodarticles_p').init();

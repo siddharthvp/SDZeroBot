@@ -14,22 +14,21 @@ import { createLocalSSHTunnel, toolsdb } from '../db';
 	`);
 	log(`[S] Got query result`);
 
-	let wikitable = new mwn.table();
+	let wikitable = new mwn.table({ classes: ['plainlinks'] });
 	wikitable.addHeaders(['Rank', 'User', 'Count']);
 
 	result.forEach(({nominator, count}, idx) => {
 		wikitable.addRow([
 			String(idx + 1),
 			`[[User:${nominator}|${nominator}]]`,
-			String(count)
+			`[https://sdzerobot.toolforge.org/gans?user=${encodeURIComponent(nominator)} ${count}]`
 		]);
 	});
 
 	await bot.getTokensAndSiteInfo();
 	await bot.save(
 		'User:SDZeroBot/Wikipedians by most GANs',
-		'{{Hatnote|Last updated at {{subst:#time:H:m, j F Y}} (UTC) by [[User:SDZeroBot|SDZeroBot]]}}.\n\n' +
-			wikitable.getText()
+		'{{/header}}\n\n' + wikitable.getText()
 	);
 	log(`[S] Saved`);
 
