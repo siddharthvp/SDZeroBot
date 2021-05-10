@@ -4,6 +4,7 @@
  */
 
 const { bot, utils, log } = require('./botbase');
+const { rejectWithError } = require("../mwn/build/error");
 
 module.exports = {
 
@@ -54,7 +55,7 @@ module.exports = {
 		}, 0, 2).then(({failures}) => {
 			// fail if all ORES calls didn't succeed eventually
 			if (Object.keys(failures).length) {
-				return bot.rejectWithError({
+				return rejectWithError({
 					code: 'ores',
 					info: 'ORES error'
 				});
