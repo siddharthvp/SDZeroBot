@@ -6,6 +6,7 @@
 import {log, bot, AuthManager} from './botbase';
 import * as mysql from 'mysql2/promise';
 import {spawn} from "child_process";
+import type {MwnDate} from "../mwn";
 export {mysql};
 
 export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.eqiad.wmflabs';
@@ -84,7 +85,6 @@ export abstract class db {
 }
 
 export class enwikidb extends db {
-	replagHours: number
 	constructor(customOptions: mysql.PoolOptions = {}) {
 		super();
 		this.config = {
@@ -94,19 +94,24 @@ export class enwikidb extends db {
 		};
 	}
 
+	replagHours: number;
+	replagHoursCalculatedTime: MwnDate;
+
 	async getReplagHours() {
+		log('[V] Querying database lag');
 		const lastrev = await this.query(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
 		const lastrevtime = new bot.date(lastrev[0].ts);
 		this.replagHours = Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60);
+		this.replagHoursCalculatedTime = new bot.date();
 		return this.replagHours;
 	}
 	/**
 	 * Return replag hatnote wikitext. Remember getReplagHours() must have been called before.
-	 * @param {number} threshold - generate message only if replag hours is greater than this
-	 * @returns {string}
+	 * @param threshold - generate message only if replag hours is greater than this
+	 * @returns
 	 */
-	makeReplagMessage(threshold) {
-		return this.replagHours > threshold ? `{{hatnote|Replica database lag is high. Changes newer than ${this.replagHours} hours may not be reflected.}}\n` : '';
+	makeReplagMessage(threshold: number): string {
+		return this.replagHours > threshold ? `{{hatnote|Database replication lag is high. Changes newer than ${this.replagHours} hours may not be reflected.}}\n` : '';
 	}
 }
 

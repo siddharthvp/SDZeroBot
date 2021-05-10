@@ -10,7 +10,7 @@ export const QUERY_TIMEOUT = 600;
 export const FAKE_INPUT_FILE = 'fake-configs.wikitext';
 export const FAKE_OUTPUT_FILE = 'fake-output.wikitext';
 
-const db = new enwikidb({
+export const db = new enwikidb({
 	connectionLimit: 10
 }).init();
 
@@ -71,7 +71,7 @@ export async function processQueriesForPage(queries: Query[]) {
 	let index = 0;
 	for (let query of queries) {
 		if (++index !== 1) log(`[+] Processing query ${index} on ${query.page}`);
-		await query.process();
+		await query.process().catch(() => {});
 	}
 }
 
@@ -315,8 +315,18 @@ class Query {
 			table.addRow(Object.values(row));
 		}
 
+		// Get DB replag, but no need to do this any more than once in 6 hours (when triggered via
+		// webservice or eventstream-router).
+		if (
+			db.replagHours === undefined ||
+			db.replagHoursCalculatedTime.isBefore(new bot.date().subtract(6, 'hours'))
+		) {
+			await db.getReplagHours();
+		}
+
 		return this.warnings.map(text => `[WARN: ${text}]\n\n`).join('') +
-			table.getText() + '\n' +
+			db.makeReplagMessage(2) +
+			TextExtractor.finalSanitise(table.getText()) + '\n' +
 			'----\n' +
 			'&sum; ' + result.length + ' items.';
 	}

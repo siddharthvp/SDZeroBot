@@ -1,6 +1,6 @@
 import { argv, bot, log } from "../botbase";
 import { writeFile } from "../utils";
-import { FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
+import { db, FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
 import { createLocalSSHTunnel, ENWIKI_DB_HOST } from "../db";
 
 /**
@@ -38,6 +38,7 @@ import { createLocalSSHTunnel, ENWIKI_DB_HOST } from "../db";
 	const queries = await fetchQueries();
 	log(`[S] Fetched queries`);
 
+	await db.getReplagHours();
 	await processQueries(queries);
 
 	// createSSHTunnel creates a detached process that prevents natural exit
