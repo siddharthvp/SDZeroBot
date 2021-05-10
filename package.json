@@ -5,7 +5,6 @@
   "main": "",
   "scripts": {
     "update": "git pull && crontab crontab && cd ../mwn && git pull && npm run quickbuild",
-    "build": "babel . --extensions \".ts\" --out-dir .",
     "tsc": "tsc --sourceMap false || echo"
   },
   "author": "Siddharth VP",
@@ -32,10 +31,6 @@
     "sqlite3": "^5.0.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.13.16",
-    "@babel/core": "^7.14.0",
-    "@babel/plugin-transform-modules-commonjs": "^7.14.0",
-    "@babel/preset-typescript": "^7.13.0",
     "@types/async-redis": "^1.1.1",
     "@types/mocha": "^8.0.4",
     "chai": "^4.2.0",
