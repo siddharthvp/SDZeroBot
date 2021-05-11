@@ -3,7 +3,7 @@
  * Automatically handles transient connection errors.
  */
 
-import {log, bot, AuthManager} from './botbase';
+import {AuthManager, bot, log} from './botbase';
 import * as mysql from 'mysql2/promise';
 import {spawn} from "child_process";
 import type {MwnDate} from "../mwn";
@@ -135,4 +135,13 @@ export async function createLocalSSHTunnel(host: string, localPort = 4711, remot
 		});
 		await bot.sleep(4000);
 	}
+}
+
+export interface SQLError extends Error {
+	code: string;
+	errno: number;
+	fatal: boolean;
+	sql: string;
+	sqlState: string;
+	sqlMessage: string;
 }

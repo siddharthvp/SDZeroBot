@@ -12,19 +12,9 @@ export class Alert {
     }
 
     async alert() {
-        if (argv.dry || !this.rule.alertPage) {
-            return;
+        if (!argv.dry && this.rule.alertPage) {
+            await this.alertTalkPage();
         }
-        await this.alertTalkPage();
-        // if (this.rule.alertMode === 'talkpage') {
-        //     await this.alertTalkPage();
-        // } else if (this.rule.alertMode === 'email') {
-        //     await this.alertEmail();
-        // } else if (this.rule.alertMode === 'ping') {
-        //     await this.alertPing();
-        // } else {
-        //     throw new RuleError(`Invalid alert mode: ${this.rule.alertMode}: must be "talkpage", "email" or "ping"`);
-        // }
     }
 
     async alertTalkPage() {
@@ -60,6 +50,17 @@ export class Alert {
         });
     }
 
+    // async alert() {
+    //     if (this.rule.alertMode === 'talkpage') {
+    //         await this.alertTalkPage();
+    //     } else if (this.rule.alertMode === 'email') {
+    //         await this.alertEmail();
+    //     } else if (this.rule.alertMode === 'ping') {
+    //         await this.alertPing();
+    //     } else {
+    //         throw new RuleError(`Invalid alert mode: ${this.rule.alertMode}: must be "talkpage", "email" or "ping"`);
+    //     }
+    // }
     // async alertEmail() {
     //     await new bot.user(this.rule.emailUser).email(
     //         this.getHeader(),

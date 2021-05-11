@@ -1,4 +1,5 @@
-import { argv, bot, emailOnError, enwikidb, log, mwn, TextExtractor } from "../botbase";
+import { argv, bot, emailOnError, log, mwn, TextExtractor } from "../botbase";
+import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
 import { arrayChunk, lowerFirst, readFile, writeFile } from "../utils";
 
@@ -390,15 +391,6 @@ class Query {
 		return text.slice(0, beginTemplateEndIdx) +
 			text.slice(beginTemplateEndIdx).replace(textToReplace, '\n' + queryResult.replace(/\$/g, '$$$$') + '\n');
 	}
-}
-
-class SQLError extends Error {
-	code: string;
-	errno: number;
-	fatal: boolean;
-	sql: string;
-	sqlState: string;
-	sqlMessage: string;
 }
 
 // hacky way to prevent further execution in process(), but not actually report as error
