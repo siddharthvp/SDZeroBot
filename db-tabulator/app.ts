@@ -56,7 +56,7 @@ export async function processQueries(allQueries: Record<string, Query[]>) {
 
 export async function fetchQueriesForPage(page: string): Promise<Query[]> {
 	// Only work in bot/op userspaces until BRFA approval
-	if (!page.startsWith('User:SD0001/') && page.startsWith('User:SDZeroBot/')) {
+	if (!page.startsWith('User:SD0001/') && !page.startsWith('User:SDZeroBot/')) {
 		return null;
 	}
 	let text = (await bot.read(page))?.revisions?.[0]?.content;

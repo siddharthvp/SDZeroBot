@@ -1,6 +1,6 @@
 import * as express from "express";
 import { fetchQueriesForPage, processQueriesForPage, TEMPLATE } from "./app";
-import { createLogStream } from '../eventstream-router/utils'
+import { createLogStream } from '../eventstream-router/utils';
 
 const router = express.Router();
 
