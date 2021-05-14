@@ -264,7 +264,7 @@ class Query {
 			result = this.transformColumn(result, srcIndex, pageName => pageName.replace(/_/g, ' '));
 			const listOfPages = result.map(row => {
 				try {
-					return new bot.page(Object.values(row)[srcIndex - 1] as string, namespace).toText()
+					return new bot.page(Object.values(row)[srcIndex - 1] as string, namespace).toText();
 				} catch (e) { return '::'; } // new bot.page() failing, use invalid page name so that
 				// fetchExcerpts return empty string extract
 			});
