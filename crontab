@@ -25,6 +25,9 @@
 #   the two.
 #
 
+# Environment variables
+CRON=true
+
 # m h  dom mon dow         		  job name      memory      executable     file path
 0   2  1   *   *   jsub -quiet -N job-MIS       -mem 900m ~/bin/node ~/SDZeroBot/reports/most-imported-scripts/most-imported-scripts.js
 0   2  15  *   *   jsub -quiet -N job-MIS       -mem 900m ~/bin/node ~/SDZeroBot/reports/most-imported-scripts/most-imported-scripts.js

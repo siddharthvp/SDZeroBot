@@ -113,6 +113,11 @@ class Query {
 	}
 
 	parseQuery() {
+		if (process.env.CRON && ['manual', 'no'].includes(this.getTemplateValue('update').toLowerCase())) {
+			log(`[+] Skipping ${this.page} as automatic updates are disabled.`);
+			throw new HandledError();
+		}
+
 		// remove semicolons to disallow multiple SQL statements used together
 		this.sql = this.getTemplateValue('sql').replace(/;/g, '');
 
