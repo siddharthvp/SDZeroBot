@@ -2,6 +2,7 @@ import { argv, bot, emailOnError, log, mwn, TextExtractor } from "../botbase";
 import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
 import { arrayChunk, lowerFirst, readFile, writeFile } from "../utils";
+import { NS_CATEGORY, NS_FILE } from "../namespaces";
 
 export const BOT_NAME = 'SDZeroBot';
 export const TEMPLATE = 'User:SDZeroBot/Database report';
@@ -279,8 +280,11 @@ class Query {
 		this.wikilinkConfig.forEach(({columnIndex, namespace, showNamespace}) => {
 			result = this.transformColumn(result, columnIndex, value => {
 				try {
-					let pageName = new bot.title(value, namespace).toText();
-					return showNamespace ? `[[${pageName}]]` : `[[${pageName}|${value.replace(/_/g, ' ')}]]`;
+					let title = new bot.title(value, namespace);
+					// title.getNamespaceId() need not be same as namespace
+					let colon = [NS_CATEGORY, NS_FILE].includes(title.getNamespaceId()) ? ':' : '';
+					let pageName = title.toText();
+					return showNamespace ? `[[${colon}${pageName}]]` : `[[${colon}${pageName}|${value.replace(/_/g, ' ')}]]`;
 				} catch (e) {
 					return value.replace(/_/g, ' ');
 				}
