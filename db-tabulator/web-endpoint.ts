@@ -13,7 +13,7 @@ router.get('/', async function (req, res, next) {
 	res.render('database-report', {
 		page,
 		template: TEMPLATE,
-		noQueries: !!queries
+		noQueries: !queries || queries.length === 0
 	});
 	if (queries) {
 		log(`Started processing ${page}`);

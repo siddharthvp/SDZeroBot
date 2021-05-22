@@ -1,7 +1,6 @@
 import * as redis from 'redis';
 import * as asyncRedis from "async-redis";
 import { randomBytes } from "crypto";
-import { createLocalSSHTunnel } from "./db";
 
 // Source: https://github.com/moaxaca/async-redis (MIT)
 // for some reason the Promisified type that we need isn't exported from there
@@ -9,6 +8,8 @@ import { createLocalSSHTunnel } from "./db";
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 type Omitted = Omit<redis.RedisClient, keyof redis.Commands<boolean>>;
 interface Promisified<T = redis.RedisClient> extends Omitted, redis.Commands<Promise<boolean>> {}
+
+export const REDIS_HOST = 'tools-redis';
 
 /**
  * Usage:
@@ -24,8 +25,8 @@ export class Redis {
 	config: redis.ClientOpts;
 	constructor(config: redis.ClientOpts = {}) {
 		this.config = {
-			host: process.env.LOCAL ? '127.0.0.1' : 'tools-redis',
-			port: process.env.LOCAL ? 4712 : 6379,
+			host: process.env.LOCAL ? '127.0.0.1' : REDIS_HOST,
+			port: process.env.LOCAL ? 4713 : 6379,
 			// Prefixing per https://wikitech.wikimedia.org/wiki/Help:Toolforge/Redis_for_Toolforge#Security
 			prefix: randomBytes(20).toString('hex'),
 			...config
@@ -34,8 +35,4 @@ export class Redis {
 	connect(): Promisified {
 		return asyncRedis.createClient(this.config);
 	}
-}
-
-export function createLocalSSHTunnelForRedis() {
-	return createLocalSSHTunnel('tools-redis', 4712, 6379);
 }

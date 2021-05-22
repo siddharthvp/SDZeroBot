@@ -7,6 +7,7 @@ import {AuthManager, bot, log} from './botbase';
 import * as mysql from 'mysql2/promise';
 import {spawn} from "child_process";
 import type {MwnDate} from "../mwn";
+import { REDIS_HOST } from "./redis";
 export {mysql};
 
 export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.eqiad.wmflabs';
@@ -18,7 +19,7 @@ export abstract class db {
 
 	init() {
 		this.pool = mysql.createPool({
-			port: process.env.LOCAL ? 4711 : 3306,
+			port: 3306,
 			...AuthManager.get('sdzerobot'),
 			waitForConnections: true,
 			connectionLimit: 5,
@@ -89,6 +90,7 @@ export class enwikidb extends db {
 		super();
 		this.config = {
 			host: process.env.LOCAL ? '127.0.0.1' : ENWIKI_DB_HOST,
+			port: process.env.LOCAL ? 4711 : 3306,
 			database: 'enwiki_p',
 			...customOptions
 		};
@@ -120,15 +122,24 @@ export class toolsdb extends db {
 		super();
 		this.config = {
 			host: process.env.LOCAL ? '127.0.0.1' : TOOLS_DB_HOST,
+			port: process.env.LOCAL ? 4712 : 3306,
 			database: 's54328__' + dbname,
 			...customOptions
 		};
 	}
 }
 
-export async function createLocalSSHTunnel(host: string, localPort = 4711, remotePort = 3306) {
+export async function createLocalSSHTunnel(host: string, localPort?: number, remotePort?: number) {
 	if (process.env.LOCAL) {
-		log('[i] Spawning local SSH tunnel ...');
+		log(`[i] Spawning local SSH tunnel for ${host} ...`);
+		localPort = localPort || (host === ENWIKI_DB_HOST
+			? 4711 : host === TOOLS_DB_HOST
+			? 4712 : host === REDIS_HOST
+			? 4713 : null);
+		remotePort = remotePort || (host === ENWIKI_DB_HOST
+			? 3306 : host === TOOLS_DB_HOST
+			? 3306 : host === REDIS_HOST
+			? 6379 : null);
 		// relies on "ssh toolforge" command connecting successfully
 		spawn('ssh', ['-L', `${localPort}:${host}:${remotePort}`, 'toolforge'], {
 			detached: true

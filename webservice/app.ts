@@ -8,7 +8,8 @@ import * as hbs from 'hbs';
 // All paths to SDZeroBot files must be via ../../SDZeroBot
 // rather than via ../
 // The latter will work locally but not when inside toolforge www/js directory!
-import {bot, mwn} from "../../SDZeroBot/botbase";
+import { bot, mwn } from "../../SDZeroBot/botbase";
+import { createLocalSSHTunnel, ENWIKI_DB_HOST, TOOLS_DB_HOST } from "../../SDZeroBot/db";
 
 const app = express();
 
@@ -31,6 +32,9 @@ bot.getSiteInfo();
 setInterval(function () {
 	bot.getTokens();
 }, 60000);
+
+createLocalSSHTunnel(ENWIKI_DB_HOST);
+createLocalSSHTunnel(TOOLS_DB_HOST);
 
 import indexRouter from "./routes/index";
 import logsRouter from "./routes/logs";

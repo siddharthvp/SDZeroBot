@@ -1,10 +1,8 @@
 import * as express from "express";
-import { createLocalSSHTunnel, TOOLS_DB_HOST, toolsdb } from '../db';
+import { toolsdb } from '../db';
 import { AuthManager } from "../botbase";
 
 const router = express.Router();
-
-createLocalSSHTunnel(TOOLS_DB_HOST);
 
 // readonly db instance
 const db = new toolsdb('goodarticles_p', {
