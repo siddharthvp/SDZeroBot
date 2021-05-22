@@ -64,7 +64,6 @@ bot.initOAuth();
 
 export const TextExtractor = require('./TextExtractor')(bot);
 
+// Deprecated exports, import from ./db or ./utils directly
 export {mysql, db, enwikidb, toolsdb} from './db';
-
-// exported like this for compatibility; better import utils directly
 export * as utils from './utils';

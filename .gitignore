@@ -2,6 +2,7 @@
 *.txt
 *.db
 *.out
+fake-*.wikitext
 *.js.map
 !tsconfig.json
 !package.json

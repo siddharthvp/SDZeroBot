@@ -6,7 +6,8 @@
     ],
     "module": "CommonJS",
     "types": ["node", "mocha"],
-    "sourceMap": true
+    "sourceMap": true,
+    "resolveJsonModule": true
   },
   "ts-node": {
     "logError": true

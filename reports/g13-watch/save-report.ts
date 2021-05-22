@@ -2,7 +2,8 @@
 // eventstream-watch.ts
 
 import { bot, emailOnError, log, mwn } from "../../botbase";
-import { createLocalSSHTunnel, toolsdb, TOOLS_DB_HOST } from "../../db";
+import { toolsdb, TOOLS_DB_HOST } from "../../db";
+import { createLocalSSHTunnel } from "../../utils";
 const { saveWithBlacklistHandling } = require('../commons');
 
 (async function() {

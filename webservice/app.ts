@@ -9,7 +9,8 @@ import * as hbs from 'hbs';
 // rather than via ../
 // The latter will work locally but not when inside toolforge www/js directory!
 import { bot, mwn } from "../../SDZeroBot/botbase";
-import { createLocalSSHTunnel, ENWIKI_DB_HOST, TOOLS_DB_HOST } from "../../SDZeroBot/db";
+import { ENWIKI_DB_HOST, TOOLS_DB_HOST } from "../../SDZeroBot/db";
+import { createLocalSSHTunnel } from "../../SDZeroBot/utils";
 
 const app = express();
 

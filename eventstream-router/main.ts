@@ -3,7 +3,8 @@ import * as EventSource from './EventSource';
 import { RouteValidator } from "./RouteValidator";
 import { RecentChangeStreamEvent } from "./RecentChangeStreamEvent";
 import { LastSeen } from "./LastSeen";
-import { createLogStream, logError, pageFromCategoryEvent } from "./utils";
+import { logError, pageFromCategoryEvent } from "./utils";
+import { createLogStream } from "../utils";
 
 // TODO: improve logging
 

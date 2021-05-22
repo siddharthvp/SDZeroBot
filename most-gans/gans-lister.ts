@@ -1,5 +1,6 @@
 import { bot, log, mwn } from '../botbase';
-import { createLocalSSHTunnel, TOOLS_DB_HOST, toolsdb } from '../db';
+import { TOOLS_DB_HOST, toolsdb } from '../db';
+import { createLocalSSHTunnel } from "../utils";
 
 (async function () {
 

@@ -1,5 +1,5 @@
-import { createLogStream } from "./utils";
 import { RecentChangeStreamEvent } from "./RecentChangeStreamEvent";
+import { createLogStream } from "../utils";
 
 /**
  * REGISTER ROUTES

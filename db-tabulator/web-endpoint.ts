@@ -1,10 +1,10 @@
 import * as express from "express";
 import { fetchQueriesForPage, processQueriesForPage, TEMPLATE } from "./app";
-import { createLogStream } from '../eventstream-router/utils';
+import { createLogStream, mapPath } from "../utils";
 
 const router = express.Router();
 
-const log = createLogStream('/data/project/sdzerobot/web-dbtb.out');
+const log = createLogStream(mapPath('~/web-dbtb.out'));
 
 router.get('/', async function (req, res, next) {
 	let {page} = req.query as {page: string};

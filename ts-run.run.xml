@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ts-run" type="NodeJSConfigurationType" application-parameters="-r test.js" node-parameters="-r ts-node/register" path-to-js-file="$FilePathRelativeToProjectRoot$" working-dir="$PROJECT_DIR$">
+  <configuration default="false" name="ts-run" type="NodeJSConfigurationType" application-parameters="--fake" node-parameters="-r ts-node/register" path-to-js-file="$FilePathRelativeToProjectRoot$" working-dir="$PROJECT_DIR$">
     <envs>
       <env name="TS_NODE_LOG_ERROR" value="true" />
       <env name="TS_NODE_COMPILER_OPTIONS" value="{&quot;sourceMap&quot;:true}" />

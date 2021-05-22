@@ -1,7 +1,7 @@
 import { argv, bot, log } from "../botbase";
-import { writeFile } from "../utils";
+import { createLocalSSHTunnel, writeFile } from "../utils";
 import { db, FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
-import { createLocalSSHTunnel, ENWIKI_DB_HOST } from "../db";
+import { ENWIKI_DB_HOST } from "../db";
 
 /**
  * Specs:
@@ -28,7 +28,7 @@ import { createLocalSSHTunnel, ENWIKI_DB_HOST } from "../db";
 
 	await Promise.all([
 		bot.getTokensAndSiteInfo(),
-		process.env.LOCAL && createLocalSSHTunnel(ENWIKI_DB_HOST)
+		createLocalSSHTunnel(ENWIKI_DB_HOST)
 	]);
 
 	if (argv.fake) {
@@ -42,7 +42,5 @@ import { createLocalSSHTunnel, ENWIKI_DB_HOST } from "../db";
 	await processQueries(queries);
 
 	// createSSHTunnel creates a detached process that prevents natural exit
-	if (process.env.LOCAL) {
-		process.exit();
-	}
+	process.exit();
 })();

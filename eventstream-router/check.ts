@@ -3,12 +3,12 @@
  * stream process is still working, and restart
  * it if it isn't.
  */
-
-const {emailOnError} = require('../botbase');
-const {exec, execSync} = require('child_process');
+import {emailOnError} from '../botbase';
+import {mapPath} from "../utils";
+import {exec, execSync} from 'child_process';
 
 const testRgx = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[i\] Reconnected/g;
-const tail = execSync('tail -100 /data/project/sdzerobot/stream.out').toString();
+const tail = execSync(`tail -100 ${mapPath('~')}/stream.out`).toString();
 
 // eslint-disable-next-line no-empty
 let match; for (match of tail.matchAll(testRgx)) {} // now match is the last matched
