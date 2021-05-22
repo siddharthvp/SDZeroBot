@@ -14,9 +14,9 @@ import { ENWIKI_DB_HOST } from "../db";
  * Report the first results immediately on setup (Use EventStream)
  * Support article extracts
  * Setup webservice endpoint to generate reports on demand
+ * Support linkification with ns numbers from another column
  *
  * Pending:
- * Support linkification with ns numbers from another column
  *
  */
 

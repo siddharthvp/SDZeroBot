@@ -87,8 +87,8 @@ class Query {
 	page: string;
 	template: Template;
 	sql: string;
-	wikilinkConfig: Array<{columnIndex: number, namespace: number, showNamespace: boolean}>;
-	excerptConfig: Array<{srcIndex: number, destIndex: number, namespace: number, charLimit: number, charHardLimit: number}>;
+	wikilinkConfig: Array<{columnIndex: number, namespace: string, showNamespace: boolean}>;
+	excerptConfig: Array<{srcIndex: number, destIndex: number, namespace: string, charLimit: number, charHardLimit: number}>;
 	warnings: string[] = [];
 
 	constructor(template: Template, page: string) {
@@ -128,12 +128,12 @@ class Query {
 				const [columnIndex, namespace, showHide] = e.trim().split(':');
 				return {
 					columnIndex: parseInt(columnIndex),
-					namespace: namespace ? parseInt(namespace) : 0,
+					namespace: namespace || '0',
 					showNamespace: showHide === 'show'
 				};
 			})
 			.filter(config => {
-				if (isNaN(config.namespace)) {
+				if (!/^c?\d+/i.test(config.namespace)) {
 					this.warnings.push(`Invalid namespace number: ${config.namespace}. Refer to [[WP:NS]] for namespace numbers`);
 					return false;
 				} else if (isNaN(config.columnIndex)) {
@@ -150,12 +150,12 @@ class Query {
 				const config = {
 					srcIndex: parseInt(srcIndex),
 					destIndex: destIndex ? parseInt(destIndex) : parseInt(srcIndex) + 1,
-					namespace: namespace ? parseInt(namespace) : 0,
+					namespace: namespace || '0',
 					charLimit: charLimit ? parseInt(charLimit) : 250,
 					charHardLimit: charHardLimit ? parseInt(charHardLimit) : 500
 				};
 				if (
-					isNaN(config.srcIndex) || isNaN(config.destIndex) || isNaN(config.namespace) ||
+					isNaN(config.srcIndex) || isNaN(config.destIndex) || !/^c?\d+/i.test(config.namespace) ||
 					isNaN(config.charLimit) || isNaN(config.charHardLimit)
 				) {
 					this.warnings.push(`Invalid excerpt config: one or more numeral values found in: <code>${e}</code>. Ignoring.`);
@@ -191,11 +191,11 @@ class Query {
 		});
 	}
 
-	transformColumn(result: Array<Record<string, string>>, columnIdx: number, transformer: (cell: string) => string): Array<Record<string, string>> {
-		return result.map((row) => {
+	transformColumn(result: Array<Record<string, string>>, columnIdx: number, transformer: (cell: string, rowIdx: number) => string): Array<Record<string, string>> {
+		return result.map((row, rowIdx) => {
 			return Object.fromEntries(Object.entries(row).map(([key, value], colIdx) => {
 				if (columnIdx === colIdx + 1) {
-					return [key, transformer(value)];
+					return [key, transformer(value, rowIdx)];
 				} else {
 					return [key, value];
 				}
@@ -263,11 +263,21 @@ class Query {
 		// Add excerpts
 		for (let {srcIndex, destIndex, namespace, charLimit, charHardLimit} of this.excerptConfig) {
 			result = this.transformColumn(result, srcIndex, pageName => pageName.replace(/_/g, ' '));
-			const listOfPages = result.map(row => {
+			let nsId, nsColNumber;
+			if (parseInt(namespace)) {
+				nsId = parseInt(namespace);
+			} else {
+				nsColNumber = parseInt(namespace.slice(1)) - 1;
+			}
+			const listOfPages = result.map((row) => {
 				try {
-					return new bot.page(Object.values(row)[srcIndex - 1] as string, namespace).toText();
+					let cells = Object.values(row);
+					return new bot.page(
+						cells[srcIndex - 1] as string,
+						nsId || Number(cells[nsColNumber])
+					).toText();
 				} catch (e) { return '::'; } // new bot.page() failing, use invalid page name so that
-				// fetchExcerpts return empty string extract
+				// fetchExcerpts returns empty string extract
 			});
 			const excerpts = await this.fetchExcerpts(listOfPages, charLimit, charHardLimit);
 			result = this.addColumn(result, destIndex, excerpts);
@@ -278,10 +288,16 @@ class Query {
 
 		// Add links
 		this.wikilinkConfig.forEach(({columnIndex, namespace, showNamespace}) => {
-			result = this.transformColumn(result, columnIndex, value => {
+			let nsId, nsColNumber;
+			if (parseInt(namespace)) {
+				nsId = parseInt(namespace);
+			} else {
+				nsColNumber = parseInt(namespace.slice(1)) - 1;
+			}
+			result = this.transformColumn(result, columnIndex, (value, rowIdx) => {
 				try {
-					let title = new bot.title(value, namespace);
-					// title.getNamespaceId() need not be same as namespace
+					let title = new bot.title(value, nsId || Number(Object.values(result[rowIdx])[nsColNumber]));
+					// title.getNamespaceId() need not be same as namespace passed to new bot.title
 					let colon = [NS_CATEGORY, NS_FILE].includes(title.getNamespaceId()) ? ':' : '';
 					let pageName = title.toText();
 					return showNamespace ? `[[${colon}${pageName}]]` : `[[${colon}${pageName}|${value.replace(/_/g, ' ')}]]`;
