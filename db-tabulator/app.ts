@@ -274,7 +274,7 @@ class Query {
 					let cells = Object.values(row);
 					return new bot.page(
 						cells[srcIndex - 1] as string,
-						nsId || Number(cells[nsColNumber])
+						nsId ?? Number(cells[nsColNumber])
 					).toText();
 				} catch (e) { return '::'; } // new bot.page() failing, use invalid page name so that
 				// fetchExcerpts returns empty string extract
@@ -296,7 +296,7 @@ class Query {
 			}
 			result = this.transformColumn(result, columnIndex, (value, rowIdx) => {
 				try {
-					let title = new bot.title(value, nsId || Number(Object.values(result[rowIdx])[nsColNumber]));
+					let title = new bot.title(value, nsId ?? Number(Object.values(result[rowIdx])[nsColNumber]));
 					// title.getNamespaceId() need not be same as namespace passed to new bot.title
 					let colon = [NS_CATEGORY, NS_FILE].includes(title.getNamespaceId()) ? ':' : '';
 					let pageName = title.toText();
