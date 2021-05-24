@@ -264,7 +264,7 @@ class Query {
 		for (let {srcIndex, destIndex, namespace, charLimit, charHardLimit} of this.excerptConfig) {
 			result = this.transformColumn(result, srcIndex, pageName => pageName.replace(/_/g, ' '));
 			let nsId, nsColNumber;
-			if (parseInt(namespace)) {
+			if (!isNaN(parseInt(namespace))) {
 				nsId = parseInt(namespace);
 			} else {
 				nsColNumber = parseInt(namespace.slice(1)) - 1;
@@ -289,7 +289,7 @@ class Query {
 		// Add links
 		this.wikilinkConfig.forEach(({columnIndex, namespace, showNamespace}) => {
 			let nsId, nsColNumber;
-			if (parseInt(namespace)) {
+			if (!isNaN(parseInt(namespace))) {
 				nsId = parseInt(namespace);
 			} else {
 				nsColNumber = parseInt(namespace.slice(1)) - 1;
