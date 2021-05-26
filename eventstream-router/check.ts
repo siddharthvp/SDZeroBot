@@ -8,7 +8,7 @@ import {mapPath} from "../utils";
 import {exec, execSync} from 'child_process';
 
 const testRgx = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[i\] Reconnected/g;
-const tail = execSync(`tail -100 ${mapPath('~')}/stream.out`).toString();
+const tail = execSync(`tail -100 ${mapPath('~/stream.out')}`).toString();
 
 // eslint-disable-next-line no-empty
 let match; for (match of tail.matchAll(testRgx)) {} // now match is the last matched
