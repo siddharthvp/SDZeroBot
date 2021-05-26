@@ -1,4 +1,4 @@
-import {bot, mwn, log, argv} from "../botbase";
+import { bot, mwn, log, argv, enwikidb } from "../botbase";
 import {Monitor} from './index';
 
 import * as moment from "moment";
@@ -58,7 +58,12 @@ export class Tabulator {
 	}
 
 	static async postResults() {
-		let text = '<noinclude>' + mwn.template('/header', {
+		let replagHours;
+		try {
+			replagHours = await new enwikidb().getReplagHours();
+		} catch (e) {}
+		let text = (replagHours > 6 ? `Database replication lag is ${replagHours} hours; as a result some bots may not be working` : '') +
+			'<noinclude>' + mwn.template('/header', {
 			errcount: this.invalidRules.length ? String(this.invalidRules.length) : null
 		}) + '</noinclude>\n' + Tabulator.table.getText();
 		if (argv.dry) {
