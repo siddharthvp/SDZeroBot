@@ -60,7 +60,6 @@ export default class gans extends Route {
 		} else {
 			this.log(`[S] Adding [[${article}]]: nominator "${GA_user}"`);
 			this.db.run(`REPLACE INTO nominators VALUES(?, ?)`, [article, GA_user]);
-			return Promise.resolve();
 		}
 	}
 

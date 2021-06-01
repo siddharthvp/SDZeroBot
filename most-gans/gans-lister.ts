@@ -28,7 +28,7 @@ import { createLocalSSHTunnel } from "../utils";
 
 	await bot.getTokensAndSiteInfo();
 	await bot.save(
-		'User:SDZeroBot/Wikipedians by most GANs',
+		'Wikipedia:List of Wikipedians by good article nominations',
 		'{{/header}}\n\n' + wikitable.getText()
 	);
 	log(`[S] Saved`);
