@@ -1,5 +1,5 @@
 const {fs, mwn, bot, enwikidb, utils, argv, log, emailOnError} = require('../../botbase');
-const OresUtils = require('../../OresUtils');
+const OresUtils = require('../OresUtils');
 process.chdir(__dirname);
 
 (async function() {

@@ -1,5 +1,5 @@
 const {mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
-const OresUtils = require('../../OresUtils');
+const OresUtils = require('../OresUtils');
 const {normaliseShortdesc, populateWikidataShortdescs} = require('../commons');
 
 process.chdir(__dirname);

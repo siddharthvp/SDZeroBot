@@ -1,5 +1,5 @@
 const {bot, mwn, log, emailOnError} = require('../botbase');
-const OresUtils = require('../OresUtils');
+const OresUtils = require('./OresUtils');
 
 /**
  * @param {Object} tableInfo

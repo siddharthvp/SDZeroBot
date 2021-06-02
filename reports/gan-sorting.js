@@ -1,5 +1,5 @@
 const {mwn, bot, log, argv, xdate, emailOnError} = require('../botbase');
-const OresUtils = require('../OresUtils');
+const OresUtils = require('./OresUtils');
 const TextExtractor = require('../TextExtractor')(bot);
 
 (async function () {
@@ -85,7 +85,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 					count: 1,
 					namePredicate: name => name === 'GA nominee'
 				})[0];
-	
+
 				if (!template) {
 					template = wkt.parseTemplates({
 						recursive: true
@@ -95,7 +95,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 			};
 
 			let template = getGATemplateFromText(text);
-			
+
 			if (!template) {
 				// get whole page
 				text = (await bot.read(pg.title)).revisions[0].content;
@@ -179,7 +179,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 		var table = new mwn.table();
 		table.addHeaders([
 			{label: 'Date', class: 'date-header'},
-			{label: 'Article', class: 'article-header'}, 
+			{label: 'Article', class: 'article-header'},
 			{label: 'Excerpt', class: 'excerpt-header'},
 			{label: 'Nominator', class: 'nominator-header'}
 		]);

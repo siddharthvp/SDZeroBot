@@ -3,8 +3,8 @@
  * sortlist tasks.
  */
 
-const { bot, utils, log } = require('./botbase');
-const { rejectWithError } = require("../mwn/build/error");
+const { bot, utils, log } = require('../botbase');
+const { rejectWithError } = require("../../mwn/build/error");
 
 module.exports = {
 

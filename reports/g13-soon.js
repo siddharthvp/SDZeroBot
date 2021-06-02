@@ -1,5 +1,5 @@
 const {bot, enwikidb, argv, log, emailOnError} = require('../botbase');
-const OresUtils = require('../OresUtils');
+const OresUtils = require('./OresUtils');
 
 (async function() {
 

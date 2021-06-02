@@ -1,5 +1,5 @@
 const {bot, argv, log, utils, emailOnError} = require('../botbase');
-const OresUtils = require('../OresUtils');
+const OresUtils = require('../reports/OresUtils');
 
 (async function() {
 
