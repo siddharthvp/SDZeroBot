@@ -1,7 +1,7 @@
 const {enwikidb, utils} = require('../botbase');
 
 (async () => {
-	let db = new enwikidb().init();
+	let db = new enwikidb();
 	const result = await db.query(`
 		SELECT page_title, rd_title FROM redirect
 		INNER JOIN page

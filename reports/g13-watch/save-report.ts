@@ -13,7 +13,7 @@ const { saveWithBlacklistHandling } = require('../commons');
 		createLocalSSHTunnel(TOOLS_DB_HOST)
 	]);
 
-	const db = new toolsdb('g13watch_p').init();
+	const db = new toolsdb('g13watch_p');
 	log('[S] Connected to the g13 database.');
 
 	let table = new mwn.table();

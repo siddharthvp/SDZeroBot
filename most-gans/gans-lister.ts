@@ -5,7 +5,7 @@ import { createLocalSSHTunnel } from "../utils";
 (async function () {
 
 	await createLocalSSHTunnel(TOOLS_DB_HOST);
-	let db = new toolsdb('goodarticles_p').init();
+	let db = new toolsdb('goodarticles_p');
 	let result = await db.query(`
         select nominator, count(*) as count
         from nominators

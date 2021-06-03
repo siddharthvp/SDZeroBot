@@ -12,7 +12,7 @@ export default class gans extends Route {
 		this.log(`[S] Started`);
 		await bot.getSiteInfo();
 
-		this.db = new toolsdb('goodarticles_p').init();
+		this.db = new toolsdb('goodarticles_p');
 	}
 
 	filter(data) {

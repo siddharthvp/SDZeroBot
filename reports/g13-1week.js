@@ -10,7 +10,7 @@ let tableInfo = {};
 const startTs = new bot.date().subtract(6, 'months').add(7, 'days').setUTCHours(0,0,0,0).format('YYYYMMDDHHmmss');
 const endTs = new bot.date().subtract(6, 'months').add(6, 'days').setUTCHours(0,0,0,0).format('YYYYMMDDHHmmss');
 
-const db = new enwikidb().init();
+const db = new enwikidb();
 const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-1week-db.json').toString()) :
 await db.query(`
 	SELECT DISTINCT page_namespace, page_title, rev_timestamp

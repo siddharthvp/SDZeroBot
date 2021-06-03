@@ -13,17 +13,16 @@ export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.eqiad.wmflabs';
 export const TOOLS_DB_HOST = 'tools.db.svc.eqiad.wmflabs';
 
 export abstract class db {
-	pool: mysql.Pool
-	config: mysql.PoolOptions
+	pool: mysql.Pool;
 
-	init() {
+	protected constructor(customOptions: mysql.PoolOptions = {}) {
 		this.pool = mysql.createPool({
 			port: 3306,
 			...AuthManager.get('sdzerobot'),
 			waitForConnections: true,
 			connectionLimit: 5,
 			//timezone: 'Z',
-			...this.config
+			...customOptions
 		});
 
 		// Toolforge policy does not allow holding idle connections
@@ -52,6 +51,9 @@ export abstract class db {
 		}
 	}
 
+	/**
+	 * @returns array of objects - each object represents a row
+	 */
 	async query(...args: any[]): Promise<Array<Record<string, string | number | null>>> {
 		let conn = await this.getConnection();
 		const result = await conn.query(...args).finally(() => {
@@ -86,13 +88,12 @@ export abstract class db {
 
 export class enwikidb extends db {
 	constructor(customOptions: mysql.PoolOptions = {}) {
-		super();
-		this.config = {
+		super({
 			host: onToolforge() ? ENWIKI_DB_HOST : '127.0.0.1',
 			port: onToolforge() ? 3306 : 4711,
 			database: 'enwiki_p',
 			...customOptions
-		};
+		});
 	}
 
 	replagHours: number;
@@ -117,14 +118,17 @@ export class enwikidb extends db {
 }
 
 export class toolsdb extends db {
-	constructor(dbname, customOptions: mysql.PoolOptions = {}) {
-		super();
-		this.config = {
+	/**
+	 * @param dbname - DB name, `s54328__` will be prepended to this
+	 * @param customOptions - extra mysql pool connection options
+	 */
+	constructor(dbname: string, customOptions: mysql.PoolOptions = {}) {
+		super({
 			host: onToolforge() ? TOOLS_DB_HOST : '127.0.0.1',
 			port: onToolforge() ? 3306 : 4712,
 			database: 's54328__' + dbname,
 			...customOptions
-		};
+		});
 	}
 }
 

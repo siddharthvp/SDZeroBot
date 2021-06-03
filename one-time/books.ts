@@ -11,7 +11,7 @@ import { createLocalSSHTunnel, readFile, saveObject, writeFile } from "../utils"
 	} else {
 		await createLocalSSHTunnel(ENWIKI_DB_HOST);
 		await bot.sleep(2000);
-		let db = new enwikidb().init();
+		let db = new enwikidb();
 
 		let table = await db.query(`
 			select sub.page_title, count(*) as "num_editors"

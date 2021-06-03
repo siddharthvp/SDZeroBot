@@ -13,7 +13,7 @@ const OresUtils = require('./OresUtils');
 	// takes a lot more time
 	const fiveMonthOldTs = new bot.date().subtract(5, 'months').format('YYYYMMDDHHmmss');
 	const sixMonthOldTs = new bot.date().subtract(6, 'months').format('YYYYMMDDHHmmss');
-	const sql = new enwikidb().init();
+	const sql = new enwikidb();
 	const result = await sql.query(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
 		FROM page

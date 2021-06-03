@@ -14,7 +14,7 @@ export default class g13Watch extends Route {
 		await bot.getSiteInfo();
 
 		await createLocalSSHTunnel(TOOLS_DB_HOST);
-		this.db = new toolsdb('g13watch_p').init();
+		this.db = new toolsdb('g13watch_p');
 		await this.db.run(`
 			CREATE TABLE IF NOT EXISTS g13(
 				name VARCHAR(255) UNIQUE,

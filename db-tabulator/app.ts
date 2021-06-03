@@ -14,7 +14,7 @@ export const FAKE_OUTPUT_FILE = 'fake-output.wikitext';
 
 export const db = new enwikidb({
 	connectionLimit: 10
-}).init();
+});
 
 export async function fetchQueries(): Promise<Record<string, Query[]>> {
 	if (argv.fake) {

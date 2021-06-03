@@ -8,7 +8,7 @@ const router = express.Router();
 const db = new toolsdb('goodarticles_p', {
 	...AuthManager.get('summary-generator'),
 	connectionLimit: 20
-}).init();
+});
 
 router.get('/', async function (req, res, next) {
 
