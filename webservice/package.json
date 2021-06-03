@@ -4,6 +4,7 @@
   "scripts": {
     "start": "/data/project/sdzerobot/bin/node server.js",
     "test": "nodemon server.ts",
+    "debug": "node --require ts-node/register server.js",
     "restart": "webservice --backend kubernetes node10 restart",
     "logs": "kubectl logs -f $(kubectl get pods | tail -1 | cut -d ' ' -f 1)"
   },

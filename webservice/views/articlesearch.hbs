@@ -1,0 +1,25 @@
+<style>
+    .title {
+        font-size: larger;
+    }
+    .result {
+        background-color: #faf6f6de;
+        padding: 10px;
+        margin: 5px;
+        border: solid #f2d8d8de 1px;
+    }
+    a {
+        color: #0645ad;
+    }
+</style>
+
+<h2>Search results for <span style="font-size: smaller">{{query}}</span></h2>
+<p>Showing {{data.length}} search results:</p>
+<ul>
+    {{#each data}}
+        <li class="result">
+            <span class="title">{{{wikilink this.title}}}</span>
+            {{{this.excerpt}}}
+        </li>
+    {{/each}}
+</ul>
