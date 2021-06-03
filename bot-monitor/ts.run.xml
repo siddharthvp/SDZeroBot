@@ -1,5 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="ts-run-botmonitor" type="NodeJSConfigurationType" application-parameters="--verbose  --dry" node-parameters="-r ts-node/register" path-to-js-file="main.ts" working-dir="$PROJECT_DIR$/bot-monitor">
-    <method v="2" />
-  </configuration>
-</component>

@@ -126,3 +126,15 @@ export function lowerFirst(str: string) {
 export function upperFirst(str: string) {
 	return str[0].toLowerCase() + str.slice(1);
 }
+
+export function setIntersection<T>(a: Set<T>, b: Set<T>): Set<T> {
+	return new Set([...a].filter(x => b.has(x)));
+}
+
+export function setUnion<T>(a: Set<T>, b: Set<T>): Set<T> {
+	return new Set([...a, ...b]);
+}
+
+export function setDifference<T>(a: Set<T>, b: Set<T>): Set<T> {
+	return new Set([...a].filter(x => !b.has(x)));
+}
