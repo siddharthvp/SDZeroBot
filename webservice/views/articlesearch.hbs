@@ -13,12 +13,17 @@
     }
 </style>
 
-<h2>Search results for <span style="font-size: smaller">{{query}}</span></h2>
+<form action="/articlesearch" style="display: flex; flex-flow: row wrap">
+    <label for="query" style="font-size: x-large; margin-right: 10px">Search:</label>
+    <input type="text" id="query" name="query" value="{{query}}" size="80" style="font-size: larger">
+    <input type="hidden" name="limit" value="50">
+    <button type="submit" style="margin-left: 5px">Go</button>
+</form>
 <p>Showing {{data.length}} search results:</p>
 <ul>
     {{#each data}}
         <li class="result">
-            <span class="title">{{{wikilink this.title}}}</span>
+            <div class="title">{{{wikilink this.title}}}</div>
             {{{this.excerpt}}}
         </li>
     {{/each}}
