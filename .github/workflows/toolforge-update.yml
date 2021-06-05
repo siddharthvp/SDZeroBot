@@ -47,10 +47,11 @@ jobs:
                 echo "Syncing SDZeroBot/webservice with www/js ...";
                 cd /data/project/sdzerobot && rsync -avu --delete "SDZeroBot/webservice/" "www/js";
                 echo "Restarting SDZeroBot webservice ...";
-                cd /data/project/sdzerobot/www/js;
-                if [[ $(grep "\.\." routes/*.ts *.ts | grep -v -c SDZeroBot) -gt 0 ]]; then
+                cd /data/project/sdzerobot/www/js || exit 1;
+                if [[ ($(grep "\.\." *.ts | grep -v -c SDZeroBot) -gt 0) || ($(grep "\.\.\/\.\." routes/*.ts | grep -v -c SDZeroBot) -gt 0) ]]; then
                   echo "Suspicious imports found in webservice!";
-                  grep "\.\." routes/*.ts *.ts | grep -v SDZeroBot;
+                  grep "\.\." *.ts | grep -v SDZeroBot;
+                  grep "\.\.\/\.\." routes/*.ts | grep -v SDZeroBot;
                   exit 1;
                 fi;
                 npm restart;
