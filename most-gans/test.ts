@@ -1,6 +1,6 @@
 import assert = require("assert");
 import { bot } from "../botbase";
-import { getCurrentUsername, processArticle } from "./model";
+import { getCurrentUsername, processArticle, db } from "./model";
 
 describe('most-gans', () => {
 	before(() => {
@@ -9,17 +9,17 @@ describe('most-gans', () => {
 
 	it('processArticle', async function () {
 		this.timeout(100000);
-		// processArticle will give a DB connectivity error, but that's ok
+		db.run = () => Promise.resolve(); // stub it out
 		const testCases = [
 			['1896 Michigan Wolverines football team', 'Wizardman', '2010-12-21'],
 			['Fight for This Love', 'Lil-unique1', '2010-06-25'], // has rev-delled talkpage revs
 			['Norman Finkelstein', 'Giggy']
 		];
-		await bot.batchOperation(testCases, async ([article, nomExpected, dateExpected]) => {
+		for (let [article, nomExpected, dateExpected] of testCases) {
 			const [nom, date] = await processArticle(article);
 			assert.strictEqual(nom, nomExpected);
 			if (dateExpected) assert.strictEqual(date, dateExpected);
-		});
+		}
 	});
 
 	it('getCurrentUsername', async function () {

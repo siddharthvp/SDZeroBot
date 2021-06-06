@@ -49,7 +49,7 @@ bot.setOptions({
 			authorNotFound.push(article);
 			return Promise.reject();
 		}
-	}, 40, 0);
+	}, 40);
 
 	log(`Identified GA nominator for ${articles.length - authorNotFound.length} GAs out of ${articles.length} total.`);
 
