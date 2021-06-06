@@ -31,7 +31,7 @@ bot.setOptions({
 	await db.run(`CREATE TABLE ${TABLE} (
 						  article   VARCHAR(255),
 						  nominator VARCHAR(255),
-						  nomdate   DATE,
+						  date   DATE,
 						  PRIMARY KEY (article)
 					  ) COLLATE 'utf8_unicode_ci'`);
 

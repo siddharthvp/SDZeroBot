@@ -8,12 +8,6 @@ export const TABLE = 'nominators2';
 const GANTemplateRegex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
 const GANTemplateNameRegex = /^GA ?(c(andidate)?|n(om(inee)?)?)$/i;
 
-// OUTSTANDING CONCERNS:
-// 1. Doesn't take care of users who were renamed --script written
-// 2. Database has 200 items less than were processed successfully --logging added
-// 3. About 96 Unix epoch dates --should be fixed
-// 4. Take care of GAs promoted between generate-initial and evt-router restart
-
 export async function processArticle(article: string) {
 	let talkpage = new bot.page(new bot.page(article).getTalkPage());
 	let talkpageedits = talkpage.historyGen(
@@ -30,7 +24,9 @@ export async function processArticle(article: string) {
 		fallback_strategy = false;
 	for await (let rev of talkpageedits) {
 		if (!fallback_strategy) {
-			let template = bot.wikitext.parseTemplates(rev.content, {
+			// `rev.content &&` to protect against revdel'd/suppressed revisions.
+			// we just assume the hidden revisions don't have the GA template.
+			let template = rev.content && bot.wikitext.parseTemplates(rev.content, {
 				namePredicate: name => GANTemplateNameRegex.test(name)
 			})[0];
 			if (template) {

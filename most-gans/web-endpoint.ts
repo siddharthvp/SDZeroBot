@@ -18,15 +18,15 @@ router.get('/', async function (req, res) {
 	}
 	const {user} = req.query;
 	const dbresult = await db.query(`
-		select article, nomdate 
+		select article, date 
 		from nominators2 
 		where nominator = ? 
-		order by nomdate desc
+		order by date desc
 	`, [user]);
 
 	res.render('gans', {
 		user,
-		dbresult: dbresult.map(row => ({ article: row.article, nomdate: new bot.date(row.nomdate).format('YYYY-MM-DD') }))
+		dbresult: dbresult.map(row => ({ article: row.article, date: new bot.date(row.date).format('YYYY-MM-DD') }))
 	});
 });
 

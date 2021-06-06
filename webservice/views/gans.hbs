@@ -1,7 +1,7 @@
 <h2>Good articles by {{user}}</h2>
-<p>Found {{dbresult.length}} successful nominations:</p>
+<p>Found {{dbresult.length}} successful nominations (GA promotion dates are given in brackets):</p>
 <ol>
     {{#each dbresult}}
-        <li>{{{wikilink this.article}}} ({{this.nomdate}})</li>
+        <li>{{{wikilink this.article}}} ({{this.date}})</li>
     {{/each}}
 </ol>

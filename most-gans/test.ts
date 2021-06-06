@@ -7,11 +7,19 @@ describe('most-gans', () => {
 		return bot.getSiteInfo();
 	})
 
-	it('processArticle', async () => {
-		// note processArticle makes a write to DB!
-		const [nom, date, fallbackStrategy] = await processArticle('1896 Michigan Wolverines football team');
-		assert.strictEqual(nom, 'Wizardman');
-		assert.strictEqual(date, '2010-12-21');
+	it('processArticle', async function () {
+		this.timeout(100000);
+		// processArticle will give a DB connectivity error, but that's ok
+		const testCases = [
+			['1896 Michigan Wolverines football team', 'Wizardman', '2010-12-21'],
+			['Fight for This Love', 'Lil-unique1', '2010-06-25'], // has rev-delled talkpage revs
+			['Norman Finkelstein', 'Giggy']
+		];
+		await bot.batchOperation(testCases, async ([article, nomExpected, dateExpected]) => {
+			const [nom, date] = await processArticle(article);
+			assert.strictEqual(nom, nomExpected);
+			if (dateExpected) assert.strictEqual(date, dateExpected);
+		});
 	});
 
 	it('getCurrentUsername', async function () {
