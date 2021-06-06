@@ -1,5 +1,4 @@
 import { emailOnError, mwn } from './botbase';
-import { exec } from "child_process";
 
 process.chdir(__dirname + '/webservice');
 
@@ -11,15 +10,7 @@ new mwn().rawRequest({
 		throw new Error('unexpected response: ' + data);
 	}
 }).catch(e => {
-	exec('npm restart', (error, stdout, stderr) => {
-		if (error || stderr) {
-			let err = new Error('webservice down, failed to restart');
-			err.stack = String(e) + e.stack + '\n**Restarting**\n:' + (error ? (error + stderr) : stderr);
-			emailOnError(err, 'webservice');
-			return;
-		}
-		let err = new Error('webservice down, restarting');
-		err.stack = String(e) + e.stack;
-		emailOnError(err, 'webservice');
-	});
+	let err = new Error('webservice down');
+	err.stack = String(e) + e.stack;
+	emailOnError(err, 'webservice');
 });
