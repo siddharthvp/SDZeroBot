@@ -14,6 +14,7 @@
     "express": "~4.16.1",
     "hbs": "~4.0.4",
     "http-errors": "~1.6.3",
+    "jsdom": "^16.6.0",
     "morgan": "~1.9.1"
   },
   "devDependencies": {
