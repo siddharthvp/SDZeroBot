@@ -1,18 +1,17 @@
-import {bot, toolsdb} from '../botbase';
-import {Route} from "../eventstream-router/Route";
+import { bot } from '../botbase';
+import { Route } from "../eventstream-router/Route";
+import { pageFromCategoryEvent } from "../eventstream-router/utils";
+import { processArticle, TABLE, db } from "./model";
 
 /**
  * Keep the db updated with new GA promotions and demotions.
  */
 export default class gans extends Route {
-	db: toolsdb;
 
 	async init() {
 		super.init();
 		this.log(`[S] Started`);
 		await bot.getSiteInfo();
-
-		this.db = new toolsdb('goodarticles_p');
 	}
 
 	filter(data) {
@@ -22,49 +21,26 @@ export default class gans extends Route {
 	}
 
 	worker(data) {
-		let match = /^\[\[:(.*?)\]\] (added|removed)/.exec(data.comment);
-		let article = match[1];
-		if (match[2] === 'added') {
-			this.processAddition(article);
-		} else if (match[2] === 'removed') {
-			this.processRemoval(article);
+		const {title, added} = pageFromCategoryEvent(data);
+		if (added) {
+			this.processAddition(title);
 		} else {
-			// should never happen
-			return Promise.reject(`${article} neither an addition nor removal?`);
+			this.processRemoval(title);
 		}
 	}
 
-
 	async processAddition(article) {
-		const GANregex = /\{\{(GA ?(c(andidate)?|n(om(inee)?)?)|Good article nominee)\s*(\||\}\})/i;
-		let talkpage = new bot.page(new bot.page(article).getTalkPage());
-		let talkpageedits = talkpage.historyGen(
-			['content', 'user', 'timestamp'],
-			{ rvsection: '0', rvlimit: 100 } // one-pass
-		);
-		let GA_template_seen = false, GA_user = null;
-		for await (let rev of talkpageedits) {
-			let GAN_template_present = GANregex.test(rev.content);
-			if (GAN_template_present) {
-				GA_template_seen = true;
-				GA_user = rev.user;
-			} else {
-				if (GA_template_seen) {
-					break;
-				}
-			}
-		}
-		if (!GA_user) {
+		try {
+			const [nom, date, fallbackStrategy] = await processArticle(article);
+			this.log(`[S] [[${article}]]: nom: "${nom}", date: ${date}` + (fallbackStrategy ? ' (by fallback strategy)': ''));
+		} catch(_) {
 			this.log(`[E] New GA [[${article}]]: nominator not found`);
 			// whine
-		} else {
-			this.log(`[S] Adding [[${article}]]: nominator "${GA_user}"`);
-			this.db.run(`REPLACE INTO nominators VALUES(?, ?)`, [article, GA_user]);
 		}
 	}
 
 	async processRemoval(article) {
-		this.log(`[S] Removing [[${article}]] from database`);
-		this.db.run(`DELETE FROM nominators WHERE article = ?`, [article]);
+		this.log(`[S] Removing [[${article}]] from database if present`);
+		db.run(`DELETE FROM ${TABLE} WHERE article = ?`, [article]);
 	}
 }

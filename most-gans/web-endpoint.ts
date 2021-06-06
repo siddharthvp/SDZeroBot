@@ -1,6 +1,6 @@
 import * as express from "express";
 import { toolsdb } from '../db';
-import { AuthManager } from "../botbase";
+import { AuthManager, bot } from "../botbase";
 
 const router = express.Router();
 
@@ -10,27 +10,34 @@ const db = new toolsdb('goodarticles_p', {
 	connectionLimit: 20
 });
 
-router.get('/', async function (req, res, next) {
-
+router.get('/', async function (req, res) {
 	if (!req.query.user) {
 		// Landing page
 		res.render('gans-landing');
 		return;
 	}
-
-	const user = decodeURIComponent(req.query.user as string);
-
-	const result = await db.query(`
-        select article from nominators
-        where nominator = ? 	
-    `, [user]);
+	const {user} = req.query;
+	const dbresult = await db.query(`
+		select article, nomdate 
+		from nominators2 
+		where nominator = ? 
+		order by nomdate desc
+	`, [user]);
 
 	res.render('gans', {
 		user,
-		count: result.length,
-		articles: result.map(e => e.article)
+		dbresult: dbresult.map(row => ({ article: row.article, nomdate: new bot.date(row.nomdate).format('YYYY-MM-DD') }))
 	});
+});
 
+router.get('/credit/:article', async function (req, res) {
+	const article = req.params.article.replace(/_/g, ' ');
+	const result = await db.query(`select nominator from nominators2 where article = ?`, [article]);
+	res.render('oneline', {
+		text: result?.[0]?.nominator
+			? `The nominator of "${article}" is ${result[0].nominator}`
+			: `Some error occurred.`
+	});
 });
 
 export default router;

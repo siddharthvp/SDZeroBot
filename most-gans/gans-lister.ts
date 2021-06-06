@@ -8,7 +8,7 @@ import { createLocalSSHTunnel } from "../utils";
 	let db = new toolsdb('goodarticles_p');
 	let result = await db.query(`
         select nominator, count(*) as count
-        from nominators
+        from nominators2
         group by nominator
         order by count desc
         limit 500

@@ -1,7 +1,7 @@
 <h2>Good articles by {{user}}</h2>
-<p>Found {{count}} successful nominations:</p>
+<p>Found {{dbresult.length}} successful nominations:</p>
 <ol>
-    {{#each articles}}
-        <li>{{{wikilink this}}}</li>
+    {{#each dbresult}}
+        <li>{{{wikilink this.article}}} ({{this.nomdate}})</li>
     {{/each}}
 </ol>
