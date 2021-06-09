@@ -32,9 +32,9 @@ CRON=true
 0   2  1   *   *   jsub -quiet -N job-MIS       -mem 900m ~/bin/node ~/SDZeroBot/reports/most-imported-scripts/most-imported-scripts.js
 0   2  15  *   *   jsub -quiet -N job-MIS       -mem 900m ~/bin/node ~/SDZeroBot/reports/most-imported-scripts/most-imported-scripts.js
 
-0   2   *   *   *  jsub -quiet -N job-AFC       -mem 900m ~/bin/node ~/SDZeroBot/reports/afc-sorting/afc-sorting.js
-0   10  *   *   *  jsub -quiet -N job-AFC       -mem 900m ~/bin/node ~/SDZeroBot/reports/afc-sorting/afc-sorting.js
-0   18  *   *   *  jsub -quiet -N job-AFC       -mem 900m ~/bin/node ~/SDZeroBot/reports/afc-sorting/afc-sorting.js
+0   2   *   *   *  jsub -quiet -N job-AFC       -mem 1g   ~/bin/node ~/SDZeroBot/reports/afc-sorting/afc-sorting.js
+0   10  *   *   *  jsub -quiet -N job-AFC       -mem 1g   ~/bin/node ~/SDZeroBot/reports/afc-sorting/afc-sorting.js
+0   18  *   *   *  jsub -quiet -N job-AFC       -mem 1g   ~/bin/node ~/SDZeroBot/reports/afc-sorting/afc-sorting.js
 
 0   1   *   *   *  jsub -quiet -N job-NPP       -mem 4g   ~/bin/node ~/SDZeroBot/reports/npp-sorting/npp-sorting.js
 0   13  *   *   *  jsub -quiet -N job-NPP       -mem 4g   ~/bin/node ~/SDZeroBot/reports/npp-sorting/npp-sorting.js
@@ -79,12 +79,12 @@ CRON=true
 
 0   0   *   *   *  jsub -quiet -N job-g13-save 	-mem 1g	 ~/bin/node ~/SDZeroBot/reports/g13-watch/save-report.js
 
-15  *   *   *   *  jsub -quiet -N stream-check           ~/bin/node ~/SDZeroBot/eventstream-router/check.js
+15  *   *   *   *  jsub -quiet -N stream-check -mem 400m ~/bin/node ~/SDZeroBot/eventstream-router/check.js
 
-17  *   *   *   *  jsub -quiet -N web-check              ~/bin/node ~/SDZeroBot/check-webservice.js
+17  *   *   *   *  jsub -quiet -N web-check    -mem 400m ~/bin/node ~/SDZeroBot/check-webservice.js
 
-20  *   *   *   *  jsub -quiet -N bot-monitor  -mem 2g   ~/bin/node ~/SDZeroBot/bot-monitor/main.js
+20  *   *   *   *  jsub -quiet -N bot-monitor   -mem 2g  ~/bin/node ~/SDZeroBot/bot-monitor/main.js
 
 25  4   *   *   *  jsub -quiet -N db-tabulator  -mem 4g  ~/bin/node ~/SDZeroBot/db-tabulator/main.js
 
-8  16   *   *   *  jsub -quiet -N gans-list  -mem 1g     ~/bin/node ~/SDZeroBot/most-gans/gans-lister.js
+8  16   *   *   *  jsub -quiet -N gans-list    -mem 900m ~/bin/node ~/SDZeroBot/most-gans/gans-lister.js
