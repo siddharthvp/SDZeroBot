@@ -80,7 +80,9 @@ export abstract class db {
 		});
 	}
 
-	// To be called when use of db is over
+	/**
+	 * To be called when use of db is over
+ 	 */
 	async end() {
 		await this.pool.end();
 	}

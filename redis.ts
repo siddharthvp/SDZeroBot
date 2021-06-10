@@ -1,39 +1,50 @@
 import * as redis from 'redis';
 import * as asyncRedis from "async-redis";
-import { randomBytes } from "crypto";
-import { onToolforge } from "./utils";
+import { onToolforge, readFile } from "./utils";
 
 // Source: https://github.com/moaxaca/async-redis (MIT)
 // for some reason the Promisified type that we need isn't exported from there
 // so we copy-paste that type definition here
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 type Omitted = Omit<redis.RedisClient, keyof redis.Commands<boolean>>;
-interface Promisified<T = redis.RedisClient> extends Omitted, redis.Commands<Promise<boolean>> {}
+
+interface Redis<T = redis.RedisClient> extends Omitted, redis.Commands<Promise<boolean>> {}
 
 export const REDIS_HOST = 'tools-redis';
 
+let instance: Redis;
+
 /**
+ * Should be used directly only when there is a need to customise the options. Otherwise, use
+ * getRedisClient() which prevents creating multiple connections unnecessarily.
+ *
  * Usage:
- * 	const redis = new Redis({customOptions}).connect();
+ * 	const redis = await createRedisClient({customOptions});
  * then
  * 	let item = await redis.get('key');
  * 	await redis.set('key', 'value');
  * 	...
- * Note that this does send a network call even though it doesn't take a callback or return a promise,
- * so it only be invoked where redis is going to be used
  */
-export class Redis {
-	config: redis.ClientOpts;
-	constructor(config: redis.ClientOpts = {}) {
-		this.config = {
-			host: onToolforge() ? REDIS_HOST : '127.0.0.1',
-			port: onToolforge() ? 6379 : 4713,
-			// Prefixing per https://wikitech.wikimedia.org/wiki/Help:Toolforge/Redis_for_Toolforge#Security
-			prefix: randomBytes(20).toString('hex'),
-			...config
-		};
+export async function createRedisClient(config: redis.ClientOpts = {}): Promise<Redis> {
+	// asyncRedis.createClient doesn't return a promise. Rather this method
+	// is marked as async just to indicate to callers that this triggers a network
+	// request.
+	return asyncRedis.createClient({
+		host: onToolforge() ? REDIS_HOST : '127.0.0.1',
+		port: onToolforge() ? 6379 : 4713,
+		// Prefixing per https://wikitech.wikimedia.org/wiki/Help:Toolforge/Redis_for_Toolforge#Security
+		// A secret prefix string is stored in redis-key-prefix.txt
+		prefix: readFile('./redis-key-prefix.txt'),
+		...config
+	});
+}
+
+/**
+ * For typical usage with the default options.
+ */
+export async function getRedisInstance(): Promise<Redis> {
+	if (!instance) {
+		instance = await createRedisClient();
 	}
-	connect(): Promisified {
-		return asyncRedis.createClient(this.config);
-	}
+	return instance;
 }
