@@ -322,9 +322,7 @@ ${replagMessage}
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
 
-	await bot.batchOperation(Object.keys(sorter), createSubpage, 1).then(() => {
-		log('[i] Finished');
-	});
+	await bot.batchOperation(Object.keys(sorter), createSubpage, 1);
 
 	log(`[i] Finished`);
 

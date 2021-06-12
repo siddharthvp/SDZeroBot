@@ -16,7 +16,7 @@ async function populateWikidataShortdescs(tableInfo) {
 	for await (let json of wdbot.massQueryGen({
 		"action": "wbgetentities",
 		"sites": "enwiki",
-		"titles": Object.keys(tableInfo),
+		"titles": Object.keys(tableInfo).filter(title => !tableInfo[title].shortdesc),
 		"props": "descriptions|labels",
 		"languages": "en",
 	})) {

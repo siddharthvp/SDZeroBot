@@ -1,6 +1,6 @@
-const {mwn, bot, log, argv, xdate, emailOnError} = require('../botbase');
+const {mwn, bot, log, argv, TextExtractor, emailOnError} = require('../botbase');
 const OresUtils = require('./OresUtils');
-const TextExtractor = require('../TextExtractor')(bot);
+const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 
 (async function () {
 
@@ -38,7 +38,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 				}
 				revidsTitles[pg.revisions[0].revid] = pg.title;
 				tableInfo[pg.title] = {
-					shortdesc: pg.description,
+					shortdesc: normaliseShortdesc(pg.description),
 					excerpt: TextExtractor.getExtract(pg.revisions[0].content, 300, 550)
 				};
 			} catch (e) {
@@ -49,6 +49,9 @@ const TextExtractor = require('../TextExtractor')(bot);
 	}
 
 	log('[S] Got articles');
+
+	await populateWikidataShortdescs(tableInfo);
+	log('[S] Got WD shortdescs');
 
 	/* GET NOMINATION DATA */
 
@@ -110,11 +113,11 @@ const TextExtractor = require('../TextExtractor')(bot);
 			tableInfo[article].date = template && template.getValue(1);
 			tableInfo[article].nominator = template && template.getValue('nominator');
 
-			let date = new xdate(tableInfo[article].date);
-			if (date.isAfter(new xdate().subtract(30, 'days'))) {
+			let date = new bot.date(tableInfo[article].date);
+			if (date.isAfter(new bot.date().subtract(30, 'days'))) {
 				tableInfo[article].class = 'new';
 				counts.new++;
-			} else if (date.isAfter(new xdate().subtract(90, 'days'))) {
+			} else if (date.isAfter(new bot.date().subtract(90, 'days'))) {
 				counts.recent++;
 				tableInfo[article].class = 'recent';
 			} else {
@@ -129,7 +132,7 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	/* GET DATA FROM ORES */
 
-	var pagelist = Object.keys(revidsTitles);
+	let pagelist = Object.keys(revidsTitles);
 	if (argv.size) {
 		pagelist = pagelist.slice(0, argv.size);
 	}
@@ -148,19 +151,19 @@ const TextExtractor = require('../TextExtractor')(bot);
 	 * }
 	 * Populated through OresUtils.processTopicsForPage
 	 */
-	var sorter = {
+	let sorter = {
 		"Unsorted/Unsorted*": []
 	};
 
 	Object.entries(oresdata).forEach(function ([revid, ores]) {
 
-		var title = revidsTitles[revid];
+		let title = revidsTitles[revid];
 		if (!title) {
 			log(`[E] revid ${revid} couldn't be matched to title`);
 		}
 
-		var topics = ores.drafttopic; // Array of topics
-		var toInsert = { title, revid };
+		let topics = ores.drafttopic; // Array of topics
+		let toInsert = { title, revid };
 
 		OresUtils.processTopicsForPage(topics, sorter, toInsert);
 
@@ -168,15 +171,15 @@ const TextExtractor = require('../TextExtractor')(bot);
 
 	/* FORMAT DATA TO BE SAVED ON THE WIKI */
 
-	var isStarred = x => x.endsWith('*');
-	var meta = x => x.split('/').slice(0, -1).join('/');
+	let isStarred = x => x.endsWith('*');
+	let meta = x => x.split('/').slice(0, -1).join('/');
 
-	var createSection = function (topic) {
-		var pagetitle = topic;
+	let createSection = function (topic) {
+		let pagetitle = topic;
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new mwn.table();
+		let table = new mwn.table();
 		table.addHeaders([
 			{label: 'Date', class: 'date-header'},
 			{label: 'Article', class: 'article-header'},
@@ -185,9 +188,9 @@ const TextExtractor = require('../TextExtractor')(bot);
 		]);
 
 		sorter[topic].map(function (page) {
-			var tabledata = tableInfo[page.title];
+			let tabledata = tableInfo[page.title];
 
-			let formatted_date = new xdate(tabledata.date).format('YYYY-MM-DD HH:mm');
+			let formatted_date = new bot.date(tabledata.date).format('YYYY-MM-DD HH:mm');
 
 			let row = [
 				{ label: formatted_date || '[Failed to parse]', class: tabledata.class },
@@ -210,12 +213,20 @@ const TextExtractor = require('../TextExtractor')(bot);
 		return [pagetitle, table.getText()];
 	};
 
-	var makeMainPage = function () {
-		var count = Object.keys(revidsTitles).length;
+	let makeMainPage = function () {
+		let content = mwn.template('/header', {
+			count: Object.keys(revidsTitles).length,
+			countold: counts.old,
+			countrecent: counts.recent,
+			countnew: counts.new,
+			date: new bot.date().format('D MMMM YYYY'),
+			ts: '~~~~~'
+		}) + '<includeonly>' +
+				`<section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate />` +
+			'</includeonly>' + '\n';
 
-		var content = `{{/header|count=${count}|countold=${counts.old}|countrecent=${counts.recent}|countnew=${counts.new}|date=${new xdate().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
-			var [sectionTitle, sectionText] = createSection(topic);
+			let [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';
 		});
@@ -232,21 +243,3 @@ const TextExtractor = require('../TextExtractor')(bot);
 	log(`[i] Finished`);
 
 })().catch(err => emailOnError(err, 'gan-sorting'));
-
-
-// const userFromSignature = function (sig) {
-// 	let wkt = new bot.wikitext(sig);
-// 	wkt.parseLinks();
-// 	for (let link of wkt.links) {
-// 		let title = new bot.title(link.target);
-// 		if (title.namespace === 2 || title.namespace === 3) {
-// 			return title.getMainText().split('/')[0];
-// 		} else if (title.namespace === -1) {
-// 			let splPgName = title.title.split('/')[0];
-// 			if (splPgName === 'Contributions' || splPgName === 'Contribs') {
-// 				return title.title.split('/')[1];
-// 			}
-// 		}
-// 	}
-// 	return null;
-// };
