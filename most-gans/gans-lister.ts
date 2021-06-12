@@ -10,7 +10,7 @@ import { createLocalSSHTunnel } from "../utils";
         select nominator, count(*) as count
         from nominators2
         group by nominator
-        order by count desc
+        order by count desc, nominator asc
         limit 500
 	`);
 	log(`[S] Got query result`);
