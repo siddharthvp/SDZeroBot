@@ -17,12 +17,13 @@ async function populateWikidataShortdescs(tableInfo) {
 		"action": "wbgetentities",
 		"sites": "enwiki",
 		"titles": Object.keys(tableInfo).filter(title => !tableInfo[title].shortdesc),
-		"props": "descriptions|labels",
+		"props": "descriptions|sitelinks",
 		"languages": "en",
+		"sitefilter": "enwiki",
 	})) {
 		// eslint-disable-next-line no-unused-vars
-		for (let [_id, {labels, descriptions}] of Object.entries(json.entities)) {
-			let tableentry = tableInfo[labels?.en?.value];
+		for (let [_id, {descriptions, sitelinks}] of Object.entries(json.entities)) {
+			let tableentry = tableInfo[sitelinks?.enwiki?.title];
 			if (!tableentry || tableentry.shortdesc) {
 				continue;
 			}
