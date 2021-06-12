@@ -1,6 +1,6 @@
 // start job using: npm run start
 
-const {bot, log, xdate, emailOnError} = require('../botbase');
+const {bot, log, emailOnError} = require('../botbase');
 const EventSource = require('eventsource');
 const TextExtractor = require('../TextExtractor')(bot);
 const sqlite3 = require('sqlite3');
@@ -31,9 +31,9 @@ async function main() {
 	}
 
 	const firstrow = await db.get(`SELECT ts FROM g13 ORDER BY ts DESC`);
-	
-	const lastTs = firstrow ? new Date(firstrow.ts * 1000).toISOString() : 
-		(function() { var d = new xdate(); d.setUTCHours(0, 0, 0, 0); return d.toISOString(); })();
+
+	const lastTs = firstrow ? new Date(firstrow.ts * 1000).toISOString() :
+		(function() { var d = new bot.date(); d.setUTCHours(0, 0, 0, 0); return d.toISOString(); })();
 
 	const stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange?since=' + lastTs, {
 		headers: {
@@ -61,7 +61,7 @@ async function main() {
 		}
 		let title = match[1];
 		let ts = data.timestamp;
-		log(`[+] Page ${title} at ${new xdate(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
+		log(`[+] Page ${title} at ${new bot.date(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
 		let pagedata = await bot.read(title, {prop: 'revisions|description'});
 		let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
 		let desc = pagedata.description;
@@ -89,7 +89,7 @@ async function main() {
 			throw err;
 		}
 	};
-	
+
 }
 
 main().catch(err => {

@@ -38,9 +38,6 @@ export const log = mwn.log;
 /** Parsed console arguments */
 export const argv = require('minimist')(process.argv.slice(2));
 
-/** Date library, deprecated (now available in mwn) */
-export const xdate = require('./xdate');
-
 /** bot account and database access credentials */
 const auth = require('./.auth');
 export class AuthManager {

@@ -18,5 +18,6 @@ describe('articlesearch', () => {
 		assertValidId(stringToId('lor"m'));
 		assertValidId(stringToId('lor%$2&()@!m'));
 		assertValidId(stringToId('lo*^r"m-'));
+		assertValidId(stringToId('H. P. Lovecraft'));
 	});
 });

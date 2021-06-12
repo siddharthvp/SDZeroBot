@@ -1,4 +1,4 @@
-const {bot, log, xdate, mwn, emailOnError} = require('../botbase');
+const {bot, log, mwn, emailOnError} = require('../botbase');
 const {formatSummary} = require('./commons');
 
 (async function() {
@@ -311,9 +311,9 @@ const {formatSummary} = require('./commons');
 
 	// Triggers:
 
-	await main(new xdate().subtract(7, 'days'), 'last week');
-	await main(new xdate().subtract(14, 'days'), 'last fortnight');
-	await main(new xdate().subtract(28, 'days'), 'last month');
+	await main(new bot.date().subtract(7, 'days'), 'last week');
+	await main(new bot.date().subtract(14, 'days'), 'last fortnight');
+	await main(new bot.date().subtract(28, 'days'), 'last month');
 
 	log(`[i] Finished`);
 

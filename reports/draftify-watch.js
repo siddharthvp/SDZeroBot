@@ -1,13 +1,13 @@
-const {bot, mwn, log, xdate, utils, emailOnError, TextExtractor} = require('../botbase');
+const {bot, mwn, log, utils, emailOnError, TextExtractor} = require('../botbase');
 const {formatSummary} = require('./commons');
 
 (async () => {
 
 	await bot.getTokensAndSiteInfo();
 
-	var ts1 = new xdate().subtract(8, 'days');
+	var ts1 = new bot.date().subtract(8, 'days');
 	ts1.setHours(0, 0, 0, 0);
-	var ts2 = new xdate().subtract(1, 'day');
+	var ts2 = new bot.date().subtract(1, 'day');
 	ts2.setHours(0, 0, 0, 0);
 
 	// fetch page moves
@@ -138,7 +138,7 @@ const {formatSummary} = require('./commons');
 		var user = utils.arrayChunk(data.user.split(''), 14).map(e => e.join('')).join('<br>');
 
 		table.addRow([
-			data.created ? new xdate(data.created).format('YYYY-MM-DD') : '',
+			data.created ? new bot.date(data.created).format('YYYY-MM-DD') : '',
 			`[[${page}]] <small>(moved from [[${data.source}]])</small>`,
 			`<small>${data.excerpt || ''}</small>`,
 			`[[User:${data.user}|${user}]]`,
