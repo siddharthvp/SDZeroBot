@@ -59,7 +59,8 @@ export const bot = new mwn({
 
 bot.initOAuth();
 
-export const TextExtractor = require('./TextExtractor')(bot);
+import TextExtractor from "./TextExtractor";
+export { TextExtractor };
 
 // Deprecated exports, import from ./db or ./utils directly
 export {mysql, db, enwikidb, toolsdb} from './db';

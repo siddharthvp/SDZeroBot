@@ -1,8 +1,5 @@
-/* globals it, before */
-
 const assert = require('assert');
-const {bot} = require('./botbase');
-const TE = require('./TextExtractor')(bot);
+const {bot, TextExtractor} = require('./botbase');
 
 before(function() {
 	return bot.getSiteInfo();
@@ -22,7 +19,7 @@ it('removes templates on new lines', function() {
 Arthur was an fine tailor.
 `;
 
-	assert.strictEqual(TE.removeTemplatesOnNewlines(text), '\n\nArthur was an fine tailor.\n');
+	assert.strictEqual(TextExtractor.removeTemplatesOnNewlines(text), '\n\nArthur was an fine tailor.\n');
 
 });
 
@@ -31,7 +28,7 @@ it('runs preprocessHook', function () {
 	
 ==References==`;
 
-	let extract = TE.getExtract(text, 250, 500, function(text) {
+	let extract = TextExtractor.getExtract(text, 250, 500, function(text) {
 		let wkt = new bot.wikitext(text);
 		wkt.parseTemplates({
 			namePredicate: name => {

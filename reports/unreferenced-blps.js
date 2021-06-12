@@ -1,5 +1,4 @@
-const {bot, mwn, log, fs} = require('../botbase');
-const TextExtractor = require('../TextExtractor')(bot);
+const {bot, mwn, log, fs, TextExtractor} = require('../botbase');
 
 const wd = new mwn({
 	...bot.options,

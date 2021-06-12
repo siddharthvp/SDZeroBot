@@ -1,5 +1,4 @@
-const {bot, mwn, log, emailOnError} = require('../botbase');
-const TextExtractor = require('../TextExtractor')(bot);
+const {bot, mwn, log, emailOnError, TextExtractor} = require('../botbase');
 
 (async function() {
 

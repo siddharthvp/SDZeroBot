@@ -3,10 +3,9 @@
 
 // start job using: npm run start
 
-import {fs, bot, log, mysql, argv} from '../../botbase';
+import {fs, bot, log, mysql, argv, TextExtractor} from '../../botbase';
 
 const {preprocessDraftForExtract} = require('../../reports/commons');
-const TextExtractor = require('../../TextExtractor')(bot);
 const auth = require('../../.auth');
 
 function logError(err) {
