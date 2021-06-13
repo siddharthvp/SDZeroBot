@@ -35,7 +35,8 @@ export default class TextExtractor {
 		extract = this.removeTemplatesOnNewlines(extract);
 
 		// Remove some other templates too
-		extract = this.removeTemplates(extract, ['efn', 'refn']);
+		// Matches r, efn, refn, sfn, sfnp, harv, harvp, audio, and IPA.* family
+		extract = this.removeTemplates(extract, /^(r|sfn[bp]?|harvp?|r?efn|IPA.*|audio)$/i);
 
 		extract = extract
 			.replace(/<!--.*?-->/sg, '')
@@ -49,7 +50,6 @@ export default class TextExtractor {
 			.replace(/\n\n.*/s, '')
 			// unbold
 			.replace(/'''(.*?)'''/g, '$1')
-			.replace(/\(\{\{[Ll]ang-.*?\}\}\)/, '')
 			.trim();
 
 		if (charLimit) {
@@ -108,21 +108,9 @@ export default class TextExtractor {
 	}
 
 	static removeTemplates(text: string, templateNameRegex: RegExp) {
-		var wkt = new bot.wikitext(text);
-		// TODO: Things to think about: how to generate ONE regex that matches all the given
-		// templates and which is as efficient as possible? That is, for 'efn' and 'refn'
-		// the regex generated should be /[rR]?[eE]?fn/ (as efn is a substring of refn)
-		// Can this be solved using the longest common subsequence problem?
-		// Or maybe use tries?
-		const makeRegexFromTemplate = function(template) {
-			return new RegExp('^[' + template[0].toLowerCase() + template[0].toUpperCase() + ']' + template.slice(1) + '$', 'g');
-		}
+		let wkt = new bot.wikitext(text);
 		wkt.parseTemplates({
-			namePredicate: name => {
-				return templates.some(template => {
-					return makeRegexFromTemplate(template).test(name);
-				});
-			}
+			namePredicate: name => templateNameRegex.test(name)
 		});
 		for (let template of wkt.templates) {
 			wkt.removeEntity(template);
@@ -150,16 +138,6 @@ export default class TextExtractor {
 			// these are just bad
 			.replace(/__[A-Z]+__/g, '')
 			// Openings of any unclosed ref tags
-			.replace(/<ref[^<]*?(>|(?=\n))/gi, '')
-			// Harvard referencing
-			.replace(/\{\{[sS]fnp?\|.*?\}\}/g, '')
-			// shortcut for named ref invocation
-			.replace(/\{\{r\|.*?\}\}/gi, '')
-			// inline parenthetical referencing
-			.replace(/\{\{[hH]arv\|.*?\}\}/g, '')
-			// pronunciation
-			.replace(/\{\{IPA.*?\}\}/g, '')
-			// audio
-			.replace(/\{\{[aA]udio\|.*?\}\}/g, '');
+			.replace(/<ref[^<]*?(>|(?=\n))/gi, '');
 	}
 }
