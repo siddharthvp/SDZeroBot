@@ -35,34 +35,43 @@ export default class TextExtractor {
 		extract = this.removeTemplatesOnNewlines(extract);
 
 		// Remove some other templates too
-		extract = this.removeTemplates(extract, REGEX.templateNames);
+		// Matches r, efn, refn, sfn, sfnp, harv, harvp, audio, and IPA.* family
+		extract = this.removeTemplates(extract, /^(r|sfn[bp]?|harvp?|r?efn|respell|IPA.*|audio)$/i);
 
 		extract = extract
-			.replace(REGEX.comments, '')
-			// remove refs
-			.replace(REGEX.references, '')
+			.replace(/<!--.*?-->/sg, '')
+			// remove refs, including named ref definitions and named ref invocations
+			.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
 			// the magic
-			.replace(REGEX.linesBeginningWithSpecialChars, '')
+			.replace(/^\s*[-{|}=*#:<!].*$/mg, '')
 			// trim left to prepare for next step
 			.trimLeft()
 			// keep only the first paragraph
-			.replace(REGEX.firstPara, '')
+			.replace(/\n\n.*/s, '')
 			// unbold
-			.replace(REGEX.bolds, '$1')
+			.replace(/'''(.*?)'''/g, '$1')
 			// cleanup side-effects from removing IPA/audio templates
-			.replace(REGEX.punctuationInParens, '(')
-			.replace(REGEX.emptyParens, '')
+			.replace(/\(\s*; ?/g, '(')
+			.replace(/ ?\(\s*\)/g, '')
 			.trim();
 
 		if (charLimit) {
+			// We consider a period followed by a space or newline NOT followed by a lowercase char
+			// as a sentence ending. Lowercase chars after period+space is generally use of an abbreviation
+			// XXX: this still results in issues with name like Arthur A. Kempod.
+			//  (?![^[]*?\]\]) so that this is not a period within a link
+			//  (?![^{*]?\}\}) so that this is not a period within a template - doesn't work if there
+			//      is a nested templates after the period.
+			const sentenceEnd = /\.\s(?![a-z])(?![^[]*?\]\])(?![^{]*?\}\})/g;
+
 			if (extract.length > charLimit) {
-				let match = REGEX.sentenceEnd.exec(extract);
+				let match = sentenceEnd.exec(extract);
 				while (match) {
 					if (this.effCharCount(extract.slice(0, match.index)) > charLimit) {
 						extract = extract.slice(0, match.index + 1);
 						break;
 					} else {
-						match = REGEX.sentenceEnd.exec(extract);
+						match = sentenceEnd.exec(extract);
 					}
 				}
 			}
@@ -114,7 +123,7 @@ export default class TextExtractor {
 
 	static effCharCount(text: string) {
 		return text
-			.replace(REGEX.wikilinks, '$1')
+			.replace(/\[\[:?(?:[^|\]]+?\|)?([^\]|]+?)\]\]/g, '$1')
 			.replace(/''/g, '')
 			.length;
 	}
@@ -128,48 +137,10 @@ export default class TextExtractor {
 	 * @param {string} content
 	 */
 	static finalSanitise(content: string) {
-		return content
-			.replace(REGEX.categories, '')
-			.replace(REGEX.magicWords, '')
-			.replace(REGEX.unclosedRefs, '');
+		return content.replace(/\[\[Category:.*?\]\]/gi, '')
+			// these are just bad
+			.replace(/__[A-Z]+__/g, '')
+			// Openings of any unclosed ref tags
+			.replace(/<ref[^<]*?(>|(?=\n))/gi, '');
 	}
 }
-
-// Since each regex is used many times (assuming we're going to make extracts for many articles),
-// storing them as constants pre-compiles them and improves performance
-const REGEX = {
-	// Matches r, efn, refn, sfn, sfnp, harv, harvp, audio, and IPA.* family
-	templateNames: /^(r|sfn[bp]?|harvp?|r?efn|respell|IPA.*|audio)$/i,
-
-	comments: /<!--.*?-->/sg,
-
-	// Matches refs, including named ref definitions and named ref invocations
-	references: /<ref.*?(?:\/>|<\/ref>)/sgi,
-
-	linesBeginningWithSpecialChars: /^\s*[-{|}=*#:<!].*$/mg,
-
-	firstPara: /\n\n.*/s,
-
-	bolds: /'''(.*?)'''/g,
-
-	punctuationInParens: /\((?:\s*[,;])+/g,
-
-	emptyParens: / ?\(\s*\)/g,
-
-	// We consider a period followed by a space or newline NOT followed by a lowercase char
-	// as a sentence ending. Lowercase chars after period+space is generally use of an abbreviation
-	// XXX: this still results in issues with name like Arthur A. Kempod.
-	//  (?![^[]*?\]\]) so that this is not a period within a link
-	//  (?![^{*]?\}\}) so that this is not a period within a template - doesn't work if there
-	//      is a nested templates after the period.
-	sentenceEnd: /\.\s(?![a-z])(?![^[]*?\]\])(?![^{]*?\}\})/g,
-
-	wikilinks: /\[\[:?(?:[^|\]]+?\|)?([^\]|]+?)\]\]/g,
-
-	categories: /\[\[Category:.*?\]\]/gi,
-
-	magicWords: /__[A-Z]+__/g,
-
-	unclosedRefs: /<ref[^<]*?(>|(?=\n))/gi,
-};
-
