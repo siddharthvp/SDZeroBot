@@ -5,15 +5,15 @@ export default class TextExtractor {
 	/**
 	 * Get wikitext extract. If you want plain text or HTML extracts, consider using
 	 * the TextExtracts API instead.
-	 * @param {string} pagetext - full page text
-	 * @param {number} [charLimit] - cut off the extract at this many readable characters, or wherever
+	 * @param pagetext - full page text
+	 * @param [charLimit] - cut off the extract at this many readable characters, or wherever
 	 * the sentence ends after this limit
-	 * @param {number} [hardUpperLimit] - cut off the extract at this many readable characters even if
+	 * @param [hardUpperLimit] - cut off the extract at this many readable characters even if
 	 * the sentence hasn't ended
-	 * @param {Function} [preprocessHook] - optional function to work on the text at the
+	 * @param [preprocessHook] - optional function to work on the text at the
 	 * beginning
 	 */
-	static getExtract(pagetext: string, charLimit: number, hardUpperLimit: number, preprocessHook: ((text: string) => string)) {
+	static getExtract(pagetext: string, charLimit?: number, hardUpperLimit?: number, preprocessHook?: ((text: string) => string)) {
 
 		if (!pagetext) {
 			return '';
@@ -59,10 +59,10 @@ export default class TextExtractor {
 			//  (?![^[]*?\]\]) so that this is not a period within a link
 			//  (?![^{*]?\}\}) so that this is not a period within a template - doesn't work if there
 			//      is a nested templates after the period.
-			var sentenceEnd = /\.\s(?![a-z])(?![^[]*?\]\])(?![^{]*?\}\})/g;
+			const sentenceEnd = /\.\s(?![a-z])(?![^[]*?\]\])(?![^{]*?\}\})/g;
 
 			if (extract.length > charLimit) {
-				var match = sentenceEnd.exec(extract);
+				let match = sentenceEnd.exec(extract);
 				while (match) {
 					if (this.effCharCount(extract.slice(0, match.index)) > charLimit) {
 						extract = extract.slice(0, match.index + 1);
@@ -84,7 +84,7 @@ export default class TextExtractor {
 	}
 
 	static removeImages(text: string) {
-		var wkt = new bot.wikitext(text);
+		let wkt = new bot.wikitext(text);
 		wkt.parseLinks();
 		wkt.files.forEach(file => {
 			wkt.removeEntity(file);
@@ -93,10 +93,10 @@ export default class TextExtractor {
 	}
 
 	static removeTemplatesOnNewlines(text: string) {
-		var templateOnNewline = /^\{\{/m; // g is omitted for a reason, the text is changing.
-		var match = templateOnNewline.exec(text);
+		let templateOnNewline = /^\{\{/m; // g is omitted for a reason, the text is changing.
+		let match = templateOnNewline.exec(text);
 		while (match) {
-			var template = new bot.wikitext(text.slice(match.index)).parseTemplates({count: 1})[0];
+			let template = new bot.wikitext(text.slice(match.index)).parseTemplates({count: 1})[0];
 			if (template) {
 				text = text.replace(template.wikitext, '');
 			} else { // just get rid of that line, otherwise we'd enter an infinite loop
@@ -107,11 +107,7 @@ export default class TextExtractor {
 		return text;
 	}
 
-	/**
-	 * @param {string} text
-	 * @param {string[]} templates
-	 */
-	static removeTemplates(text: string, templates: string[]) {
+	static removeTemplates(text: string, templateNameRegex: RegExp) {
 		var wkt = new bot.wikitext(text);
 		// TODO: Things to think about: how to generate ONE regex that matches all the given
 		// templates and which is as efficient as possible? That is, for 'efn' and 'refn'
