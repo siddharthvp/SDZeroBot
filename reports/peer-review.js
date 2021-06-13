@@ -1,4 +1,5 @@
 const {bot, mwn, log, emailOnError, TextExtractor} = require('../botbase');
+const {populateWikidataShortdescs} = require('./commons');
 
 (async function() {
 
@@ -6,7 +7,7 @@ await bot.getTokensAndSiteInfo();
 
 const prcat = new bot.category('Category:Requests for peer review');
 
-const talkpages = (await prcat.pages()).map(pg => pg.title);
+const talkpages = (await prcat.pages({ cmnamespace: 1 })).map(pg => pg.title);
 const articles = talkpages.map(t => new bot.title(t).getSubjectPage().toText());
 
 let data = {};
@@ -35,6 +36,10 @@ await bot.read(articles, {
 	rvsection: '0'
 }).then(json => {
 	for (let pg of json) {
+		if (!data[pg.title]) {
+			log(`[E] data['${pg.title}'] is ${data[pg.title]}`);
+			continue;
+		}
 		Object.assign(data[pg.title], {
 			description: pg.description,
 			excerpt: TextExtractor.getExtract(pg.revisions[0].content, 250, 500),
@@ -43,10 +48,14 @@ await bot.read(articles, {
 });
 log(`[S] got articles`);
 
-let prpages = Object.values(data).map(e => e.prpage);
+await populateWikidataShortdescs(data);
+log(`[S] got wikidata shortdescs`);
 
-await bot.batchOperation(prpages, prpage => {
-	let article = prpage.match(/^Wikipedia:Peer review\/(.*?)\/archive/)[1];
+await bot.batchOperation(articles, article => {
+	if (!data[article]) {
+		return log(`[E] data['${article}'] is ${data[article]}`);
+	}
+	let prpage = data[article].prpage;
 	return new bot.page(prpage).history('timestamp|user', 'max').then(revs => {
 		let firstrev = revs[revs.length - 1];
 
