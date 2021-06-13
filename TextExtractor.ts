@@ -36,7 +36,7 @@ export default class TextExtractor {
 
 		// Remove some other templates too
 		// Matches r, efn, refn, sfn, sfnp, harv, harvp, audio, and IPA.* family
-		extract = this.removeTemplates(extract, /^(r|sfn[bp]?|harvp?|r?efn|IPA.*|audio)$/i);
+		extract = this.removeTemplates(extract, /^(r|sfn[bp]?|harvp?|r?efn|respell|IPA.*|audio)$/i);
 
 		extract = extract
 			.replace(/<!--.*?-->/sg, '')
@@ -50,6 +50,9 @@ export default class TextExtractor {
 			.replace(/\n\n.*/s, '')
 			// unbold
 			.replace(/'''(.*?)'''/g, '$1')
+			// cleanup side-effects from removing IPA/audio templates
+			.replace(/\(\s*; ?/g, '(')
+			.replace(/ ?\(\s*\)/g, '')
 			.trim();
 
 		if (charLimit) {
