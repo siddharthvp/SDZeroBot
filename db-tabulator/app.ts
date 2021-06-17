@@ -3,10 +3,11 @@ import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
 import { arrayChunk, lowerFirst, readFile, writeFile } from "../utils";
 import { NS_CATEGORY, NS_FILE } from "../namespaces";
+const {formatSummary} = require('../reports/commons');
 
 export const BOT_NAME = 'SDZeroBot';
-export const TEMPLATE = 'User:SDZeroBot/Database report';
-export const TEMPLATE_END = 'User:SDZeroBot/Database report end';
+export const TEMPLATE = 'Database report';
+export const TEMPLATE_END = 'Database report end';
 export const SUBSCRIPTIONS_CATEGORY = 'SDZeroBot database report subscriptions';
 export const QUERY_TIMEOUT = 600;
 export const FAKE_INPUT_FILE = 'fake-configs.wikitext';
@@ -25,10 +26,6 @@ export async function fetchQueries(): Promise<Record<string, Query[]>> {
 	let pages = (await new bot.page(TEMPLATE).transclusions());
 	for await (let pg of bot.readGen(pages)) {
 		if (pg.ns === 0) { // sanity check: don't work in mainspace
-			continue;
-		}
-		// Only work in bot/op userspaces until BRFA approval
-		if (!pg.title.startsWith('User:SD0001/') && !pg.title.startsWith('User:SDZeroBot/')) {
 			continue;
 		}
 		let text = pg.revisions[0].content;
@@ -56,10 +53,6 @@ export async function processQueries(allQueries: Record<string, Query[]>) {
 }
 
 export async function fetchQueriesForPage(page: string): Promise<Query[]> {
-	// Only work in bot/op userspaces until BRFA approval
-	if (!page.startsWith('User:SD0001/') && !page.startsWith('User:SDZeroBot/')) {
-		return null;
-	}
 	let text = (await bot.read(page))?.revisions?.[0]?.content;
 	if (!text) {
 		return null;
@@ -89,6 +82,7 @@ class Query {
 	sql: string;
 	wikilinkConfig: Array<{columnIndex: number, namespace: string, showNamespace: boolean}>;
 	excerptConfig: Array<{srcIndex: number, destIndex: number, namespace: string, charLimit: number, charHardLimit: number}>;
+	commentConfig: number[];
 	warnings: string[] = [];
 
 	constructor(template: Template, page: string) {
@@ -142,6 +136,11 @@ class Query {
 				}
 				return true;
 			}) || [];
+
+		// TODO: show warning on wrong syntax
+		this.commentConfig = this.getTemplateValue('comments')
+			?.split(',')
+			.map(e => parseInt(e.trim()) + 1) || [];
 
 		this.excerptConfig = this.getTemplateValue('excerpts')
 			?.split(',')
@@ -255,7 +254,7 @@ class Query {
 			// Stringify everything
 			result = this.transformColumn(result, i, (value: string | number | null | Date) => {
 				if (value === null) return '';
-				if (value instanceof Date) return value.toISOString(); // is this ever possible?
+				if (value instanceof Date) return value.toISOString();
 				return String(value);
 			});
 		}
@@ -304,6 +303,13 @@ class Query {
 				} catch (e) {
 					return value.replace(/_/g, ' ');
 				}
+			});
+		});
+
+		// Format edit summaries / log action summaries
+		this.commentConfig.forEach(columnIndex => {
+			result = this.transformColumn(result, columnIndex, (value) => {
+				return formatSummary(value);
 			});
 		});
 

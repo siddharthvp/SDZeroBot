@@ -17,6 +17,8 @@ import { ENWIKI_DB_HOST } from "../db";
  * Support linkification with ns numbers from another column
  *
  * Pending:
+ * Support pagination
+ * Create Module:Database report for syntax checking
  *
  */
 

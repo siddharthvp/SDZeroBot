@@ -1,5 +1,6 @@
 const assert = require('assert');
 const {bot, TextExtractor} = require('./botbase');
+const {preprocessDraftForExtract} = require('./reports/commons')
 
 describe('TextExtractor', () => {
 	before(function() {
@@ -33,22 +34,11 @@ Arthur was an fine tailor.
 	});
 
 	it('runs preprocessHook', function () {
-		let text = `[[User:Example]] 21:09, 30 May 2020 (UTC){{AFC submission|t||ts=20200530210953|u=Harshit567|ns=118|demo=}}
+		let text = `[[User:Example]] 21:09, 30 May 2020 (UTC){{AfC submission|t||ts=20200530210953|u=Harshit567|ns=118|demo=}}
 	
 ==References==`;
 
-		let extract = TextExtractor.getExtract(text, 250, 500, function(text) {
-			let wkt = new bot.wikitext(text);
-			wkt.parseTemplates({
-				namePredicate: name => {
-					return /infobox/i.test(name) || name === 'AFC submission';
-				}
-			});
-			for (let template of wkt.templates) {
-				wkt.removeEntity(template);
-			}
-			return wkt.getText();
-		});
+		let extract = TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract);
 
 		assert.strictEqual(extract, `[[User:Example]] 21:09, 30 May 2020 (UTC)`);
 	});
