@@ -108,7 +108,7 @@ class Query {
 	}
 
 	parseQuery() {
-		if (process.env.CRON && ['manual', 'no'].includes(this.getTemplateValue('update').toLowerCase())) {
+		if (process.env.CRON && this.getTemplateValue('autoupdate').toLowerCase() === 'no') {
 			log(`[+] Skipping ${this.page} as automatic updates are disabled.`);
 			throw new HandledError();
 		}
