@@ -3,13 +3,14 @@ import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
 import { arrayChunk, lowerFirst, readFile, writeFile } from "../utils";
 import { NS_CATEGORY, NS_FILE } from "../namespaces";
-const {formatSummary} = require('../reports/commons');
+const { formatSummary } = require('../reports/commons');
 
 export const BOT_NAME = 'SDZeroBot';
 export const TEMPLATE = 'Database report';
 export const TEMPLATE_END = 'Database report end';
 export const SUBSCRIPTIONS_CATEGORY = 'SDZeroBot database report subscriptions';
 export const QUERY_TIMEOUT = 600;
+export const MAX_SUBPAGES = 20;
 export const FAKE_INPUT_FILE = 'fake-configs.wikitext';
 export const FAKE_OUTPUT_FILE = 'fake-output.wikitext';
 
@@ -23,7 +24,7 @@ export async function fetchQueries(): Promise<Record<string, Query[]>> {
 		return { 'Fake-Configs': getQueriesFromText(text, 'Fake-Configs') };
 	}
 	let allQueries: Record<string, Query[]> = {};
-	let pages = (await new bot.page(TEMPLATE).transclusions());
+	let pages = (await new bot.page('Template:' + TEMPLATE).transclusions());
 	for await (let pg of bot.readGen(pages)) {
 		if (pg.ns === 0) { // sanity check: don't work in mainspace
 			continue;
@@ -84,6 +85,9 @@ class Query {
 	excerptConfig: Array<{srcIndex: number, destIndex: number, namespace: string, charLimit: number, charHardLimit: number}>;
 	commentConfig: number[];
 	warnings: string[] = [];
+	pagination: number;
+	maxPages: number;
+	numPages: number;
 
 	constructor(template: Template, page: string) {
 		this.page = page;
@@ -165,6 +169,18 @@ class Query {
 			})
 			.filter(e => e) // filter out nulls
 			|| [];
+
+		this.pagination = this.getTemplateValue('pagination')
+			? parseInt(this.getTemplateValue('pagination'))
+			: Infinity;
+		if (isNaN(this.pagination)) {
+			this.warnings.push(`Non-numeral value "${this.getTemplateValue('pagination')}" specified for pagination. Ignored.`);
+			this.pagination = Infinity;
+		}
+		this.maxPages = Math.min(MAX_SUBPAGES,
+			this.getTemplateValue('max_pages') ? parseInt(this.getTemplateValue('max_pages')) : 5
+		);
+
 	}
 
 	async runQuery() {
@@ -241,13 +257,29 @@ class Query {
 
 	async formatResults(result) {
 
-		let table = new mwn.table({
-			style: this.getTemplateValue('table_style') || 'overflow-wrap: anywhere'
-		});
-
 		if (result.length === 0) {
 			return 'No items retrieved.'; // XXX
 		}
+		if (result.length > this.pagination) {
+			const resultSets = arrayChunk(result, this.pagination).slice(0, this.maxPages);
+			this.numPages = resultSets.length;
+			const resultTexts: string[] = [];
+			let pageNumber = 1;
+			for (let resultSet of resultSets) {
+				resultTexts.push(await this.formatResultSet(resultSet, pageNumber++));
+			}
+			return resultTexts;
+		} else {
+			this.numPages = 1;
+			return this.formatResultSet(result, 0);
+		}
+	}
+
+	async formatResultSet(result, pageNumber: number) {
+
+		let table = new mwn.table({
+			style: this.getTemplateValue('table_style') || 'overflow-wrap: anywhere'
+		});
 
 		let numColumns = Object.keys(result[0]).length;
 		for (let i = 1; i <= numColumns; i++) {
@@ -356,29 +388,36 @@ class Query {
 			await db.getReplagHours();
 		}
 
-		return this.warnings.map(text => `[WARN: ${text}]\n\n`).join('') +
+		let warningsText = this.warnings.map(text => `[WARN: ${text}]\n\n`).join('');
+
+		return (pageNumber <= 1 ? warningsText : '') +
 			db.makeReplagMessage(2) +
 			TextExtractor.finalSanitise(table.getText()) + '\n' +
 			'----\n' +
-			'&sum; ' + result.length + ' items.';
+			mwn.template('Database report/footer', {
+				count: result.length,
+				page: pageNumber && String(pageNumber),
+				num_pages: pageNumber && String(this.numPages)
+			});
 	}
 
-	async save(queryResult: string, isError = false) {
-		let page = new bot.page(this.page);
+	async save(queryResult: string | string[], isError = false) {
 		if (argv.fake) {
 			writeFile(
 				FAKE_OUTPUT_FILE,
 				this.insertResultIntoPageText(
 					readFile(FAKE_OUTPUT_FILE) || readFile(FAKE_INPUT_FILE),
-					queryResult
+					queryResult as string
 				)
 			);
 			return;
 		}
+		let page = new bot.page(this.page);
+		let firstPageResult = Array.isArray(queryResult) ? queryResult[0] : queryResult;
 		try {
 			await page.edit(rev => {
 				let text = rev.content;
-				let newText = this.insertResultIntoPageText(text, queryResult);
+				let newText = this.insertResultIntoPageText(text, firstPageResult);
 				return {
 					text: newText,
 					summary: isError ? 'Encountered error in database report update' : 'Updating database report'
@@ -392,11 +431,35 @@ class Query {
 			// to add the error message, but not in case of errors like protectedpage
 			log(`[E] Couldn't save to ${this.page} due to error ${err.code}`);
 			log(err);
-			if (err.code !== 'protectedpage') {
-				return this.saveWithError(`Error while saving report: ${err.message}`);
-			} else throw err;
+			if (err.code === 'protectedpage') {
+				throw err;
+			}
+			return this.saveWithError(`Error while saving report: ${err.message}`);
 		}
-
+		if (Array.isArray(queryResult)) {
+			for (let [idx, resultText] of Object.entries(queryResult)) {
+				let pageNumber = parseInt(idx) + 1;
+				if (pageNumber ===  1) continue; // already saved above
+				let subpage = new bot.page(this.page + '/' + pageNumber);
+				await subpage.save(
+					`{{Database report/subpage|page=${pageNumber}|num_pages=${this.numPages}}}\n` +
+					resultText,
+					'Updating database report'
+				);
+			}
+			for (let i = this.numPages + 1; i <= MAX_SUBPAGES; i++) {
+				let subpage = new bot.page(this.page + '/' + i);
+				let apiPage = await bot.read(subpage.toText());
+				if (apiPage.missing) {
+					break;
+				}
+				await subpage.save(
+					`{{Database report/subpage|page=${i}|num_pages=${this.numPages}}}\n` +
+					`{{Database report/footer|count=0|page=${i}|num_pages=${this.numPages}}}`,
+					'Updating database report subpage - empty'
+				);
+			}
+		}
 	}
 
 	async saveWithError(message: string) {
@@ -405,7 +468,7 @@ class Query {
 	}
 
 	insertResultIntoPageText(text: string, queryResult: string) {
-		// Does not support the case of two template uses with very same wikitext
+		// Does not support the case of two template usages with very same wikitext
 		let beginTemplateStartIdx = text.indexOf(this.template.wikitext);
 		if (beginTemplateStartIdx === -1) {
 			throw new Error(`Failed to find template in wikitext on page ${this.page}`);
