@@ -34,7 +34,7 @@ export async function createRedisClient(config: redis.ClientOpts = {}): Promise<
 		port: onToolforge() ? 6379 : 4713,
 		// Prefixing per https://wikitech.wikimedia.org/wiki/Help:Toolforge/Redis_for_Toolforge#Security
 		// A secret prefix string is stored in redis-key-prefix.txt
-		prefix: readFile('./redis-key-prefix.txt'),
+		prefix: readFile(__dirname + '/redis-key-prefix.txt'),
 		...config
 	});
 }

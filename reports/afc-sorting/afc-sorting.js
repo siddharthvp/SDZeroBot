@@ -20,7 +20,7 @@ process.chdir(__dirname);
 			FROM categorylinks
 			JOIN page ON page_id = cl_from
 			JOIN revision ON page_id = rev_page AND rev_parent_id = 0
-			JOIN actor ON rev_actor = actor_id
+			JOIN actor_revision ON rev_actor = actor_id
 			LEFT JOIN user ON user_id = actor_user
 			WHERE cl_to = 'Pending_AfC_submissions'
 			AND page_namespace = 118;

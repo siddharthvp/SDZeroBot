@@ -1,8 +1,7 @@
 import {bot, emailOnError, log} from '../botbase';
 import {MwnDate} from "../../mwn";
-import {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
-import {LogEvent, UserContribution} from "../../mwn/src/user";
-
+import type {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
+import type {LogEvent, UserContribution} from "../../mwn/src/api_response_types";
 import {Alert, ChecksDb, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
 
 export class Monitor {
