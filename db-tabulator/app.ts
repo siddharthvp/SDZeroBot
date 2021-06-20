@@ -3,7 +3,8 @@ import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
 import { arrayChunk, lowerFirst, readFile, writeFile } from "../utils";
 import { NS_CATEGORY, NS_FILE } from "../namespaces";
-const { formatSummary } = require('../reports/commons');
+import { MwnDate } from "../../mwn/build/date";
+import { formatSummary } from "../reports/commons";
 
 export const BOT_NAME = 'SDZeroBot';
 export const TEMPLATE = 'Database report';
@@ -14,7 +15,7 @@ export const MAX_SUBPAGES = 20;
 export const FAKE_INPUT_FILE = 'fake-configs.wikitext';
 export const FAKE_OUTPUT_FILE = 'fake-output.wikitext';
 
-export const db = new enwikidb({
+const db = new enwikidb({
 	connectionLimit: 10
 });
 
@@ -46,7 +47,31 @@ function getQueriesFromText(text: string, title: string): Query[] {
 	return templates.map(template => new Query(template, title));
 }
 
+let lastEditsData: Record<string, MwnDate>;
+
+// Called from the cronjob
 export async function processQueries(allQueries: Record<string, Query[]>) {
+	await db.getReplagHours();
+	// Get the date of the bot's last edit to each of the subscribed pages
+	// The API doesn't have an efficient query for this, so using the DB instead
+	let startTime = process.hrtime.bigint();
+	let lastEditsDb = await db.query(`
+		SELECT page_namespace, page_title,
+			(SELECT MAX(rc_timestamp) FROM recentchanges_userindex
+			 JOIN actor_recentchanges ON rc_actor = actor_id AND actor_name = ?
+			 WHERE rc_namespace = page_namespace AND rc_title = page_title
+			) AS last_edit
+		FROM page 
+		JOIN categorylinks ON cl_from = page_id AND cl_to = ?
+	`, [BOT_NAME, SUBSCRIPTIONS_CATEGORY].map(e => e.replace(/ /g, '_')));
+	let endTime = process.hrtime.bigint();
+	log(`[i] Retrieved last edits data. DB query took ${parseInt(String(endTime - startTime))/1e9} seconds.`);
+
+	lastEditsData = Object.fromEntries(lastEditsDb.map((row) => [
+		new bot.page(row.page_title as string, row.page_namespace as number).toText(),
+		row.last_edit && new bot.date(row.last_edit)
+	]));
+
 	await bot.batchOperation(Object.entries(allQueries), async ([page, queries]) => {
 		log(`[+] Processing page ${page}`);
 		await processQueriesForPage(queries);
@@ -71,7 +96,7 @@ export async function processQueriesForPage(queries: Query[]) {
 	}
 }
 
-class Query {
+export class Query {
 
 	/// Step 1. Parse the query
 	/// Step 2. Run the query
@@ -111,10 +136,28 @@ class Query {
 		return this.template.getValue(param)?.replace(/<!--.*?-->/g, '').trim();
 	}
 
+	static checkIfUpdateDue(lastUpdate: MwnDate, frequency: number): boolean {
+		if (!lastUpdate) {
+			return true;
+		}
+		let daysDiff = (new bot.date().getTime() - lastUpdate.getTime())/8.64e7;
+		return daysDiff >= frequency - 0.5;
+	}
+
 	parseQuery() {
-		if (process.env.CRON && this.getTemplateValue('autoupdate').toLowerCase() === 'no') {
-			log(`[+] Skipping ${this.page} as automatic updates are disabled.`);
-			throw new HandledError();
+		if (process.env.CRON) {
+			if (this.getTemplateValue('autoupdate')?.toLowerCase() === 'no') {
+				log(`[+] Skipping ${this.page} as automatic updates are disabled.`);
+				throw new HandledError();
+			}
+			let frequency = parseInt(this.getTemplateValue('frequency'));
+			if (isNaN(frequency)) {
+				frequency = 1;
+			}
+			if (!Query.checkIfUpdateDue(lastEditsData[this.page], frequency)) {
+				log(`[+] Skipping ${this.page} as update is not due.`);
+				throw new HandledError();
+			}
 		}
 
 		// remove semicolons to disallow multiple SQL statements used together
@@ -141,10 +184,10 @@ class Query {
 				return true;
 			}) || [];
 
-		// TODO: show warning on wrong syntax
 		this.commentConfig = this.getTemplateValue('comments')
 			?.split(',')
-			.map(e => parseInt(e.trim()) + 1) || [];
+			.map(e => parseInt(e.trim()) + 1)
+			.filter(e => !isNaN(e))|| [];
 
 		this.excerptConfig = this.getTemplateValue('excerpts')
 			?.split(',')

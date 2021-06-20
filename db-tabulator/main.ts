@@ -1,6 +1,6 @@
 import { argv, bot, emailOnError, log } from "../botbase";
 import { createLocalSSHTunnel, writeFile } from "../utils";
-import { db, FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
+import { FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
 import { ENWIKI_DB_HOST } from "../db";
 
 /**
@@ -17,10 +17,10 @@ import { ENWIKI_DB_HOST } from "../db";
  * Support linkification with ns numbers from another column
  * Support pagination
  * Create Module:Database report for syntax checking
+ * Support frequency parameter
  *
  * Pending:
  * Support row_template and skip_table aka Listeriabot
- * Support frequency parameter - needs db support
  */
 
 (async function () {
@@ -41,7 +41,6 @@ import { ENWIKI_DB_HOST } from "../db";
 	const queries = await fetchQueries();
 	log(`[S] Fetched queries`);
 
-	await db.getReplagHours();
 	await processQueries(queries);
 
 	// createSSHTunnel creates a detached process that prevents natural exit
