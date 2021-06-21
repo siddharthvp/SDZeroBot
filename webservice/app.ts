@@ -4,6 +4,7 @@ import * as path from "path";
 import * as cookieParser from "cookie-parser";
 import * as logger from "morgan";
 import * as hbs from 'hbs';
+import * as cors from 'cors';
 
 // All paths to SDZeroBot files must be via ../../SDZeroBot rather than via ../
 // The latter will work locally but not when inside toolforge www/js directory!
@@ -24,6 +25,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({extended: false}));
 app.use(cookieParser());
+app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // bot account setup: get siteinfo once and refresh tokens every 10 minutes
