@@ -35,7 +35,7 @@ router.get('/credit/:article', async function (req, res) {
 	const article = req.params.article.replace(/_/g, ' ');
 	const result = await db.query(`SELECT nominator FROM ${TABLE} WHERE article = ?`, [article]);
 	if (req.query.raw) {
-		return res.type('text').send(result[0].nominator);
+		return res.type('text').send(result?.[0]?.nominator || '<Unknown>');
 	}
 	res.render('oneline', {
 		text: result?.[0]?.nominator
