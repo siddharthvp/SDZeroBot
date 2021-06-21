@@ -187,7 +187,7 @@ export class Query {
 
 		this.commentConfig = this.getTemplateValue('comments')
 			?.split(',')
-			.map(e => parseInt(e.trim()) + 1)
+			.map(e => parseInt(e.trim()))
 			.filter(e => !isNaN(e))|| [];
 
 		this.excerptConfig = this.getTemplateValue('excerpts')
@@ -216,7 +216,7 @@ export class Query {
 
 		this.hiddenColumns = this.getTemplateValue('hide')
 			?.split(',')
-			.map(e => parseInt(e.trim()) + 1)
+			.map(e => parseInt(e.trim()))
 			.filter(e => !isNaN(e)) || [];
 
 		this.pagination = this.getTemplateValue('pagination')
@@ -279,7 +279,7 @@ export class Query {
 	}
 
 	removeColumn(result: Array<Record<string, string>>, columnIdx: number): Array<Record<string, string>> {
-		return result.map((row, idx) => {
+		return result.map((row) => {
 			let newRow = Object.entries(row);
 			newRow.splice(columnIdx - 1, 1);
 			return Object.fromEntries(newRow);
