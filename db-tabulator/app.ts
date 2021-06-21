@@ -334,10 +334,6 @@ export class Query {
 
 	async formatResultSet(result, pageNumber: number) {
 
-		let table = new mwn.table({
-			style: this.getTemplateValue('table_style') || 'overflow-wrap: anywhere'
-		});
-
 		let numColumns = Object.keys(result[0]).length;
 		for (let i = 1; i <= numColumns; i++) {
 			// Stringify everything
@@ -427,19 +423,51 @@ export class Query {
 			result = this.removeColumn(result, columnIdx - idx);
 		});
 
-		table.addHeaders(Object.keys(result[0]).map((columnName, columnIndex) => {
-			let columnConfig: {label: string, style?: string} = {
-				label: columnName,
-			};
-			let width = widths?.find(e => e.column === columnIndex + 1)?.width;
-			if (width) {
-				columnConfig.style = `width: ${width}`;
-			}
-			return columnConfig;
-		}));
+		const row_template = this.getTemplateValue('row_template');
+		const header_template = this.getTemplateValue('header_template');
+		const skip_table = this.getTemplateValue('skip_table');
 
-		for (let row of result) {
-			table.addRow(Object.values(row));
+		let table: InstanceType<typeof mwn.table>;
+		let tableText = '';
+		if (!skip_table) {
+			table = new mwn.table({
+				style: this.getTemplateValue('table_style') || 'overflow-wrap: anywhere'
+			});
+			if (header_template) {
+				tableText = table.text + '{{' + header_template + '}}\n';
+			} else {
+				table.addHeaders(Object.keys(result[0]).map((columnName, columnIndex) => {
+					let columnConfig: { label: string, style?: string } = {
+						label: columnName,
+					};
+					let width = widths?.find(e => e.column === columnIndex + 1)?.width;
+					if (width) {
+						columnConfig.style = `width: ${width}`;
+					}
+					return columnConfig;
+				}));
+				tableText = table.text;
+			}
+		}
+
+		if (row_template) {
+			for (let row of result) {
+				tableText += '{{' + row_template + Object.values(row).map((val, idx) => `|${idx + 1}=` + val) + '}}\n';
+			}
+			if (!skip_table) {
+				tableText += '|}'; // complete the table syntax
+			}
+		} else {
+			if (skip_table) {
+				// Using skip_table without row_template
+				throw new HandledError(); // module shows the error on page
+			}
+			for (let row of result) {
+				table.addRow(Object.values(row));
+			}
+			tableText = TextExtractor.finalSanitise(table.getText());
+			// XXX: header gets skipped if header_template is used without row_template,
+			// but module does show a warning
 		}
 
 		// Get DB replag, but no need to do this any more than once in 6 hours (when triggered via
@@ -455,7 +483,7 @@ export class Query {
 
 		return (pageNumber <= 1 ? warningsText : '') +
 			db.makeReplagMessage(2) +
-			TextExtractor.finalSanitise(table.getText()) + '\n' +
+			tableText + '\n' +
 			'----\n' +
 			mwn.template('Database report/footer', {
 				count: result.length,

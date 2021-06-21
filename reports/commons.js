@@ -148,7 +148,7 @@ function preprocessDraftForExtract(text) {
 	let wkt = new bot.wikitext(text);
 	wkt.parseTemplates({
 		namePredicate: name => {
-			return /infobox/i.test(name) || name === 'AfC submission';
+			return /(infobox|AfC submission)/i.test(name);
 		}
 	});
 	for (let template of wkt.templates) {
