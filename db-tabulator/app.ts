@@ -113,6 +113,7 @@ export class Query {
 	pagination: number;
 	maxPages: number;
 	numPages: number;
+	hiddenColumns: number[];
 
 	constructor(template: Template, page: string) {
 		this.page = page;
@@ -213,6 +214,11 @@ export class Query {
 			.filter(e => e) // filter out nulls
 			|| [];
 
+		this.hiddenColumns = this.getTemplateValue('hide')
+			?.split(',')
+			.map(e => parseInt(e.trim()) + 1)
+			.filter(e => !isNaN(e)) || [];
+
 		this.pagination = this.getTemplateValue('pagination')
 			? parseInt(this.getTemplateValue('pagination'))
 			: Infinity;
@@ -268,6 +274,14 @@ export class Query {
 		return result.map((row, idx) => {
 			let newRow = Object.entries(row);
 			newRow.splice(columnIdx - 1, 0, ['Excerpt', contents[idx]]);
+			return Object.fromEntries(newRow);
+		});
+	}
+
+	removeColumn(result: Array<Record<string, string>>, columnIdx: number): Array<Record<string, string>> {
+		return result.map((row, idx) => {
+			let newRow = Object.entries(row);
+			newRow.splice(columnIdx - 1, 1);
 			return Object.fromEntries(newRow);
 		});
 	}
@@ -405,6 +419,12 @@ export class Query {
 				column: parseInt(colIdx),
 				width: width
 			};
+		});
+
+		// Last step: changes column numbers
+		this.hiddenColumns.sort().forEach((columnIdx, idx) => {
+			// columnIdx - idx because column numebering changes when one is removed
+			result = this.removeColumn(result, columnIdx - idx);
 		});
 
 		table.addHeaders(Object.keys(result[0]).map((columnName, columnIndex) => {

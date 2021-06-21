@@ -18,6 +18,7 @@ import { ENWIKI_DB_HOST } from "../db";
  * Support pagination
  * Create Module:Database report for syntax checking
  * Support frequency parameter
+ * Support hiding namespace number
  *
  * Pending:
  * Support row_template and skip_table aka Listeriabot
