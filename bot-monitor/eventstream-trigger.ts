@@ -1,5 +1,5 @@
-import {Route} from "../eventstream-router/Route";
-import {exec} from 'child_process';
+import { exec } from 'child_process';
+import { Route } from "../eventstream-router/app";
 
 export default class Task extends Route {
 	async init() {

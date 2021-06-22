@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-import {Route} from "../Route";
+import { Route } from "../app";
 
 export default class Task extends Route {
 	async init() {

@@ -1,7 +1,6 @@
 import { bot } from '../botbase';
-import { Route } from "../eventstream-router/Route";
-import { pageFromCategoryEvent } from "../eventstream-router/utils";
 import { processArticle, TABLE, db } from "./model";
+import { pageFromCategoryEvent, Route } from "../eventstream-router/app";
 
 /**
  * Keep the db updated with new GA promotions and demotions.

@@ -18,6 +18,9 @@ let instance: Redis;
  * Should be used directly only when there is a need to customise the options. Otherwise, use
  * getRedisClient() which prevents creating multiple connections unnecessarily.
  *
+ * Note: this triggers a network request even though it doesn't take a callback or return a
+ * promise.
+ *
  * Usage:
  * 	const redis = await createRedisClient({customOptions});
  * then
@@ -25,10 +28,7 @@ let instance: Redis;
  * 	await redis.set('key', 'value');
  * 	...
  */
-export async function createRedisClient(config: redis.ClientOpts = {}): Promise<Redis> {
-	// asyncRedis.createClient doesn't return a promise. Rather this method
-	// is marked as async just to indicate to callers that this triggers a network
-	// request.
+export function createRedisClient(config: redis.ClientOpts = {}): Redis {
 	return asyncRedis.createClient({
 		host: onToolforge() ? REDIS_HOST : '127.0.0.1',
 		port: onToolforge() ? 6379 : 4713,
@@ -41,10 +41,12 @@ export async function createRedisClient(config: redis.ClientOpts = {}): Promise<
 
 /**
  * For typical usage with the default options.
+ * Note: this can trigger a network request even though it doesn't take a callback or return a
+ * promise.
  */
-export async function getRedisInstance(): Promise<Redis> {
+export function getRedisInstance(): Redis {
 	if (!instance) {
-		instance = await createRedisClient();
+		instance = createRedisClient();
 	}
 	return instance;
 }

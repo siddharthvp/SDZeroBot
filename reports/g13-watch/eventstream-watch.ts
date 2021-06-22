@@ -1,9 +1,8 @@
 import { bot, TextExtractor } from '../../botbase';
 import { toolsdb, TOOLS_DB_HOST } from "../../db";
-import {Route} from "../../eventstream-router/Route";
-import { pageFromCategoryEvent } from "../../eventstream-router/utils";
 import { createLocalSSHTunnel } from "../../utils";
-const { preprocessDraftForExtract } = require('../commons');
+import { pageFromCategoryEvent, Route } from "../../eventstream-router/app";
+import { preprocessDraftForExtract } from '../commons';
 
 export default class g13Watch extends Route {
 	db: toolsdb;

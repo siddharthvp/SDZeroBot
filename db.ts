@@ -69,6 +69,14 @@ export abstract class db {
 		});
 	}
 
+	async timedQuery(...args: any[]): Promise<[number, Array<Record<string, string | number | null>>]> {
+		let startTime = process.hrtime.bigint();
+		let queryResult = await this.query(...args);
+		let endTime = process.hrtime.bigint();
+		let timeTaken = parseInt(String(endTime - startTime))/1e9;
+		return [timeTaken, queryResult];
+	}
+
 	async run(...args: any[]) {
 		// convert `undefined`s in bind parameters to null
 		if (args[1] instanceof Array) {

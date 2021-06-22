@@ -54,8 +54,7 @@ export async function processQueries(allQueries: Record<string, Query[]>) {
 	await db.getReplagHours();
 	// Get the date of the bot's last edit to each of the subscribed pages
 	// The API doesn't have an efficient query for this, so using the DB instead
-	let startTime = process.hrtime.bigint();
-	let lastEditsDb = await db.query(`
+	let [timeTaken, lastEditsDb] = await db.timedQuery(`
 		SELECT page_namespace, page_title,
 			(SELECT MAX(rc_timestamp) FROM recentchanges_userindex
 			 JOIN actor_recentchanges ON rc_actor = actor_id AND actor_name = ?
@@ -64,8 +63,7 @@ export async function processQueries(allQueries: Record<string, Query[]>) {
 		FROM page 
 		JOIN categorylinks ON cl_from = page_id AND cl_to = ?
 	`, [BOT_NAME, SUBSCRIPTIONS_CATEGORY].map(e => e.replace(/ /g, '_')));
-	let endTime = process.hrtime.bigint();
-	log(`[i] Retrieved last edits data. DB query took ${parseInt(String(endTime - startTime))/1e9} seconds.`);
+	log(`[i] Retrieved last edits data. DB query took ${timeTaken} seconds.`);
 
 	lastEditsData = Object.fromEntries(lastEditsDb.map((row) => [
 		new bot.page(row.page_title as string, row.page_namespace as number).toText(),
@@ -234,7 +232,10 @@ export class Query {
 
 	async runQuery() {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.sql.trim()}`;
-		return db.query(query).catch(async (err: SQLError) => {
+		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
+			log(`[+] ${this.page}: Took ${timeTaken} seconds`);
+			return queryResult;
+		}).catch(async (err: SQLError) => {
 			if (err.sqlMessage) {
 				// SQL server error
 				let message = `SQL Error: ${err.code || ''}: ${err.sqlMessage}`;

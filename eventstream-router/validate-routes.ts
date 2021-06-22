@@ -2,7 +2,7 @@
  * Script to check if all registered routes are valid without actually starting
  */
 
-import {RouteValidator} from "./RouteValidator";
+import { RouteValidator } from "./app";
 
 const routes = require('./routes.json');
 

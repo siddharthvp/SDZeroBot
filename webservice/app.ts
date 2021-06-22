@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import * as createError from "http-errors";
 import * as express from "express";
 import * as path from "path";
@@ -38,20 +39,10 @@ setInterval(function () {
 createLocalSSHTunnel(ENWIKI_DB_HOST);
 createLocalSSHTunnel(TOOLS_DB_HOST);
 
-import indexRouter from "./routes/index";
-import logsRouter from "./routes/logs";
-import summaryRouter from "./routes/summary";
-import dbReportRouter from '../../SDZeroBot/db-tabulator/web-endpoint';
-import gansRouter from '../../SDZeroBot/most-gans/web-endpoint';
-import articleSearchRouter from './routes/articlesearch';
-
-app.use('/', indexRouter);
-app.use('/logs', logsRouter);
-app.use('/logs.php', logsRouter); // support old URLs from the time webservice was in php
-app.use('/database-report', dbReportRouter);
-app.use('/gans', gansRouter);
-app.use('/summary', summaryRouter);
-app.use('/articlesearch', articleSearchRouter);
+const routes: Record<string, string> = JSON.parse(fs.readFileSync('./routes.json').toString());
+for (let [path, file] of Object.entries(routes)) {
+	app.use(path, require(file).default);
+}
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
