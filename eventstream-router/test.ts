@@ -12,4 +12,6 @@ export default class Test extends Route {
 	worker(data) {
 		this.log(data);
 	}
+
+	readonly name = "test";
 }

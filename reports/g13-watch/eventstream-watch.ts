@@ -5,6 +5,7 @@ import { pageFromCategoryEvent, Route } from "../../eventstream-router/app";
 import { preprocessDraftForExtract } from '../commons';
 
 export default class g13Watch extends Route {
+	name = "g13-watch";
 	db: toolsdb;
 
 	async init() {

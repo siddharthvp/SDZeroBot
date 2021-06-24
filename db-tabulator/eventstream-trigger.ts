@@ -1,7 +1,9 @@
 import { fetchQueriesForPage, processQueriesForPage, SUBSCRIPTIONS_CATEGORY } from "./app";
 import { pageFromCategoryEvent, Route } from "../eventstream-router/app";
 
-export default class Task extends Route {
+export default class dbTabulator extends Route {
+	name = "db-tabulator";
+
 	async init() {
 		super.init();
 		this.log('[S] Started');

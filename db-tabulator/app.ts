@@ -11,12 +11,13 @@ export const TEMPLATE = 'Database report';
 export const TEMPLATE_END = 'Database report end';
 export const SUBSCRIPTIONS_CATEGORY = 'SDZeroBot database report subscriptions';
 export const QUERY_TIMEOUT = 600;
+export const CONCURRENCY = 5;
 export const MAX_SUBPAGES = 20;
 export const FAKE_INPUT_FILE = 'fake-configs.wikitext';
 export const FAKE_OUTPUT_FILE = 'fake-output.wikitext';
 
 const db = new enwikidb({
-	connectionLimit: 10
+	connectionLimit: CONCURRENCY
 });
 
 export async function fetchQueries(): Promise<Record<string, Query[]>> {
@@ -62,7 +63,7 @@ export async function processQueries(allQueries: Record<string, Query[]>) {
 			) AS last_edit
 		FROM page 
 		JOIN categorylinks ON cl_from = page_id AND cl_to = ?
-	`, [BOT_NAME, SUBSCRIPTIONS_CATEGORY].map(e => e.replace(/ /g, '_')));
+	`, [BOT_NAME, SUBSCRIPTIONS_CATEGORY.replace(/ /g, '_')]);
 	log(`[i] Retrieved last edits data. DB query took ${timeTaken} seconds.`);
 
 	lastEditsData = Object.fromEntries(lastEditsDb.map((row) => [
@@ -73,7 +74,7 @@ export async function processQueries(allQueries: Record<string, Query[]>) {
 	await bot.batchOperation(Object.entries(allQueries), async ([page, queries]) => {
 		log(`[+] Processing page ${page}`);
 		await processQueriesForPage(queries);
-	}, 10);
+	}, CONCURRENCY);
 }
 
 export async function fetchQueriesForPage(page: string): Promise<Query[]> {
@@ -103,15 +104,18 @@ export class Query {
 
 	page: string;
 	template: Template;
-	sql: string;
-	wikilinkConfig: Array<{columnIndex: number, namespace: string, showNamespace: boolean}>;
-	excerptConfig: Array<{srcIndex: number, destIndex: number, namespace: string, charLimit: number, charHardLimit: number}>;
-	commentConfig: number[];
+	config: {
+		sql: string
+		wikilinks: Array<{columnIndex: number, namespace: string, showNamespace: boolean}>;
+		excerpts: Array<{srcIndex: number, destIndex: number, namespace: string, charLimit: number, charHardLimit: number}>;
+		comments: number[];
+		pagination: number;
+		maxPages: number;
+		removeUnderscores: number[];
+		hiddenColumns: number[];
+	}
 	warnings: string[] = [];
-	pagination: number;
-	maxPages: number;
 	numPages: number;
-	hiddenColumns: number[];
 
 	constructor(template: Template, page: string) {
 		this.page = page;
@@ -143,6 +147,7 @@ export class Query {
 		return daysDiff >= frequency - 0.5;
 	}
 
+	// Errors in configs are reported to user through [[Module:Database report]] in Lua
 	parseQuery() {
 		if (process.env.CRON) {
 			if (this.getTemplateValue('autoupdate')?.toLowerCase() === 'no') {
@@ -160,9 +165,9 @@ export class Query {
 		}
 
 		// remove semicolons to disallow multiple SQL statements used together
-		this.sql = this.getTemplateValue('sql').replace(/;/g, '');
+		this.config.sql = this.getTemplateValue('sql').replace(/;/g, '');
 
-		this.wikilinkConfig = this.getTemplateValue('wikilinks')
+		this.config.wikilinks = this.getTemplateValue('wikilinks')
 			?.split(',')
 			.map(e => {
 				const [columnIndex, namespace, showHide] = e.trim().split(':');
@@ -172,66 +177,51 @@ export class Query {
 					showNamespace: showHide === 'show'
 				};
 			})
-			.filter(config => {
-				if (!/^c?\d+/i.test(config.namespace)) {
-					this.warnings.push(`Invalid namespace number: ${config.namespace}. Refer to [[WP:NS]] for namespace numbers`);
-					return false;
-				} else if (isNaN(config.columnIndex)) {
-					this.warnings.push(`Invalid column number: ${config.columnIndex}.`);
-					return false;
-				}
-				return true;
-			}) || [];
+			.filter(config => /^c?\d+/i.test(config.namespace) && !isNaN(config.columnIndex)) || [];
 
-		this.commentConfig = this.getTemplateValue('comments')
+		this.config.comments = this.getTemplateValue('comments')
 			?.split(',')
 			.map(e => parseInt(e.trim()))
 			.filter(e => !isNaN(e))|| [];
 
-		this.excerptConfig = this.getTemplateValue('excerpts')
+		this.config.excerpts = this.getTemplateValue('excerpts')
 			?.split(',')
 			.map(e => {
 				const [srcIndex, destIndex, namespace, charLimit, charHardLimit] = e.trim().split(':');
-				const config = {
+				return {
 					srcIndex: parseInt(srcIndex),
 					destIndex: destIndex ? parseInt(destIndex) : parseInt(srcIndex) + 1,
 					namespace: namespace || '0',
 					charLimit: charLimit ? parseInt(charLimit) : 250,
 					charHardLimit: charHardLimit ? parseInt(charHardLimit) : 500
 				};
-				if (
-					isNaN(config.srcIndex) || isNaN(config.destIndex) || !/^c?\d+/i.test(config.namespace) ||
-					isNaN(config.charLimit) || isNaN(config.charHardLimit)
-				) {
-					this.warnings.push(`Invalid excerpt config: one or more numeral values found in: <code>${e}</code>. Ignoring.`);
-					return null;
-				} else {
-					return config;
-				}
 			})
-			.filter(e => e) // filter out nulls
+			.filter(config => !isNaN(config.srcIndex) && !isNaN(config.destIndex) && /^c?\d+/i.test(config.namespace) &&
+				!isNaN(config.charLimit) && !isNaN(config.charHardLimit))
 			|| [];
 
-		this.hiddenColumns = this.getTemplateValue('hide')
+		this.config.hiddenColumns = this.getTemplateValue('hide')
 			?.split(',')
 			.map(e => parseInt(e.trim()))
 			.filter(e => !isNaN(e)) || [];
 
-		this.pagination = this.getTemplateValue('pagination')
-			? parseInt(this.getTemplateValue('pagination'))
-			: Infinity;
-		if (isNaN(this.pagination)) {
-			this.warnings.push(`Non-numeral value "${this.getTemplateValue('pagination')}" specified for pagination. Ignored.`);
-			this.pagination = Infinity;
+		this.config.removeUnderscores = this.getTemplateValue('remove_underscores')
+			?.split(',')
+			.map(num => parseInt(num.trim()))
+			.filter(e => !isNaN(e));
+
+		this.config.pagination = parseInt(this.getTemplateValue('pagination'));
+		if (isNaN(this.config.pagination)) {
+			this.config.pagination = Infinity;
 		}
-		this.maxPages = Math.min(MAX_SUBPAGES,
+		this.config.maxPages = Math.min(MAX_SUBPAGES,
 			this.getTemplateValue('max_pages') ? parseInt(this.getTemplateValue('max_pages')) : 5
 		);
 
 	}
 
 	async runQuery() {
-		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.sql.trim()}`;
+		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.config.sql.trim()}`;
 		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
 			log(`[+] ${this.page}: Took ${timeTaken} seconds`);
 			return queryResult;
@@ -318,8 +308,8 @@ export class Query {
 		if (result.length === 0) {
 			return 'No items retrieved.'; // XXX
 		}
-		if (result.length > this.pagination) {
-			const resultSets = arrayChunk(result, this.pagination).slice(0, this.maxPages);
+		if (result.length > this.config.pagination) {
+			const resultSets = arrayChunk(result, this.config.pagination).slice(0, this.config.maxPages);
 			this.numPages = resultSets.length;
 			const resultTexts: string[] = [];
 			let pageNumber = 1;
@@ -346,7 +336,7 @@ export class Query {
 		}
 
 		// Add excerpts
-		for (let {srcIndex, destIndex, namespace, charLimit, charHardLimit} of this.excerptConfig) {
+		for (let {srcIndex, destIndex, namespace, charLimit, charHardLimit} of this.config.excerpts) {
 			result = this.transformColumn(result, srcIndex, pageName => pageName.replace(/_/g, ' '));
 			let nsId, nsColNumber;
 			if (!isNaN(parseInt(namespace))) {
@@ -369,10 +359,10 @@ export class Query {
 		}
 
 		// Number of columns increased due to excerpts
-		numColumns += this.excerptConfig.length;
+		numColumns += this.config.excerpts.length;
 
 		// Add links
-		this.wikilinkConfig.forEach(({columnIndex, namespace, showNamespace}) => {
+		this.config.wikilinks.forEach(({columnIndex, namespace, showNamespace}) => {
 			let nsId, nsColNumber;
 			if (!isNaN(parseInt(namespace))) {
 				nsId = parseInt(namespace);
@@ -393,18 +383,15 @@ export class Query {
 		});
 
 		// Format edit summaries / log action summaries
-		this.commentConfig.forEach(columnIndex => {
+		this.config.comments.forEach(columnIndex => {
 			result = this.transformColumn(result, columnIndex, (value) => {
 				return formatSummary(value);
 			});
 		});
 
-		this.getTemplateValue('remove_underscores')?.split(',').forEach(num => {
-			let columnIndex = parseInt(num.trim());
-			if (isNaN(columnIndex)) {
-				this.warnings.push(`Found non-numeral value in <code>remove_underscores</code>: "${num}". Ignoring. Please use a comma-separated list of column numbers`);
-			} else if (columnIndex > numColumns) {
-				this.warnings.push(`Found "${num}" in <code>remove_underscores</code> though the table only has ${numColumns} column{{subst:plural:${numColumns}||s}}. Ignoring.`);
+		this.config.removeUnderscores.forEach(columnIndex => {
+			if (columnIndex > numColumns) {
+				this.warnings.push(`Found "${columnIndex}" in <code>remove_underscores</code> though the table only has ${numColumns} column{{subst:plural:${numColumns}||s}}. Ignoring.`);
 			} else {
 				result = this.transformColumn(result, columnIndex, value => value.replace(/_/g, ' '));
 			}
@@ -419,7 +406,7 @@ export class Query {
 		});
 
 		// Last step: changes column numbers
-		this.hiddenColumns.sort().forEach((columnIdx, idx) => {
+		this.config.hiddenColumns.sort().forEach((columnIdx, idx) => {
 			// columnIdx - idx because column numebering changes when one is removed
 			result = this.removeColumn(result, columnIdx - idx);
 		});

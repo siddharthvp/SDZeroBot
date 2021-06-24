@@ -1,4 +1,3 @@
-import * as fs from 'fs';
 import * as createError from "http-errors";
 import * as express from "express";
 import * as path from "path";
@@ -12,6 +11,7 @@ import * as cors from 'cors';
 import { bot, mwn } from "../../SDZeroBot/botbase";
 import { ENWIKI_DB_HOST, TOOLS_DB_HOST } from "../../SDZeroBot/db";
 import { createLocalSSHTunnel } from "../../SDZeroBot/utils";
+import { registerRoutes } from "./route-registry";
 
 const app = express();
 
@@ -39,10 +39,7 @@ setInterval(function () {
 createLocalSSHTunnel(ENWIKI_DB_HOST);
 createLocalSSHTunnel(TOOLS_DB_HOST);
 
-const routes: Record<string, string> = JSON.parse(fs.readFileSync('./routes.json').toString());
-for (let [path, file] of Object.entries(routes)) {
-	app.use(path, require(file).default);
-}
+registerRoutes(app);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -1,7 +1,9 @@
 import { exec } from 'child_process';
 import { Route } from "../eventstream-router/app";
 
-export default class Task extends Route {
+export default class botActivityMonitor extends Route {
+	name = "bot-activity-monitor";
+
 	async init() {
 		super.init();
 		this.log('[S] Started');

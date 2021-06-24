@@ -1,10 +1,15 @@
-import { log } from '../botbase';
-import { getRoutes, LastSeen, start } from "./app";
+import { argv, log } from '../botbase';
+import { streamWithRoutes } from "./app";
 
 log(`[S] Started`);
 process.chdir(__dirname);
 
-const lastSeen = new LastSeen('./last-seen.txt');
-const routes = getRoutes('./routes.json');
+import g13Watch from "../reports/g13-watch/eventstream-watch";
+import gans from "../most-gans/eventstream-updater";
+import botActivityMonitor from "../bot-monitor/eventstream-trigger";
+import dbTabulator from "../db-tabulator/eventstream-trigger";
 
-start(routes, lastSeen);
+const routeClasses = [g13Watch, gans, botActivityMonitor, /*dbTabulator*/];
+
+// debugging a single route example: -r "./test"
+streamWithRoutes(argv.r ? [require(argv.r).default] : routeClasses);

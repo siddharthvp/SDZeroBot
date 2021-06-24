@@ -62,7 +62,7 @@ export async function processArticle(article: string) {
 	}
 }
 
-const dbWriteFailures = createLogStream('./db-write-failures.out');
+const dbWriteFailures = createLogStream(__dirname + '/db-write-failures.out');
 
 function addToDb(article: string, nom: string, date, fallbackStrategy = false): Promise<[string, string, boolean]> {
 	let date_str = new bot.date(date).format('YYYY-MM-DD');

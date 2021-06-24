@@ -1,4 +1,4 @@
-import { argv, bot, fs, log, path } from "../botbase";
+import { argv, bot, fs, log } from "../botbase";
 import { RecentChangeStreamEvent } from "./RecentChangeStreamEvent";
 import { createLogStream, stringifyObject } from "../utils";
 import EventSource = require("./EventSource");
@@ -19,7 +19,7 @@ import EventSource = require("./EventSource");
  *
  */
 export abstract class Route {
-	name: string;
+	readonly abstract name: string;
 	log: ((msg: any) => void);
 
 	init(): void | Promise<void> {
@@ -41,26 +41,16 @@ export class RouteValidator {
 	isValid: boolean;
 	ready: Promise<void>;
 
-	constructor(name) {
-		this.name = name;
-	}
-
-	validate(file: string) {
-		let route;
-		try {
-			let routeCls = require(file).default;
-			route = new routeCls();
-			route.name = this.name;
-		} catch (e) {
-			log(`[E] Invalid route "${file}": require failed`);
-			log(e);
-			this.isValid = false;
-			return;
-		}
+	validate(routeCls: new () => Route) {
+		let route = new routeCls();
+		this.name = route.name;
 		this.worker = route.worker.bind(route);
 		this.filter = route.filter.bind(route);
 		this.init = route.init.bind(route);
 
+		if (!route.name) {
+			log(`[E] Found task without a name. Please define name property in all route classes.`)
+		}
 		if (typeof this.filter !== 'function' || typeof this.worker !== 'function') {
 			log(`[E] Invalid route ${route.name}: filter or worker is not a function`);
 			this.isValid = false;
@@ -86,7 +76,7 @@ export class RouteValidator {
 }
 
 // XXX: consider using Redis rather than to NFS since this does a write every 1 second
-export class LastSeen {
+class LastSeen {
 
 	// Number of milliseconds after which lastSeenTs is to be saved to file
 	readonly updateInterval = 1000;
@@ -117,18 +107,8 @@ export class LastSeen {
 		);
 	}
 }
-export function getRoutes(routesFile: string): RouteValidator[] {
-	// For development, specify a file as "-r filename" and only that route will be
-	// registered, otherwise all files in routes.json are registered.
-	let files: Record<string, string> = argv.r ? {[path.basename(argv.r)]: argv.r} : require(routesFile);
-	return Object.entries(files).map(([name, file]) => {
-		return new RouteValidator(name).validate(file);
-	}).filter(route => {
-		return route.isValid;
-	});
-}
 
-const routerLog = createLogStream('./routerlog.out');
+let routerLog;
 
 function addToRouterLog(routeName: string, data: RecentChangeStreamEvent) {
 	let catNote = '';
@@ -141,7 +121,7 @@ function addToRouterLog(routeName: string, data: RecentChangeStreamEvent) {
 	routerLog(`Routing to ${routeName}: ${catNote}${data.title}@${data.wiki}`);
 }
 
-async function main(routes: RouteValidator[], lastSeen: LastSeen) {
+async function run(routes: RouteValidator[], lastSeen: LastSeen) {
 	log('[S] Restarted main');
 
 	const ts = lastSeen.get();
@@ -173,7 +153,7 @@ async function main(routes: RouteValidator[], lastSeen: LastSeen) {
 		if (evt.status === 429) { // Too Many Requests, the underlying library doesn't reconnect by itself
 			stream.close(); // just to be safe that there aren't two parallel connections
 			bot.sleep(5000).then(() => {
-				return start(routes, lastSeen); // restart
+				return main(routes, lastSeen); // restart
 			});
 		}
 		// TODO: handle other errors, ensure auto-reconnection
@@ -199,11 +179,21 @@ async function main(routes: RouteValidator[], lastSeen: LastSeen) {
 	}
 }
 
-export async function start(routes: RouteValidator[], lastSeen: LastSeen) {
-	await main(routes, lastSeen).catch(err => {
+async function main(routes: RouteValidator[], lastSeen: LastSeen) {
+	await run(routes, lastSeen).catch(err => {
 		logError(err);
-		start(routes, lastSeen);
+		main(routes, lastSeen);
 	});
+}
+
+export function streamWithRoutes(routes: (new () => Route)[]) {
+	let validatedRoutes = routes.map(routeCls => {
+		return new RouteValidator().validate(routeCls);
+	}).filter(route => {
+		return route.isValid;
+	});
+	routerLog = createLogStream('./routerlog.out');
+	main(validatedRoutes, new LastSeen('./last-seen.txt'));
 }
 
 export function logError(err, task?) {

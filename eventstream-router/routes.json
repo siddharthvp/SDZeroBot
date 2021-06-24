@@ -1,6 +1,0 @@
-{
-	"g13-watch": "../reports/g13-watch/eventstream-watch",
-	"gans": "../most-gans/eventstream-updater",
-	"bot-activity-monitor": "../bot-monitor/eventstream-trigger",
-	"db-tabulator": "../db-tabulator/eventstream-trigger"
-}

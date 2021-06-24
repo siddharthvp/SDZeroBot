@@ -1,9 +1,0 @@
-{
-  "/": "./routes/index",
-  "/logs": "./routes/logs",
-  "/logs.php": "./routes/logs",
-  "/database-report": "../../SDZeroBot/db-tabulator/web-endpoint",
-  "/gans": "../../SDZeroBot/most-gans/web-endpoint",
-  "/summary": "./routes/summary",
-  "/articlesearch": "./routes/articlesearch"
-}
