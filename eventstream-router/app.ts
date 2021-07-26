@@ -75,7 +75,7 @@ export class RouteValidator {
 	}
 }
 
-// XXX: consider using Redis rather than to NFS since this does a write every 1 second
+// XXX: consider using Redis rather than NFS since this does a write every 1 second
 class LastSeen {
 
 	// Number of milliseconds after which lastSeenTs is to be saved to file
@@ -221,6 +221,7 @@ export function pageFromCategoryEvent(data: RecentChangeStreamEvent) {
 	};
 }
 
+// XXX: remove
 export function debug(msg) {
 	if (argv.debug) {
 		log(msg);

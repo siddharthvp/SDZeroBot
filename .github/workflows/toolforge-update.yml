@@ -37,7 +37,7 @@ jobs:
               fi;
               if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c eventstream)" -gt 0 ]]; then
                 echo "Restarting eventstream-router ...";
-                cd eventstream-router && npm run validate && npm restart;
+                cd eventstream-router && npm restart;
               fi;
               if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "webservice/")" -gt 0 ]]; then
                 if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "webservice/package.json")" -gt 0 ]]; then
@@ -48,7 +48,7 @@ jobs:
                 cd /data/project/sdzerobot && rsync -avu --delete "SDZeroBot/webservice/" "www/js";
                 echo "Restarting SDZeroBot webservice ...";
                 cd /data/project/sdzerobot/www/js || exit 1;
-                if [[ ($(grep "\.\." *.ts | grep -v -c SDZeroBot) -gt 0) || ($(grep "\.\.\/\.\." routes/*.ts | grep -v -c SDZeroBot) -gt 0) ]]; then
+                if [[ ($(grep "\.\." *.ts | grep -v SDZeroBot | grep -v -c mwn) -gt 0) || ($(grep "\.\.\/\.\." routes/*.ts | grep -v SDZeroBot | grep -v -c mwn) -gt 0) ]]; then
                   echo "Suspicious imports found in webservice!";
                   grep "\.\." *.ts | grep -v SDZeroBot;
                   grep "\.\.\/\.\." routes/*.ts | grep -v SDZeroBot;

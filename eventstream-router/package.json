@@ -3,7 +3,6 @@
 		"test": "node --require ts-node/register main.ts",
 		"start": "jstart -N stream -mem 4g ~/bin/node ~/SDZeroBot/eventstream-router/main.js",
 		"stop": "jstop stream || echo",
-		"restart": "npm run stop && sleep 10 && npm run start",
-		"validate": "~/bin/node validate-routes.js"
+		"restart": "npm run stop && sleep 10 && npm run start"
 	}
 }
