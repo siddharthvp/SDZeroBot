@@ -131,7 +131,7 @@ class Notifier {
 			return log(`[W] ${afd} already closed`);
 		}
 
-		let articleRgx = /\{\{la\|(.*?)\}\}/g;
+		let articleRgx = /\{\{la\|1=(.*?)\}\}/g;
 		let articles = [];
 		for (let match of afdtext.matchAll(articleRgx)) {
 			let article = match[1];
