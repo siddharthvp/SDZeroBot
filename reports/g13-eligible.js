@@ -7,8 +7,6 @@ log(`[i] Started`);
 
 let tableInfo = {};
 
-const startTs = new bot.date().subtract(6, 'months').setUTCHours(0,0,0,0).format('YYYYMMDDHHmmss');
-
 const db = new enwikidb();
 const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-eligible-db.json').toString()) :
 	await db.query(`
@@ -17,7 +15,7 @@ const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-eligible
 	JOIN revision ON rev_id = page_latest
 	WHERE page_namespace = 118
 	AND page_is_redirect = 0
-	AND rev_timestamp < "${startTs}"
+	AND rev_timestamp < DATE_FORMAT(UTC_DATE() - INTERVAL 6 MONTH, '%Y%m%d%H%i%S')
 
 	UNION
 	
@@ -29,7 +27,7 @@ const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-eligible
 	AND tl_title = "AFC_submission" 
 	AND tl_namespace = 10
 	AND page_is_redirect = 0
-	AND rev_timestamp < "${startTs}"
+	AND rev_timestamp < DATE_FORMAT(UTC_DATE() - INTERVAL 6 MONTH, '%Y%m%d%H%i%S')
 `);
 db.end();
 process.chdir(__dirname);
