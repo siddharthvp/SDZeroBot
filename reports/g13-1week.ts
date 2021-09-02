@@ -210,15 +210,18 @@ async function makeOldLinks() {
 	try {
 		// If same date has multiple reports (testing), show link to only the latest one
 		let links: Record<string, string> = {};
-		(await getRecentEdits(10)).forEach((rev: ApiRevision) => {
+		for (let rev of (await getRecentEdits(10))) {
 			let date = dateFromEditSummary(rev.comment);
 			if (date) {
 				let dateStr = date.format('D MMMM');
 				if (!links[dateStr]) {
 					links[dateStr] = `[[Special:Permalink/${rev.revid}|Last edit ${dateStr}]]`;
+					if (Object.keys(links).length >= 7) {
+						break;
+					}
 				}
 			}
-		});
+		}
 		return Object.values(links).join(' - ') + ' - {{history|2=older}}';
 	} catch (e) {
 		return '{{history}}';
@@ -248,10 +251,6 @@ async function makeOldLinks() {
 	// and for the SQL to work out right
 	runTillDate.setUTCHours(0, 0, 0, 0);
 	lastRunDate.setUTCHours(0, 0, 0, 0);
-
-	if (lastRunDate.isAfter(runTillDate)) { // should never happen
-		throw new Error(`lastRunDate ${lastRunDate} more recent than expected`);
-	}
 
 	// Most of the days, this would run once.
 	// On beginning/end of certain months, this can run multiple times or not at all
