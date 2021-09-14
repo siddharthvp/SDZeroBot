@@ -119,6 +119,18 @@ export function arrayChunk(arr, size) {
 	return result;
 }
 
+export function withIndices<T>(arr: Array<T>): Array<[number, T]> {
+	return arr.map((item, idx) => [idx, item]);
+}
+
+export function len(obj: Record<any, any> | Array<any>) {
+	if (Array.isArray(obj)) {
+		return obj.length;
+	} else {
+		return Object.keys(obj).length;
+	}
+}
+
 export function lowerFirst(str: string) {
 	return str[0].toLowerCase() + str.slice(1);
 }
