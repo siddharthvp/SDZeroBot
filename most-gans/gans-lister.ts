@@ -1,34 +1,42 @@
-import { bot, log, mwn } from '../botbase';
+import { argv, bot, log, mwn } from '../botbase';
 import { TOOLS_DB_HOST, toolsdb } from '../db';
-import { createLocalSSHTunnel } from "../utils";
+import { createLocalSSHTunnel, withIndices } from "../utils";
 
 (async function () {
 
 	await createLocalSSHTunnel(TOOLS_DB_HOST);
 	let db = new toolsdb('goodarticles_p');
 	let result = await db.query(`
-        select nominator, count(*) as count
-        from nominators2
-        group by nominator
-        order by count desc, nominator asc
-        limit 500
+        SELECT nominator, COUNT(*) AS count
+        FROM nominators2
+        GROUP BY nominator
+        ORDER BY count DESC, nominator ASC
+        LIMIT 600
 	`);
+	db.end();
 	log(`[S] Got query result`);
 
-	let wikitable = new mwn.table({ classes: ['plainlinks'] });
+	let wikitable = new mwn.table();
 	wikitable.addHeaders(['Rank', 'User', 'Count']);
 
-	result.forEach(({nominator, count}, idx) => {
+	let rank500Count;
+	for (let [idx, {nominator, count}] of withIndices(result)) {
+		let rank = idx + 1;
+		if (rank === 500) {
+			rank500Count = count;
+		} else if (rank > 500 && count < rank500Count) {
+			break;
+		}
 		wikitable.addRow([
-			String(idx + 1),
+			String(rank),
 			`[[User:${nominator}|${nominator}]]`,
 			`[https://sdzerobot.toolforge.org/gans?user=${encodeURIComponent(nominator)} ${count}]`
 		]);
-	});
+	}
 
 	await bot.getTokensAndSiteInfo();
 	await bot.save(
-		'Wikipedia:List of Wikipedians by good article nominations',
+		'Wikipedia:List of Wikipedians by good article nominations' + (argv.sandbox ? '/sandbox' : ''),
 		'{{/header}}\n\n' + wikitable.getText()
 	);
 	log(`[S] Saved`);
