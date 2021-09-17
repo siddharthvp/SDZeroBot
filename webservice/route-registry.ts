@@ -6,6 +6,7 @@ import summaryRouter from "./routes/summary";
 import dbReportRouter from '../../SDZeroBot/db-tabulator/web-endpoint';
 import gansRouter from '../../SDZeroBot/most-gans/web-endpoint';
 import articleSearchRouter from './routes/articlesearch';
+import dykRouter from './routes/dyk';
 
 export function registerRoutes(app: express.Router) {
 	app.use('/', indexRouter);
@@ -15,4 +16,5 @@ export function registerRoutes(app: express.Router) {
 	app.use('/gans', gansRouter);
 	app.use('/summary', summaryRouter);
 	app.use('/articlesearch', articleSearchRouter);
+	app.use('/dyk', dykRouter);
 }
