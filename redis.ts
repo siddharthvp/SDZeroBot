@@ -29,14 +29,18 @@ let instance: Redis;
  * 	...
  */
 export function createRedisClient(config: redis.ClientOpts = {}): Redis {
-	return asyncRedis.createClient({
+	return asyncRedis.createClient(getRedisConfig(config));
+}
+
+export function getRedisConfig(config: redis.ClientOpts = {}): redis.ClientOpts {
+	return {
 		host: onToolforge() ? REDIS_HOST : '127.0.0.1',
 		port: onToolforge() ? 6379 : 4713,
 		// Prefixing per https://wikitech.wikimedia.org/wiki/Help:Toolforge/Redis_for_Toolforge#Security
 		// A secret prefix string is stored in redis-key-prefix.txt
 		prefix: readFile(__dirname + '/redis-key-prefix.txt'),
 		...config
-	});
+	}
 }
 
 /**

@@ -10,8 +10,9 @@ import * as cors from 'cors';
 // The latter will work locally but not when inside toolforge www/js directory!
 import { bot, mwn } from "../../SDZeroBot/botbase";
 import { humanDate } from "../../mwn/build/log";
-import { ENWIKI_DB_HOST, TOOLS_DB_HOST } from "../../SDZeroBot/db";
 import { createLocalSSHTunnel } from "../../SDZeroBot/utils";
+import { ENWIKI_DB_HOST, TOOLS_DB_HOST } from "../../SDZeroBot/db";
+import { REDIS_HOST } from "../../SDZeroBot/redis";
 import { registerRoutes } from "./route-registry";
 
 const app = express();
@@ -38,8 +39,16 @@ setInterval(function () {
 	bot.getTokens();
 }, 60000);
 
+bot.setOptions({
+	retryPause: 2000,
+	defaultParams: {
+		maxlag: undefined
+	}
+});
+
 createLocalSSHTunnel(ENWIKI_DB_HOST);
 createLocalSSHTunnel(TOOLS_DB_HOST);
+createLocalSSHTunnel(REDIS_HOST);
 
 registerRoutes(app);
 

@@ -1,8 +1,10 @@
 import * as express from "express";
-import {enwikidb} from "../../../SDZeroBot/db";
+import * as expressRedisCache from 'express-redis-cache';
+import { enwikidb } from "../../../SDZeroBot/db";
+import { getRedisConfig } from "../../../SDZeroBot/redis";
 
 const router = express.Router();
-
+const cache = expressRedisCache(getRedisConfig());
 const db = new enwikidb();
 
 router.get('/credits/:user', async (req, res, next) => {
@@ -19,7 +21,7 @@ router.get('/credits/:user', async (req, res, next) => {
 	res.end(String(count));
 });
 
-router.get('/noms/:user', async (req, res, next) => {
+router.get('/noms/:user', cache.route(), async (req, res, next) => {
 	const user = req.params.user.replace(/ /g, '_');
 	const result = await db.query(`
 		SELECT COUNT(*) AS count FROM revision_userindex
