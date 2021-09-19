@@ -21,6 +21,8 @@ class DykNomCountsTask extends Route {
 
 		await createLocalSSHTunnel(ENWIKI_DB_HOST);
 		this.db = new enwikidb();
+
+		bot.setOptions({ maxRetries: 0, defaultParams: { maxlag: undefined } });
 		await bot.getTokensAndSiteInfo();
 
 		await this.refreshCountsFromDb();
@@ -31,19 +33,24 @@ class DykNomCountsTask extends Route {
 	// Necessary to be run periodically as otherwise we aren't accounting for DYK noms being deleted/redirected
 	async refreshCountsFromDb() {
 		this.log(`[i] Refreshing counts from db`);
-		const queryResult = await this.db.query(`
-			SELECT actor_name AS username, COUNT(*) AS noms
-			FROM revision_userindex
-			JOIN page ON rev_page = page_id
-			JOIN actor_revision ON rev_actor = actor_id
-			WHERE page_namespace = 10
-			AND page_title LIKE 'Did_you_know_nominations/%'
-			AND page_is_redirect = 0
-			AND rev_parent_id = 0
-			GROUP BY username
-		`);
-		this.counts = Object.fromEntries(queryResult.map(e => [e.username, parseInt(e.noms as string)]));
-		await this.saveCounts('Refreshing counts from database');
+		try {
+			const queryResult = await this.db.query(`
+                SELECT actor_name AS username, COUNT(*) AS noms
+				FROM revision_userindex
+				JOIN page ON rev_page = page_id
+				JOIN actor_revision ON rev_actor = actor_id
+				WHERE page_namespace = 10
+				AND page_title LIKE 'Did_you_know_nominations/%'
+				AND page_is_redirect = 0
+				AND rev_parent_id = 0
+				GROUP BY username
+			`);
+			this.counts = Object.fromEntries(queryResult.map(e => [e.username, parseInt(e.noms as string)]));
+			await this.saveCounts('Refreshing counts from database');
+		} catch (e) {
+			this.log(`[E] Error while running db refresh`);
+			this.log(e);
+		}
 	}
 
 	async flushCounts() {
@@ -58,8 +65,13 @@ class DykNomCountsTask extends Route {
 
 	async saveCounts(editSummary: string) {
 		let counts = Object.fromEntries(Object.entries(this.counts).filter(e => e[1] >= this.minCountToSave));
-		await bot.save(this.page, JSON.stringify(counts), editSummary);
-		this.unflushedChanges = {};
+		try {
+			await bot.save(this.page, JSON.stringify(counts), editSummary);
+			this.unflushedChanges = {};
+		} catch (e) {
+			this.log(`[E] Failed to save to onwiki page`);
+			this.log(e);
+		}
 	}
 
 	filter(data): boolean {
