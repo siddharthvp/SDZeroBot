@@ -11,7 +11,7 @@ class DykNomCountsTask extends Route {
 	readonly page = 'User:SDZeroBot/DYK_nomination_counts.json';
 	readonly minCountToSave = 5;
 	readonly flushInterval = 5000;
-	readonly dbRefreshInterval = 86400;
+	readonly dbRefreshInterval = 86400000;
 
 	db: enwikidb;
 
