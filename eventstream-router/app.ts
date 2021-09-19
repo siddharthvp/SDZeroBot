@@ -78,13 +78,17 @@ export class RouteValidator {
 // XXX: consider using Redis rather than NFS since this does a write every 1 second
 class LastSeen {
 
-	// Number of milliseconds after which lastSeenTs is to be saved to file
-	readonly updateInterval = 1000;
 	ts: number;
+
+	// File where last seen timestamp is stored
 	file: string;
 
-	constructor(filePath: string) {
+	// Number of milliseconds after which lastSeenTs is to be saved to file
+	updateInterval: number;
+
+	constructor(filePath: string, updateInterval: number) {
 		this.file = filePath;
+		this.updateInterval = updateInterval;
 		setInterval(() => this.write(), this.updateInterval);
 	}
 
@@ -186,14 +190,24 @@ async function main(routes: RouteValidator[], lastSeen: LastSeen) {
 	});
 }
 
-export function streamWithRoutes(routes: (new () => Route)[]) {
+interface StreamAppConfig {
+	routingLogFile?: string;
+	lastSeenFile?: string;
+	lastSeenUpdateInterval?: number
+}
+
+export function streamWithRoutes(routes: (new () => Route)[], config: StreamAppConfig = {}) {
 	let validatedRoutes = routes.map(routeCls => {
 		return new RouteValidator().validate(routeCls);
 	}).filter(route => {
 		return route.isValid;
 	});
-	routerLog = createLogStream('./routerlog.out');
-	main(validatedRoutes, new LastSeen('./last-seen.txt'));
+	routerLog = createLogStream(config.routingLogFile || './routerlog.out');
+	const lastSeen = new LastSeen(
+		config.lastSeenFile || './last-seen.txt',
+		config.lastSeenUpdateInterval || 1000
+	);
+	main(validatedRoutes, lastSeen);
 }
 
 export function logError(err, task?) {
