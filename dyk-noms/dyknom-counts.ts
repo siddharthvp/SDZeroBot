@@ -75,4 +75,5 @@ class DykNomCountsTask extends Route {
 	}
 }
 
+process.chdir(__dirname);
 streamWithRoutes([DykNomCountsTask]);
