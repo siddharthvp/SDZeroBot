@@ -66,7 +66,7 @@ const dbWriteFailures = createLogStream(__dirname + '/db-write-failures.out');
 
 function addToDb(article: string, nom: string, date, fallbackStrategy = false): Promise<[string, string, boolean]> {
 	let date_str = new bot.date(date).format('YYYY-MM-DD');
-	db.run(`REPLACE INTO ${TABLE} VALUES (?, ?, ?)`, [article, nom, date_str]).catch(err => {
+	db.run(`REPLACE INTO ${TABLE} VALUES (?, ?, ?, ?)`, [article, nom, date_str, null]).catch(err => {
 		log(`[E] Db error ${err}`);
 		log(err);
 		dbWriteFailures(JSON.stringify(err));
