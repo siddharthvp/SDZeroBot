@@ -1,7 +1,7 @@
-import { bot, enwikidb } from "../botbase";
+import { bot } from "../botbase";
 import { Route, streamWithRoutes } from "../eventstream-router/app";
 import { createLocalSSHTunnel } from "../utils";
-import { ENWIKI_DB_HOST } from "../db";
+import { ENWIKI_DB_HOST, enwikidb } from "../db";
 
 class DykNomCountsTask extends Route {
     name = 'dyk-counts';
@@ -31,6 +31,7 @@ class DykNomCountsTask extends Route {
 	}
 
 	// Necessary to be run periodically as otherwise we aren't accounting for DYK noms being deleted/redirected
+	// Also the worker() isn't idempotent!
 	async refreshCountsFromDb() {
 		this.log(`[i] Refreshing counts from db`);
 		try {
@@ -48,8 +49,7 @@ class DykNomCountsTask extends Route {
 			this.counts = Object.fromEntries(queryResult.map(e => [e.username, parseInt(e.noms as string)]));
 			await this.saveCounts('Refreshing counts from database');
 		} catch (e) {
-			this.log(`[E] Error while running db refresh`);
-			this.log(e);
+			this.log(`[E] Error while running db refresh`, e);
 		}
 	}
 
@@ -69,8 +69,7 @@ class DykNomCountsTask extends Route {
 			await bot.save(this.page, JSON.stringify(counts), editSummary);
 			this.unflushedChanges = {};
 		} catch (e) {
-			this.log(`[E] Failed to save to onwiki page`);
-			this.log(e);
+			this.log(`[E] Failed to save to onwiki page`, e);
 		}
 	}
 
@@ -84,6 +83,7 @@ class DykNomCountsTask extends Route {
 		let {user} = data;
 		this.counts[user] = this.counts[user] ? (this.counts[user] + 1) : 1;
 		this.unflushedChanges[user] = this.unflushedChanges[user] ? (this.unflushedChanges[user] + 1) : 1;
+		this.log(`[i] Crediting "${user}" for [[${data.title}]]`);
 	}
 }
 

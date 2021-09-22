@@ -21,7 +21,7 @@ export function createLogStream(file: string) {
 		encoding: 'utf8'
 	});
 
-	return function (msg) {
+	var logger = function (msg) {
 		let ts = new bot.date().format('YYYY-MM-DD HH:mm:ss');
 		let stringified;
 		if (typeof msg === 'string') {
@@ -31,6 +31,10 @@ export function createLogStream(file: string) {
 		} else {
 			stream.write(`[${ts}] [Non-stringifiable object!]\n`);
 		}
+	}
+
+	return function (...args) {
+		args.forEach(arg => logger(arg));
 	};
 }
 

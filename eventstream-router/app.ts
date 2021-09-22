@@ -20,7 +20,7 @@ import EventSource = require("./EventSource");
  */
 export abstract class Route {
 	readonly abstract name: string;
-	log: ((msg: any) => void);
+	log: ((...msg: any[]) => void);
 
 	init(): void | Promise<void> {
 		this.log = createLogStream('./' + this.name + '.out');
