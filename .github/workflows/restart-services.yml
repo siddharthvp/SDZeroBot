@@ -14,7 +14,7 @@ jobs:
             become sdzerobot bash -c '
               cd /data/project/sdzerobot/www/js && npm restart;
               cd /data/project/sdzerobot/SDZeroBot/eventstream-router && npm restart;
-              cd /data/project/sdzerobot/SDZeroBot/dyk-noms && npm restart;
+              cd /data/project/sdzerobot/SDZeroBot/dyk-counts && npm restart;
             '
           host: login.toolforge.org
           username: sd

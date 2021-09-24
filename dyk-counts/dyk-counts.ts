@@ -3,8 +3,8 @@ import { Route, streamWithRoutes } from "../eventstream-router/app";
 import { createLocalSSHTunnel } from "../utils";
 import { ENWIKI_DB_HOST, enwikidb } from "../db";
 
-class DykNomCountsTask extends Route {
-    name = 'dyk-counts';
+class DykCountsTask extends Route {
+    name = 'task';
 
 	counts: Record<string, number> = {};
 	unflushedChanges: Record<string, number> = {};
@@ -88,4 +88,4 @@ class DykNomCountsTask extends Route {
 }
 
 process.chdir(__dirname);
-streamWithRoutes([DykNomCountsTask]);
+streamWithRoutes([DykCountsTask]);
