@@ -7,7 +7,7 @@ class DykCountsTask extends Route {
     name = 'task';
 
 	counts: Record<string, number> = {};
-	unflushedChanges: Record<string, number> = {};
+	unflushedChanges: Record<string, string[]> = {};
 	readonly page = 'User:SDZeroBot/DYK_nomination_counts.json';
 	readonly minCountToSave = 5;
 	readonly flushInterval = 5000;
@@ -55,8 +55,11 @@ class DykCountsTask extends Route {
 
 	async flushCounts() {
 		let changesToFlush = Object.entries(this.unflushedChanges)
-			.filter(([user, count]) => this.counts[user] >= 5)
-			.map(([user, count]) => `${user} +${count}`);
+			.filter(([user, entries]) => this.counts[user] >= 5)
+			.map(([user, entries]) => {
+				let articles = entries.map(e => `[[${e}|${e.slice('Template:Did you know nominations/'.length)}]]`).join(', ');
+				return `${user} +${entries.length} (${articles})`;
+			});
 		if (changesToFlush.length) {
 			let editSummary = 'Updating: ' + changesToFlush.join(', ');
 			await this.saveCounts(editSummary);
@@ -80,9 +83,9 @@ class DykCountsTask extends Route {
 	}
 
 	async worker(data) {
-		let {user} = data;
-		this.counts[user] = this.counts[user] ? (this.counts[user] + 1) : 1;
-		this.unflushedChanges[user] = this.unflushedChanges[user] ? (this.unflushedChanges[user] + 1) : 1;
+		let {user, title} = data;
+		this.counts[user] = (this.counts[user] || 0) + 1;
+		this.unflushedChanges[user] = (this.unflushedChanges[user] || []).concat(title);
 		this.log(`[i] Crediting "${user}" for [[${data.title}]]`);
 	}
 }
