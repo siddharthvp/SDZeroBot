@@ -11,7 +11,7 @@ const testRgx = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[i\] Reconnected/g;
 
 const streamJobs = {
 	'stream': '~/SDZeroBot/eventstream-router',
-	'dyknoms': '~/SDZeroBot/dyk-noms'
+	'dyk-counts': '~/SDZeroBot/dyk-counts'
 }
 
 for (const [job, dir] of Object.entries(streamJobs)) {
