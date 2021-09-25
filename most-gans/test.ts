@@ -32,6 +32,9 @@ describe('most-gans', () => {
 		// old renames - legacy log formats
 		assert.strictEqual(await getCurrentUsername('Santros57Q', '2008-01-06'), 'Santos25Q');
 		assert.strictEqual(await getCurrentUsername('HInBC', '2006-01-01'), 'H');
+
+		// non-existing user
+		assert.strictEqual(await getCurrentUsername('Jh3rifesd9', '2018-01-01'), 'Jh3rifesd9');
 	});
 
 });

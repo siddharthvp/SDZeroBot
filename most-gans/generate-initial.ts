@@ -32,6 +32,7 @@ bot.setOptions({
 						  article   VARCHAR(255),
 						  nominator VARCHAR(255),
 						  date   DATE,
+						  username_updated DATE,
 						  PRIMARY KEY (article)
 					  ) COLLATE 'utf8_unicode_ci'`);
 
