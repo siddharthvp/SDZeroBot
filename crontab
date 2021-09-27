@@ -34,6 +34,10 @@
 0   10  *   *   *  jsub -quiet -N job-AFC       -mem 1g     ~/SDZeroBot/job reports/afc-sorting/afc-sorting.js
 0   18  *   *   *  jsub -quiet -N job-AFC       -mem 1g     ~/SDZeroBot/job reports/afc-sorting/afc-sorting.js
 
+15  2   *   *   *  jsub -quiet -N job-pafc       -mem 1g     ~/SDZeroBot/job reports/reports/pending-afc.js
+15  10  *   *   *  jsub -quiet -N job-pafc       -mem 1g     ~/SDZeroBot/job reports/reports/pending-afc.js
+15  18  *   *   *  jsub -quiet -N job-pafc       -mem 1g     ~/SDZeroBot/job reports/reports/pending-afc.js
+
 0   1   *   *   *  jsub -quiet -N job-NPP       -mem 4g     ~/SDZeroBot/job reports/npp-sorting/npp-sorting.js
 0   13  *   *   *  jsub -quiet -N job-NPP       -mem 4g     ~/SDZeroBot/job reports/npp-sorting/npp-sorting.js
 

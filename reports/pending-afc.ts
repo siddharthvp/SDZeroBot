@@ -19,14 +19,14 @@ import { ENWIKI_DB_HOST } from "../db";
 	await createLocalSSHTunnel(ENWIKI_DB_HOST);
 	const result = await db.query(`
         SELECT page_title, page_latest, cl_sortkey_prefix, actor_name, rev_timestamp, user_editcount,
-               (SELECT 1 from page afds
+               (SELECT afds.page_title from page afds
                 WHERE page_namespace = 4
                   AND afds.page_title = CONCAT('Articles_for_deletion/', p.page_title)
                   AND afds.page_id NOT IN  (
                     SELECT cl_from FROM categorylinks
                     WHERE cl_to = 'AfD_debates'
                 )
-               ) AS has_prior_afd
+               ) AS prior_afd
         FROM page p
 		JOIN categorylinks ON page_id = cl_from
 		JOIN revision ON page_id = rev_page AND rev_parent_id = 0
@@ -50,7 +50,7 @@ import { ENWIKI_DB_HOST } from "../db";
 			submissionDate: formatDateString(row.cl_sortkey_prefix.slice(1)),
 			creator: row.actor_name,
 			creatorEdits: row.user_editcount || '',
-			priorAfD: !!row.has_prior_afd
+			priorAfD: row.prior_afd
 		};
 	});
 
@@ -156,7 +156,7 @@ import { ENWIKI_DB_HOST } from "../db";
 		if (data.blank) notes.push('blank');
 		if (data.test) notes.push('test');
 		if (data.draftified) notes.push('draftified');
-		if (data.priorAfD) notes.push(`[[WP:Articles for deletion/${title}|Prior AfD]]`)
+		if (data.priorAfD) notes.push(`[[WP:${data.priorAfD}|Prior AfD]]`)
 
 		table.addRow([
 			data.submissionDate,
