@@ -38,6 +38,11 @@ export const log = mwn.log;
 /** Parsed console arguments */
 export const argv = require('minimist')(process.argv.slice(2));
 
+import {updateLoggingConfig} from "../mwn/build/log";
+updateLoggingConfig({
+    printVerbose: !!argv.verbose
+});
+
 /** bot account and database access credentials */
 const auth = require('./.auth');
 export class AuthManager {

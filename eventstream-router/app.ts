@@ -59,11 +59,11 @@ export class RouteValidator {
 		this.ready = new Promise((resolve, reject) => {
 			if (typeof this.init !== 'function') {
 				resolve();
-				debug(`[i] Initialized ${route.name} with no initializer`);
+				log(`[V] Initialized ${route.name} with no initializer`);
 			} else {
 				Promise.resolve(this.init()).then(() => {
 					resolve();
-					debug(`[S] Initialized ${route.name}`);
+					log(`[V] Initialized ${route.name}`);
 				}, (err) => {
 					reject();
 					logError(err, route.name);
@@ -233,11 +233,4 @@ export function pageFromCategoryEvent(data: RecentChangeStreamEvent) {
 		added: match[2] === 'added',
 		removed: match[2] === 'removed'
 	};
-}
-
-// XXX: remove
-export function debug(msg) {
-	if (argv.debug) {
-		log(msg);
-	}
 }
