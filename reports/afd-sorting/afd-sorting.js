@@ -1,6 +1,6 @@
 const {mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
-const {normaliseShortdesc, populateWikidataShortdescs} = require('../commons');
+const {normaliseShortdesc, populateWikidataShortdescs, escapeForTableCell} = require('../commons');
 
 process.chdir(__dirname);
 
@@ -193,7 +193,7 @@ process.chdir(__dirname);
 					if (relists) { // skip if no relists
 						afd_cell += ` (${relists} relist${relists > 1 ? 's' : ''})`;
 					}
-					afd_cell += ` (<small>${concern}</small>)`;
+					afd_cell += ` (<small>${escapeForTableCell(concern)}</small>)`;
 
 					// over-write date with date of last relist
 					if (relists && relist_date) {

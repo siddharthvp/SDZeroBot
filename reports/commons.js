@@ -193,6 +193,16 @@ function formatSummary(text) {
 		.replace(/\[\[((?:Category|File|Image):.*?)\]\]/gi, '[[:$1]]');
 }
 
+/**
+ * Format arbitrary text for inclusion in table cell.
+ * Escapes the double pipe sequence.
+ * @param {string} text
+ * @returns {string}
+ */
+function escapeForTableCell(text) {
+	return text.replace(/\|\|/g, '&#124;&#124;');
+}
+
 module.exports = {
 	populateWikidataShortdescs,
 	normaliseShortdesc,
@@ -201,6 +211,6 @@ module.exports = {
 	AfcDraftSize,
 	preprocessDraftForExtract,
 	saveWithBlacklistHandling,
-	formatSummary
+	formatSummary,
+	escapeForTableCell
 };
-
