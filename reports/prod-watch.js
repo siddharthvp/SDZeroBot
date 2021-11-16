@@ -1,5 +1,5 @@
 const {bot, log, mwn, emailOnError} = require('../botbase');
-const {formatSummary} = require('./commons');
+const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
 
@@ -305,7 +305,7 @@ const {formatSummary} = require('./commons');
 		${deletedtable}
 		`.replace(/^\t\t/mg, ''); // remove tabs because of the indentation in this file
 
-		await bot.save(`User:SDZeroBot/PROD Watch/${subpage}`, text, 'Updating report');
+		await saveWithBlacklistHandling(new bot.page(`User:SDZeroBot/PROD Watch/${subpage}`), text, 'Updating report');
 
 	}
 

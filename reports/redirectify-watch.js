@@ -1,5 +1,5 @@
 const {mwn, bot, log, emailOnError, TextExtractor} = require('../botbase');
-const {formatSummary} = require('./commons');
+const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
 
@@ -109,7 +109,7 @@ let wikitext =
 ${table.getText()}
 `;
 
-await report.save(TextExtractor.finalSanitise(wikitext), 'Updating report');
+await saveWithBlacklistHandling(report, TextExtractor.finalSanitise(wikitext), 'Updating report');
 
 log(`[i] Finished`);
 
