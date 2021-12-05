@@ -1,6 +1,6 @@
 const {bot, TextExtractor, mwn, log, argv, utils, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
-const {populateWikidataShortdescs, normaliseShortdesc} = require('../commons');
+const {populateWikidataShortdescs, normaliseShortdesc, saveWithBlacklistHandling} = require('../commons');
 
 process.chdir(__dirname);
 
@@ -165,7 +165,7 @@ process.chdir(__dirname);
 		});
 		content = TextExtractor.finalSanitise(content);
 
-		return bot.save('User:SDZeroBot/PROD sorting' + (lite ? '/lite' : ''), content, 'Updating report');
+		return saveWithBlacklistHandling(new bot.page('User:SDZeroBot/PROD sorting' + (lite ? '/lite' : '')), content, 'Updating report');
 
 	}
 	await makeMainPage(); // User:SDZeroBot/PROD sorting

@@ -1,6 +1,6 @@
 const {mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
-const {normaliseShortdesc, populateWikidataShortdescs, escapeForTableCell} = require('../commons');
+const {normaliseShortdesc, populateWikidataShortdescs, escapeForTableCell, saveWithBlacklistHandling } = require('../commons');
 
 process.chdir(__dirname);
 
@@ -236,7 +236,7 @@ process.chdir(__dirname);
 		content += '\n{{reflist-talk}}';
 
 		if (!argv.dry) {
-			return bot.save('User:SDZeroBot/AfD sorting', content, 'Updating report');
+			return saveWithBlacklistHandling(new bot.page('User:SDZeroBot/AfD sorting'), content, 'Updating report');
 		}
 
 	}
