@@ -6,16 +6,22 @@ import * as child_process from 'child_process';
 export {fs, path, child_process};
 
 /** Notify by email on facing unexpected errors, see wikitech.wikimedia.org/wiki/Help:Toolforge/Email */
-export function emailOnError(err: Error, taskname: string) {
-    // datetime similar to what mwn log produces, but can't use that directly as mwn may not have loaded
-    const dateTimeString = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    console.log(`\x1b[31m%s\x1b[0m`, `[${dateTimeString}] [E] Fatal error`);
-    console.log(err);
+export function emailOnError(err: Error, taskname: string, isFatal = true) {
+    logFullError(err, isFatal);
     child_process.exec(
         `echo "Subject: ${taskname} error\n\n${taskname} task resulted in the error:\n\n${err.stack}\n" | /usr/sbin/exim -odf -i tools.sdzerobot@tools.wmflabs.org`,
         () => {} // Emailing failed, must be a non-toolforge environ
     );
     // exit normally
+}
+export function logFullError(err: Error, isFatal = true) {
+    // datetime similar to what mwn log produces, but can't use that directly as mwn may not have loaded
+    const dateTimeString = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    console.log(`[${dateTimeString}] ${isFatal ? '[E] Fatal error' : '[E] Error'}`);
+    console.log(err);
+    if (err?.response?.data?.error) { // this isn't visible otherwise (deeply nested object)
+        console.log('err.response.data.error: ', err.response.data.error);
+    }
 }
 
 // Errors occurring inside async functions are caught by emailOnError(),

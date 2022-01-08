@@ -71,7 +71,7 @@ async function populateOresQualityRatings(tableInfo) {
 			log(`[S] Got ORES result`);
 		}).catch(err => {
 			log(`[E] ORES query failed: ${err}`);
-			emailOnError(err, 'g13-* ores (non-fatal)');
+			emailOnError(err, 'g13-* ores (non-fatal)', false);
 		});
 }
 

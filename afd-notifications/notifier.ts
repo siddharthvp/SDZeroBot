@@ -40,7 +40,7 @@ class Notifier {
 			}
 			log(`[i] Finished`);
 		} catch(e) {
-			emailOnError(e, 'afd-notifier (non-fatal)');
+			emailOnError(e, 'afd-notifier (non-fatal)', false);
 		} finally {
 			await notifier.notifyUsers();
 			let wikitext = `~~~~~\n\n${notifier.table.getText()}`;
@@ -195,7 +195,7 @@ class Notifier {
 			if (/does not exist/.test(err.message)) {
 				log(`[W] ${article} does not exist`);
 			} else {
-				emailOnError(err, 'afd-notifier (non-fatal)');
+				emailOnError(err, 'afd-notifier (non-fatal)', false);
 			}
 			return [];
 		}

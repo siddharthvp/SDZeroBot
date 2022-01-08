@@ -1,4 +1,4 @@
-import {bot, emailOnError, log} from '../botbase';
+import {bot, emailOnError, log, logFullError} from '../botbase';
 import {MwnDate} from "../../mwn";
 import type {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
 import type {LogEvent, UserContribution} from "../../mwn/src/api_response_types";
@@ -199,8 +199,11 @@ export class Monitor {
 			// It's the user's fault
 			log(`[W] Invalid rule for ${this.name}: ${err.message}`);
 			Tabulator.invalidRules.push({task: this.name, reason: err.message})
+		} else if (err.code === 'internal_api_error_DBQueryError') {
+			// Occurring due to https://phabricator.wikimedia.org/T297708
+			logFullError(err, false);
 		} else {
-			emailOnError(err, 'bot-monitor (non-fatal)');
+			emailOnError(err, 'bot-monitor (non-fatal)', false);
 		}
 	}
 

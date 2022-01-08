@@ -18,7 +18,7 @@ class SqliteDb {
 		return this.db.run(sql, ...params).catch(this.handleError);
 	}
 	handleError(err: Error) {
-		emailOnError(err, 'bot-monitor checksDb (non-fatal)');
+		emailOnError(err, 'bot-monitor checksDb (non-fatal)', false);
 	}
 }
 
