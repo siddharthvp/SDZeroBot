@@ -19,9 +19,6 @@ export function logFullError(err: Error, isFatal = true) {
     const dateTimeString = new Date().toISOString().slice(0, 19).replace('T', ' ');
     console.log(`[${dateTimeString}] ${isFatal ? '[E] Fatal error' : '[E] Error'}`);
     console.log(err);
-    if (err?.response?.data?.error) { // this isn't visible otherwise (deeply nested object)
-        console.log('err.response.data.error: ', err.response.data.error);
-    }
 }
 
 // Errors occurring inside async functions are caught by emailOnError(),
