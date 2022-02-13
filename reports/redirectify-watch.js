@@ -13,8 +13,16 @@ log(`[i] Started`);
 let json = await bot.request({
 	"action": "query",
 	"list": "recentchanges",
-	"rcstart": new bot.date().setHours(0,0,0,0).toISOString(),
-	"rcend": new bot.date().subtract(1, 'day').setHours(0,0,0,0).toISOString(),
+	"rcstart": (function () {
+		let d = new bot.date();
+		d.setHours(0,0,0,0);
+		return d.toISOString();
+	})(),
+	"rcend": (function () {
+		let d = new bot.date().subtract(1, 'day');
+		d.setHours(0,0,0,0);
+		return d.toISOString();
+	})(),
 	"rcnamespace": "0",
 	"rctag": "mw-new-redirect",
 	"rcprop": "title|timestamp|user|comment",

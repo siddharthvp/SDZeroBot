@@ -24,8 +24,16 @@ const { saveWithBlacklistHandling } = require('../commons');
 		{label: 'Size', style: 'width: 4em'}
 	]);
 
-	let end = new bot.date().setUTCHours(0,0,0,0);
-	let start = new bot.date().subtract(24, 'hours').setUTCHours(0,0,0,0);
+	let end = (function () {
+		let d = new bot.date();
+		d.setUTCHours(0,0,0,0);
+		return d;
+	})();
+	let start = (function () {
+		let d = new bot.date().subtract(24, 'hours');
+		d.setUTCHours(0,0,0,0);
+		return d;
+	})();
 
 	const result = await db.query(`
 		SELECT * FROM g13
