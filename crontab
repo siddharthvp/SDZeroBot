@@ -81,7 +81,7 @@
 
 0   0   *   *   *  jsub -quiet -N job-g13-save  -mem 1g     ~/SDZeroBot/job reports/g13-watch/save-report.js
 
-15  *   *   *   *  jsub -quiet -N stream-check  -mem 400m   ~/SDZeroBot/job eventstream-router/check.js
+15,45  *   *   *   *  jsub -quiet -N stream-check  -mem 2g   ~/SDZeroBot/job eventstream-router/check.js
 
 20  *   *   *   *  jsub -quiet -N bot-monitor   -mem 2g     ~/SDZeroBot/job bot-monitor/main.js
 

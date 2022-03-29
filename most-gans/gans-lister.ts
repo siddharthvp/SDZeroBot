@@ -1,17 +1,18 @@
 import { argv, bot, log, mwn } from '../botbase';
 import { TOOLS_DB_HOST, toolsdb } from '../db';
 import { createLocalSSHTunnel, withIndices } from "../utils";
+import { TABLE } from "./model";
 
 (async function () {
 
 	await createLocalSSHTunnel(TOOLS_DB_HOST);
 	let db = new toolsdb('goodarticles_p');
 	let result = await db.query(`
-        SELECT nominator, COUNT(*) AS count
-        FROM nominators2
-        GROUP BY nominator
-        ORDER BY count DESC, nominator ASC
-        LIMIT 600
+		SELECT nominator, COUNT(*) AS count
+		FROM ${TABLE}
+		GROUP BY nominator
+		ORDER BY count DESC, nominator ASC
+		LIMIT 600
 	`);
 	db.end();
 	log(`[S] Got query result`);
