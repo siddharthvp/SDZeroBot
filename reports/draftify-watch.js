@@ -1,5 +1,5 @@
 const {bot, mwn, log, utils, emailOnError, TextExtractor} = require('../botbase');
-const {formatSummary} = require('./commons');
+const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 (async () => {
 
@@ -151,7 +151,7 @@ const {formatSummary} = require('./commons');
 	`\n\n==Moved back or deleted==` +
 	`\n` + TextExtractor.finalSanitise(footertable.getText());
 
-	await bot.save('User:SDZeroBot/Draftify Watch', text, 'Updating report');
+	await saveWithBlacklistHandling(new bot.page('User:SDZeroBot/Draftify Watch'), text, 'Updating report');
 
 	log('[i] Finished');
 
