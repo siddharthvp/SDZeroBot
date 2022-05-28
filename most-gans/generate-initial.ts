@@ -1,5 +1,5 @@
 import { bot, log } from '../botbase';
-import { createLocalSSHTunnel } from "../utils";
+import { closeTunnels, createLocalSSHTunnel } from "../utils";
 import { TOOLS_DB_HOST } from "../db";
 import { processArticle, TABLE, db } from "./model";
 
@@ -62,6 +62,6 @@ ${authorNotFound.map(p => `*[[${p}]]`).join('\n')}
 `);
 	log(`[S] Saved error list on-wiki`);
 
-	process.exit();
+	closeTunnels();
 
 })();

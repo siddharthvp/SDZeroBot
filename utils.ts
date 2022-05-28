@@ -61,6 +61,8 @@ export function mapPath(path: string): string {
 	}
 }
 
+const runningTunnels = [];
+
 export async function createLocalSSHTunnel(host: string, localPort?: number, remotePort?: number) {
 	if (!onToolforge()) {
 		log(`[i] Spawning local SSH tunnel for ${host} ...`);
@@ -77,11 +79,17 @@ export async function createLocalSSHTunnel(host: string, localPort?: number, rem
 			null
 		);
 		// relies on "ssh toolforge" command connecting successfully
-		spawn('ssh', ['-L', `${localPort}:${host}:${remotePort}`, 'toolforge'], {
-			detached: true
-		});
-		await bot.sleep(4000);
+		runningTunnels.push(
+			spawn('ssh', ['-L', `${localPort}:${host}:${remotePort}`, 'toolforge'], {
+				detached: true
+			})
+		);
+		await bot.sleep(5000);
 	}
+}
+
+export function closeTunnels() {
+	runningTunnels.forEach(tunnel => tunnel.kill());
 }
 
 export function saveObject(filename, obj) {

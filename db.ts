@@ -89,7 +89,8 @@ export abstract class db {
 	}
 
 	/**
-	 * To be called when use of db is over
+	 * To be called when use of db is over.
+	 * All in-progress queries are executed before a quit packet is sent to mysql server.
  	 */
 	async end() {
 		await this.pool.end();

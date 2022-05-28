@@ -1,6 +1,6 @@
 import { argv, bot, log, mwn } from '../botbase';
 import { TOOLS_DB_HOST, toolsdb } from '../db';
-import { createLocalSSHTunnel, withIndices } from "../utils";
+import { closeTunnels, createLocalSSHTunnel, withIndices } from "../utils";
 import { TABLE } from "./model";
 
 (async function () {
@@ -42,6 +42,6 @@ import { TABLE } from "./model";
 	);
 	log(`[S] Saved`);
 
-	process.exit();
+	closeTunnels();
 
 })();

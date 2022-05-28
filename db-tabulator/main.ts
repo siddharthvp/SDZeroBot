@@ -1,5 +1,5 @@
 import { argv, bot, emailOnError, log } from "../botbase";
-import { createLocalSSHTunnel, writeFile } from "../utils";
+import { closeTunnels, createLocalSSHTunnel, writeFile } from "../utils";
 import { FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
 import { ENWIKI_DB_HOST } from "../db";
 
@@ -45,6 +45,5 @@ import { ENWIKI_DB_HOST } from "../db";
 
 	await processQueries(queries);
 
-	// createSSHTunnel creates a detached process that prevents natural exit
-	process.exit();
+	closeTunnels();
 })().catch(e => emailOnError(e, 'db-tabulator'));
