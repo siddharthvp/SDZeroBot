@@ -9,7 +9,7 @@ import gans from "../most-gans/eventstream-updater";
 import botActivityMonitor from "../bot-monitor/eventstream-trigger";
 import dbTabulator from "../db-tabulator/eventstream-trigger";
 
-const routeClasses = [g13Watch, gans, botActivityMonitor, /*dbTabulator*/];
+const routeClasses = [gans, botActivityMonitor];
 
 // debugging a single route example: -r "./test"
 streamWithRoutes(argv.r ? [require(argv.r).default] : routeClasses);

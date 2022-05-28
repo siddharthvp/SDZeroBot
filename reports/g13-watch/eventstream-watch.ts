@@ -1,3 +1,6 @@
+// DEPRECATED: replaced by g13-watch.ts which doesn't require
+// eventstream watching component
+
 import { bot, TextExtractor } from '../../botbase';
 import { toolsdb, TOOLS_DB_HOST } from "../../db";
 import { createLocalSSHTunnel } from "../../utils";

@@ -1,3 +1,5 @@
+// DEPRECATED: replaced by g13-watch.ts
+
 // This report relies on ToolsDB g13watch_p database maintained using
 // eventstream-watch.ts
 

@@ -79,7 +79,7 @@
 
 0   6   *   *   *  jsub -quiet -N job-unref     -mem 2g     ~/SDZeroBot/job reports/unreferenced-blps.js
 
-0   0   *   *   *  jsub -quiet -N job-g13-save  -mem 1g     ~/SDZeroBot/job reports/g13-watch/save-report.js
+0   0   *   *   *  jsub -quiet -N job-g13watch  -mem 2g     ~/SDZeroBot/job reports/g13-watch/g13-watch.js
 
 15,45  *   *   *   *  jsub -quiet -N stream-check  -mem 2g   ~/SDZeroBot/job eventstream-router/check.js
 
