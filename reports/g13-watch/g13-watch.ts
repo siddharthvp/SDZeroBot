@@ -187,7 +187,7 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
             String(details.size || '')
         ]);
     }
-    const wikitable = table.getText();
+    const wikitable = TextExtractor.finalSanitise(table.getText());
 
     let yesterday = new bot.date().subtract(1, 'day').format('D MMMM YYYY');
 
