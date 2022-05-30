@@ -121,6 +121,7 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
 
     let data = {} as Map<string, {excerpt?: string, description: string, ts: string, size: number, error?: string}>;
 
+    let numDeletions = 0;
     for await (const json of bot.continuedQueryGen({
         "action": "query",
         "list": "logevents",
@@ -134,6 +135,7 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
     })) {
         const g13Deletions = json.query.logevents
             .filter(log => g13Regex.test(log.comment));
+        numDeletions += g13Deletions.length;
         log(`[+] Got a page of the deletion log entries, with ${g13Deletions.length} G13 deletions (out of ${json.query.logevents.length})`);
 
         await Promise.all(g13Deletions.map(entry => {
@@ -163,6 +165,7 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
         }));
     }
     g13db.end();
+    log(`[i] ${numDeletions} G13 deletions overall`);
 
     let table = new mwn.table();
     table.addHeaders([
@@ -186,7 +189,7 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
     }
     const wikitable = table.getText();
 
-    let yesterday = new bot.date().subtract(1, 'day');
+    let yesterday = new bot.date().subtract(1, 'day').format('D MMMM YYYY');
 
     let page = new bot.page('User:SDZeroBot/G13 Watch' + (argv.sandbox ? '/sandbox' : ''));
 
@@ -198,10 +201,10 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
         }).join(' - ') + ' - {{history|2=older}}';
     } catch (e) {}
 
-    let text = `{{/header/v4|count=${result.length}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>`
+    let text = `{{/header/v4|count=${numDeletions}|date=${yesterday}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>`
         + `\n\n${wikitable}`;
 
-    await saveWithBlacklistHandling(page, text, 'Updating G13 report');
+    await saveWithBlacklistHandling(page, text, `Updating report: ${numDeletions} G13 deletions on ${yesterday}`);
 
     log(`[i] Finished`);
     closeTunnels();
