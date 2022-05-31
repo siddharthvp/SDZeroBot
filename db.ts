@@ -22,6 +22,13 @@ export abstract class db {
 			waitForConnections: true,
 			connectionLimit: 5,
 			//timezone: 'Z',
+			typeCast: function (field, next) {
+				if (field.type === 'BIT' && field.length === 1) {
+					return field.buffer()[0] === 1;
+				} else {
+					return next();
+				}
+			},
 			...customOptions
 		});
 
