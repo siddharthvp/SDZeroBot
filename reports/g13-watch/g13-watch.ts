@@ -75,11 +75,29 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
     // for each page, fetch text, generate excerpt, save to g13db
     for (const pages of arrayChunk(result, 100)) {
        let pagedata = await bot.read(pages.map(pg => new bot.title(pg.page_title, pg.page_namespace)), {
-           prop: 'revisions|description',
-           rvprop: 'content|size|timestamp'
+           "prop": "revisions|info|description|templates|categories",
+           "rvprop": "content|timestamp",
+           "tltemplates": [
+               "Template:COI",
+               "Template:Undisclosed paid",
+               "Template:Connected contributor",
+               "Template:Drafts moved from mainspace"
+           ],
+           "clcategories": [
+               "Category:Rejected AfC submissions",
+               "Category:Promising draft articles"
+           ],
+           "tllimit": "max",
+           "cllimit": "max"
        });
+       pagedata = Array.isArray(pagedata) ? pagedata : [ pagedata ]; // in case this chunk has a single page
        await Promise.all(pagedata.map(pg => {
-           let excerpt = TextExtractor.getExtract(pg.revisions[0].content, 300, 500, preprocessDraftForExtract);
+           let rev = pg.revisions?.[0];
+           let text = rev.content;
+           let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
+           let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
+
+           let excerpt = TextExtractor.getExtract(text, 300, 500, preprocessDraftForExtract);
            let lastEdited = new bot.date(pg.revisions[0].timestamp);
            let size = pg.revisions[0].size;
            let title = pg.title;
@@ -87,10 +105,23 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
            if (desc && desc.size > 255) {
                desc = desc.slice(0, 250) + ' ...';
            }
+           let declines = text.match(/\{\{A[fF]C submission\|d/g)?.length || 0;
+           let upe = templates.includes('Undisclosed paid');
+           let coi = templates.includes('COI') || templates.includes('Connected contributor');
+           let unsourced = !/<ref/i.test(text) && !/\{\{([Ss]fn|[Hh]arv)/.test(text);
+           let promising = categories.includes('Promising draft articles');
+           let blank = /\{\{A[fF]C submission\|d\|blank/.test(text);
+           let test = /\{\{A[fF]C submission\|d\|test/.test(text);
+           let draftified = templates.includes('Drafts moved from mainspace');
+           let rejected = categories.includes('Rejected AfC submissions');
            return g13db.run(`
-               INSERT INTO g13 VALUES(?, ?, ?, ?, ?)
-               ON DUPLICATE KEY UPDATE excerpt=VALUES(excerpt), description=VALUES(description), ts=VALUES(ts), size=VALUES(size)
-           `, [title, desc, excerpt, size, lastEdited]).catch(e => {
+               REPLACE INTO g13(name, description, excerpt, size, ts, declines, upe, coi, 
+                                unsourced, promising, blank, test, draftified, rejected)
+               VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+           `, [
+               title, desc, excerpt, size, lastEdited, declines, upe, coi,
+               unsourced, promising, blank, test, draftified, rejected
+           ]).catch(e => {
                log(`[E] Error inserting ${pg} into g13 db`);
                log(e);
            });
@@ -145,14 +176,21 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
                 };
                 return;
             }
-            return g13db.query(`SELECT * FROM g13 WHERE name = ?`, [entry.title]).then(result => {
+            return g13db.query(`SELECT * FROM g13 WHERE name = ?`, [entry.title]).then(async result => {
                 if (result.length) {
                     data[entry.title] = result[0];
                 } else {
                     log(`[E] Invalid G13 (not found in g13 db): ${entry.title}`);
+                    const lastEditTime = (await bot.query({
+                        "prop": "deletedrevisions",
+                        "titles": entry.title,
+                        "drvprop": "timestamp",
+                        "drvlimit": "1"
+                    }))?.query?.pages?.[0]?.deletedrevisions?.[0]?.timestamp;
+
                     data[entry.title] = {
-                        // TODO: fetch last edit time
-                        error: 'Possibly invalid G13: could not find excerpt'
+                        error: 'Possibly invalid G13: could not find excerpt. ' +
+                            (lastEditTime ? `Last deleted edit was at ${lastEditTime}`: '')
                     };
                 }
             }, e => {
@@ -169,22 +207,36 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
 
     let table = new mwn.table();
     table.addHeaders([
-        {label: 'Date', style: 'width: 5em'},
-        {label: 'Draft', style: 'width: 18em'},
-        {label: 'Excerpt'},
-        {label: 'Size', style: 'width: 4em'}
+        {label: 'Draft', style: 'width: 15em'},
+        {label: 'Excerpt' },
+        {label: '# declines', style: 'width: 5em'},
+        {label: 'Size', style: 'width: 3em'},
+        {label: 'Notes', style: 'width: 5em'}
     ]);
+
     for (const [title, details] of Object.entries(data)) {
         let page = `[[${title}]]`;
         if (details.description) {
             page += ` (<small>${details.description}</small>)`
         }
+        let notes = [];
+        if (details.promising) notes.push('promising');
+        if (details.coi) notes.push('COI');
+        if (details.upe) notes.push('undisclosed-paid');
+        if (details.unsourced) notes.push('unsourced');
+        if (details.rejected) notes.push('rejected');
+        if (details.blank) notes.push('blank');
+        if (details.test) notes.push('test');
+        if (details.draftified) notes.push('draftified');
+
         table.addRow([
-            details.ts ? new bot.date(details.ts).format('YYYY-MM-DD HH:mm') : '',
+            // details.ts ? new bot.date(details.ts).format('YYYY-MM-DD HH:mm') : '',
             page,
             details.excerpt ? details.excerpt :
                 (details.error ? `<span class="error">[${details.error}]</span>` : ''),
-            String(details.size || '')
+            String(details.declines ?? ''),
+            String(details.size || ''),
+            notes.join('<br>')
         ]);
     }
     const wikitable = TextExtractor.finalSanitise(table.getText());
