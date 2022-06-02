@@ -2,7 +2,8 @@ import {argv, bot, emailOnError, enwikidb, log, mwn} from "../../botbase";
 import {toolsdb, TOOLS_DB_HOST, ENWIKI_DB_HOST} from "../../db";
 import {arrayChunk, createLocalSSHTunnel, closeTunnels} from "../../utils";
 import TextExtractor from "../../TextExtractor";
-import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
+import {preprocessDraftForExtract, saveWithBlacklistHandling, comparators, AfcDraftSize} from '../commons';
+import * as OresUtils from '../OresUtils';
 
 /**
  * Query pages becoming eligible for G13 within the next 24 hours, along with currently eligible pages if any.
@@ -91,6 +92,24 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
            "cllimit": "max"
        });
        pagedata = Array.isArray(pagedata) ? pagedata : [ pagedata ]; // in case this chunk has a single page
+
+       // fetch ORES ratings as well
+       let revIdTitleMap = Object.fromEntries(pagedata.map(pg => [pg.lastrevid, pg.title]));
+       let rawOresData = await OresUtils.queryRevisions(
+           ['articlequality', 'draftquality'],
+           Object.keys(revIdTitleMap),
+           []
+       );
+       let oresData = {};
+       for (let [revid, {articlequality, draftquality}] of Object.entries(rawOresData)) {
+           oresData[revIdTitleMap[revid]] = {
+               oresRating: {
+                   'Stub': 1, 'Start': 2, 'C': 3, 'B': 4, 'GA': 5, 'FA': 6 // sort-friendly format
+               }[articlequality],
+               oresBad: draftquality !== 'OK' // Vandalism/spam/attack, many false positives
+           };
+       }
+
        await Promise.all(pagedata.map(pg => {
            let rev = pg.revisions?.[0];
            let text = rev.content;
@@ -99,7 +118,7 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
 
            let excerpt = TextExtractor.getExtract(text, 300, 500, preprocessDraftForExtract);
            let lastEdited = new bot.date(pg.revisions[0].timestamp);
-           let size = pg.revisions[0].size;
+           let size = AfcDraftSize(text);
            let title = pg.title;
            let desc = pg.description;
            if (desc && desc.size > 255) {
@@ -114,13 +133,14 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
            let test = /\{\{A[fF]C submission\|d\|test/.test(text);
            let draftified = templates.includes('Drafts moved from mainspace');
            let rejected = categories.includes('Rejected AfC submissions');
+           let {oresBad, oresRating} = oresData[pg.title];
            return g13db.run(`
-               REPLACE INTO g13(name, description, excerpt, size, ts, declines, upe, coi, 
-                                unsourced, promising, blank, test, draftified, rejected)
-               VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               REPLACE INTO g13(name, description, excerpt, size, ts, declines, upe, coi, unsourced, 
+                                promising, blank, test, draftified, rejected, oresBad, oresRating)
+               VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            `, [
-               title, desc, excerpt, size, lastEdited, declines, upe, coi,
-               unsourced, promising, blank, test, draftified, rejected
+               title, desc, excerpt, size, lastEdited, declines, upe, coi, unsourced,
+               promising, blank, test, draftified, rejected, oresBad, oresRating
            ]).catch(e => {
                log(`[E] Error inserting ${pg} into g13 db`);
                log(e);
@@ -214,7 +234,25 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
         {label: 'Notes', style: 'width: 5em'}
     ]);
 
-    for (const [title, details] of Object.entries(data)) {
+    const {sortDesc, promote, demote} = comparators;
+    Object.entries(data).map(([title, details]) => {
+        // Synthesise any new parameters from the details here
+        details.short = details.size < 500; // thankfully undefined < 500 is false
+        return [title, details];
+
+    }).sort(([_title1, data1], [_title2, data2]) => {
+        return (
+            promote('promising', data1, data2) ||
+            demote('blank', data1, data2) ||
+            demote('test', data1, data2) ||
+            demote('short', data1, data2) ||
+            demote('rejected', data1, data2) ||
+            demote('unsourced', data1, data2) ||
+            demote('oresBad', data1, data2) || // many false positives
+            sortDesc('oresRating', data1, data2) ||
+            sortDesc('size', data1, data2)
+        );
+    }).forEach(([title, details]) => {
         let page = `[[${title}]]`;
         if (details.description) {
             page += ` (<small>${details.description}</small>)`
@@ -238,7 +276,7 @@ import {preprocessDraftForExtract, saveWithBlacklistHandling} from '../commons';
             String(details.size || ''),
             notes.join('<br>')
         ]);
-    }
+    });
     const wikitable = TextExtractor.finalSanitise(table.getText());
 
     let yesterday = new bot.date().subtract(1, 'day').format('D MMMM YYYY');
