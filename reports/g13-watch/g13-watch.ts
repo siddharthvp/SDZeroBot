@@ -273,7 +273,7 @@ import * as OresUtils from '../OresUtils';
             details.excerpt ? details.excerpt :
                 (details.error ? `<span class="error">[${details.error}]</span>` : ''),
             String(details.declines ?? ''),
-            String(details.size || ''),
+            details.short ? `<span class=short>${details.size || ''}</span>` : (details.size || ''),
             notes.join('<br>')
         ]);
     });
@@ -292,7 +292,8 @@ import * as OresUtils from '../OresUtils';
     } catch (e) {}
 
     let text = `{{/header/v4|count=${numDeletions}|date=${yesterday}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>`
-        + `\n\n${wikitable}`;
+        + `\n\n${wikitable}`
+        + `\n''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''`;
 
     await saveWithBlacklistHandling(page, text, `Updating report: ${numDeletions} G13 deletions on ${yesterday}`);
 
