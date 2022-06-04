@@ -95,11 +95,17 @@ import * as OresUtils from '../OresUtils';
 
        // fetch ORES ratings as well
        let revIdTitleMap = Object.fromEntries(pagedata.map(pg => [pg.lastrevid, pg.title]));
-       let rawOresData = await OresUtils.queryRevisions(
-           ['articlequality', 'draftquality'],
-           Object.keys(revIdTitleMap),
-           []
-       );
+       let rawOresData = {};
+       try {
+           rawOresData = await OresUtils.queryRevisions(
+               ['articlequality', 'draftquality'],
+               Object.keys(revIdTitleMap),
+               []
+           );
+       } catch (e) {
+           log(`[E] Failed to fetch ORES data`);
+           log(e);
+       }
        let oresData = {};
        for (let [revid, {articlequality, draftquality}] of Object.entries(rawOresData)) {
            oresData[revIdTitleMap[revid]] = {
@@ -133,7 +139,8 @@ import * as OresUtils from '../OresUtils';
            let test = /\{\{A[fF]C submission\|d\|test/.test(text);
            let draftified = templates.includes('Drafts moved from mainspace');
            let rejected = categories.includes('Rejected AfC submissions');
-           let {oresBad, oresRating} = oresData[pg.title];
+           let oresBad = oresData?.[pg.title]?.oresBad ?? false;
+           let oresRating = oresData?.[pg.title]?.oresRating ?? 2;
            return g13db.run(`
                REPLACE INTO g13(name, description, excerpt, size, ts, declines, upe, coi, unsourced, 
                                 promising, blank, test, draftified, rejected, oresBad, oresRating)

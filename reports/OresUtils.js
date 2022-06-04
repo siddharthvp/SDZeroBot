@@ -45,6 +45,7 @@ module.exports = {
 					oresdata[revid] = {};
 					models.forEach(model => {
 						if (data[model].error) { // is this needed?
+							log(`[E] ORES response-level error (revid=${revid}): ${data[model].error}`)
 							errors.push(revid);
 							return;
 						}
@@ -52,7 +53,7 @@ module.exports = {
 					});
 				});
 			});
-		}, 0, 2).then(({failures}) => {
+		}, 2000, 2).then(({failures}) => {
 			// fail if all ORES calls didn't succeed eventually
 			if (Object.keys(failures).length) {
 				return rejectWithError({
