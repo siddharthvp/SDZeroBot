@@ -44,12 +44,12 @@ module.exports = {
 				Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
 					oresdata[revid] = {};
 					models.forEach(model => {
-						if (data[model].error) { // is this needed?
-							log(`[E] ORES response-level error (revid=${revid}): ${data[model].error}`)
-							errors.push(revid);
-							return;
+						if (data[model].error) {
+							log(`[E] ORES response-level error (revid=${revid}, model=${model}): ${JSON.stringify(data[model].error)}`);
+							if (errors) errors.push(revid);
+						} else {
+							oresdata[revid][model] = data[model].score.prediction;
 						}
-						oresdata[revid][model] = data[model].score.prediction;
 					});
 				});
 			});
