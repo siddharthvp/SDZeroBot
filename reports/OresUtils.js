@@ -52,6 +52,9 @@ module.exports = {
 						}
 					});
 				});
+			}).catch(function (err) {
+				console.log(err);
+				return Promise.reject(err);
 			});
 		}, 2000, 2).then(({failures}) => {
 			// fail if all ORES calls didn't succeed eventually

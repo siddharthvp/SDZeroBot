@@ -104,7 +104,6 @@ import * as OresUtils from '../OresUtils';
            );
        } catch (e) {
            log(`[E] Failed to fetch ORES data`);
-           log(e);
        }
        let oresData = {};
        for (let [revid, {articlequality, draftquality}] of Object.entries(rawOresData)) {
@@ -118,6 +117,10 @@ import * as OresUtils from '../OresUtils';
 
        await Promise.all(pagedata.map(pg => {
            let rev = pg.revisions?.[0];
+           if (!rev) {
+               log(`[E] ${pg.title} no longer exists`);
+               return;
+           }
            let text = rev.content;
            let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
            let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];

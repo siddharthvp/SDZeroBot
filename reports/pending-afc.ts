@@ -8,6 +8,7 @@ import {
 } from "./commons";
 import { createLocalSSHTunnel, arrayChunk, len } from "../utils";
 import { ENWIKI_DB_HOST } from "../db";
+import { NS_DRAFT } from "../namespaces";
 
 (async function() {
 
@@ -34,7 +35,8 @@ import { ENWIKI_DB_HOST } from "../db";
 		LEFT JOIN user ON user_id = actor_user
         WHERE cl_to = 'Pending_AfC_submissions'
         AND page_namespace = 118;
-	`);
+	`) as Array<{page_title: string, page_latest: number, cl_sortkey_prefix: string,
+		actor_name: string, rev_timestamp: string, user_editcount: number, prior_afd: string}>;
 
 	db.end();
 	process.chdir(__dirname);
@@ -43,7 +45,7 @@ import { ENWIKI_DB_HOST } from "../db";
 	await bot.getTokensAndSiteInfo();
 
 	result.forEach(row => {
-		let pagename = 'Draft:' + row.page_title.replace(/_/g, ' ');
+		let pagename = bot.title.makeTitle(NS_DRAFT, row.page_title).toText();
 		tableInfo[pagename] = {
 			revid: row.page_latest,
 			creationDate: formatDateString(row.rev_timestamp),
@@ -85,6 +87,10 @@ import { ENWIKI_DB_HOST } from "../db";
 			let text = rev.content;
 			let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
 			let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
+			if (!tableInfo[pg.title]) {
+				log(`[E] Page [[${pg.title}]] from API response was not there in db result (not in tableInfo)`);
+				continue;
+			}
 			Object.assign(tableInfo[pg.title], {
 				extract: TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract),
 				desc: pg.description,
