@@ -170,9 +170,8 @@ let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
 	return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 }).join(' - ') + ' - {{history|2=older}}';
 
-let count = Object.values(tableInfo).map(e => !e.skip).length;
 let wikitext =
-`{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}${replagNote}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+`{{/header|count=${table.getNumRows()}|date=${yesterday.format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}${replagNote}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;

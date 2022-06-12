@@ -180,9 +180,8 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 
 let page = new bot.page('User:SDZeroBot/G13 eligible' + (argv.sandbox ? '/sandbox' : ''));
 
-let count = Object.values(tableInfo).map(e => !e.skip).length;
 let wikitext =
-	`{{/header|count=${count}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+	`{{/header|count=${table.getNumRows()}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 

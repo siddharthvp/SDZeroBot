@@ -187,9 +187,8 @@ import { NS_DRAFT } from "../namespaces";
 
 	let page = new bot.page('User:SDZeroBot/Pending AfC submissions' + (argv.sandbox ? '/sandbox' : ''));
 
-	let count = Object.values(tableInfo).filter(e => !e.skip).length;
 	let wikitext =
-		`{{/header|count=${count}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+		`{{/header|count=${table.getNumRows()}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 

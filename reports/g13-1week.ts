@@ -187,9 +187,8 @@ async function runForDate(date: MwnDate) {
 	let page = new bot.page(REPORT_PAGE);
 	let oldlinks = await makeOldLinks();
 
-	let count = Object.values(tableInfo).map(e => !e.skip).length;
 	let wikitext =
-		`{{/header|count=${count}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+		`{{/header|count=${table.getNumRows()}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;
