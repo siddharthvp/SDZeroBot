@@ -16,7 +16,7 @@ async function populateWikidataShortdescs(tableInfo) {
 	for await (let json of wdbot.massQueryGen({
 		"action": "wbgetentities",
 		"sites": "enwiki",
-		"titles": Object.keys(tableInfo).filter(title => !tableInfo[title].shortdesc),
+		"titles": Object.keys(tableInfo).filter(title => !tableInfo[title].skip && !tableInfo[title].shortdesc),
 		"props": "descriptions|sitelinks",
 		"languages": "en",
 		"sitefilter": "enwiki",
@@ -53,7 +53,7 @@ function normaliseShortdesc(shortdesc) {
  */
 async function populateOresQualityRatings(tableInfo) {
 	let revidTitleMap = Object.entries(tableInfo).reduce((map, [title, data]) => {
-		if (data.revid) {
+		if (!data.skip && data.revid) {
 			map[data.revid] = title;
 		}
 		return map;

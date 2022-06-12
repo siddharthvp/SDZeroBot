@@ -64,6 +64,7 @@ async function runForDate(date: MwnDate) {
 		for await (let pg of bot.readGen(pageSet, {
 			"prop": "revisions|info|description|templates|categories",
 			"rvprop": "content|timestamp",
+			"redirects": false,
 			"tltemplates": [
 				"Template:COI",
 				"Template:Undisclosed paid",
@@ -82,12 +83,24 @@ async function runForDate(date: MwnDate) {
 				tableInfo[pg.title].skip = true;
 				continue;
 			}
+			if (!tableInfo[pg.title]) {
+				log(`[E] Page [[${pg.title}]] from API response was not there in db result (not in tableInfo)`);
+				continue;
+			}
 			let text = rev.content;
+			let excerpt = TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract);
+			if (excerpt === '') { // empty extract is suspicious
+				if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
+					// the db query should omit redirects, this happens only because of db lag
+					// or if the page was converted to redirect after the db fetch
+					tableInfo[page.title].skip = true; // skip it
+					continue;
+				}
+			}
 			let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
 			let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 			Object.assign(tableInfo[pg.title], {
-				extract: TextExtractor.getExtract(text, 250, 500,
-					preprocessDraftForExtract),
+				extract: excerpt,
 				revid: pg.lastrevid,
 				lastedit: rev.timestamp,
 				desc: pg.description,
@@ -174,8 +187,9 @@ async function runForDate(date: MwnDate) {
 	let page = new bot.page(REPORT_PAGE);
 	let oldlinks = await makeOldLinks();
 
+	let count = Object.values(tableInfo).map(e => !e.skip).length;
 	let wikitext =
-		`{{/header|count=${Object.keys(tableInfo).length}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+		`{{/header|count=${count}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;

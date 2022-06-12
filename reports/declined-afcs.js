@@ -1,6 +1,7 @@
 const {argv, bot, log, TextExtractor, emailOnError, mwn, utils} = require('../botbase');
 const {AfcDraftSize, populateWikidataShortdescs, populateOresQualityRatings, comparators,
 	preprocessDraftForExtract, saveWithBlacklistHandling} = require('./commons');
+const {enwikidb} = require("../db");
 
 (async function() {
 
@@ -26,7 +27,14 @@ bot.wikitext.parseTemplates(await earwigReport.text(), {
 });
 
 log(`[i] Found ${Object.keys(tableInfo).length} pages declined yesterday`);
-
+let db = new enwikidb();
+let replag = await db.getReplagHours();
+let replagNote = '';
+if (replag > 0) {
+	log(`[W] DB replag: ${replag} hours`);
+	replagNote = db.makeReplagMessage(0);
+}
+db.end();
 
 // In theory, we can request all the details of upto 500 pages in 1 API call, but
 // send in batches of 100 to avoid the slim possibility of hitting the max API response size limit
@@ -35,6 +43,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 	for await (let pg of bot.readGen(pageSet, {
 		"prop": "revisions|info|description|templates|categories",
 		"rvprop": "content|timestamp",
+		"redirects": false,
 		"tltemplates": [
 			"Template:COI",
 			"Template:Undisclosed paid",
@@ -53,12 +62,25 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			tableInfo[pg.title].skip = true;
 			continue;
 		}
+		if (!tableInfo[pg.title]) {
+			log(`[E] Page [[${pg.title}]] from API response was not there in db result (not in tableInfo)`);
+			continue;
+		}
+
 		let text = rev.content;
+		let excerpt = TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract);
+		if (excerpt === '') { // empty extract is suspicious
+			if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
+				// the db query should omit redirects, this happens only because of db lag
+				// or if the page was converted to redirect after the db fetch
+				tableInfo[pg.title].skip = true; // skip it
+				continue;
+			}
+		}
 		let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
 		let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 		Object.assign(tableInfo[pg.title], {
-			extract: TextExtractor.getExtract(text, 250, 500,
-				preprocessDraftForExtract),
+			extract: excerpt,
 			revid: pg.lastrevid,
 			desc: pg.description,
 			coi: templates.includes('COI') || templates.includes('Connected contributor'),
@@ -148,8 +170,9 @@ let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
 	return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 }).join(' - ') + ' - {{history|2=older}}';
 
+let count = Object.values(tableInfo).map(e => !e.skip).length;
 let wikitext =
-`{{/header|count=${Object.keys(tableInfo).length}|date=${yesterday.format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+`{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}${replagNote}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;

@@ -66,6 +66,7 @@ import { NS_DRAFT } from "../namespaces";
 		for await (let pg of bot.readGen(pageSet, {
 			"prop": "revisions|description|templates|categories",
 			"rvprop": "content",
+			"redirects": false,
 			"tltemplates": [
 				"Template:COI",
 				"Template:Undisclosed paid",
@@ -85,6 +86,15 @@ import { NS_DRAFT } from "../namespaces";
 				continue;
 			}
 			let text = rev.content;
+			let excerpt = TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract);
+			if (excerpt === '') { // empty extract is suspicious
+				if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
+					// the db query should omit redirects, this happens only because of db lag
+					// or if the page was converted to redirect after the db fetch
+					tableInfo[pg.title].skip = true; // skip it
+					continue;
+				}
+			}
 			let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
 			let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 			if (!tableInfo[pg.title]) {
@@ -92,7 +102,7 @@ import { NS_DRAFT } from "../namespaces";
 				continue;
 			}
 			Object.assign(tableInfo[pg.title], {
-				extract: TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract),
+				extract: excerpt,
 				desc: pg.description,
 				coi: templates.includes('COI') || templates.includes('Connected contributor'),
 				upe: templates.includes('Undisclosed paid'),
@@ -177,8 +187,9 @@ import { NS_DRAFT } from "../namespaces";
 
 	let page = new bot.page('User:SDZeroBot/Pending AfC submissions' + (argv.sandbox ? '/sandbox' : ''));
 
+	let count = Object.values(tableInfo).filter(e => !e.skip).length;
 	let wikitext =
-		`{{/header|count=${Object.keys(tableInfo).length}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+		`{{/header|count=${count}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 

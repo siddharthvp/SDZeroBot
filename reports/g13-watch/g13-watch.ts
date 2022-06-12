@@ -94,7 +94,7 @@ import * as OresUtils from '../OresUtils';
        pagedata = Array.isArray(pagedata) ? pagedata : [ pagedata ]; // in case this chunk has a single page
 
        // fetch ORES ratings as well
-       let revIdTitleMap = Object.fromEntries(pagedata.map(pg => [pg.lastrevid, pg.title]));
+       let revIdTitleMap = Object.fromEntries(pagedata.filter(pg => !pg.missing).map(pg => [pg.lastrevid, pg.title]));
        let rawOresData = {};
        try {
            rawOresData = await OresUtils.queryRevisions(
