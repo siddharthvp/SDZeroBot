@@ -28,7 +28,7 @@
     "mysql2": "^2.1.0",
     "object-hash": "^2.0.3",
     "sqlite": "^4.0.15",
-    "sqlite3": "^5.0.0"
+    "sqlite3": "^5.0.3"
   },
   "devDependencies": {
     "@types/mocha": "^8.0.4",
