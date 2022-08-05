@@ -1,11 +1,13 @@
 name: Toolforge
 
 on:
-  - push
-  - workflow_dispatch
+  push:
+    branches:
+      - master
+  workflow_dispatch:
 
 jobs:
-  update:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -20,7 +22,7 @@ jobs:
                   npm install || exit 1;
                 fi;
                 echo "Building mwn ...";
-                npm run quickbuild;
+                npm run build;
               fi;
               cd /data/project/sdzerobot/SDZeroBot || exit 1;
               echo "Pulling SDZeroBot ...";
@@ -67,4 +69,3 @@ jobs:
           host: login.toolforge.org
           username: sd
           privateKey: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
-
