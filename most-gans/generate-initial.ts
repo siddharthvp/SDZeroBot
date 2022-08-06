@@ -32,7 +32,7 @@ bot.setOptions({
 						  article   VARCHAR(255),
 						  nominator VARCHAR(255),
 						  date   DATE,
-						  username_updated DATE,
+						  lastUpdate DATE,
 						  PRIMARY KEY (article)
 					  ) COLLATE 'utf8_unicode_ci'`);
 
@@ -58,7 +58,7 @@ bot.setOptions({
 	await bot.save('User:SDZeroBot/Wikipedians by most GANs/Errors/1',
 		`No GA nominator could be identified for the following articles:
 	
-${authorNotFound.map(p => `*[[${p}]]`).join('\n')}
+${authorNotFound.map(p => `#[[${p}]]`).join('\n')}
 `);
 	log(`[S] Saved error list on-wiki`);
 
