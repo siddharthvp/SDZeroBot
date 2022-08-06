@@ -3,7 +3,7 @@ import { NS_USER, NS_USER_TALK } from "../namespaces";
 import { createLogStream } from "../utils";
 
 export const db = new toolsdb('goodarticles_p');
-export const TABLE = 'nominators2';
+export const TABLE = 'nominators';
 
 const GANTemplateRegex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
 const GANTemplateNameRegex = /^GA ?(c(andidate)?|n(om(inee)?)?)$/i;
