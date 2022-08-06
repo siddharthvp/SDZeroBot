@@ -1,6 +1,6 @@
 import assert = require("assert");
 import { bot } from "../botbase";
-import { getCurrentUsername, processArticle, db } from "./model";
+import {getCurrentUsername, processArticle, db, getCurrentTitle} from "./model";
 
 describe('most-gans', () => {
 	before(() => {
@@ -35,6 +35,11 @@ describe('most-gans', () => {
 
 		// non-existing user
 		assert.strictEqual(await getCurrentUsername('Jh3rifesd9', '2018-01-01'), 'Jh3rifesd9');
+	});
+
+	it('getCurrentTitle', async function() {
+		this.timeout(10000);
+		assert.strictEqual(await getCurrentTitle('Shivers (song)', '2014-11-19'), 'Shivers (The Boys Next Door song)');
 	});
 
 });
