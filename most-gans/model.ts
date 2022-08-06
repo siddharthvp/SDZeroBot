@@ -106,6 +106,30 @@ function getUsernameFromSignature(sig: string) {
 }
 
 /**
+ * Given the title of an article on a given date, find the current title.
+ */
+export async function getCurrentTitle(title: string, date: string): Promise<string> {
+	const rename = (await bot.query({
+		"list": "logevents",
+		"letype": "move",
+		"leprop": "timestamp|details|comment|title",
+		"letitle": title,
+		"lestart": new bot.date(date).add(10, 'seconds').toISOString(),
+		"ledir": "newer",
+		"lelimit": "1"
+	})).query.logevents[0];
+	if (!rename) {
+		return title;
+	}
+	let newTitle = rename.params?.target_title;
+	if (!newTitle) {
+		log(`[E] Failed to parse new title for [[${title}]]`);
+		return Promise.reject();
+	}
+	return getCurrentTitle(newTitle, rename.timestamp);
+}
+
+/**
  * Given the username of an account on a given date, find the current username of
  * the account.
  */
