@@ -1,6 +1,7 @@
 import { bot, log, toolsdb } from "../botbase";
 import { NS_USER, NS_USER_TALK } from "../namespaces";
 import { createLogStream } from "../utils";
+import * as fs from "fs";
 
 export const db = new toolsdb('goodarticles_p');
 export const TABLE = 'nominators';
@@ -34,8 +35,10 @@ export async function processArticle(article: string) {
 				let nominatorSignature = template.getValue('nominator');
 				let nom = getUsernameFromSignature(nominatorSignature);
 				if (nom) {
+					nom = await getCurrentUsername(nom, rev.timestamp);
 					return addToDb(article, nom, GA_date);
 				} else {
+					log(`[W] Couldn't parse signature, will use fallback strategy. Sig: ${nominatorSignature}`);
 					fallback_strategy = true;
 				}
 			} else {
@@ -66,7 +69,7 @@ const dbWriteFailures = createLogStream(__dirname + '/db-write-failures.out');
 
 function addToDb(article: string, nom: string, date, fallbackStrategy = false): Promise<[string, string, boolean]> {
 	let date_str = new bot.date(date).format('YYYY-MM-DD');
-	db.run(`REPLACE INTO ${TABLE} VALUES (?, ?, ?, ?)`, [article, nom, date_str, null]).catch(err => {
+	db.run(`REPLACE INTO ${TABLE} VALUES (?, ?, ?, UTC_DATE())`, [article, nom, date_str]).catch(err => {
 		log(`[E] Db error ${err}`);
 		log(err);
 		dbWriteFailures(JSON.stringify(err));
@@ -134,12 +137,18 @@ export async function getCurrentTitle(title: string, date: string): Promise<stri
  * the account.
  */
 export async function getCurrentUsername(username: string, date: string): Promise<string> {
+	// This is called during the stream task as well, avoid API call in such cases
+	const dateParsed = new bot.date(date);
+	// if now - dateParsed < 30 seconds
+	if (new bot.date().subtract(30, 'seconds').isBefore(dateParsed)) {
+		return username;
+	}
 	const rename = (await bot.query({
 		"list": "logevents",
 		"letype": "renameuser",
 		"leprop": "timestamp|details|comment|title",
 		"letitle": "User:" + username,
-		"lestart": new bot.date(date).add(10, 'seconds').toISOString(),
+		"lestart": dateParsed.add(10, 'seconds').toISOString(),
 		"ledir": "newer",
 		"lelimit": "1"
 	})).query.logevents[0];
@@ -161,3 +170,10 @@ export async function getCurrentUsername(username: string, date: string): Promis
 // 2007: https://en.wikipedia.org/wiki/Special:ApiSandbox#action=query&format=json&list=logevents&leprop=timestamp%7Ccomment%7Cdetails%7Ctitle&letype=renameuser&lestart=2007-06-06T05%3A17%3A45.000Z&ledir=older
 // 2008: https://en.wikipedia.org/wiki/Special:ApiSandbox#action=query&format=json&list=logevents&leprop=timestamp%7Ccomment%7Cdetails%7Ctitle&letype=renameuser&lestart=2008-06-06T05%3A17%3A45.000Z&ledir=older
 // 2013-current: https://en.wikipedia.org/wiki/Special:ApiSandbox#action=query&format=json&list=logevents&leprop=timestamp%7Ccomment%7Cdetails%7Ctitle&letype=renameuser&lestart=2013-06-06T05%3A17%3A45.000Z&ledir=older
+
+
+export async function runManualEdits() {
+	const sqlStatements = fs.readFileSync(__dirname + "/manual-edits.sql").toString();
+	const dbUpdatePromises = sqlStatements.split('\n').map(line => db.run(line));
+	await Promise.all(dbUpdatePromises);
+}

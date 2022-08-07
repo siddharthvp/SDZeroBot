@@ -1,7 +1,8 @@
 import { bot, log } from '../botbase';
 import { closeTunnels, createLocalSSHTunnel } from "../utils";
 import { TOOLS_DB_HOST } from "../db";
-import { processArticle, TABLE, db } from "./model";
+import {processArticle, TABLE, db, runManualEdits} from "./model";
+import { exec } from "child_process";
 
 bot.setOptions({
 	silent: true,
@@ -36,6 +37,12 @@ bot.setOptions({
 						  PRIMARY KEY (article)
 					  ) COLLATE 'utf8_unicode_ci'`);
 
+	// Restart the stream task, so that new GAs are processed
+	exec(`cd ${__dirname}/../eventstream-router; npm restart`, err => {
+		log(`[E] Failed to start stream task`);
+		log(err);
+	});
+
 	let authorNotFound = [];
 
 	await bot.batchOperation(articles, async (article, idx) => {
@@ -62,6 +69,7 @@ ${authorNotFound.map(p => `#[[${p}]]`).join('\n')}
 `);
 	log(`[S] Saved error list on-wiki`);
 
+	await runManualEdits();
 	closeTunnels();
 
 })();

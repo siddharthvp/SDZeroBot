@@ -24,7 +24,8 @@ describe('most-gans', () => {
 
 	it('getCurrentUsername', async function () {
 		this.timeout(10000);
-		assert.strictEqual(await getCurrentUsername('Dr. Blofeld', '2018-01-01'), 'Encyclopædius');
+		assert.strictEqual(await getCurrentUsername('Dr. Blofeld', '2018-01-01'), 'Dr. Blofeld');
+		assert.strictEqual(await getCurrentUsername('Encyclopædius', '2021-01-01'), 'Dr. Blofeld');
 		assert.strictEqual(await getCurrentUsername('DeltaQuad', '2020-06-20'), 'AmandaNP');
 		assert.strictEqual(await getCurrentUsername('DeltaQuad', '2020-06-26T11:00:00Z'), 'DeltaQuad (usurp)');
 		assert.strictEqual(await getCurrentUsername('DeltaQuad', '2020-06-27'), 'DeltaQuad');
@@ -35,6 +36,12 @@ describe('most-gans', () => {
 
 		// non-existing user
 		assert.strictEqual(await getCurrentUsername('Jh3rifesd9', '2018-01-01'), 'Jh3rifesd9');
+
+		let startTime = process.hrtime.bigint();
+		assert.strictEqual(await getCurrentUsername('HInBC', new bot.date().subtract(15, 'seconds').toISOString()), 'HInBC');
+		let endTime = process.hrtime.bigint();
+		// API call shouldn't have taken place, so takes less time
+		assert.strictEqual(Number(endTime - startTime)/1e6 < 10, true);
 	});
 
 	it('getCurrentTitle', async function() {
