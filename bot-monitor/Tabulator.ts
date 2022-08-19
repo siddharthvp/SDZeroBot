@@ -40,6 +40,15 @@ export class Tabulator {
 		]);
 	}
 
+	static addError(monitor: Monitor, err: Error) {
+		let rule = monitor.rule || monitor.rawRule;
+		this.table.addRow([
+			`[[User:${rule.bot}|${rule.bot}]]`,
+			rule.task,
+			`{{hmmm}} Error while checking: ${err?.code || ''}`
+		]);
+	}
+
 	static async whineAboutRuleErrors() {
 		let msg;
 		if (this.invalidRules.length) {
