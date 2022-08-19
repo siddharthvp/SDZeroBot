@@ -199,10 +199,11 @@ export class Monitor {
 			// It's the user's fault
 			log(`[W] Invalid rule for ${this.name}: ${err.message}`);
 			Tabulator.invalidRules.push({task: this.name, reason: err.message})
-		} else if (err.code === 'internal_api_error_DBQueryError') {
-			// Occurring due to https://phabricator.wikimedia.org/T297708
+		} else if (err.code === 'internal_api_error_DBQueryTimeoutError') {
+			Tabulator.addError(this, err);
 			logFullError(err, false);
 		} else {
+			Tabulator.addError(this, err);
 			emailOnError(err, 'bot-monitor (non-fatal)', false);
 		}
 	}
