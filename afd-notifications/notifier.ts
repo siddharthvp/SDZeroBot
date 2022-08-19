@@ -208,16 +208,18 @@ class Notifier {
 	 * @returns {{totalBytes: number, users: ({id: number, name: string, bytes: number, percent: number})[]}}
 	 */
 	async queryAuthors(title) {
-		let json;
+		let response;
 		try {
-			json = await bot.rawRequest({
-				url: `https://api.wikiwho.net/en/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(title)}/?editor=true`
-			}).then(response => response.data);
+			response = await bot.rawRequest({
+				url: `https://wikiwho.wmflabs.org/en/whocolor/v1.0.0-beta/${encodeURIComponent(title)}/?editor=true`
+			});
 		} catch(err) {
-			throw new Error(err?.response?.data?.Error);
+			if (err?.response?.data?.error) {
+				throw new Error(err?.response?.data?.error);
+			} else throw err;
 		}
 
-		const tokens = Object.values(json.revisions[0])[0].tokens;
+		const tokens = response.data.tokens;
 
 		let data = {
 			totalBytes: 0,
@@ -233,19 +235,19 @@ class Notifier {
 		for (let i = 0; i < tokens.length; i++) {
 
 			if (inCmt) {
-				if (tokens[i].str === '-->') {
+				if (tokens[i][1] === '-->') {
 					inCmt = false;
 				}
 				continue;
 			} else {
-				if (tokens[i].str === '<!--') {
+				if (tokens[i][1] === '<!--') {
 					inCmt = true;
 					continue;
 				}
 			}
 
 			if (inCategory) {
-				if (tokens[i].str === ']]') {
+				if (tokens[i][1] === ']]') {
 					inCategory = false;
 				}
 				continue;
@@ -262,11 +264,11 @@ class Notifier {
 			// citation bot, etc)
 			let addRefBytes = function(...tokens) {
 				for (let token of tokens) {
-					let editor = token.editor;
+					let editor = token[5];
 					if (!userdata[editor]) {
 						userdata[editor] = { bytes: 0, refBytes: 0 };
 					}
-					userdata[editor].refBytes += token.str.length;
+					userdata[editor].refBytes += token[1].length;
 					if (editor.startsWith('0|')) { // IP
 						userdata[editor].name = editor.slice(2);
 					}
@@ -291,12 +293,12 @@ class Notifier {
 			}
 
 			let token = tokens[i];
-			data.totalBytes += token.str.length;
-			let editor = token.editor;
+			data.totalBytes += token[1].length;
+			let editor = token[5];
 			if (!userdata[editor]) {
 				userdata[editor] = { bytes: 0, refBytes: 0 };
 			}
-			userdata[editor].bytes += token.str.length;
+			userdata[editor].bytes += token[1].length;
 			if (editor.startsWith('0|')) { // IP
 				userdata[editor].name = editor.slice(2);
 			}
