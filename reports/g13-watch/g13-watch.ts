@@ -53,7 +53,8 @@ import * as OresUtils from '../OresUtils';
         FROM page
                  LEFT JOIN revision ON rev_page = page_id
                  LEFT JOIN actor_revision ON actor_id = rev_actor
-                 JOIN templatelinks ON tl_from = page_id AND tl_namespace = 10 AND tl_title = 'AfC_submission'
+                 JOIN templatelinks ON tl_from = page_id AND tl_target_id = (SELECT lt_id FROM linktarget WHERE
+                                                                lt_namespace = 10 AND lt_title = "AfC_submission")
         WHERE page_namespace = 2
           AND page_is_redirect = 0
           AND (actor_user IS NULL OR actor_user NOT IN (SELECT * FROM bots))

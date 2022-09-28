@@ -24,8 +24,8 @@ const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-eligible
 	JOIN revision ON rev_id = page_latest
 	JOIN templatelinks ON tl_from = page_id 
 	WHERE page_namespace = 2
-	AND tl_title = "AFC_submission" 
-	AND tl_namespace = 10
+    AND tl_target_id = (SELECT lt_id FROM linktarget
+		WHERE lt_namespace = 10 AND lt_title = "AfC_submission")
 	AND page_is_redirect = 0
 	AND rev_timestamp < DATE_FORMAT(UTC_DATE() - INTERVAL 6 MONTH, '%Y%m%d%H%i%S')
 `);
