@@ -1,5 +1,5 @@
 import {bot, emailOnError, argv} from "../botbase";
-import {fetchRules, Monitor, Tabulator, ChecksDb} from './index';
+import {fetchRules, Monitor, Tabulator, checksDb} from './index';
 
 (async function () {
 
@@ -7,7 +7,7 @@ import {fetchRules, Monitor, Tabulator, ChecksDb} from './index';
 
     await Promise.all([
         bot.getTokensAndSiteInfo(),
-        ChecksDb.connect()
+        checksDb.connect()
     ]);
 
     const rules = await fetchRules();

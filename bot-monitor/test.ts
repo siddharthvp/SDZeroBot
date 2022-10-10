@@ -1,5 +1,5 @@
 import {bot} from "../botbase";
-import {Monitor, getBotOperator, ChecksDb, RawRule, Rule, fetchRules} from './index'
+import {Monitor, getBotOperator, checksDb, RawRule, Rule, fetchRules} from './index'
 
 import {expect} from 'chai';
 
@@ -27,11 +27,11 @@ describe('Monitor', async function () {
 describe('ChecksDb', async function () {
 
     before(function () {
-        return ChecksDb.connect();
+        return checksDb.connect();
     });
 
     it('undefined on non-existent access', async function () {
-        const last = await ChecksDb.db.get(`SELECT * FROM checks WHERE name = ?`, [
+        const last = await checksDb.db.get(`SELECT * FROM checks WHERE name = ?`, [
             `SDZeroBot: NPPSot`
         ]);
         expect(last).to.eq(undefined);

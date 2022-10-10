@@ -2,7 +2,7 @@ import {bot, emailOnError, log, logFullError} from '../botbase';
 import {MwnDate} from "../../mwn";
 import type {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
 import type {LogEvent, UserContribution} from "../../mwn/src/api_response_types";
-import {Alert, ChecksDb, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
+import {Alert, checksDb, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
 
 export class Monitor {
 	name: string
@@ -24,7 +24,7 @@ export class Monitor {
 		log(`[V] Checking ${this.name}`);
 		this.rawRule = rule;
 		try {
-			if (await ChecksDb.checkCached(rule)) {
+			if (await checksDb.checkCached(rule)) {
 				Tabulator.add(this, true);
 				log(`[i] Skipped check for ${rule.task}`);
 				return;
@@ -37,7 +37,7 @@ export class Monitor {
 	}
 
 	async checkActions() {
-		this.lastSeenDb = await ChecksDb.getLastSeen(this.rawRule);
+		this.lastSeenDb = await checksDb.getLastSeen(this.rawRule);
 		let check = this.rule.action === 'edit' ? await this.checkContribs() : await this.checkLogs();
 		Tabulator.add(this, check);
 		if (!check) { // Not OK
@@ -58,7 +58,7 @@ export class Monitor {
 		for await (let edit of new bot.user(this.rule.bot).contribsGen(ucParams)) {
 			if (this.checkEdit(edit)) {
 				if (++this.actions >= this.rule.minEdits) {
-					await ChecksDb.update(this.rawRule, edit.timestamp);
+					await checksDb.update(this.rawRule, edit.timestamp);
 					return true;
 				}
 			}
@@ -91,7 +91,7 @@ export class Monitor {
 			for await (let action of new bot.user(this.rule.bot).logsGen(apiParams)) {
 				if (this.checkLogEvent(action)) {
 					if (++this.actions >= this.rule.minEdits) {
-						await ChecksDb.update(this.rawRule, action.timestamp);
+						await checksDb.update(this.rawRule, action.timestamp);
 						return true;
 					}
 				}
@@ -134,7 +134,7 @@ export class Monitor {
 		for (let action of actions) {
 			if (checkAction(action)) {
 				this.lastSeen = new bot.date(action.timestamp);
-				await ChecksDb.updateLastSeen(this.rawRule, action.timestamp);
+				await checksDb.updateLastSeen(this.rawRule, action.timestamp);
 				return;
 			}
 		}
@@ -168,14 +168,14 @@ export class Monitor {
 		})) {
 			if (checkAction(action)) {
 				this.lastSeen = new bot.date(action.timestamp);
-				await ChecksDb.updateLastSeen(this.rawRule, action.timestamp);
+				await checksDb.updateLastSeen(this.rawRule, action.timestamp);
 				return;
 			} else {
 				lastSeenNot = action.timestamp;
 			}
 		}
 		this.lastSeenNot = new bot.date(lastSeenNot);
-		await ChecksDb.updateLastSeen(this.rawRule, lastSeenNot, true);
+		await checksDb.updateLastSeen(this.rawRule, lastSeenNot, true);
 	}
 
 

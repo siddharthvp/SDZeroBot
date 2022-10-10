@@ -5,6 +5,7 @@ import {RawRule, getFromDate} from './index'
 import * as sqlite from "sqlite";
 import * as sqlite3 from "sqlite3";
 import * as hash from 'object-hash';
+import {getRedisInstance} from "../redis";
 
 class SqliteDb {
 	db: sqlite.Database;
@@ -22,7 +23,65 @@ class SqliteDb {
 	}
 }
 
-class Db extends SqliteDb {
+interface ChecksDb {
+	connect();
+	update(rule: RawRule, ts: string);
+	checkCached(rule: RawRule);
+	getLastSeen(rule: RawRule);
+	updateLastSeen(rule: RawRule, ts: string, notSeen?: boolean);
+}
+
+/**
+ *
+ * THIS REDIS IMPLEMENTATION IS UNTESTED
+ *
+ */
+class RedisChecksDb implements ChecksDb {
+	connect() {
+		getRedisInstance().ping();
+	}
+
+	getKey(rule: RawRule) {
+		return `${rule.bot}: ${rule.task}`.slice(0, 250);
+	}
+
+	update(rule: RawRule, ts: string) {
+		// getRedisInstance().hmset(this.getKey(rule), {
+		// 	rule: hash.sha1(rule),
+		// 	ts: ts
+		// });
+		getRedisInstance().hset(this.getKey(rule), 'rulehash', hash.sha1(rule));
+		getRedisInstance().hset(this.getKey(rule), 'ts', ts);
+
+	}
+
+	checkCached(rule: RawRule) {
+		let cached = getRedisInstance().hgetall(this.getKey(rule) + '-cached');
+		return cached.rulehash === hash.sha1(rule) &&
+			new bot.date(cached.ts).isAfter(getFromDate(rule.duration));
+	}
+
+	getLastSeen(rule: RawRule) {
+		if (argv.nocache) {
+			return;
+		}
+		let lastseen = getRedisInstance().hgetall(this.getKey(rule) + '-seen');
+		if (lastseen && lastseen.rulehash === hash.sha1(rule)) {
+			return lastseen;
+		} // else return undefined
+	}
+
+	updateLastSeen(rule: RawRule, ts: string, notSeen?: boolean) {
+		getRedisInstance().hset(this.getKey(rule) + '-seen', 'rulehash', hash.sha1(rule));
+		getRedisInstance().hset(this.getKey(rule) + '-seen', 'ts', ts);
+		if (notSeen) {
+			getRedisInstance().hset(this.getKey(rule) + '-seen', 'notseen', '1');
+		}
+	}
+
+}
+
+class SqliteChecksDb extends SqliteDb implements ChecksDb {
 
 	async connect() {
 		await super.connect('./last_checks.db');
@@ -43,13 +102,13 @@ class Db extends SqliteDb {
 
 	// Robustify this? This value still stands the risk of being the same for two tasks.
 	// Should we use the SHA1 hash as the primary key?
-	getDbKey(rule: RawRule) {
+	getKey(rule: RawRule) {
 		return `${rule.bot}: ${rule.task}`.slice(0, 250);
 	}
 
 	async update(rule: RawRule, ts: string) {
 		await this.run(`INSERT OR REPLACE INTO last_good VALUES(?, ?, ?)`, [
-			this.getDbKey(rule),
+			this.getKey(rule),
 			hash.sha1(rule),
 			ts // ISO timestamp
 		]);
@@ -67,7 +126,7 @@ class Db extends SqliteDb {
 			return false;
 		}
 		const last = await this.db.get(`SELECT * FROM last_good WHERE name = ?`, [
-			this.getDbKey(rule),
+			this.getKey(rule),
 		]); // on error, last remains undefined
 		return last &&
 			last.rulehash === hash.sha1(rule) && // check that the rule itself hasn't changed
@@ -80,7 +139,7 @@ class Db extends SqliteDb {
 			return;
 		}
 		let lastSeen = await this.db.get(`SELECT * FROM last_seen WHERE name = ?`, [
-			this.getDbKey(rule),
+			this.getKey(rule),
 		]); // on error, lastSeen remains undefined
 		// If the rule was changed, discard it (namespace/pages/summary config could have changed)
 		if (lastSeen && lastSeen.rulehash === hash.sha1(rule)) {
@@ -90,7 +149,7 @@ class Db extends SqliteDb {
 
 	async updateLastSeen(rule: RawRule, ts: string, notSeen?: boolean) {
 		await this.run(`INSERT OR REPLACE INTO last_seen VALUES(?, ?, ?, ?, ?)`, [
-			this.getDbKey(rule),
+			this.getKey(rule),
 			hash.sha1(rule),
 			new bot.date().toISOString(),
 			ts,
@@ -99,4 +158,4 @@ class Db extends SqliteDb {
 	}
 }
 
-export const ChecksDb = new Db();
+export const checksDb: ChecksDb = new SqliteChecksDb();

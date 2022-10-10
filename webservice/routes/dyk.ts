@@ -4,7 +4,14 @@ import { enwikidb } from "../../../SDZeroBot/db";
 import { getRedisConfig } from "../../../SDZeroBot/redis";
 
 const router = express.Router();
-const cache = expressRedisCache(getRedisConfig());
+const cache = expressRedisCache({
+	...getRedisConfig(),
+	expire: {
+		200: 120, // 2 minutes
+		'4xx': 1,
+		'5xx': 1
+	}
+});
 const db = new enwikidb();
 
 router.get('/credits/:user', async (req, res, next) => {
