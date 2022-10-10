@@ -29,6 +29,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 		await grid.history('content', 1, {
 			rvstart: date.toISOString(),
+			rvuser: 'SDZeroBot'
 		}).then(revs => {
 			let rev = revs[0];
 			var wikitable = rev.content.slice(rev.content.indexOf('{|'));

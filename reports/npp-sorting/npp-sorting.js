@@ -1,6 +1,8 @@
 const {log, argv, TextExtractor, mwn, bot, enwikidb, utils, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
 const {populateWikidataShortdescs, normaliseShortdesc} = require('../commons');
+const {createLocalSSHTunnel, closeTunnels} = require("../../utils");
+const {ENWIKI_DB_HOST} = require("../../db");
 
 process.chdir(__dirname);
 
@@ -10,7 +12,10 @@ process.chdir(__dirname);
 
 	log('[i] Started');
 
-	await bot.getTokensAndSiteInfo();
+	await Promise.all([
+		bot.getTokensAndSiteInfo(),
+		createLocalSSHTunnel(ENWIKI_DB_HOST)
+	]);
 
 	let sql;
 
@@ -80,6 +85,7 @@ process.chdir(__dirname);
 		utils.saveObject('oresdata', oresdata);
 		utils.saveObject('errors', errors);
 	}
+	log(`[S] Finished fetching ORES data`);
 
 	/* GET SHORT DESCRIPTIONS AND PAGE CONTENT */
 	let pagesWithShortDescs = 0;
@@ -325,5 +331,6 @@ ${replagMessage}
 	await bot.batchOperation(Object.keys(sorter), createSubpage, 1);
 
 	log(`[i] Finished`);
+	closeTunnels();
 
 })().catch(err => emailOnError(err, 'npp-sorting'));
