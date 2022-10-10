@@ -25,6 +25,6 @@
     "@types/hbs": "^4.0.1",
     "@types/http-errors": "^1.8.0",
     "@types/morgan": "^1.9.2",
-    "nodemon": "^2.0.7"
+    "nodemon": "^2.0.20"
   }
 }
