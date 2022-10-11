@@ -35,6 +35,11 @@ export async function processArticle(article: string) {
 				let nominatorSignature = template.getValue('nominator');
 				let nom = getUsernameFromSignature(nominatorSignature);
 				if (nom) {
+					// XXX: this is not strictly correct, to get the current username we should use the
+					// date at which the GAN template was added, but this uses the date of the rev preceding
+					// addition of GA template.
+					// Fails with [[Etchmiadzin Cathedral]] where it continues to attribute old username, as
+					// user was renamed between nomination and promotion.
 					nom = await getCurrentUsername(nom, rev.timestamp);
 					return addToDb(article, nom, GA_date);
 				} else {
