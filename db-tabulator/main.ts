@@ -1,6 +1,6 @@
 import { argv, bot, emailOnError, log } from "../botbase";
 import { closeTunnels, createLocalSSHTunnel, writeFile } from "../utils";
-import { FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
+import { checkShutoff, FAKE_OUTPUT_FILE, fetchQueries, processQueries } from "./app";
 import { ENWIKI_DB_HOST } from "../db";
 
 /**
@@ -38,6 +38,12 @@ import { ENWIKI_DB_HOST } from "../db";
 
 	if (argv.fake) {
 		writeFile(FAKE_OUTPUT_FILE, '');
+	} else {
+		const shutoffText = await checkShutoff();
+		if (shutoffText) {
+			log(`[E] Bot is shut off. Shutoff page content: ${shutoffText}`);
+			process.exit();
+		}
 	}
 
 	const queries = await fetchQueries();

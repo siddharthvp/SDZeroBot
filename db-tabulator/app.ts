@@ -13,6 +13,7 @@ export const SUBSCRIPTIONS_CATEGORY = 'SDZeroBot database report subscriptions';
 export const QUERY_TIMEOUT = 600;
 export const CONCURRENCY = 5;
 export const MAX_SUBPAGES = 20;
+export const SHUTOFF_PAGE = 'User:SDZeroBot/Shutoff/Database reports';
 export const FAKE_INPUT_FILE = 'fake-configs.wikitext';
 export const FAKE_OUTPUT_FILE = 'fake-output.wikitext';
 
@@ -93,6 +94,11 @@ export async function processQueriesForPage(queries: Query[]) {
 		if (++index !== 1) log(`[+] Processing query ${index} on ${query.page}`);
 		await query.process().catch(() => {});
 	}
+}
+
+export async function checkShutoff() {
+	let text = (await bot.read(SHUTOFF_PAGE))?.revisions?.[0]?.content;
+	return text?.trim();
 }
 
 export class Query {
