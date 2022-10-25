@@ -43,7 +43,7 @@ function getQueriesFromText(text: string, title: string): Query[] {
 		namePredicate: name => name === TEMPLATE
 	});
 	if (templates.length === 0) {
-		log(`[E] Failed to parse template on ${title}`);
+		log(`[E] Failed to find template on ${title}`);
 		return [];
 	}
 	return templates.map(template => new Query(template, title));
@@ -111,15 +111,15 @@ export class Query {
 	page: string;
 	template: Template;
 	config: {
-		sql: string
-		wikilinks: Array<{columnIndex: number, namespace: string, showNamespace: boolean}>;
-		excerpts: Array<{srcIndex: number, destIndex: number, namespace: string, charLimit: number, charHardLimit: number}>;
-		comments: number[];
-		pagination: number;
-		maxPages: number;
-		removeUnderscores: number[];
-		hiddenColumns: number[];
-	}
+		sql?: string
+		wikilinks?: Array<{columnIndex: number, namespace: string, showNamespace: boolean}>;
+		excerpts?: Array<{srcIndex: number, destIndex: number, namespace: string, charLimit: number, charHardLimit: number}>;
+		comments?: number[];
+		pagination?: number;
+		maxPages?: number;
+		removeUnderscores?: number[];
+		hiddenColumns?: number[];
+	} = {};
 	warnings: string[] = [];
 	numPages: number;
 
@@ -145,26 +145,23 @@ export class Query {
 		return this.template.getValue(param)?.replace(/<!--.*?-->/g, '').trim();
 	}
 
-	static checkIfUpdateDue(lastUpdate: MwnDate, frequency: number): boolean {
+	static checkIfUpdateDue(lastUpdate: MwnDate, interval: number): boolean {
 		if (!lastUpdate) {
 			return true;
 		}
 		let daysDiff = (new bot.date().getTime() - lastUpdate.getTime())/8.64e7;
-		return daysDiff >= frequency - 0.5;
+		return daysDiff >= interval - 0.5;
 	}
 
 	// Errors in configs are reported to user through [[Module:Database report]] in Lua
 	parseQuery() {
 		if (process.env.CRON) {
-			if (this.getTemplateValue('autoupdate')?.toLowerCase() === 'no') {
-				log(`[+] Skipping ${this.page} as automatic updates are disabled.`);
+			let interval = parseInt(this.getTemplateValue('interval'));
+			if (isNaN(interval)) {
+				log(`[+] Skipping ${this.page} as periodic updates are not configured`);
 				throw new HandledError();
 			}
-			let frequency = parseInt(this.getTemplateValue('frequency'));
-			if (isNaN(frequency)) {
-				frequency = 1;
-			}
-			if (!Query.checkIfUpdateDue(lastEditsData[this.page], frequency)) {
+			if (!Query.checkIfUpdateDue(lastEditsData[this.page], interval)) {
 				log(`[+] Skipping ${this.page} as update is not due.`);
 				throw new HandledError();
 			}
