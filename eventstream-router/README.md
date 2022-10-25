@@ -11,9 +11,11 @@ Files:
 
 To create a new task consuming the event stream, create a file from this template:
 ```ts
-import {Route} from "../route";
+import {Route} from "./app";
 
 export default class Task extends Route {
+    readonly name = "task" 
+        
 	async init() {
 		super.init();
 		this.log('[S] Started');
@@ -29,6 +31,6 @@ export default class Task extends Route {
 }
 ```
 
-and register it in `routes.json`.
+and register it in `main.ts`.
 
 Run `npm restart` on the toolforge host for any code changes to take effect. This automatically takes place through the GitHub Action workflow whenever the pulled commits have edits to any file whose name including path contains "eventstream". 
