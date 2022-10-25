@@ -12,7 +12,7 @@ export function registerRoutes(app: express.Router) {
 	app.use('/', indexRouter);
 	app.use('/logs', logsRouter);
 	app.use('/logs.php', logsRouter); // support old URLs from the time webservice was in php
-	// app.use('/database-report', dbReportRouter);
+	app.use('/database-report', dbReportRouter);
 	app.use('/gans', gansRouter);
 	app.use('/summary', summaryRouter);
 	app.use('/articlesearch', articleSearchRouter);
