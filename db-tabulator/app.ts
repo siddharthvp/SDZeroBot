@@ -1,7 +1,7 @@
 import { argv, bot, emailOnError, log, mwn, TextExtractor } from "../botbase";
 import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
-import { arrayChunk, lowerFirst, readFile, writeFile } from "../utils";
+import { arrayChunk, createLogStream, lowerFirst, readFile, writeFile } from "../utils";
 import { NS_CATEGORY, NS_FILE } from "../namespaces";
 import { MwnDate } from "../../mwn/build/date";
 import { formatSummary } from "../reports/commons";
@@ -46,7 +46,7 @@ function getQueriesFromText(text: string, title: string): Query[] {
 		log(`[E] Failed to find template on ${title}`);
 		return [];
 	}
-	return templates.map(template => new Query(template, title));
+	return templates.map((template, idx) => new Query(template, title, idx + 1));
 }
 
 let lastEditsData: Record<string, MwnDate>;
@@ -89,9 +89,8 @@ export async function fetchQueriesForPage(page: string): Promise<Query[]> {
 // All queries are on same page. Processing is done sequentially
 // to avoid edit-conflicting with self.
 export async function processQueriesForPage(queries: Query[]) {
-	let index = 0;
 	for (let query of queries) {
-		if (++index !== 1) log(`[+] Processing query ${index} on ${query.page}`);
+		if (query.idx !== 1) log(`[+] Processing query ${query.idx} on ${query.page}`);
 		await query.process().catch(() => {});
 	}
 }
@@ -101,6 +100,8 @@ export async function checkShutoff() {
 	return text?.trim();
 }
 
+const queriesLog = createLogStream('queries');
+
 export class Query {
 
 	/// Step 1. Parse the query
@@ -108,7 +109,12 @@ export class Query {
 	/// Step 3. Format the result
 	/// Step 4. Save the page
 
+	/** Page on which the query exists */
 	page: string;
+
+	/** Index of the query on the page (1 if only one query on the page) */
+	idx: number;
+
 	template: Template;
 	config: {
 		sql?: string
@@ -123,9 +129,14 @@ export class Query {
 	warnings: string[] = [];
 	numPages: number;
 
-	constructor(template: Template, page: string) {
+	constructor(template: Template, page: string, idxOnPage: number) {
 		this.page = page;
 		this.template = template;
+		this.idx = idxOnPage;
+	}
+
+	toString() {
+		return this.page + (this.idx !== 1 ? ` (#${this.idx})` : '');
 	}
 
 	async process() {
@@ -136,7 +147,7 @@ export class Query {
 			await this.save(resultText);
 		} catch (err) {
 			if (err instanceof HandledError) return;
-			emailOnError(err, 'quarry2wp');
+			emailOnError(err, 'db-tabulator');
 			throw err; // propagate error
 		}
 	}
@@ -158,11 +169,11 @@ export class Query {
 		if (process.env.CRON) {
 			let interval = parseInt(this.getTemplateValue('interval'));
 			if (isNaN(interval)) {
-				log(`[+] Skipping ${this.page} as periodic updates are not configured`);
+				log(`[+] Skipping ${this} as periodic updates are not configured`);
 				throw new HandledError();
 			}
 			if (!Query.checkIfUpdateDue(lastEditsData[this.page], interval)) {
-				log(`[+] Skipping ${this.page} as update is not due.`);
+				log(`[+] Skipping ${this} as update is not due.`);
 				throw new HandledError();
 			}
 		}
@@ -185,7 +196,7 @@ export class Query {
 		this.config.comments = this.getTemplateValue('comments')
 			?.split(',')
 			.map(e => parseInt(e.trim()))
-			.filter(e => !isNaN(e))|| [];
+			.filter(e => !isNaN(e)) || [];
 
 		this.config.excerpts = this.getTemplateValue('excerpts')
 			?.split(',')
@@ -211,7 +222,7 @@ export class Query {
 		this.config.removeUnderscores = this.getTemplateValue('remove_underscores')
 			?.split(',')
 			.map(num => parseInt(num.trim()))
-			.filter(e => !isNaN(e));
+			.filter(e => !isNaN(e)) || [];
 
 		this.config.pagination = parseInt(this.getTemplateValue('pagination'));
 		if (isNaN(this.config.pagination)) {
@@ -225,6 +236,7 @@ export class Query {
 
 	async runQuery() {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.config.sql.trim()}`;
+		queriesLog(`Page: [[${this.page}]], context: ${getContext()}, query: ${query}`);
 		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
 			log(`[+] ${this.page}: Took ${timeTaken} seconds`);
 			return queryResult;
@@ -410,7 +422,7 @@ export class Query {
 
 		// Last step: changes column numbers
 		this.config.hiddenColumns.sort().forEach((columnIdx, idx) => {
-			// columnIdx - idx because column numebering changes when one is removed
+			// columnIdx - idx because column numbering changes when one is removed
 			result = this.removeColumn(result, columnIdx - idx);
 		});
 
@@ -502,7 +514,8 @@ export class Query {
 				let newText = this.insertResultIntoPageText(text, firstPageResult);
 				return {
 					text: newText,
-					summary: isError ? 'Encountered error in database report update' : 'Updating database report'
+					summary: (isError ? 'Encountered error in database report update' : 'Updating database report') +
+						(process.env.WEB ? ' - web triggered' : '')
 				};
 			});
 		} catch (err) {
@@ -571,3 +584,9 @@ export class Query {
 
 // hacky way to prevent further execution in process(), but not actually report as error
 class HandledError extends Error {}
+
+function getContext() {
+	if (process.env.CRON) return 'cron';
+	if (process.env.WEB) return 'web';
+	return 'eventstream';
+}
