@@ -566,7 +566,7 @@ export class Query {
 	}
 
 	async saveWithError(message: string) {
-		await this.save(`{{error|[${message}]}}`, true);
+		await this.save(`{{error|1=[${message}]}}`, true);
 		throw new HandledError();
 	}
 
