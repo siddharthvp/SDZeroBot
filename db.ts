@@ -80,7 +80,7 @@ export abstract class db {
 		let startTime = process.hrtime.bigint();
 		let queryResult = await this.query(...args);
 		let endTime = process.hrtime.bigint();
-		let timeTaken = Math.round(Number(endTime - startTime)/1e7)/100; // in seconds, upto 2 decimals
+		let timeTaken = Number(endTime - startTime) / 1e9;
 		return [timeTaken, queryResult];
 	}
 

@@ -4,6 +4,8 @@ import { streamWithRoutes } from "./app";
 log(`[S] Started`);
 process.chdir(__dirname);
 
+process.env.EVENTSTREAM_ROUTER = 'true';
+
 import g13Watch from "../reports/g13-watch/eventstream-watch";
 import gans from "../most-gans/eventstream-updater";
 import botActivityMonitor from "../bot-monitor/eventstream-trigger";

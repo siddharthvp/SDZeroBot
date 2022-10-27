@@ -65,7 +65,7 @@ export async function processQueries(allQueries: Record<string, Query[]>) {
 		FROM page 
 		JOIN categorylinks ON cl_from = page_id AND cl_to = ?
 	`, [BOT_NAME, SUBSCRIPTIONS_CATEGORY.replace(/ /g, '_')]);
-	log(`[i] Retrieved last edits data. DB query took ${timeTaken} seconds.`);
+	log(`[i] Retrieved last edits data. DB query took ${timeTaken.toFixed(2)} seconds.`);
 
 	lastEditsData = Object.fromEntries(lastEditsDb.map((row) => [
 		new bot.page(row.page_title as string, row.page_namespace as number).toText(),
@@ -242,7 +242,7 @@ export class Query {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.config.sql.trim()}`;
 		queriesLog(`Page: [[${this.page}]], context: ${this.context}, query: ${query}`);
 		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
-			log(`[+] ${this}: Took ${timeTaken} seconds`);
+			log(`[+] ${this}: Took ${timeTaken.toFixed(2)} seconds`);
 			return queryResult;
 		}).catch(async (err: SQLError) => {
 			if (err.sqlMessage) {
@@ -521,7 +521,8 @@ export class Query {
 					summary: (isError ? 'Encountered error in updating database report' : 'Updating database report') + (
 						this.context === 'web' ? ': web triggered' :
 							this.context === 'cron' ? ': periodic update' :
-								': new transclusion'
+								this.context === 'eventstream' ? ': new transclusion' :
+									'manual'
 					)
 				};
 			});
@@ -595,5 +596,6 @@ class HandledError extends Error {}
 function getContext() {
 	if (process.env.CRON) return 'cron';
 	if (process.env.WEB) return 'web';
-	return 'eventstream';
+	if (process.env.EVENTSTREAM_ROUTER) return 'eventstream';
+	return 'manual';
 }
