@@ -100,7 +100,7 @@ export async function checkShutoff() {
 	return text?.trim();
 }
 
-const queriesLog = createLogStream('queries');
+const queriesLog = createLogStream('queries.log');
 
 export class Query {
 
@@ -128,11 +128,13 @@ export class Query {
 	} = {};
 	warnings: string[] = [];
 	numPages: number;
+	context: string;
 
 	constructor(template: Template, page: string, idxOnPage: number) {
 		this.page = page;
 		this.template = template;
 		this.idx = idxOnPage;
+		this.context = getContext();
 	}
 
 	toString() {
@@ -166,7 +168,7 @@ export class Query {
 
 	// Errors in configs are reported to user through [[Module:Database report]] in Lua
 	parseQuery() {
-		if (process.env.CRON) {
+		if (this.context === 'cron') {
 			let interval = parseInt(this.getTemplateValue('interval'));
 			if (isNaN(interval)) {
 				log(`[+] Skipping ${this} as periodic updates are not configured`);
@@ -178,9 +180,8 @@ export class Query {
 			}
 		}
 
-		// remove semicolons to disallow multiple SQL statements used together
+		// Use of semicolons for multiple statements will be flagged as error at query runtime
 		this.config.sql = this.getTemplateValue('sql')
-			.replace(/;/g, '')
 			// Allow pipes to be written as {{!}}
 			.replace(/\{\{!\}\}/g, '|');
 
@@ -239,9 +240,9 @@ export class Query {
 
 	async runQuery() {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.config.sql.trim()}`;
-		queriesLog(`Page: [[${this.page}]], context: ${getContext()}, query: ${query}`);
+		queriesLog(`Page: [[${this.page}]], context: ${this.context}, query: ${query}`);
 		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
-			log(`[+] ${this.page}: Took ${timeTaken} seconds`);
+			log(`[+] ${this}: Took ${timeTaken} seconds`);
 			return queryResult;
 		}).catch(async (err: SQLError) => {
 			if (err.sqlMessage) {
@@ -517,8 +518,11 @@ export class Query {
 				let newText = this.insertResultIntoPageText(text, firstPageResult);
 				return {
 					text: newText,
-					summary: (isError ? 'Encountered error in database report update' : 'Updating database report') +
-						(process.env.WEB ? ' - web triggered' : '')
+					summary: (isError ? 'Encountered error in updating database report' : 'Updating database report') + (
+						this.context === 'web' ? ': web triggered' :
+							this.context === 'cron' ? ': periodic update' :
+								': new transclusion'
+					)
 				};
 			});
 		} catch (err) {
