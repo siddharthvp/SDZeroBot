@@ -179,7 +179,10 @@ export class Query {
 		}
 
 		// remove semicolons to disallow multiple SQL statements used together
-		this.config.sql = this.getTemplateValue('sql').replace(/;/g, '');
+		this.config.sql = this.getTemplateValue('sql')
+			.replace(/;/g, '')
+			// Allow pipes to be written as {{!}}
+			.replace(/\{\{!\}\}/g, '|');
 
 		this.config.wikilinks = this.getTemplateValue('wikilinks')
 			?.split(',')
