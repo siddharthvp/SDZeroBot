@@ -80,7 +80,7 @@ export abstract class db {
 		let startTime = process.hrtime.bigint();
 		let queryResult = await this.query(...args);
 		let endTime = process.hrtime.bigint();
-		let timeTaken = parseInt(String(endTime - startTime))/1e9;
+		let timeTaken = Math.round(Number(endTime - startTime)/1e7)/100; // in seconds, upto 2 decimals
 		return [timeTaken, queryResult];
 	}
 
@@ -93,6 +93,14 @@ export abstract class db {
 		return await conn.execute(...args).finally(() => {
 			conn.release();
 		});
+	}
+
+	async transaction(func: (conn: mysql.PoolConnection) => Promise<void>) {
+		let conn = await this.getConnection();
+		await conn.beginTransaction();
+		await func(conn);
+		await conn.commit();
+		conn.release();
 	}
 
 	/**
