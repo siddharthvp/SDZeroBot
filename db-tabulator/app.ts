@@ -81,7 +81,7 @@ export async function processQueries(allQueries: Record<string, Query[]>) {
 export async function fetchQueriesForPage(page: string): Promise<Query[]> {
 	let text = (await bot.read(page))?.revisions?.[0]?.content;
 	if (!text) {
-		return null;
+		return [];
 	}
 	return getQueriesFromText(text, page);
 }
