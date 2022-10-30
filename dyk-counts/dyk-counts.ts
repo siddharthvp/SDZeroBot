@@ -6,14 +6,17 @@ import { ENWIKI_DB_HOST, enwikidb } from "../db";
 class DykCountsTask extends Route {
     name = 'task';
 
+	db: enwikidb;
+
 	counts: Record<string, number> = {};
 	unflushedChanges: Record<string, string[]> = {};
+	lastFlushTime: number = 0;
+	isFlushScheduled = false;
+
 	readonly page = 'User:SDZeroBot/DYK_nomination_counts.json';
 	readonly minCountToSave = 5;
-	readonly flushInterval = 5000;
+	readonly minFlushInterval = 5000;
 	readonly dbRefreshInterval = 86400000;
-
-	db: enwikidb;
 
 	async init() {
 		super.init();
@@ -26,7 +29,6 @@ class DykCountsTask extends Route {
 		await bot.getTokensAndSiteInfo();
 
 		await this.refreshCountsFromDb();
-		setInterval(() => this.flushCounts(), this.flushInterval);
 		setInterval(() => this.refreshCountsFromDb(), this.dbRefreshInterval);
 	}
 
@@ -54,6 +56,9 @@ class DykCountsTask extends Route {
 	}
 
 	async flushCounts() {
+		this.lastFlushTime = Date.now();
+		this.isFlushScheduled = false;
+
 		let changesToFlush = Object.entries(this.unflushedChanges)
 			.filter(([user, entries]) => this.counts[user] >= 5)
 			.map(([user, entries]) => {
@@ -87,6 +92,16 @@ class DykCountsTask extends Route {
 		this.counts[user] = (this.counts[user] || 0) + 1;
 		this.unflushedChanges[user] = (this.unflushedChanges[user] || []).concat(title);
 		this.log(`[i] Crediting "${user}" for [[${data.title}]]`);
+
+		if (Date.now() - this.lastFlushTime > this.minFlushInterval) {
+			this.flushCounts();
+		} else {
+			if (!this.isFlushScheduled) {
+				this.isFlushScheduled = true;
+				this.log(`[D] Scheduling flush for ${this.minFlushInterval/1e3} seconds from now`);
+				setTimeout(() => this.flushCounts(), this.minFlushInterval);
+			}
+		}
 	}
 }
 
