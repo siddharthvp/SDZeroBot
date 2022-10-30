@@ -13,7 +13,7 @@ export async function processArticle(article: string) {
 	let talkpage = new bot.page(new bot.page(article).getTalkPage());
 	let talkpageedits = talkpage.historyGen(
 		['content', 'user', 'timestamp'],
-		{ rvsection: '0', rvlimit: 100 } // one-pass
+		{ rvsection: '0', rvlimit: 100, rvslots: 'main' } // 100 revs in one API call
 	);
 
 	// Parse the signature in the template not more than once

@@ -22,6 +22,7 @@ process.chdir(__dirname);
 			"prop": "revisions|description",
 			"generator": "categorymembers",
 			"rvprop": "ids|content",
+			"rvslots": "main",
 			"gcmtitle": "Category:Articles for deletion",
 			"gcmnamespace": "0",
 			"gcmtype": "page",
@@ -74,7 +75,8 @@ process.chdir(__dirname);
 		gcmlimit: '500',
 		gcmtype: 'page',
 		prop: 'revisions',
-		rvprop: 'content'
+		rvprop: 'content',
+		rvslots: 'main',
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(pg => {
