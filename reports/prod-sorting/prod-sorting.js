@@ -21,7 +21,6 @@ process.chdir(__dirname);
 			"prop": "revisions|description",
 			"generator": "categorymembers",
 			"rvprop": "ids|content",
-			"rvslots": "main",
 			"gcmtitle": "Category:All_articles_proposed_for_deletion",
 			"gcmtype": "page",
 			"gcmlimit": "500"

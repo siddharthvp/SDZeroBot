@@ -26,7 +26,6 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		"prop": "revisions|description",
 		"rvprop": "ids|content",
 		"rvsection": '0',
-		"rvslots": "main",
 		"titles": articles
 	})) {
 		log(`[+] Got a page of the API response for article texts and descriptions`);
@@ -67,7 +66,6 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		"prop": "revisions",
 		"rvprop": "content",
 		"rvsection": "0",
-		"rvslots": "main",
 		"titles": talkpages,
 	})) {
 		log(`[+] Got a page of the API response for talk page texts`);
