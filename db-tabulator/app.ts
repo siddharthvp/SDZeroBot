@@ -459,7 +459,7 @@ export class Query {
 
 		if (row_template) {
 			for (let row of result) {
-				tableText += '{{' + row_template + Object.values(row).map((val, idx) => `|${idx + 1}=` + val) + '}}\n';
+				tableText += '{{' + row_template + Object.values(row).map((val, idx) => `|${idx + 1}=` + val).join('') + '}}\n';
 			}
 			if (!skip_table) {
 				tableText += '|}'; // complete the table syntax
