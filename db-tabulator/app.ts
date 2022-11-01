@@ -2,7 +2,7 @@ import { argv, bot, emailOnError, log, mwn, TextExtractor } from "../botbase";
 import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
 import { arrayChunk, createLogStream, lowerFirst, readFile, writeFile } from "../utils";
-import { NS_CATEGORY, NS_FILE } from "../namespaces";
+import {NS_CATEGORY, NS_FILE, NS_MAIN} from "../namespaces";
 import { MwnDate } from "../../mwn/build/date";
 import { formatSummary } from "../reports/commons";
 
@@ -394,7 +394,8 @@ export class Query {
 					// title.getNamespaceId() need not be same as namespace passed to new bot.title
 					let colon = [NS_CATEGORY, NS_FILE].includes(title.getNamespaceId()) ? ':' : '';
 					let pageName = title.toText();
-					return showNamespace ? `[[${colon}${pageName}]]` : `[[${colon}${pageName}|${value.replace(/_/g, ' ')}]]`;
+					return (showNamespace || title.getNamespaceId() === NS_MAIN) ?
+						`[[${colon}${pageName}]]` : `[[${colon}${pageName}|${value.replace(/_/g, ' ')}]]`;
 				} catch (e) {
 					return value.replace(/_/g, ' ');
 				}
