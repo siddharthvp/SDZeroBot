@@ -56,8 +56,9 @@ export class AuthManager {
 
 export const bot = new mwn({
     apiUrl: 'https://en.wikipedia.org/w/api.php',
+    ...AuthManager.get('SDZeroBot:oauth2'),
     ...AuthManager.get('SDZeroBot:bp1'),
-    OAuthCredentials: AuthManager.get('SDZeroBot:oauth1'),
+    ...AuthManager.get('SDZeroBot:oauth1'),
     defaultParams: {
         assert: 'bot'
     },
