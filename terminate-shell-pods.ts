@@ -1,4 +1,4 @@
-import {bot, log} from "./botbase";
+import {bot, emailOnError, log} from "./botbase";
 import {KubeConfig, CoreV1Api} from "@kubernetes/client-node";
 
 (async function () {
@@ -16,7 +16,7 @@ import {KubeConfig, CoreV1Api} from "@kubernetes/client-node";
             await k8sApi.deleteNamespacedPod(podName, namespace);
         }
     }
-})();
+})().catch(err => emailOnError(err, 'terminate-shell-pods'));
 
 function isStale(date: Date): boolean {
     return new bot.date().subtract(2, 'hours').isAfter(date);

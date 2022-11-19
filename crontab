@@ -90,4 +90,4 @@
 8   16  *   *   *  jsub -quiet -N gans-list     -mem 900m   ~/SDZeroBot/job most-gans/gans-lister.js
 0   3   1   *   *  jsub -quiet -N gans-users    -mem 1g     ~/SDZeroBot/job most-gans/update-usernames.js
 
-0   4   *   *   *  jsub -quiet -N shells        -mem 400m   ~/SDZeroBot/terminate-shell-pods.js
+0   4   *   *   *  jsub -quiet -N shells        -mem 400m   ~/SDZeroBot/job terminate-shell-pods.js
