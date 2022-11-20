@@ -123,7 +123,8 @@ export class Query {
 
 	/** Configurations parsed from the template */
 	config: {
-		sql?: string
+		sql?: string;
+		outputPage?: string;
 		wikilinks?: Array<{columnIndex: number, namespace: string, showNamespace: boolean}>;
 		excerpts?: Array<{srcIndex: number, destIndex: number, namespace: string, charLimit: number, charHardLimit: number}>;
 		comments?: number[];
@@ -247,6 +248,15 @@ export class Query {
 		this.config.maxPages = Math.min(MAX_SUBPAGES,
 			this.getTemplateValue('max_pages') ? parseInt(this.getTemplateValue('max_pages')) : 5
 		);
+
+		let outputPage = this.getTemplateValue('output_page');
+		if (outputPage && isFinite(this.config.pagination)) {
+			let thisTitle = new bot.title(this.page);
+			let outputTitle = new bot.title(this.config.outputPage);
+			if (outputTitle.toText().startsWith(thisTitle.toText() + '/')) {
+				this.config.outputPage = outputPage;
+			}
+		}
 
 	}
 
@@ -526,7 +536,8 @@ export class Query {
 			);
 			return;
 		}
-		let page = new bot.page(this.page);
+		let outputPage = this.config.outputPage || this.page;
+		let page = new bot.page(outputPage);
 		let firstPageResult = Array.isArray(queryResult) ? queryResult[0] : queryResult;
 		try {
 			await page.edit(rev => {
@@ -548,18 +559,18 @@ export class Query {
 			}
 			// In case of errors like `contenttoobig` we can still edit the page
 			// to add the error message, but not in case of errors like protectedpage
-			log(`[E] Couldn't save to ${this.page} due to error ${err.code}`);
+			log(`[E] Couldn't save to ${outputPage} due to error ${err.code}`);
 			log(err);
 			if (err.code === 'protectedpage') {
 				throw err;
 			}
 			return this.saveWithError(`Error while saving report: ${err.message}`);
 		}
-		if (Array.isArray(queryResult)) {
+		if (Array.isArray(queryResult)) { // paginated result (output_page is not applicable in this case)
 			for (let [idx, resultText] of Object.entries(queryResult)) {
 				let pageNumber = parseInt(idx) + 1;
 				if (pageNumber ===  1) continue; // already saved above
-				let subpage = new bot.page(this.page + '/' + pageNumber);
+				let subpage = new bot.page(outputPage + '/' + pageNumber);
 				await subpage.save(
 					`{{Database report/subpage|page=${pageNumber}|num_pages=${this.numPages}}}\n` +
 					resultText,
@@ -567,7 +578,7 @@ export class Query {
 				);
 			}
 			for (let i = this.numPages + 1; i <= MAX_SUBPAGES; i++) {
-				let subpage = new bot.page(this.page + '/' + i);
+				let subpage = new bot.page(outputPage + '/' + i);
 				let apiPage = await bot.read(subpage.toText());
 				if (apiPage.missing) {
 					break;
@@ -587,6 +598,9 @@ export class Query {
 	}
 
 	insertResultIntoPageText(text: string, queryResult: string) {
+		if (this.config.outputPage) {
+			return queryResult;
+		}
 		// Does not support the case of two template usages with very same wikitext
 		let beginTemplateStartIdx = text.indexOf(this.template.wikitext);
 		if (beginTemplateStartIdx === -1) {
