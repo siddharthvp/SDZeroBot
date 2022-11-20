@@ -510,8 +510,8 @@ export class Query {
 				count: result.length,
 				page: pageNumber && String(pageNumber),
 				num_pages: pageNumber && String(this.numPages),
-				query_runtime: String(this.queryRuntime),
-				last_updated: new bot.date().toISOString(),
+				query_runtime: this.queryRuntime,
+				last_updated: new bot.date().format('D MMMM YYYY HH:mm') + ' (UTC)',
 			});
 	}
 
