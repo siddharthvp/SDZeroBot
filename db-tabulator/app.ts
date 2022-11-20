@@ -115,7 +115,13 @@ export class Query {
 	/** Index of the query on the page (1 if only one query on the page) */
 	idx: number;
 
+	/** Time taken to run the SQL, formatted to 2 decimal places */
+	queryRuntime: string;
+
+	/** Represents the {{database report}} template placed on the page */
 	template: Template;
+
+	/** Configurations parsed from the template */
 	config: {
 		sql?: string
 		wikilinks?: Array<{columnIndex: number, namespace: string, showNamespace: boolean}>;
@@ -126,8 +132,14 @@ export class Query {
 		removeUnderscores?: number[];
 		hiddenColumns?: number[];
 	} = {};
+
+	/** Warnings generated while template parsing or result formatting, to be added to the page */
 	warnings: string[] = [];
+
+	/** Total number of pages in the report (for paginated queries) */
 	numPages: number;
+
+	/** Invocation mode */
 	context: string;
 
 	constructor(template: Template, page: string, idxOnPage: number) {
@@ -242,7 +254,8 @@ export class Query {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.config.sql.trim()}`;
 		queriesLog(`Page: [[${this.page}]], context: ${this.context}, query: ${query}`);
 		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
-			log(`[+] ${this}: Took ${timeTaken.toFixed(2)} seconds`);
+			this.queryRuntime = timeTaken.toFixed(2);
+			log(`[+] ${this}: Took ${this.queryRuntime} seconds`);
 			return queryResult;
 		}).catch(async (err: SQLError) => {
 			if (err.sqlMessage) {
@@ -316,7 +329,7 @@ export class Query {
 			if (excerpts[pg] !== undefined) {
 				return '<small>' + excerpts[pg] + '</small>';
 			} else {
-				log(`[W] no excerpt found for ${pg} while processing query on ${this.page}`);
+				log(`[W] no excerpt found for ${pg} while processing query ${this}`);
 				return '';
 			}
 		});
@@ -496,7 +509,8 @@ export class Query {
 			mwn.template('Database report/footer', {
 				count: result.length,
 				page: pageNumber && String(pageNumber),
-				num_pages: pageNumber && String(this.numPages)
+				num_pages: pageNumber && String(this.numPages),
+				query_runtime: String(this.queryRuntime)
 			});
 	}
 
@@ -566,7 +580,7 @@ export class Query {
 		}
 	}
 
-	async saveWithError(message: string) {
+	async saveWithError(message: string): Promise<never> {
 		await this.save(`{{error|1=[${message}]}}`, true);
 		throw new HandledError();
 	}
