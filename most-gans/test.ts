@@ -13,7 +13,8 @@ describe('most-gans', () => {
 		const testCases = [
 			['1896 Michigan Wolverines football team', 'Wizardman', '2010-12-21'],
 			['Fight for This Love', 'Lil-unique1', '2010-06-25'], // has rev-delled talkpage revs
-			['Norman Finkelstein', 'Giggy']
+			['Norman Finkelstein', 'Giggy'],
+			['Etchmiadzin Cathedral', 'Yerevantsi', '2013-12-27'], // user renamed between nomination and promotion
 		];
 		for (let [article, nomExpected, dateExpected] of testCases) {
 			const [nom, date] = await processArticle(article);

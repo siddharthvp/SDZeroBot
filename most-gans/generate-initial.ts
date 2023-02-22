@@ -1,7 +1,7 @@
 import { bot, log } from '../botbase';
 import { closeTunnels, createLocalSSHTunnel } from "../utils";
 import { TOOLS_DB_HOST } from "../db";
-import {processArticle, TABLE, db, runManualEdits} from "./model";
+import { processArticle, TABLE, db, runManualEdits } from "./model";
 import { exec } from "child_process";
 
 bot.setOptions({

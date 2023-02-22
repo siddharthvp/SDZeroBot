@@ -4,7 +4,7 @@ import { createLogStream } from "../utils";
 import * as fs from "fs";
 
 export const db = new toolsdb('goodarticles_p');
-export const TABLE = 'nominators';
+export const TABLE = 'nominators2';
 
 const GANTemplateRegex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
 const GANTemplateNameRegex = /^GA ?(c(andidate)?|n(om(inee)?)?)$/i;
@@ -13,7 +13,7 @@ export async function processArticle(article: string) {
 	let talkpage = new bot.page(new bot.page(article).getTalkPage());
 	let talkpageedits = talkpage.historyGen(
 		['content', 'user', 'timestamp'],
-		{ rvsection: '0', rvlimit: 100 } // one-pass
+		{ rvsection: '0', rvlimit: 100, rvslots: 'main' } // one-pass
 	);
 
 	// Parse the signature in the template not more than once
@@ -24,10 +24,11 @@ export async function processArticle(article: string) {
 		GA_date = null, // promotion date
 		fallback_strategy = false;
 	for await (let rev of talkpageedits) {
+		let content = rev.slots.main.content;
 		if (!fallback_strategy) {
-			// `rev.content &&` to protect against revdel'd/suppressed revisions.
+			// `content &&` to protect against revdel'd/suppressed revisions.
 			// we just assume the hidden revisions don't have the GA template.
-			let template = rev.content && bot.wikitext.parseTemplates(rev.content, {
+			let template = content && bot.wikitext.parseTemplates(content, {
 				namePredicate: name => GANTemplateNameRegex.test(name)
 			})[0];
 			if (template) {
@@ -35,12 +36,11 @@ export async function processArticle(article: string) {
 				let nominatorSignature = template.getValue('nominator');
 				let nom = getUsernameFromSignature(nominatorSignature);
 				if (nom) {
-					// XXX: this is not strictly correct, to get the current username we should use the
-					// date at which the GAN template was added, but this uses the date of the rev preceding
-					// addition of GA template.
-					// Fails with [[Etchmiadzin Cathedral]] where it continues to attribute old username, as
-					// user was renamed between nomination and promotion.
-					nom = await getCurrentUsername(nom, rev.timestamp);
+					let date = new bot.date(template.getValue(1));
+					// If no date could be extracted from template, fallback to considering the rev timestamp
+					// (not strictly correct, we want the date at which the GAN template was added, not the date of the
+					// rev preceding addition of GA template)
+					nom = await getCurrentUsername(nom, date.isValid() ? date.toISOString() : rev.timestamp);
 					return addToDb(article, nom, GA_date);
 				} else {
 					log(`[W] Couldn't parse signature, will use fallback strategy. Sig: ${nominatorSignature}`);
@@ -51,7 +51,7 @@ export async function processArticle(article: string) {
 			}
 		} // no else
 		if (fallback_strategy) {
-			let GAN_template_present = GANTemplateRegex.test(rev.content);
+			let GAN_template_present = GANTemplateRegex.test(content);
 			if (GAN_template_present) {
 				GA_template_seen = true;
 				GA_user = rev.user;
