@@ -4,7 +4,7 @@ import { createLogStream } from "../utils";
 import * as fs from "fs";
 
 export const db = new toolsdb('goodarticles_p');
-export const TABLE = 'nominators2';
+export const TABLE = 'nominators';
 
 const GANTemplateRegex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
 const GANTemplateNameRegex = /^GA ?(c(andidate)?|n(om(inee)?)?)$/i;
