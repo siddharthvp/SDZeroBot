@@ -61,6 +61,8 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		new: 0
 	};
 
+	const GANTemplateNameRegex = /^GA ?(c(andidate)?|n(om(inee)?)?)$/i;
+
 	for await (let data of bot.massQueryGen({
 		"action": "query",
 		"prop": "revisions",
@@ -86,13 +88,13 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 				let wkt = new bot.wikitext(text);
 				let template = wkt.parseTemplates({
 					count: 1,
-					namePredicate: name => name === 'GA nominee'
+					namePredicate: name => GANTemplateNameRegex.test(name)
 				})[0];
 
 				if (!template) {
 					template = wkt.parseTemplates({
 						recursive: true
-					}).find(t => t.name === 'GA nominee');
+					}).find(t => GANTemplateNameRegex.test(t.name));
 				}
 				return template;
 			};
