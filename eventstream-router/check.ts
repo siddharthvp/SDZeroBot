@@ -36,12 +36,9 @@ for (const [job, dir] of Object.entries(streamJobs)) {
 		process.chdir(mapPath(dir));
 		exec('npm restart', (error, stdout, stderr) => {
 			if (error) {
-				emailOnError(error, `${job}-restart`);
-			}
-			if (stderr) {
-				let err = new Error('npm restart raised an error');
-				err.stack = stderr;
-				emailOnError(err, `${job}-restart`);
+				let e = new Error(`npm restart raised an error: ${error.message}\nstderr: ${stderr}`);
+				e.stack = error.stack;
+				emailOnError(e, `${job}-restart`);
 			}
 		});
 	}
