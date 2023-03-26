@@ -3,7 +3,7 @@ import * as multer from 'multer';
 import {mwn} from "../../../mwn";
 
 const router = express.Router();
-const upload = multer()
+const upload = multer();
 
 // Handles multipart/form-data requests
 router.post('/savepage', upload.none(), async (req, res) => {
@@ -16,6 +16,11 @@ router.post('/savepage', upload.none(), async (req, res) => {
             OAuth2AccessToken: req.body.oauth2Token,
             userAgent: 'gitsync ([[en:User:SD0001]])'
         })
+        if (new client.title(req.body.page).namespace === 0) {
+            return res.status(400).contentType('json').send({
+                error: 'Aborting edit to target page as it is in main namespace'
+            })
+        }
         const saveResponse = await client.save(
             req.body.page,
             req.body.content,
