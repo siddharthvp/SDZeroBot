@@ -9,8 +9,8 @@ export { mysql };
 import type { MwnDate } from "../mwn";
 import { onToolforge } from "./utils";
 
-export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.eqiad.wmflabs';
-export const TOOLS_DB_HOST = 'tools.db.svc.eqiad.wmflabs';
+export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.wikimedia.cloud';
+export const TOOLS_DB_HOST = 'tools.db.svc.wikimedia.cloud';
 
 export abstract class db {
 	pool: mysql.Pool;
