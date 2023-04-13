@@ -141,6 +141,8 @@ export default class TextExtractor {
 			// these are just bad
 			.replace(/__[A-Z]+__/g, '')
 			// Openings of any unclosed ref tags
-			.replace(/<ref[^<]*?(>|(?=\n))/gi, '');
+			.replace(/<ref[^<]*?(>|(?=\n))/gi, '')
+			// remove categories added via {{post-nomials}}
+			.replace(/(\|country=[A-Z]{3})-cats/, '$1');
 	}
 }
