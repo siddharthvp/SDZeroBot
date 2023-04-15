@@ -143,6 +143,6 @@ export default class TextExtractor {
 			// Openings of any unclosed ref tags
 			.replace(/<ref[^<]*?(>|(?=\n))/gi, '')
 			// remove categories added via {{post-nomials}}
-			.replace(/(\|country=[A-Z]{3})-cats/, '$1');
+			.replace(/(\|country=[A-Z]{3})-cats/g, '$1');
 	}
 }
