@@ -14,13 +14,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: garygrossgarten/github-action-ssh@2b10f41b5a33808f6d24eafd253296766308b7c4
+      - uses: actions/checkout@v3
+      - uses: garygrossgarten/github-action-ssh@915e492551885a89131e21d85f2e043c96abff80
         with:
           command: >-
             become sdzerobot bash -c '
               cd /data/project/sdzerobot/mwn || exit 1;
-              if [[ "$(git pull | grep -c "Already up to date")" -eq 0 ]]; then
+              if [[ "$(git pull --ff-only | grep -c "Already up to date")" -eq 0 ]]; then
                 if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
                   echo "Running npm install for mwn ...";
                   npm install || exit 1;
@@ -31,7 +31,7 @@ jobs:
               cd /data/project/sdzerobot/SDZeroBot || exit 1;
               echo "Pulling SDZeroBot ...";
               git checkout master || exit 1;
-              git pull || exit 1;
+              git pull --ff-only || exit 1;
               if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
                 echo "Running npm install for SDZeroBot ...";
                 npm install || exit 1;

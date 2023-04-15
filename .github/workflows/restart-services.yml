@@ -7,8 +7,8 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: garygrossgarten/github-action-ssh@2b10f41b5a33808f6d24eafd253296766308b7c4
+      - uses: actions/checkout@v3
+      - uses: garygrossgarten/github-action-ssh@915e492551885a89131e21d85f2e043c96abff80
         with:
           command: >-
             become sdzerobot bash -c '
