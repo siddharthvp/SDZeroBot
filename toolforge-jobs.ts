@@ -13,13 +13,21 @@ const toolforgeJobsCfgPath = '~/toolforge-jobs-framework-cli.cfg';
  * not mounted on the container.
  */
 export function toolforgeJobs(...args: string[]) {
-    exec(mapPath(`${pythonInterpreterPath} ${toolforgeJobsScriptPath} --cfg ${toolforgeJobsCfgPath} ${args.join(' ')}`), function (err, stdout, stderr) {
-        if (stdout) {
-            console.log(stdout);
-        }
-        if (stderr) {
-            log(`[E] Error in toolforge-jobs`);
-            console.log(stderr);
-        }
+    return new Promise<void>((resolve, reject) => {
+        exec(mapPath(`${pythonInterpreterPath} ${toolforgeJobsScriptPath} --cfg ${toolforgeJobsCfgPath} ${args.join(' ')}`), function (err, stdout, stderr) {
+            if (stdout) {
+                log(stdout);
+            }
+            if (stderr) {
+                log(`[E] Stderr from toolforge-jobs ${args.join(' ')}`);
+                log(stderr);
+            }
+            if (err) {
+                log(err);
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
     });
 }
