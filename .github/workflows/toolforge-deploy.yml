@@ -19,22 +19,23 @@ jobs:
         with:
           command: >-
             become sdzerobot bash -c '
-              cd /data/project/sdzerobot/mwn || exit 1;
+              set -eo pipefail;
+              cd /data/project/sdzerobot/mwn;
               if [[ "$(git pull --ff-only | grep -c "Already up to date")" -eq 0 ]]; then
                 if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
                   echo "Running npm install for mwn ...";
-                  npm install || exit 1;
+                  npm install;
                 fi;
                 echo "Building mwn ...";
                 npm run build;
               fi;
-              cd /data/project/sdzerobot/SDZeroBot || exit 1;
+              cd /data/project/sdzerobot/SDZeroBot;
               echo "Pulling SDZeroBot ...";
-              git checkout master || exit 1;
-              git pull --ff-only || exit 1;
+              git checkout master;
+              git pull --ff-only;
               if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
                 echo "Running npm install for SDZeroBot ...";
-                npm install || exit 1;
+                npm install;
               fi;
               echo "Building SDZeroBot ...";
               npm run tsc;
@@ -62,7 +63,7 @@ jobs:
                 echo "Syncing SDZeroBot/webservice with www/js ...";
                 cd /data/project/sdzerobot && rsync -avu --delete "SDZeroBot/webservice/" "www/js";
                 echo "Restarting SDZeroBot webservice ...";
-                cd /data/project/sdzerobot/www/js || exit 1;
+                cd /data/project/sdzerobot/www/js;
                 if [[ ($(grep "\.\." *.ts | grep -v SDZeroBot | grep -v -c mwn) -gt 0) || ($(grep "\.\.\/\.\." routes/*.ts | grep -v SDZeroBot | grep -v -c mwn) -gt 0) ]]; then
                   echo "Suspicious imports found in webservice!";
                   grep "\.\." *.ts | grep -v SDZeroBot;
