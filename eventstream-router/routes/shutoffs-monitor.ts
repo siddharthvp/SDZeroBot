@@ -1,6 +1,5 @@
 import {Route} from "../app";
-import {sendMail} from "../../email";
-import {bot} from "../../botbase";
+import {bot, sendMail} from "../../botbase";
 
 export default class ShutoffsMonitorTask extends Route {
     readonly name: string = 'shutoff-monitor';
