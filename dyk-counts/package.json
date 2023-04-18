@@ -1,6 +1,0 @@
-{
-  "scripts": {
-    "test": "node --require ts-node/register dyk-counts.ts",
-    "restart": "toolforge-jobs restart dyk-counts"
-  }
-}

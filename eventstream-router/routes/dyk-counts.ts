@@ -1,9 +1,9 @@
-import { bot } from "../botbase";
-import { Route, streamWithRoutes } from "../eventstream-router/app";
-import { createLocalSSHTunnel } from "../utils";
-import { ENWIKI_DB_HOST, enwikidb } from "../db";
+import { bot } from "../../botbase";
+import { Route } from "../app";
+import { createLocalSSHTunnel } from "../../utils";
+import { ENWIKI_DB_HOST, enwikidb } from "../../db";
 
-class DykCountsTask extends Route {
+export default class DykCountsTask extends Route {
     name = 'task';
 
 	db: enwikidb;
@@ -104,6 +104,3 @@ class DykCountsTask extends Route {
 		}
 	}
 }
-
-process.chdir(__dirname);
-streamWithRoutes([DykCountsTask]);

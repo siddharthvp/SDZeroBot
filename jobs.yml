@@ -1,6 +1,5 @@
 ---
-- {"continuous": true, "name": "stream", "command": "~/bin/node ~/SDZeroBot/eventstream-router/main.js", mem: "4Gi", "image": "tf-node16" }
-- {"continuous": true, "name": "dyk-counts", "command": "~/bin/node ~/SDZeroBot/dyk-counts/dyk-counts.js", mem: "2Gi", "image": "tf-node16" }
+- {"continuous": true, "name": "stream", "command": "~/bin/node ~/SDZeroBot/eventstream-router/main.js", mem: "3Gi", "image": "tf-node16" }
 #- {"schedule": "0 2 1,15 * *", "name": "job-mostimported", mem: "900Mi", "command": "~/SDZeroBot/job reports/most-imported-scripts/most-imported-scripts.js", "image": "tf-node16"}
 #- {"schedule": "0 2,10,18 * * *", "name": "job-afc", mem: "1Gi", "command": "~/SDZeroBot/job reports/afc-sorting/afc-sorting.js", "image": "tf-node16"}
 #- {"schedule": "15 2,10,18 * * *", "name": "job-pafc", mem: "1Gi", "command": "~/SDZeroBot/job reports/pending-afc.js", "image": "tf-node16"}
