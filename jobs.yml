@@ -13,7 +13,7 @@
 - {"schedule": "10 4 * * 1", "name": "job-g13-soon", mem: "1Gi", "command": "~/SDZeroBot/job reports/g13-soon.js", "image": "tf-node16"}
 - {"schedule": "0 0 * * *", "name": "job-declined", mem: "2Gi", "command": "~/SDZeroBot/job reports/declined-afcs.js", "image": "tf-node16"}
 - {"schedule": "0 0 * * *", "name": "job-g131week", mem: "2Gi", "command": "~/SDZeroBot/job reports/g13-1week.js", "image": "tf-node16"}
-- {"schedule": "0 0 * * *", "name": "job-g13-eliGi", mem: "1Gi", "command": "~/SDZeroBot/job reports/g13-eligible.js", "image": "tf-node16"}
+- {"schedule": "0 0 * * *", "name": "job-g13-elig", mem: "1Gi", "command": "~/SDZeroBot/job reports/g13-eligible.js", "image": "tf-node16"}
 - {"schedule": "5 0 * * 2", "name": "job-draft", mem: "2Gi", "command": "~/SDZeroBot/job reports/draftify-watch.js", "image": "tf-node16"}
 - {"schedule": "5 0 * * 3", "name": "job-pwatch", mem: "2Gi", "command": "~/SDZeroBot/job reports/prod-watch.js", "image": "tf-node16"}
 - {"schedule": "0 1 * * *", "name": "job-rwatch", mem: "2Gi", "command": "~/SDZeroBot/job reports/redirectify-watch.js", "image": "tf-node16"}
