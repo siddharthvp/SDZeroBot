@@ -3,4 +3,3 @@
 export CRON=true;
 cd /data/project/sdzerobot/SDZeroBot || exit 1;
 /data/project/sdzerobot/bin/node $@
-

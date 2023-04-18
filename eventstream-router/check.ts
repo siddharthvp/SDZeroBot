@@ -5,7 +5,8 @@
  */
 import {emailOnError} from '../botbase';
 import {mapPath} from "../utils";
-import {exec, execSync} from 'child_process';
+import {execSync} from 'child_process';
+import {restartDeployment} from "../k8s";
 
 const testRgx = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[i\] Reconnected/g;
 
@@ -34,12 +35,6 @@ for (const [job, dir] of Object.entries(streamJobs)) {
 		emailOnError(err, job);
 
 		process.chdir(mapPath(dir));
-		exec('npm restart', (error, stdout, stderr) => {
-			if (error) {
-				let e = new Error(`npm restart raised an error: ${error.message}\nstderr: ${stderr}`);
-				e.stack = error.stack;
-				emailOnError(e, `${job}-restart`);
-			}
-		});
+		restartDeployment(job).catch(err => emailOnError(err, `${job}-restart`));
 	}
 }

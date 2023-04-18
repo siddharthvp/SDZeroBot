@@ -2,7 +2,7 @@ import { bot, log } from '../botbase';
 import { closeTunnels, createLocalSSHTunnel } from "../utils";
 import { TOOLS_DB_HOST } from "../db";
 import { processArticle, TABLE, db, runManualEdits } from "./model";
-import { exec } from "child_process";
+import { restartDeployment } from "../k8s";
 
 bot.setOptions({
 	silent: true,
@@ -38,8 +38,8 @@ bot.setOptions({
 					  ) COLLATE 'utf8_unicode_ci'`);
 
 	// Restart the stream task, so that new GAs are processed
-	exec(`cd ${__dirname}/../eventstream-router; npm restart`, err => {
-		log(`[E] Failed to start stream task`);
+	restartDeployment('stream').catch(err => {
+		log(`[E] Failed to restart stream task`);
 		log(err);
 	});
 

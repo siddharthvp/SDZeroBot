@@ -1,5 +1,5 @@
-import { exec } from 'child_process';
 import { Route } from "../eventstream-router/app";
+import { invokeCronJob } from "../k8s";
 
 export default class botActivityMonitor extends Route {
 	name = "bot-activity-monitor";
@@ -15,8 +15,7 @@ export default class botActivityMonitor extends Route {
 	}
 
 	async worker(data) {
-		// run crontab command for bot-activity monitor
 		this.log(`[+] Triggering BAM run following config edit by ${data.user} at ${data.timestamp}`);
-		exec('jsub -quiet -N bot-monitor -mem 2g ~/bin/node ~/SDZeroBot/bot-monitor/main.js');
+		invokeCronJob('bot-monitor');
 	}
 }
