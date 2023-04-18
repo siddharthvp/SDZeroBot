@@ -4,7 +4,7 @@ import { createLocalSSHTunnel } from "../../utils";
 import { ENWIKI_DB_HOST, enwikidb } from "../../db";
 
 export default class DykCountsTask extends Route {
-    name = 'task';
+    name = 'dyk-counts';
 
 	db: enwikidb;
 
