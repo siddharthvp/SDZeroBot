@@ -26,4 +26,68 @@
 #
 
 
-# Everything migrated to k8s, see jobs.yml instead for list of jobs
+# m h  dom mon dow                name          memory      executable      file path
+0   2  1    *   *  jsub -quiet -N job-MIS       -mem 900m   ~/SDZeroBot/job reports/most-imported-scripts/most-imported-scripts.js
+0   2  15   *   *  jsub -quiet -N job-MIS       -mem 900m   ~/SDZeroBot/job reports/most-imported-scripts/most-imported-scripts.js
+
+0   2   *   *   *  jsub -quiet -N job-AFC       -mem 1g     ~/SDZeroBot/job reports/afc-sorting/afc-sorting.js
+0   10  *   *   *  jsub -quiet -N job-AFC       -mem 1g     ~/SDZeroBot/job reports/afc-sorting/afc-sorting.js
+0   18  *   *   *  jsub -quiet -N job-AFC       -mem 1g     ~/SDZeroBot/job reports/afc-sorting/afc-sorting.js
+
+15  2   *   *   *  jsub -quiet -N job-pafc       -mem 1g     ~/SDZeroBot/job reports/pending-afc.js
+15  10  *   *   *  jsub -quiet -N job-pafc       -mem 1g     ~/SDZeroBot/job reports/pending-afc.js
+15  18  *   *   *  jsub -quiet -N job-pafc       -mem 1g     ~/SDZeroBot/job reports/pending-afc.js
+
+0   1   *   *   *  jsub -quiet -N job-NPP       -mem 4g     ~/SDZeroBot/job reports/npp-sorting/npp-sorting.js
+0   13  *   *   *  jsub -quiet -N job-NPP       -mem 4g     ~/SDZeroBot/job reports/npp-sorting/npp-sorting.js
+
+30  0   *   *   *  jsub -quiet -N job-PROD      -mem 2g     ~/SDZeroBot/job reports/prod-sorting/prod-sorting.js
+30  4   *   *   *  jsub -quiet -N job-PROD      -mem 2g     ~/SDZeroBot/job reports/prod-sorting/prod-sorting.js
+30  8   *   *   *  jsub -quiet -N job-PROD      -mem 2g     ~/SDZeroBot/job reports/prod-sorting/prod-sorting.js
+30  12  *   *   *  jsub -quiet -N job-PROD      -mem 2g     ~/SDZeroBot/job reports/prod-sorting/prod-sorting.js
+30  16  *   *   *  jsub -quiet -N job-PROD      -mem 2g     ~/SDZeroBot/job reports/prod-sorting/prod-sorting.js
+30  20  *   *   *  jsub -quiet -N job-PROD      -mem 2g     ~/SDZeroBot/job reports/prod-sorting/prod-sorting.js
+
+30  1   *   *   *  jsub -quiet -N job-AFD       -mem 1g     ~/SDZeroBot/job reports/afd-sorting/afd-sorting.js
+30  5   *   *   *  jsub -quiet -N job-AFD       -mem 1g     ~/SDZeroBot/job reports/afd-sorting/afd-sorting.js
+30  9   *   *   *  jsub -quiet -N job-AFD       -mem 1g     ~/SDZeroBot/job reports/afd-sorting/afd-sorting.js
+30  13  *   *   *  jsub -quiet -N job-AFD       -mem 1g     ~/SDZeroBot/job reports/afd-sorting/afd-sorting.js
+30  17  *   *   *  jsub -quiet -N job-AFD       -mem 1g     ~/SDZeroBot/job reports/afd-sorting/afd-sorting.js
+30  21  *   *   *  jsub -quiet -N job-AFD       -mem 1g     ~/SDZeroBot/job reports/afd-sorting/afd-sorting.js
+
+0   1   *   *   *  jsub -quiet -N job-notifier  -mem 2g     ~/SDZeroBot/job afd-notifications/notifier.js
+
+0   0   *   *   *  jsub -quiet -N job-grid      -mem 2g     ~/SDZeroBot/job reports/grid-afd-prod.js
+
+0   5   *   *   *  jsub -quiet -N job-gan       -mem 2g     ~/SDZeroBot/job reports/gan-sorting.js
+
+10  4   *   *   1  jsub -quiet -N job-g13-soon  -mem 1g     ~/SDZeroBot/job reports/g13-soon.js
+
+0   0   *   *   *  jsub -quiet -N job-declined  -mem 2g     ~/SDZeroBot/job reports/declined-afcs.js
+
+0   0   *   *   *  jsub -quiet -N job-g131week  -mem 2g     ~/SDZeroBot/job reports/g13-1week.js
+
+0   0   *   *   *  jsub -quiet -N job-g13-elig  -mem 1g     ~/SDZeroBot/job reports/g13-eligible.js
+
+5   0   *   *   2  jsub -quiet -N job-draft     -mem 2g     ~/SDZeroBot/job reports/draftify-watch.js
+
+5   0   *   *   3  jsub -quiet -N job-pwatch    -mem 2g     ~/SDZeroBot/job reports/prod-watch.js
+
+0   1   *   *   *  jsub -quiet -N job-rwatch    -mem 2g     ~/SDZeroBot/job reports/redirectify-watch.js
+
+30  3   *   *   2  jsub -quiet -N job-peer      -mem 1g     ~/SDZeroBot/job reports/peer-review.js
+
+0   6   *   *   *  jsub -quiet -N job-unref     -mem 2g     ~/SDZeroBot/job reports/unreferenced-blps.js
+
+0   0   *   *   *  jsub -quiet -N job-g13watch  -mem 2g     ~/SDZeroBot/job reports/g13-watch/g13-watch.js
+
+15,45  *   *   *   *  jsub -quiet -N stream-check  -mem 2g   ~/SDZeroBot/job eventstream-router/check.js
+
+20  *   *   *   *  jsub -quiet -N bot-monitor   -mem 2g     ~/SDZeroBot/job bot-monitor/main.js
+
+25  4   *   *   *  jsub -quiet -N db-tabulator  -mem 4g     ~/SDZeroBot/job db-tabulator/main.js
+
+8   16  *   *   *  jsub -quiet -N gans-list     -mem 900m   ~/SDZeroBot/job most-gans/gans-lister.js
+0   3   1   *   *  jsub -quiet -N gans-users    -mem 1g     ~/SDZeroBot/job most-gans/update-entries.js
+
+0   4   *   *   *  jsub -quiet -N shells        -mem 400m   ~/SDZeroBot/job terminate-shell-pods.js
