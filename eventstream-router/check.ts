@@ -11,8 +11,7 @@ import {restartDeployment} from "../k8s";
 const testRgx = /\[(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\] \[i\] Reconnected/g;
 
 const streamJobs = {
-	'stream': '~/SDZeroBot/eventstream-router',
-	'dyk-counts': '~/SDZeroBot/dyk-counts'
+	'stream': '~/SDZeroBot/eventstream-router'
 };
 
 for (const [job, dir] of Object.entries(streamJobs)) {
