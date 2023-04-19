@@ -1,27 +1,27 @@
 ---
-- {"continuous": true, "name": "stream", "command": "~/bin/node ~/SDZeroBot/eventstream-router/main.js", mem: "3Gi", "image": "tf-node16" }
-#- {"schedule": "0 2 1,15 * *", "name": "job-mostimported", mem: "900Mi", "command": "~/SDZeroBot/job reports/most-imported-scripts/most-imported-scripts.js", "image": "tf-node16"}
-#- {"schedule": "0 2,10,18 * * *", "name": "job-afc", mem: "1Gi", "command": "~/SDZeroBot/job reports/afc-sorting/afc-sorting.js", "image": "tf-node16"}
-#- {"schedule": "15 2,10,18 * * *", "name": "job-pafc", mem: "1Gi", "command": "~/SDZeroBot/job reports/pending-afc.js", "image": "tf-node16"}
-#- {"schedule": "0 1,13 * * *", "name": "job-npp", mem: "4Gi", "command": "~/SDZeroBot/job reports/npp-sorting/npp-sorting.js", "image": "tf-node16"}
-#- {"schedule": "30 0,4,8,12,16,20 * * *", "name": "job-prod", mem: "2Gi", "command": "~/SDZeroBot/job reports/prod-sorting/prod-sorting.js", "image": "tf-node16"}
-#- {"schedule": "30 1,5,9,13,17,21 * * *", "name": "job-afd", mem: "1Gi", "command": "~/SDZeroBot/job reports/afd-sorting/afd-sorting.js", "image": "tf-node16"}
-#- {"schedule": "0 1 * * *", "name": "job-notifier", mem: "2Gi", "command": "~/SDZeroBot/job afd-notifications/notifier.js", "image": "tf-node16"}
-#- {"schedule": "0 0 * * *", "name": "job-grid", mem: "2Gi", "command": "~/SDZeroBot/job reports/grid-afd-prod.js", "image": "tf-node16"}
-#- {"schedule": "0 5 * * *", "name": "job-gan", mem: "2Gi", "command": "~/SDZeroBot/job reports/gan-sorting.js", "image": "tf-node16"}
-#- {"schedule": "10 4 * * 1", "name": "job-g13-soon", mem: "1Gi", "command": "~/SDZeroBot/job reports/g13-soon.js", "image": "tf-node16"}
-#- {"schedule": "0 0 * * *", "name": "job-declined", mem: "2Gi", "command": "~/SDZeroBot/job reports/declined-afcs.js", "image": "tf-node16"}
-#- {"schedule": "0 0 * * *", "name": "job-g131week", mem: "2Gi", "command": "~/SDZeroBot/job reports/g13-1week.js", "image": "tf-node16"}
-#- {"schedule": "0 0 * * *", "name": "job-g13-elig", mem: "1Gi", "command": "~/SDZeroBot/job reports/g13-eligible.js", "image": "tf-node16"}
-#- {"schedule": "5 0 * * 2", "name": "job-draft", mem: "2Gi", "command": "~/SDZeroBot/job reports/draftify-watch.js", "image": "tf-node16"}
-#- {"schedule": "5 0 * * 3", "name": "job-pwatch", mem: "2Gi", "command": "~/SDZeroBot/job reports/prod-watch.js", "image": "tf-node16"}
-#- {"schedule": "0 1 * * *", "name": "job-rwatch", mem: "2Gi", "command": "~/SDZeroBot/job reports/redirectify-watch.js", "image": "tf-node16"}
-#- {"schedule": "30 3 * * 2", "name": "job-peer", mem: "1Gi", "command": "~/SDZeroBot/job reports/peer-review.js", "image": "tf-node16"}
-#- {"schedule": "0 6 * * *", "name": "job-unref", mem: "2Gi", "command": "~/SDZeroBot/job reports/unreferenced-blps.js", "image": "tf-node16"}
-#- {"schedule": "0 0 * * *", "name": "job-g13watch", mem: "2Gi", "command": "~/SDZeroBot/job reports/g13-watch/g13-watch.js", "image": "tf-node16"}
-#- {"schedule": "15,45 * * * *", "name": "stream-check", mem: "2Gi", "command": "~/SDZeroBot/job eventstream-router/check.js", "image": "tf-node16"}
-#- {"schedule": "20 * * * *", "name": "bot-monitor", mem: "2Gi", "command": "~/SDZeroBot/job bot-monitor/main.js", "image": "tf-node16"}
-#- {"schedule": "25 4 * * *", "name": "db-tabulator", mem: "4Gi", "command": "~/SDZeroBot/job db-tabulator/main.js", "image": "tf-node16"}
-#- {"schedule": "8 16 * * *", "name": "gans-list", mem: "900Mi", "command": "~/SDZeroBot/job most-gans/gans-lister.js", "image": "tf-node16"}
-#- {"schedule": "0 3 1 * *", "name": "gans-users", mem: "1Gi", "command": "~/SDZeroBot/job most-gans/update-entries.js", "image": "tf-node16"}
-#- {"schedule": "0 4 * * *", "name": "shells", mem: "400Mi", "command": "~/SDZeroBot/job terminate-shell-pods.js", "image": "tf-node16"}
+- {"continuous": true, "name": "stream", "command": "~/bin/node ~/SDZeroBot/eventstream-router/main.js", mem: "3Gi", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 2 1,15 * *", "name": "job-mostimported", mem: "900Mi", "command": "~/SDZeroBot/job reports/most-imported-scripts/most-imported-scripts.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 2,10,18 * * *", "name": "job-afc", mem: "1Gi", "command": "~/SDZeroBot/job reports/afc-sorting/afc-sorting.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "15 2,10,18 * * *", "name": "job-pafc", mem: "1Gi", "command": "~/SDZeroBot/job reports/pending-afc.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 1,13 * * *", "name": "job-npp", mem: "2Gi", "command": "~/SDZeroBot/job reports/npp-sorting/npp-sorting.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "30 0,4,8,12,16,20 * * *", "name": "job-prod", mem: "1536Mi", "command": "~/SDZeroBot/job reports/prod-sorting/prod-sorting.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "30 1,5,9,13,17,21 * * *", "name": "job-afd", mem: "1Gi", "command": "~/SDZeroBot/job reports/afd-sorting/afd-sorting.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 1 * * *", "name": "job-notifier", mem: "1Gi", "command": "~/SDZeroBot/job afd-notifications/notifier.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 0 * * *", "name": "job-grid", mem: "1Gi", "command": "~/SDZeroBot/job reports/grid-afd-prod.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 5 * * *", "name": "job-gan", mem: "1536Mi", "command": "~/SDZeroBot/job reports/gan-sorting.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "10 4 * * 1", "name": "job-g13-soon", mem: "1Gi", "command": "~/SDZeroBot/job reports/g13-soon.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 0 * * *", "name": "job-declined", mem: "1Gi", "command": "~/SDZeroBot/job reports/declined-afcs.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 0 * * *", "name": "job-g131week", mem: "1Gi", "command": "~/SDZeroBot/job reports/g13-1week.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 0 * * *", "name": "job-g13-elig", mem: "1Gi", "command": "~/SDZeroBot/job reports/g13-eligible.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "5 0 * * 2", "name": "job-draft", mem: "1Gi", "command": "~/SDZeroBot/job reports/draftify-watch.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "5 0 * * 3", "name": "job-pwatch", mem: "1Gi", "command": "~/SDZeroBot/job reports/prod-watch.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 1 * * *", "name": "job-rwatch", mem: "1Gi", "command": "~/SDZeroBot/job reports/redirectify-watch.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "30 3 * * 2", "name": "job-peer", mem: "1Gi", "command": "~/SDZeroBot/job reports/peer-review.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 6 * * *", "name": "job-unref", mem: "1Gi", "command": "~/SDZeroBot/job reports/unreferenced-blps.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 0 * * *", "name": "job-g13watch", mem: "2Gi", "command": "~/SDZeroBot/job reports/g13-watch/g13-watch.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "15,45 * * * *", "name": "stream-check", mem: "900Mi", "command": "~/SDZeroBot/job eventstream-router/check.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "20 * * * *", "name": "bot-monitor", mem: "1Gi", "command": "~/SDZeroBot/job bot-monitor/main.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "25 4 * * *", "name": "db-tabulator", mem: "2Gi", "command": "~/SDZeroBot/job db-tabulator/main.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "8 16 * * *", "name": "gans-list", mem: "900Mi", "command": "~/SDZeroBot/job most-gans/gans-lister.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 3 1 * *", "name": "gans-users", mem: "1Gi", "command": "~/SDZeroBot/job most-gans/update-entries.js", "image": "tf-node16", "emails": "onfailure"}
+- {"schedule": "0 4 * * *", "name": "shells", mem: "900Mi", "command": "~/SDZeroBot/job terminate-shell-pods.js", "image": "tf-node16", "emails": "onfailure"}
