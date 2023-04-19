@@ -130,18 +130,18 @@ process.chdir(__dirname);
 		return pages.map(pg => pg.title);
 	}));
 
-	await bot.massQuery({
+	for await (let json of await bot.massQueryGen({
 		action: 'query',
 		titles: Object.values(revidsTitles).map(e => 'Wikipedia:Articles for deletion/' + e)
-	}).then(jsons => {
-		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
+	}, 'titles', 50)) {
+		var pages = json.query.pages;
 		pages.forEach(page => {
 			if (!page.missing && !currentAfds.has(page.title)) {
 				afds[page.title.slice('Wikipedia:Articles for deletion/'.length)] = 1;
 			}
 		});
 		log(`[S] Fetched list of prior AfDs. Found ${Object.keys(afds).length} articles with AfDs`);
-	});
+	}
 
 
 

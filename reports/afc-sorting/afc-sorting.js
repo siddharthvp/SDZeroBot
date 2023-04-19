@@ -1,5 +1,7 @@
 const {fs, mwn, bot, enwikidb, utils, argv, log, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
+const {createLocalSSHTunnel, closeTunnels} = require("../../utils");
+const {ENWIKI_DB_HOST} = require("../../db");
 process.chdir(__dirname);
 
 (async function() {
@@ -14,6 +16,7 @@ process.chdir(__dirname);
 		tableInfo = require('./tableInfo');
 	} else {
 		sql = new enwikidb();
+		await createLocalSSHTunnel(ENWIKI_DB_HOST);
 		await sql.getReplagHours();
 		const result = await sql.query(`
 			SELECT page_title, page_latest, cl_sortkey_prefix, page_len, actor_name, rev_timestamp, user_editcount
@@ -98,7 +101,7 @@ process.chdir(__dirname);
 		"action": "query",
 		"prop": "description",
 		"titles": Object.keys(tableInfo)
-	})) {
+	}, 'titles', 50)) {
 
 		data.query.pages.forEach(pg => {
 			tableInfo[pg.title].description = pg.description;
@@ -338,8 +341,9 @@ process.chdir(__dirname);
 		return bot.save('Wikipedia:AfC sorting/' + pagetitle, content, 'Updating report');
 	};
 
-	bot.batchOperation(Object.keys(sorter), createSubpage, 1, 2).then(() => {
-		log('[i] Finished');
-	});
+	await bot.batchOperation(Object.keys(sorter), createSubpage, 1, 2);
+	log('[i] Finished');
+
+	closeTunnels();
 
 })().catch(err => emailOnError(err, 'afc-sorting'));

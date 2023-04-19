@@ -26,8 +26,9 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		"prop": "revisions|description",
 		"rvprop": "ids|content",
 		"rvsection": '0',
+		"rvslots": "main",
 		"titles": articles
-	})) {
+	}, 'titles', 50)) {
 		log(`[+] Got a page of the API response for article texts and descriptions`);
 		let pages = data.query.pages;
 
@@ -39,7 +40,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 				revidsTitles[pg.revisions[0].revid] = pg.title;
 				tableInfo[pg.title] = {
 					shortdesc: normaliseShortdesc(pg.description),
-					excerpt: TextExtractor.getExtract(pg.revisions[0].content, 300, 550)
+					excerpt: TextExtractor.getExtract(pg.revisions[0].slots.main.content, 300, 550)
 				};
 			} catch (e) {
 				log(`[E] error in processing ${pg.title}`);
@@ -69,7 +70,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		"rvprop": "content",
 		"rvsection": "0",
 		"titles": talkpages,
-	})) {
+	}, 'titles', 50)) {
 		log(`[+] Got a page of the API response for talk page texts`);
 		let pages = data.query.pages;
 		pages.forEach(async pg => {
