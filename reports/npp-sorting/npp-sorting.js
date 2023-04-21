@@ -100,7 +100,7 @@ process.chdir(__dirname);
 
 	for await (let page of bot.readGen(Object.values(revidsTitles), {
 		prop: 'revisions|description',
-	})) {
+	}, 50)) {
 		if (page.missing) {
 			tableInfo[page.title].skip = true; // skip it and return
 			return;
