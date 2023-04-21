@@ -27,15 +27,22 @@ process.chdir(__dirname);
 		sql = new enwikidb();
 		await sql.getReplagHours();
 		const result = await sql.query(`
-			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount
-			FROM pagetriage_page
-			JOIN page on page_id = ptrp_page_id
-			JOIN revision ON page_id = rev_page AND rev_parent_id = 0
-			JOIN actor ON rev_actor = actor_id
-			LEFT JOIN user ON user_id = actor_user
-			WHERE page_namespace = 0
-			AND page_is_redirect = 0
-			AND ptrp_reviewed = 0
+            SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount,
+			   (
+				   SELECT COUNT(*) FROM page
+				   WHERE page_namespace = 4
+					 AND page_title = CONCAT('Articles_for_deletion/', p.page_title)
+					 -- exclude current AfDs
+					 AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'AfD_debates')
+			   ) AS afd
+            FROM pagetriage_page
+			 JOIN page p on page_id = ptrp_page_id
+			 JOIN revision ON page_id = rev_page AND rev_parent_id = 0
+			 JOIN actor ON rev_actor = actor_id
+			 LEFT JOIN user ON user_id = actor_user
+            WHERE page_namespace = 0
+              AND page_is_redirect = 0
+              AND ptrp_reviewed = 0
 		`);
 		sql.end();
 		log('[S] Got DB query result');
@@ -60,6 +67,7 @@ process.chdir(__dirname);
 				bytecount: row.page_len,
 				creator: row.actor_name,
 				creatorEdits: row.user_editcount || '',
+				afd: row.afd > 0
 			};
 		});
 		utils.saveObject('revidsTitles', revidsTitles);
@@ -122,28 +130,6 @@ process.chdir(__dirname);
 	// populate wikidata shortdescs into tableInfo
 	await populateWikidataShortdescs(tableInfo);
 
-	/* GET DATA ABOUT PRIOR AFD */
-	var afds = {};
-
-	// Get existing AfDs to filter them out
-	var currentAfds = new Set(await new bot.category('AfD debates').pages().then(pages => {
-		return pages.map(pg => pg.title);
-	}));
-
-	for await (let json of await bot.massQueryGen({
-		action: 'query',
-		titles: Object.values(revidsTitles).map(e => 'Wikipedia:Articles for deletion/' + e)
-	}, 'titles', 50)) {
-		var pages = json.query.pages;
-		pages.forEach(page => {
-			if (!page.missing && !currentAfds.has(page.title)) {
-				afds[page.title.slice('Wikipedia:Articles for deletion/'.length)] = 1;
-			}
-		});
-		log(`[S] Fetched list of prior AfDs. Found ${Object.keys(afds).length} articles with AfDs`);
-	}
-
-
 
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
 
@@ -164,7 +150,7 @@ process.chdir(__dirname);
 		if (ores.draftquality !== 'OK') { // OK / vandalism / spam / attack
 			issues.push('Possible ' + ores.draftquality);
 		}
-		if (afds[title]) {
+		if (tableInfo[title].afd) {
 			issues.push(`[[Wikipedia:Articles for deletion/${title}|Past AfD]]`);
 		}
 		issues = issues.join('<br>');
