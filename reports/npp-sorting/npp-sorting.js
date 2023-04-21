@@ -43,6 +43,7 @@ process.chdir(__dirname);
             WHERE page_namespace = 0
               AND page_is_redirect = 0
               AND ptrp_reviewed = 0
+              AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'All_redirects_for_discussion')
 		`);
 		sql.end();
 		log('[S] Got DB query result');
@@ -50,17 +51,10 @@ process.chdir(__dirname);
 		var formatDateString = function(str) {
 			return str.slice(0, 4) + '-' + str.slice(4, 6) + '-' + str.slice(6, 8);
 		};
-
-		var rfdRedirects = new Set(await new bot.category('All redirects for discussion').pages()
-			.then(pages => pages.map(pg => pg.title)));
-
 		revidsTitles = {};
 		tableInfo = {};
 		result.forEach(row => {
 			var pagename = row.page_title.replace(/_/g, ' ');
-			if (rfdRedirects.has(pagename)) { // exclude RfD'd redirects
-				return;
-			}
 			revidsTitles[row.page_latest] = pagename
 			tableInfo[pagename] = {
 				creation_date: formatDateString(row.rev_timestamp),
