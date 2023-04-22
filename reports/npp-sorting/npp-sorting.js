@@ -27,23 +27,23 @@ process.chdir(__dirname);
 		sql = new enwikidb();
 		await sql.getReplagHours();
 		const result = await sql.query(`
-            SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount,
-			   (
-				   SELECT COUNT(*) FROM page
-				   WHERE page_namespace = 4
-					 AND page_title = CONCAT('Articles_for_deletion/', p.page_title)
+			SELECT page_title, rev_timestamp, page_latest, page_len, actor_name, user_editcount,
+				(
+					SELECT COUNT(*) FROM page
+					WHERE page_namespace = 4
+					AND page_title = CONCAT('Articles_for_deletion/', p.page_title)
 					 -- exclude current AfDs
-					 AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'AfD_debates')
+					AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'AfD_debates')
 			   ) AS afd
-            FROM pagetriage_page
+			FROM pagetriage_page
 			 JOIN page p on page_id = ptrp_page_id
 			 JOIN revision ON page_id = rev_page AND rev_parent_id = 0
 			 JOIN actor ON rev_actor = actor_id
 			 LEFT JOIN user ON user_id = actor_user
-            WHERE page_namespace = 0
-              AND page_is_redirect = 0
-              AND ptrp_reviewed = 0
-              AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'All_redirects_for_discussion')
+			WHERE page_namespace = 0
+			  AND page_is_redirect = 0
+			  AND ptrp_reviewed = 0
+			  AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'All_redirects_for_discussion')
 		`);
 		sql.end();
 		log('[S] Got DB query result');
