@@ -46,7 +46,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 	// fetch page texts
 	for await (let page of bot.readGen(Object.keys(tableInfo), {
 		redirects: false
-	})) {
+	}, 50)) {
 		if (page.missing) {
 			// page doesn't exist, check the logs to see what happened to it
 			let pageobj = new bot.page(page.title);
