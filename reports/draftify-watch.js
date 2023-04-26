@@ -11,7 +11,8 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 	ts2.setHours(0, 0, 0, 0);
 
 	// fetch page moves
-	var tableInfo = await bot.continuedQuery({
+	var tableInfo = {};
+	for await (let json of bot.continuedQueryGen({
 		"action": "query",
 		"list": "logevents",
 		"leprop": "title|user|timestamp|comment|details",
@@ -21,11 +22,8 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		"ledir": "newer",
 		"lenamespace": "0",
 		"lelimit": "max"
-	}).then(jsons => {
-		var moves = jsons.reduce((items, json) => items.concat(json.query.logevents), [])
-			.filter(move => move.params.target_ns === 118);
-
-		var tableInfo = {};
+	})) {
+		const moves = json.query.logevents.filter(move => move.params.target_ns === 118);
 		for (let move of moves) {
 			var drafttitle = move.params.target_title;
 
@@ -41,55 +39,51 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 				comment: move.comment
 			}
 		}
-		return tableInfo;
-	});
+	}
 
 	log('[S] Got page moves');
 
 	// fetch page texts
-	await bot.read(Object.keys(tableInfo), {
+	for await (let page of bot.readGen(Object.keys(tableInfo), {
 		redirects: false
-	}).then(async (pages) => {
-		for (let page of pages) {
-			if (page.missing) {
-				// page doesn't exist, check the logs to see what happened to it
-				let pageobj = new bot.page(page.title);
-				let logtext, logentry;
-				let deletionlog = await pageobj.logs(null, 1, 'delete/delete');
-				if (deletionlog.length === 0) {
-					let movelog = await pageobj.logs("title|type|user|timestamp|comment|details", 1, 'move');
-					if (movelog.length) {
-						logentry = movelog[0];
-						logtext = `[[User:${logentry.user}|${logentry.user}]] moved page to [[${logentry.params.target_title}]] ${logentry.comment ? `(${logentry.comment})` : ''}`;
-					}
-				} else {
-					logentry = deletionlog[0];
-					logtext = `[[User:${logentry.user}|${logentry.user}]] deleted page ${logentry.comment ? `(${logentry.comment})` : ''}`;
+	})) {
+		if (page.missing) {
+			// page doesn't exist, check the logs to see what happened to it
+			let pageobj = new bot.page(page.title);
+			let logtext, logentry;
+			let deletionlog = await pageobj.logs(null, 1, 'delete/delete');
+			if (deletionlog.length === 0) {
+				let movelog = await pageobj.logs("title|type|user|timestamp|comment|details", 1, 'move');
+				if (movelog.length) {
+					logentry = movelog[0];
+					logtext = `[[User:${logentry.user}|${logentry.user}]] moved page to [[${logentry.params.target_title}]] ${logentry.comment ? `(${logentry.comment})` : ''}`;
 				}
-				tableInfo[page.title].excerpt = `[''Deleted'']: ${logtext}`;
-				tableInfo[page.title].footer = true;
-				continue;
-
 			} else {
+				logentry = deletionlog[0];
+				logtext = `[[User:${logentry.user}|${logentry.user}]] deleted page ${logentry.comment ? `(${logentry.comment})` : ''}`;
+			}
+			tableInfo[page.title].excerpt = `[''Deleted'']: ${logtext}`;
+			tableInfo[page.title].footer = true;
 
-				tableInfo[page.title].excerpt = TextExtractor.getExtract(page.revisions[0].content, 300, 500);
+		} else {
 
-				if (tableInfo[page.title].excerpt === '') {
-					// empty extract, check if it's a redirect
-					let match = page.revisions[0].content.match(/^\s*#redirect\s*\[\[(.*?)\]\]/i);
-					if (match && match[1]) {
-						let redirectTarget = match[1];
-						if (redirectTarget === tableInfo[page.title].source) {
-							tableInfo[page.title].excerpt = `[''Moved back'' to [[${redirectTarget}]]]`;
-							tableInfo[page.title].footer = true;
-						} else {
-							tableInfo[page.title].excerpt = `[''Redirects'' to [[${redirectTarget}]]]`;
-						}
+			tableInfo[page.title].excerpt = TextExtractor.getExtract(page.revisions[0].content, 300, 500);
+
+			if (tableInfo[page.title].excerpt === '') {
+				// empty extract, check if it's a redirect
+				let match = page.revisions[0].content.match(/^\s*#redirect\s*\[\[(.*?)\]\]/i);
+				if (match && match[1]) {
+					let redirectTarget = match[1];
+					if (redirectTarget === tableInfo[page.title].source) {
+						tableInfo[page.title].excerpt = `[''Moved back'' to [[${redirectTarget}]]]`;
+						tableInfo[page.title].footer = true;
+					} else {
+						tableInfo[page.title].excerpt = `[''Redirects'' to [[${redirectTarget}]]]`;
 					}
 				}
 			}
 		}
-	});
+	}
 
 	log(`[S] Got article texts`);
 
