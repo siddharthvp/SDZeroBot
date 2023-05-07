@@ -118,6 +118,7 @@ export class enwikidb extends db {
 			host: onToolforge() ? ENWIKI_DB_HOST : '127.0.0.1',
 			port: onToolforge() ? 3306 : 4711,
 			database: 'enwiki_p',
+			...AuthManager.get('draftifyhistory'),
 			...customOptions
 		});
 	}
