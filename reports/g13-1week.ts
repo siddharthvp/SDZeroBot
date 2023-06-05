@@ -39,7 +39,7 @@ async function runForDate(date: MwnDate) {
 		JOIN templatelinks ON tl_from = page_id 
 		WHERE page_namespace = 2
 		AND tl_target_id = (SELECT lt_id FROM linktarget 
-			WHERE lt_namespace = 10 AND lt_title = "AFC_submission")
+			WHERE lt_namespace = 10 AND lt_title = "AfC_submission")
 		AND page_is_redirect = 0
 		AND rev_timestamp < "${startTs}"
 		AND rev_timestamp > "${endTs}"
