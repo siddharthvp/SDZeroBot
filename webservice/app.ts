@@ -8,7 +8,7 @@ import * as cors from 'cors';
 
 // All paths to SDZeroBot files must be via ../../SDZeroBot rather than via ../
 // The latter will work locally but not when inside toolforge www/js directory!
-import { bot, mwn } from "../../SDZeroBot/botbase";
+import { bot, Mwn } from "../../SDZeroBot/botbase";
 import { humanDate } from "../../mwn/build/log";
 import { createLocalSSHTunnel } from "../../SDZeroBot/utils";
 import { ENWIKI_DB_HOST, TOOLS_DB_HOST } from "../../SDZeroBot/db";
@@ -21,7 +21,7 @@ const app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 hbs.registerHelper('wikilink',  (pageName, displayName) => {
-	return `<a href="https://en.wikipedia.org/wiki/${mwn.util.wikiUrlencode(pageName)}" title="${pageName.replace(/"/g, '&#34;')}">${typeof displayName === 'string' ? displayName : pageName}</a>`;
+	return `<a href="https://en.wikipedia.org/wiki/${Mwn.util.wikiUrlencode(pageName)}" title="${pageName.replace(/"/g, '&#34;')}">${typeof displayName === 'string' ? displayName : pageName}</a>`;
 });
 
 morgan.token('date', () => humanDate());

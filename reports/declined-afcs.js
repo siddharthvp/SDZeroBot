@@ -1,4 +1,4 @@
-const {argv, bot, log, TextExtractor, emailOnError, mwn, utils} = require('../botbase');
+const {argv, bot, log, TextExtractor, emailOnError, Mwn, utils} = require('../botbase');
 const {AfcDraftSize, populateWikidataShortdescs, populateOresQualityRatings, comparators,
 	preprocessDraftForExtract, saveWithBlacklistHandling} = require('./commons');
 const {enwikidb} = require("../db");
@@ -104,7 +104,7 @@ await populateOresQualityRatings(tableInfo);
 // Wikidata short descriptions
 await populateWikidataShortdescs(tableInfo);
 
-let table = new mwn.table({
+let table = new Mwn.table({
 	style: 'overflow-wrap: anywhere'
 });
 table.addHeaders([

@@ -1,4 +1,4 @@
-import { argv, bot, log, mwn } from '../botbase';
+import { argv, bot, log, Mwn } from '../botbase';
 import { enwikidb, ENWIKI_DB_HOST } from "../db";
 import { createLocalSSHTunnel, readFile, saveObject, writeFile } from "../utils";
 
@@ -93,7 +93,7 @@ import { createLocalSSHTunnel, readFile, saveObject, writeFile } from "../utils"
 	// 	})
 	// }
 
-	let wikitable = new mwn.table({
+	let wikitable = new Mwn.table({
 		classes: ['plainlinks']
 	});
 	wikitable.addHeaders([
@@ -106,9 +106,9 @@ import { createLocalSSHTunnel, readFile, saveObject, writeFile } from "../utils"
 		title = 'Book:' + title.replace(/_/g, ' ');
 		wikitable.addRow([
 			`[[${title}]]`,
-			`[https://en.wikipedia.org/w/index.php?title=${mwn.util.wikiUrlencode(title)}&action=history ${num_revisions}]`,
+			`[https://en.wikipedia.org/w/index.php?title=${Mwn.util.wikiUrlencode(title)}&action=history ${num_revisions}]`,
 			num_editors,
-			`[https://en.wikipedia.org/w/index.php?title=${mwn.util.wikiUrlencode(title)}&action=info ${pageviews}]`
+			`[https://en.wikipedia.org/w/index.php?title=${Mwn.util.wikiUrlencode(title)}&action=info ${pageviews}]`
 		]);
 	}
 

@@ -1,4 +1,4 @@
-import { argv, bot, log, mwn } from '../botbase';
+import { argv, bot, log, Mwn } from '../botbase';
 import { TOOLS_DB_HOST, toolsdb } from '../db';
 import { closeTunnels, createLocalSSHTunnel, withIndices } from "../utils";
 import { TABLE } from "./model";
@@ -17,7 +17,7 @@ import { TABLE } from "./model";
 	db.end();
 	log(`[S] Got query result`);
 
-	let wikitable = new mwn.table();
+	let wikitable = new Mwn.table();
 	wikitable.addHeaders(['Rank', 'User', 'Count']);
 
 	let rank500Count;

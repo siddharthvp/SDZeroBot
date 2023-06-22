@@ -1,4 +1,4 @@
-import { argv, bot, emailOnError, enwikidb, log, mwn, TextExtractor } from "../botbase";
+import { argv, bot, emailOnError, enwikidb, log, Mwn, TextExtractor } from "../botbase";
 import {
 	AfcDraftSize,
 	comparators,
@@ -125,7 +125,7 @@ import { NS_DRAFT } from "../namespaces";
 	// Wikidata short descriptions
 	await populateWikidataShortdescs(tableInfo);
 
-	let table = new mwn.table({
+	let table = new Mwn.table({
 		style: 'overflow-wrap: anywhere'
 	});
 	table.addHeaders([

@@ -1,6 +1,6 @@
-const {bot, mwn, log, fs, TextExtractor} = require('../botbase');
+const {bot, Mwn, log, fs, TextExtractor} = require('../botbase');
 
-const wd = new mwn({
+const wd = new Mwn({
 	...bot.options,
 	apiUrl: 'https://www.wikidata.org/w/api.php',
 	hasApiHighLimit: false
@@ -85,9 +85,9 @@ for await (let json of bot.continuedQueryGen({
 log(`[S] got data from the APIs`);
 
 let tables = {
-	men: new mwn.table(),
-	women: new mwn.table(),
-	unknown: new mwn.table()
+	men: new Mwn.table(),
+	women: new Mwn.table(),
+	unknown: new Mwn.table()
 };
 let headers = [
 	{label: 'Article', style: 'width: 17em'},

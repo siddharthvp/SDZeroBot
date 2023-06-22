@@ -1,4 +1,4 @@
-const {fs, mwn, bot, utils, log, argv, emailOnError} = require('../../botbase');
+const {fs, Mwn, bot, utils, log, argv, emailOnError} = require('../../botbase');
 
 process.chdir(__dirname);
 
@@ -132,7 +132,7 @@ process.chdir(__dirname);
 
 	// Create wikitable:
 
-	var wikitable = new mwn.table({ sortable: true, style: 'text-align: center' });
+	var wikitable = new Mwn.table({ sortable: true, style: 'text-align: center' });
 	wikitable.addHeaders([
 		'Position',
 		'Script',

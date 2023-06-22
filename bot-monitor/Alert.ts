@@ -1,4 +1,4 @@
-import { argv, bot, log, mwn } from "../botbase";
+import { argv, bot, log, Mwn } from "../botbase";
 import {Rule, RuleError, Monitor} from "./index";
 
 export class Alert {
@@ -39,7 +39,7 @@ export class Alert {
     }
 
     getMessage() {
-        return mwn.template('subst:Wikipedia:Bot activity monitor/Notification', {
+        return Mwn.template('subst:Wikipedia:Bot activity monitor/Notification', {
             bot: this.rule.bot,
             task: this.rule.task,
             action: this.rule.action === 'edit' ? 'edit' : `"${this.rule.action}" action`,

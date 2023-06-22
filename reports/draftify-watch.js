@@ -1,4 +1,4 @@
-const {bot, mwn, log, utils, emailOnError, TextExtractor} = require('../botbase');
+const {bot, Mwn, log, utils, emailOnError, TextExtractor} = require('../botbase');
 const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 (async () => {
@@ -117,10 +117,10 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		{ label: `Move summary` },
 	];
 
-	var maintable = new mwn.table();
+	var maintable = new Mwn.table();
 	maintable.addHeaders(tableHeaders);
 
-	let footertable = new mwn.table();
+	let footertable = new Mwn.table();
 	footertable.addHeaders(tableHeaders);
 
 	for (let [page, data] of Object.entries(tableInfo)) {

@@ -1,4 +1,4 @@
-import {bot, fs, log, mwn} from '../botbase.js';
+import {bot, fs, log, Mwn} from '../botbase.js';
 
 (async function () {
 
@@ -90,7 +90,7 @@ for await (let pg of reader) {
 
 }
 
-let mwntable = new mwn.table({
+let mwntable = new Mwn.table({
 	style: 'overflow-wrap: anywhere;'
 });
 mwntable.addHeaders([

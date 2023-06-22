@@ -1,4 +1,4 @@
-const {mwn, bot, log, emailOnError, TextExtractor} = require('../botbase');
+const {Mwn, bot, log, emailOnError, TextExtractor} = require('../botbase');
 const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
@@ -33,7 +33,7 @@ let json = await bot.request({
 const actions = json.query.recentchanges;
 log(`[S] Fetched data from the API - ${actions.length} pages`);
 
-let table = new mwn.table({
+let table = new Mwn.table({
 	// overflow-wrap: anywhere avoids a column from being widened due to one user
 	// using a very large "word" (eg. an external link or a wikilink with underscores)
 	// in the summary

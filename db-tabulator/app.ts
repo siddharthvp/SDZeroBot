@@ -1,4 +1,4 @@
-import { argv, bot, emailOnError, log, mwn, TextExtractor } from "../botbase";
+import { argv, bot, emailOnError, log, Mwn, TextExtractor } from "../botbase";
 import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
 import { arrayChunk, createLogStream, lowerFirst, readFile, writeFile } from "../utils";
@@ -458,10 +458,10 @@ export class Query {
 		const header_template = this.getTemplateValue('header_template');
 		const skip_table = this.getTemplateValue('skip_table');
 
-		let table: InstanceType<typeof mwn.table>;
+		let table: InstanceType<typeof Mwn.table>;
 		let tableText = '';
 		if (!skip_table) {
-			table = new mwn.table({
+			table = new Mwn.table({
 				style: this.getTemplateValue('table_style') || 'overflow-wrap: anywhere'
 			});
 			if (header_template) {
@@ -516,7 +516,7 @@ export class Query {
 			db.makeReplagMessage(2) +
 			tableText + '\n' +
 			'----\n' +
-			mwn.template('Database report/footer', {
+			Mwn.template('Database report/footer', {
 				count: result.length,
 				page: pageNumber && String(pageNumber),
 				num_pages: pageNumber && String(this.numPages),

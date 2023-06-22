@@ -1,4 +1,4 @@
-const {bot, log, mwn, emailOnError} = require('../botbase');
+const {bot, log, Mwn, emailOnError} = require('../botbase');
 const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
@@ -87,7 +87,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 						} else { // redirect, check if this edit is a page move
 
 							let moveCommentRgx = new RegExp(
-								`^${mwn.util.escapeRegExp(rev.user)} moved page \\[\\[${mwn.util.escapeRegExp(page)}\\]\\] to \\[\\[(.*?)\\]\\]`
+								`^${Mwn.util.escapeRegExp(rev.user)} moved page \\[\\[${Mwn.util.escapeRegExp(page)}\\]\\] to \\[\\[(.*?)\\]\\]`
 							);
 							let match = rev.comment.match(moveCommentRgx);
 							if (match) {
@@ -141,7 +141,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 						return bot.search('prefix:Wikipedia:Articles for deletion/' + page, 5, '', {
 							srsort: 'create_timestamp_desc' // get most recent afd first if there are multiple
 						}).then(afds => {
-							var sanityRgx = new RegExp('Wikipedia:Articles for deletion/' + mwn.util.escapeRegExp(page) + '( \\((2nd|3rd|\\dth) nomination\\))?$');
+							var sanityRgx = new RegExp('Wikipedia:Articles for deletion/' + Mwn.util.escapeRegExp(page) + '( \\((2nd|3rd|\\dth) nomination\\))?$');
 							for (let afd of afds) {
 								if (!sanityRgx.test(afd.title)) {
 									continue;
@@ -261,7 +261,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 
 		var makeTable = function(header3, set) {
-			var table = new mwn.table();
+			var table = new Mwn.table();
 			table.addHeaders([
 				{ style: 'width: 15em;', label: `Article`},
 				{ style: 'width: 25em;', label: `Excerpt`},

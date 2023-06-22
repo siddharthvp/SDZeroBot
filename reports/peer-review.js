@@ -1,4 +1,4 @@
-const {bot, mwn, log, emailOnError, TextExtractor} = require('../botbase');
+const {bot, Mwn, log, emailOnError, TextExtractor} = require('../botbase');
 const {populateWikidataShortdescs} = require('./commons');
 
 (async function() {
@@ -79,7 +79,7 @@ await bot.batchOperation(articles, article => {
 log(`[S] got histories`);
 
 
-let table = new mwn.table();
+let table = new Mwn.table();
 table.addHeaders([
 	{label: 'Date', class: 'date-header'},
 	{label: 'Article', class: 'article-header'},

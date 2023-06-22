@@ -1,4 +1,4 @@
-const {bot, TextExtractor, mwn, log, argv, utils, emailOnError} = require('../../botbase');
+const {bot, TextExtractor, Mwn, log, argv, utils, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
 const {populateWikidataShortdescs, normaliseShortdesc, saveWithBlacklistHandling} = require('../commons');
 
@@ -121,7 +121,7 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new mwn.table({ style: 'overflow-wrap: anywhere' });
+		var table = new Mwn.table({ style: 'overflow-wrap: anywhere' });
 
 		table.addHeaders(lite ? [ // exlcude excerpt in lite mode
 			`scope="col" style="width: 7em;" | PROD date`,

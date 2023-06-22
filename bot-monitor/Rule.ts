@@ -1,4 +1,4 @@
-import {argv, bot, mwn, path} from "../botbase";
+import {argv, bot, Mwn, path} from "../botbase";
 import {MwnTitle, MwnDate} from "../../mwn";
 import {getFromDate} from "./index";
 import {readFile} from "../utils";
@@ -88,9 +88,9 @@ export function parseRule(rule: RawRule): Rule {
         namespace: rule.namespace && rule.namespace.match(/\d+/g).map(num => parseInt(num)),
         duration: rule.duration,
         fromDate,
-        titleRegex: (rule.title && new RegExp('^' + mwn.util.escapeRegExp(rule.title) + '$')) ||
+        titleRegex: (rule.title && new RegExp('^' + Mwn.util.escapeRegExp(rule.title) + '$')) ||
             (rule.title_regex && new RegExp('^' + rule.title_regex + '$')),
-        summaryRegex: (rule.summary && new RegExp('^' + mwn.util.escapeRegExp(rule.summary) + '$')) ||
+        summaryRegex: (rule.summary && new RegExp('^' + Mwn.util.escapeRegExp(rule.summary) + '$')) ||
             (rule.summary_regex && new RegExp('^' + rule.summary_regex + '$')),
         minEdits: rule.min_edits ? parseInt(rule.min_edits) : 1,
         alertPage

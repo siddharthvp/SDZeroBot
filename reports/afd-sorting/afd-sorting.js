@@ -1,4 +1,4 @@
-const {mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
+const {Mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
 const {normaliseShortdesc, populateWikidataShortdescs, escapeForTableCell, saveWithBlacklistHandling } = require('../commons');
 
@@ -169,7 +169,7 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new mwn.table({
+		var table = new Mwn.table({
 			style: 'overflow-wrap: anywhere'
 		});
 		table.addHeaders([

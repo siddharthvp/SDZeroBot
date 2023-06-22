@@ -1,10 +1,10 @@
-import {bot, log, emailOnError, mwn, argv} from '../botbase';
+import {bot, log, emailOnError, Mwn, argv} from '../botbase';
 
 const PercentDefault = 0.25;
 const ByteDefault = 1000;
 
 class Notifier {
-	table: InstanceType<typeof mwn.table>
+	table: InstanceType<typeof Mwn.table>
 	notificationScheme: Map<string, Array<string>>
 	afds: { [afdtitle: string]: string }
 	config: {
@@ -22,7 +22,7 @@ class Notifier {
 
 		await notifier.getAfDs();
 
-		notifier.table = new mwn.table();
+		notifier.table = new Mwn.table();
 		notifier.table.addHeaders([
 			`! scope="col" style="width: 14em" | AfD`,
 			`! scope="col" style="width: 14em" | Article`,
@@ -348,7 +348,7 @@ class Notifier {
 				return Promise.reject('nobots');
 			}
 
-			let rgx = new RegExp(`== ?Nomination of \\[\\[:?${mwn.util.escapeRegExp(article)}\\]\\] for deletion ?==`);
+			let rgx = new RegExp(`== ?Nomination of \\[\\[:?${Mwn.util.escapeRegExp(article)}\\]\\] for deletion ?==`);
 			if (rgx.test(text)) {
 				log(`[C] ${username} was already notified of ${article}`);
 				return Promise.reject('already-notified');
@@ -360,7 +360,7 @@ class Notifier {
 			}
 		}
 
-		if (!mwn.util.isIPAddress(username)) { // IP blocks can't be looked up this way, TODO: handle this
+		if (!Mwn.util.isIPAddress(username)) { // IP blocks can't be looked up this way, TODO: handle this
 			let blockinfo = await user.info('blockinfo');
 			if (blockinfo.blockid) { // blocked
 				if (blockinfo.blockexpiry === 'infinite') {

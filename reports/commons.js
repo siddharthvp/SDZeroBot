@@ -1,4 +1,4 @@
-const {bot, mwn, log, emailOnError} = require('../botbase');
+const {bot, Mwn, log, emailOnError} = require('../botbase');
 const OresUtils = require('./OresUtils');
 
 /**
@@ -7,7 +7,7 @@ const OresUtils = require('./OresUtils');
  */
 async function populateWikidataShortdescs(tableInfo) {
 	/* GET WIKIDATA SHORTDESCS */
-	const wdbot = new mwn({
+	const wdbot = new Mwn({
 		...bot.options,
 		apiUrl: 'https://www.wikidata.org/w/api.php'
 	});

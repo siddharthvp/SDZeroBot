@@ -1,8 +1,8 @@
-import { emailOnError, mwn } from './botbase';
+import { emailOnError, Mwn } from './botbase';
 
 process.chdir(__dirname + '/webservice');
 
-new mwn().rawRequest({
+new Mwn().rawRequest({
 	url: 'https://sdzerobot.toolforge.org/ping'
 }).then(response => {
 	let data = response?.data;

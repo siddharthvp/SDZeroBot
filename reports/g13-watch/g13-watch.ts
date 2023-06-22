@@ -1,4 +1,4 @@
-import {argv, bot, emailOnError, enwikidb, log, mwn} from "../../botbase";
+import {argv, bot, emailOnError, enwikidb, log, Mwn} from "../../botbase";
 import {toolsdb, TOOLS_DB_HOST, ENWIKI_DB_HOST} from "../../db";
 import {arrayChunk, createLocalSSHTunnel, closeTunnels} from "../../utils";
 import TextExtractor from "../../TextExtractor";
@@ -236,7 +236,7 @@ import * as OresUtils from '../OresUtils';
     g13db.end();
     log(`[i] ${numDeletions} G13 deletions overall`);
 
-    let table = new mwn.table();
+    let table = new Mwn.table();
     table.addHeaders([
         {label: 'Draft', style: 'width: 15em'},
         {label: 'Excerpt' },

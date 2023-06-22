@@ -46,11 +46,11 @@ process.on('uncaughtException', function(err) {
     }
 });
 
-import {mwn} from '../mwn';
-export {mwn};
+import {Mwn} from '../mwn';
+export {Mwn};
 
 /** Colorised and dated console logging. */
-export const log = mwn.log;
+export const log = Mwn.log;
 
 /** Parsed console arguments */
 export const argv = require('minimist')(process.argv.slice(2));
@@ -68,7 +68,7 @@ export class AuthManager {
     }
 }
 
-export const bot = new mwn({
+export const bot = new Mwn({
     apiUrl: 'https://en.wikipedia.org/w/api.php',
     ...AuthManager.get('SDZeroBot:oauth2'),
     ...AuthManager.get('SDZeroBot:bp1'),

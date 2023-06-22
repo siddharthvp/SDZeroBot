@@ -1,4 +1,4 @@
-const {mwn, bot, log, argv, TextExtractor, emailOnError} = require('../botbase');
+const {Mwn, bot, log, argv, TextExtractor, emailOnError} = require('../botbase');
 const OresUtils = require('./OresUtils');
 const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 
@@ -182,7 +182,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		let table = new mwn.table();
+		let table = new Mwn.table();
 		table.addHeaders([
 			{label: 'Date', class: 'date-header'},
 			{label: 'Article', class: 'article-header'},
@@ -217,7 +217,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 	};
 
 	let makeMainPage = function () {
-		let content = mwn.template('/header', {
+		let content = Mwn.template('/header', {
 			count: Object.keys(revidsTitles).length,
 			countold: counts.old,
 			countrecent: counts.recent,

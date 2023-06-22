@@ -1,4 +1,4 @@
-const {fs, mwn, bot, enwikidb, utils, argv, log, emailOnError} = require('../../botbase');
+const {fs, Mwn, bot, enwikidb, utils, argv, log, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
 const {createLocalSSHTunnel, closeTunnels} = require("../../utils");
 const {ENWIKI_DB_HOST} = require("../../db");
@@ -86,7 +86,7 @@ process.chdir(__dirname);
 
 	var entriesFound = 0;
 	var getCopyioPercent = function(title) {
-		var re = new RegExp(`${mwn.util.escapeRegExp(title).replace(/ /g, '_')}(?:\\s|\\S)*?tools\\.wmflabs\\.org\\/copyvios\\/.*? (.*?)\\]%`).exec(UserSQLReport);
+		var re = new RegExp(`${Mwn.util.escapeRegExp(title).replace(/ /g, '_')}(?:\\s|\\S)*?tools\\.wmflabs\\.org\\/copyvios\\/.*? (.*?)\\]%`).exec(UserSQLReport);
 		if (!re || !re[1]) {
 			return null;
 		}
@@ -280,7 +280,7 @@ process.chdir(__dirname);
 		}
 		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n${replagMessage}`;
 
-		var table = new mwn.table();
+		var table = new Mwn.table();
 		table.addHeaders([
 			`scope="col" style="width: 17em;" | Page`,
 			`Class`,
@@ -307,7 +307,7 @@ process.chdir(__dirname);
 				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
 			} else {
 				// lowercase IPv6 address and split to 2 lines to reduce column width
-				if (mwn.util.isIPv6Address(tabledata.creator)) {
+				if (Mwn.util.isIPv6Address(tabledata.creator)) {
 					var ip = tabledata.creator.toLowerCase();
 					var idx = Math.round(ip.length / 2);
 					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);

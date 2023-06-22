@@ -1,4 +1,4 @@
-const {bot, mwn, log} = require('../../botbase');
+const {bot, Mwn, log} = require('../../botbase');
 
 (async function() {
 
@@ -28,7 +28,7 @@ for (let i = userswithcount.length - 1; i >= 0; i--) {
 	userswithcount[i] = orz(userswithcount[i+1]) + orz(userswithcount[i]);
 }
 
-let table = new mwn.table();
+let table = new Mwn.table();
 table.addHeaders([
 	{label: 'Statistic', style: 'width: 40em;'},
 	{label: 'Value', style: 'width: 20em'}
@@ -43,7 +43,7 @@ table.addRow([ 'Users with 500+ actions in the last 30 days', orz(userswithcount
 table.addRow([ 'Users with 1000+ actions in the last 30 days', orz(userswithcount[1000]) ]);
 table.addRow([ 'Users with 5000+ actions in the last 30 days', orz(userswithcount[5000]) ]);
 
-let wikitext = 
+let wikitext =
 `{{hatnote|Last updated by [[User:SDZeroBot|SDZeroBot]] at ~~~~~}}
 
 ${table.getText()}

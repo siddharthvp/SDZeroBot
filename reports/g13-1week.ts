@@ -1,4 +1,4 @@
-import { argv, bot, emailOnError, log, mwn, TextExtractor } from "../botbase";
+import { argv, bot, emailOnError, log, Mwn, TextExtractor } from "../botbase";
 import { ApiRevision, MwnDate} from "../../mwn";
 import {
 	AfcDraftSize,
@@ -125,7 +125,7 @@ async function runForDate(date: MwnDate) {
 	// Wikidata short descriptions
 	await populateWikidataShortdescs(tableInfo);
 
-	let table = new mwn.table({
+	let table = new Mwn.table({
 		style: 'overflow-wrap: anywhere'
 	});
 	table.addHeaders([

@@ -1,6 +1,6 @@
 import * as express from "express";
 import * as multer from 'multer';
-import {mwn} from "../../../mwn";
+import {Mwn} from "../../../mwn";
 
 const router = express.Router();
 const upload = multer();
@@ -9,7 +9,7 @@ const upload = multer();
 router.post('/savepage', upload.none(), async (req, res) => {
 
     try {
-        const client = await mwn.init({
+        const client = await Mwn.init({
             apiUrl: req.body.apiUrl,
             username: req.body.username,
             password: req.body.password,

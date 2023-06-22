@@ -1,4 +1,4 @@
-const {mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
+const {Mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
 
 process.chdir(__dirname);
@@ -171,7 +171,7 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new mwn.table({ sortable: true, multiline: true });
+		var table = new Mwn.table({ sortable: true, multiline: true });
 		table.addHeaders([
 			`scope="col" style="width: 5em;" | AfD date`,
 			`scope="col" style="width: 19em;" | Article`,

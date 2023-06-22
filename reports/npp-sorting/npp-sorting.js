@@ -1,4 +1,4 @@
-const {log, argv, TextExtractor, mwn, bot, enwikidb, utils, emailOnError} = require('../../botbase');
+const {log, argv, TextExtractor, Mwn, bot, enwikidb, utils, emailOnError} = require('../../botbase');
 const OresUtils = require('../OresUtils');
 const {populateWikidataShortdescs, normaliseShortdesc} = require('../commons');
 const {createLocalSSHTunnel, closeTunnels} = require("../../utils");
@@ -268,7 +268,7 @@ ${replagMessage}
 				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
 			} else {
 				// lowercase IPv6 address and split to 2 lines to reduce column width
-				if (mwn.util.isIPv6Address(tabledata.creator)) {
+				if (Mwn.util.isIPv6Address(tabledata.creator)) {
 					var ip = tabledata.creator.toLowerCase();
 					var idx = Math.round(ip.length / 2);
 					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);

@@ -1,4 +1,4 @@
-import { bot, mwn, log, argv, enwikidb } from "../botbase";
+import { bot, Mwn, log, argv, enwikidb } from "../botbase";
 import {Monitor} from './index';
 
 import * as moment from "moment";
@@ -6,11 +6,11 @@ import * as moment from "moment";
 export class Tabulator {
 	static rootpage = 'Wikipedia:Bot activity monitor' + (argv.fake ? '/sandbox' : '');
 
-	static table: InstanceType<typeof mwn.table>;
+	static table: InstanceType<typeof Mwn.table>;
 	static invalidRules: { task: string, reason: string }[] = []
 
 	static init() {
-		this.table = new mwn.table();
+		this.table = new Mwn.table();
 		this.table.addHeaders([
 			{label: 'Bot'},
 			{label: 'Task'},
@@ -52,7 +52,7 @@ export class Tabulator {
 	static async whineAboutRuleErrors() {
 		let msg;
 		if (this.invalidRules.length) {
-			let table = new mwn.table();
+			let table = new Mwn.table();
 			table.addHeaders([
 				'Bot and task',
 				'Configuration error'
@@ -73,7 +73,7 @@ export class Tabulator {
 		} catch (e) {}
 		let text = '== Current status report ==' +
 			(replagHours > 6 ? `Database replication lag is ${replagHours} hours; as a result some bots may not be working` : '') +
-			'<noinclude>' + mwn.template('/header', {
+			'<noinclude>' + Mwn.template('/header', {
 			errcount: this.invalidRules.length ? String(this.invalidRules.length) : null
 		}) + '</noinclude>\n' + Tabulator.table.getText();
 		if (argv.dry) {

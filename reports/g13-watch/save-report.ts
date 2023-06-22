@@ -3,7 +3,7 @@
 // This report relies on ToolsDB g13watch_p database maintained using
 // eventstream-watch.ts
 
-import { bot, emailOnError, log, mwn } from "../../botbase";
+import { bot, emailOnError, log, Mwn } from "../../botbase";
 import { toolsdb, TOOLS_DB_HOST } from "../../db";
 import { createLocalSSHTunnel } from "../../utils";
 const { saveWithBlacklistHandling } = require('../commons');
@@ -18,7 +18,7 @@ const { saveWithBlacklistHandling } = require('../commons');
 	const db = new toolsdb('g13watch_p');
 	log('[S] Connected to the g13 database.');
 
-	let table = new mwn.table();
+	let table = new Mwn.table();
 	table.addHeaders([
 		{label: 'Date', style: 'width: 5em'},
 		{label: 'Draft', style: 'width: 18em'},
