@@ -71,11 +71,12 @@ export class Tabulator {
 		try {
 			replagHours = await new enwikidb().getReplagHours();
 		} catch (e) {}
-		let text = '== Current status report ==' +
-			(replagHours > 6 ? `Database replication lag is ${replagHours} hours; as a result some bots may not be working` : '') +
+		let text = '== Current status report ==\n' +
+			(replagHours > 6 ? `{{hatnote|1=Database replication lag is ${replagHours} hours; as a result some bots may not be working}}\n` : '') +
 			'<noinclude>' + Mwn.template('/header', {
-			errcount: this.invalidRules.length ? String(this.invalidRules.length) : null
-		}) + '</noinclude>\n' + Tabulator.table.getText();
+				errcount: this.invalidRules.length ? String(this.invalidRules.length) : null
+			}) + '</noinclude>\n' +
+			Tabulator.table.getText();
 		if (argv.dry) {
 			return console.log(text);
 		}
