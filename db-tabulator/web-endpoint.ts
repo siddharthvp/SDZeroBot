@@ -40,7 +40,7 @@ router.get('/', async function (req, res, next) {
 	}
 	redis.sadd(redisKey, pgKey).catch(handleRedisError);
 
-	res.status(202).render('database-report', {
+	res.status(queries.length ? 202 : 400).render('database-report', {
 		page,
 		template: TEMPLATE,
 		noQueries: queries.length === 0
