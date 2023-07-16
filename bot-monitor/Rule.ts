@@ -1,6 +1,6 @@
 import {argv, bot, Mwn, path} from "../botbase";
 import {MwnTitle, MwnDate} from "../../mwn";
-import {getFromDate} from "./index";
+import {subtractFromNow} from "./index";
 import {readFile} from "../utils";
 import {NS_USER_TALK} from "../namespaces";
 
@@ -17,10 +17,8 @@ export interface Rule {
     duration: string
     fromDate: MwnDate
     alertPage: MwnTitle
+    email: string
 
-    // alertMode: 'email' | 'talkpage' | 'ping'
-    // emailUser: string
-    // header: string
     // pingUser: string
 }
 
@@ -36,14 +34,15 @@ export type BotConfigParam =
     | 'min_edits'
     | 'duration'
     | 'notify'
+    | 'email'
 
-    // | 'alert_mode'
-    // | 'alert_page'
-    // | 'email_user'
-    // | 'header'
     // | 'ping_user'
 
 export class RuleError extends Error {}
+
+export function getKey(rule: RawRule | Rule, maxLength = -1) {
+    return `${rule.bot}: ${rule.task}`.slice(0, maxLength);
+}
 
 export async function fetchRules(): Promise<RawRule[]> {
     let text = !argv.fake ?
@@ -65,7 +64,7 @@ export async function fetchRules(): Promise<RawRule[]> {
 
 export function parseRule(rule: RawRule): Rule {
     rule.duration = rule.duration || '3 days';
-    let fromDate = getFromDate(rule.duration);
+    let fromDate = subtractFromNow(rule.duration);
 
     if (!rule.bot) {
         throw new RuleError(`No bot account specified!`);
@@ -93,11 +92,9 @@ export function parseRule(rule: RawRule): Rule {
         summaryRegex: (rule.summary && new RegExp('^' + Mwn.util.escapeRegExp(rule.summary) + '$')) ||
             (rule.summary_regex && new RegExp('^' + rule.summary_regex + '$')),
         minEdits: rule.min_edits ? parseInt(rule.min_edits) : 1,
-        alertPage
+        alertPage,
+        email: rule.email,
 
-        // alertMode: rule.alert_mode as 'talkpage' | 'email' | 'ping',
-        // emailUser: rule.email_user || rule.bot,
         // pingUser: rule.ping_user,
-        // header: rule.header,
     };
 }

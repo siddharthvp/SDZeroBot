@@ -2,7 +2,7 @@ import {bot, emailOnError, log, logFullError} from '../botbase';
 import {MwnDate} from "../../mwn";
 import type {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
 import type {LogEvent, UserContribution} from "../../mwn/src/api_response_types";
-import {Alert, checksDb, getFromDate, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
+import {Alert, checksDb, subtractFromNow, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
 
 export class Monitor {
 	name: string
@@ -163,7 +163,7 @@ export class Monitor {
 			...apiParams,
 			...listParams({
 				start: lastAction.timestamp,
-				end: getFromDate(this.rule.duration, 4)
+				end: subtractFromNow(this.rule.duration, 4)
 			})
 		})) {
 			if (checkAction(action)) {

@@ -1,5 +1,5 @@
 import {argv, bot, emailOnError, log} from "../botbase";
-import {RawRule, getFromDate} from './index'
+import {RawRule, subtractFromNow} from './index'
 
 // Only a small amount of data is stored. Probably not worth using ToolsDB.
 import * as sqlite from "sqlite";
@@ -37,46 +37,50 @@ interface ChecksDb {
  *
  */
 class RedisChecksDb implements ChecksDb {
-	connect() {
-		getRedisInstance().ping();
+	redis = getRedisInstance();
+
+	async connect() {
+		await this.redis.ping();
 	}
 
 	getKey(rule: RawRule) {
-		return `${rule.bot}: ${rule.task}`.slice(0, 250);
+		return `botmonitor-${rule.bot}: ${rule.task}`;
 	}
 
-	update(rule: RawRule, ts: string) {
-		// getRedisInstance().hmset(this.getKey(rule), {
-		// 	rule: hash.sha1(rule),
-		// 	ts: ts
-		// });
-		getRedisInstance().hset(this.getKey(rule), 'rulehash', hash.sha1(rule));
-		getRedisInstance().hset(this.getKey(rule), 'ts', ts);
-
+	async update(rule: RawRule, ts: string) {
+		await this.redis.hset(this.getKey(rule) + '-cached',
+			'rulehash', hash.sha1(rule),
+			'ts', ts);
 	}
 
-	checkCached(rule: RawRule) {
-		let cached = getRedisInstance().hgetall(this.getKey(rule) + '-cached');
+	async checkCached(rule: RawRule) {
+		if (argv.nocache) {
+			return false;
+		}
+		let cached = await this.redis.hgetall(this.getKey(rule) + '-cached');
 		return cached.rulehash === hash.sha1(rule) &&
-			new bot.date(cached.ts).isAfter(getFromDate(rule.duration));
+			new bot.date(cached.ts).isAfter(subtractFromNow(rule.duration));
 	}
 
-	getLastSeen(rule: RawRule) {
+	async getLastSeen(rule: RawRule) {
 		if (argv.nocache) {
 			return;
 		}
-		let lastseen = getRedisInstance().hgetall(this.getKey(rule) + '-seen');
+		let lastseen = await this.redis.hgetall(this.getKey(rule) + '-seen');
 		if (lastseen && lastseen.rulehash === hash.sha1(rule)) {
 			return lastseen;
 		} // else return undefined
 	}
 
-	updateLastSeen(rule: RawRule, ts: string, notSeen?: boolean) {
-		getRedisInstance().hset(this.getKey(rule) + '-seen', 'rulehash', hash.sha1(rule));
-		getRedisInstance().hset(this.getKey(rule) + '-seen', 'ts', ts);
+	async updateLastSeen(rule: RawRule, ts: string, notSeen?: boolean) {
+		let props: Record<string, string> = {
+			rulehash: hash.sha1(rule),
+			ts: ts,
+		};
 		if (notSeen) {
-			getRedisInstance().hset(this.getKey(rule) + '-seen', 'notseen', '1');
+			props.notseen = '1';
 		}
+		await this.redis.hset(this.getKey(rule) + '-seen', ...Object.entries(props).flat());
 	}
 
 }
@@ -130,7 +134,7 @@ class SqliteChecksDb extends SqliteDb implements ChecksDb {
 		]); // on error, last remains undefined
 		return last &&
 			last.rulehash === hash.sha1(rule) && // check that the rule itself hasn't changed
-			new bot.date(last.ts).isAfter(getFromDate(rule.duration));
+			new bot.date(last.ts).isAfter(subtractFromNow(rule.duration));
 	}
 
 

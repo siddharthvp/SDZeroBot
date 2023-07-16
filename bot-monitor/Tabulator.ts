@@ -64,6 +64,7 @@ export class Tabulator {
 			msg = '{{tick}} No configuration errors';
 		}
 		await new bot.page(this.rootpage + '/Errors').save(msg, `Updating ${argv.fake ? '(testing)': ''}`);
+		log(`[V] Saved error report on-wiki`);
 	}
 
 	static async postResults() {
@@ -81,6 +82,7 @@ export class Tabulator {
 			return console.log(text);
 		}
 		await new bot.page(this.rootpage + '/Report').save(text, `Updating ${argv.fake ? '(testing)': ''}`);
+		log(`[V] Saved report on-wiki`);
 		await Tabulator.whineAboutRuleErrors();
 	}
 }

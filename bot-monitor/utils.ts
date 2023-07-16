@@ -2,7 +2,7 @@ import {bot} from "../botbase";
 import {MwnDate} from "../../mwn";
 import {RuleError} from "./index";
 
-export function getFromDate(duration: string, times = 1): MwnDate {
+export function subtractFromNow(duration: string, times = 1): MwnDate {
     try {
         let durationParts = duration.split(' ');
         let num = parseInt(durationParts[0]);

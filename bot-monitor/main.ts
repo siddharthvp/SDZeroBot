@@ -1,5 +1,6 @@
 import {bot, emailOnError, argv} from "../botbase";
-import {fetchRules, Monitor, Tabulator, checksDb} from './index';
+import {fetchRules, Monitor, Tabulator, checksDb, alertsDb} from './index';
+import {closeTunnels} from "../utils";
 
 (async function () {
 
@@ -7,7 +8,8 @@ import {fetchRules, Monitor, Tabulator, checksDb} from './index';
 
     await Promise.all([
         bot.getTokensAndSiteInfo(),
-        checksDb.connect()
+        checksDb.connect(),
+        alertsDb.connect(),
     ]);
 
     const rules = await fetchRules();
@@ -18,5 +20,7 @@ import {fetchRules, Monitor, Tabulator, checksDb} from './index';
     }
 
     await Tabulator.postResults();
+
+    closeTunnels();
 
 })().catch(err => emailOnError(err, 'bot-monitor'));
