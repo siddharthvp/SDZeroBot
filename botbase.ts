@@ -6,7 +6,7 @@ import * as child_process from 'child_process';
 import * as nodemailer from 'nodemailer';
 export {fs, path, child_process};
 
-const mailTransporter = nodemailer.createTransport({
+export const mailTransporter = nodemailer.createTransport({
     host: 'mail.tools.wmflabs.org',
     port: 465,
 });
