@@ -51,7 +51,7 @@ log(`[S] got articles`);
 await populateWikidataShortdescs(data);
 log(`[S] got wikidata shortdescs`);
 
-await bot.batchOperation(articles, article => {
+await bot.batchOperation(articles, async article => {
 	if (!data[article]) {
 		return log(`[E] data['${article}'] is ${data[article]}`);
 	}
