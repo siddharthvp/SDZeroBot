@@ -9,7 +9,8 @@ import {closeTunnels} from "../utils";
     await Promise.all([
         bot.getTokensAndSiteInfo(),
         checksDb.connect(),
-        alertsDb.connect(),
+        // can mostly work even if alertsDb fails to connect
+        alertsDb.connect().catch(err => emailOnError(err, 'bot-monitor (non-fatal)')),
     ]);
 
     const rules = await fetchRules();
