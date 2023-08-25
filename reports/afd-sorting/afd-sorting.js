@@ -108,6 +108,9 @@ process.chdir(__dirname);
 		log('[S] Got AfDs');
 	});
 
+	// Temp hack as this single mass AFD is breaking the page
+	delete afd_data['Wikipedia:Articles for deletion/List of Air Nippon destinations'];
+
 	var accessdate = new bot.date().format('D MMMM YYYY');
 
 
