@@ -349,7 +349,8 @@ class Notifier {
 			}
 
 			let rgx = new RegExp(`== ?Nomination of \\[\\[:?${Mwn.util.escapeRegExp(article)}\\]\\] for deletion ?==`);
-			if (rgx.test(text)) {
+			let nppRgx = new RegExp(`== ?Deletion discussion about \\[\\[:?${Mwn.util.escapeRegExp(article)}\\]\\] ?==`);
+			if (rgx.test(text) || nppRgx.test(text)) {
 				log(`[C] ${username} was already notified of ${article}`);
 				return Promise.reject('already-notified');
 			}
