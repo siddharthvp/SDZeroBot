@@ -27,7 +27,8 @@ module.exports = {
 	 */
 	queryRevisions: function(models, revids, errors) {
 		var oresdata = {};
-		var sets = utils.arrayChunk(revids, 50);
+		var requestsLimit = Math.floor(20 / models.length);
+		var sets = utils.arrayChunk(revids, requestsLimit);
 		return bot.seriesBatchOperation(sets, (set, i) => {
 			return bot.rawRequest({
 				method: 'get',
