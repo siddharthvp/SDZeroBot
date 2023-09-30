@@ -20,7 +20,7 @@ class MariadbAlertsDb implements AlertsDb {
         this.db = new toolsdb('botmonitor');
         await this.db.run(`
             CREATE TABLE IF NOT EXISTS alerts(
-                name VARCHAR(255),
+                name VARCHAR(255) PRIMARY KEY,
                 lastEmailed TIMESTAMP
             )
         `);
@@ -36,7 +36,7 @@ class MariadbAlertsDb implements AlertsDb {
 
     async saveLastEmailedTime(rule: Rule): Promise<void> {
         await this.db.run(
-            `REPLACE INTO alerts (name, lastEmailed) VALUES(?, NOW())`,
+            `REPLACE INTO alerts (name, lastEmailed) VALUES(?, UTC_TIMESTAMP())`,
             [ getKey(rule, 250) ]
         );
     }
