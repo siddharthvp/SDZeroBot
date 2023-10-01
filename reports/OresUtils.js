@@ -56,7 +56,7 @@ module.exports = {
 				console.log(err);
 				return Promise.reject(err);
 			});
-		}, 2000, 2).then(({failures}) => {
+		}, 100, 2).then(({failures}) => {
 			// fail if all ORES calls didn't succeed eventually
 			let numFailing = Object.keys(failures).length;
 			if (numFailing > 0) {
