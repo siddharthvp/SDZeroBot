@@ -92,9 +92,11 @@ process.chdir(__dirname);
 	/* GET SHORT DESCRIPTIONS AND PAGE CONTENT */
 	let pagesWithShortDescs = 0;
 
+	let pageBatchesRead = 0;
 	for await (let page of bot.readGen(Object.values(revidsTitles), {
 		prop: 'revisions|description',
-	}, 50)) {
+	}, 200)) {
+		log(`[+] Reading contents and descriptions: ${++pageBatchesRead} batches read`);
 		if (page.missing) {
 			tableInfo[page.title].skip = true; // skip it and return
 			return;
