@@ -96,8 +96,8 @@ process.chdir(__dirname);
 	for await (let page of bot.readGen(Object.values(revidsTitles), {
 		prop: 'revisions|description',
 	}, 200)) {
-		if (pagesRead % 1000 === 0) {
-			log(`[+] Reading contents and descriptions: ${++pagesRead} pages read`);
+		if (++pagesRead % 1000 === 0) {
+			log(`[+] Reading contents and descriptions: ${pagesRead} pages read`);
 		}
 		if (page.missing) {
 			tableInfo[page.title].skip = true; // skip it
@@ -143,9 +143,9 @@ process.chdir(__dirname);
 		}
 
 		var topics = ores.drafttopic; // Array of topics
-		var quality = ores.articlequality; // FA / GA / B / C / Start / Stub
+		var quality = ores.articlequality ?? ''; // FA / GA / B / C / Start / Stub
 		var issues = [];
-		if (ores.draftquality !== 'OK') { // OK / vandalism / spam / attack
+		if (ores.draftquality && ores.draftquality !== 'OK') { // OK / vandalism / spam / attack
 			issues.push('Possible ' + ores.draftquality);
 		}
 		if (tableInfo[title].afd) {
@@ -155,7 +155,7 @@ process.chdir(__dirname);
 
 		var toInsert = { title, revid, quality, issues };
 
-		if (topics.length) {
+		if (topics && topics.length) {
 
 			topics = topics.map(t => t.replace(/\./g, '/'));
 
