@@ -100,8 +100,8 @@ process.chdir(__dirname);
 			log(`[+] Reading contents and descriptions: ${++pagesRead} pages read`);
 		}
 		if (page.missing) {
-			tableInfo[page.title].skip = true; // skip it and return
-			return;
+			tableInfo[page.title].skip = true; // skip it
+			continue;
 		}
 		var text = page.revisions[0].content;
 		if (!tableInfo[page.title]) {
