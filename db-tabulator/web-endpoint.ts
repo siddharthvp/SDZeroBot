@@ -18,12 +18,12 @@ router.get('/', async function (req, res, next) {
 	const [shutoffText, queries, revId] = await Promise.all([
 		checkShutoff(),
 		fetchQueriesForPage(page),
-		getLatestRevId(page),
+		getLatestRevId(page).catch(err => {
+			res.status(err.code || 500).render('oneline', { text: err.message });
+		}),
 	]);
 
-	if (revId === -1) {
-		return res.status(404).render('oneline', { text: `The page ${page} does not exist.` });
-	}
+	if (!revId) return;
 
 	if (shutoffText) {
 		log(`[E] Refused run on ${page} as task is shut off. Shutoff page content: ${shutoffText}`);
@@ -58,9 +58,12 @@ router.get('/', async function (req, res, next) {
 
 async function getLatestRevId(page: string) {
 	let response = await bot.query({ prop: 'revisions', titles: page, rvprop: 'ids', rvlimit: 1 });
-	let pg = response.query.pages[0];
-	if (pg.missing) {
-		return -1;
+	let pg = response?.query?.pages?.[0];
+	if (!pg) {
+		throw new CustomError(500, 'Encountered error while fetching page content.');
+	}
+	if (pg.invalid || pg.missing) {
+		throw new CustomError(404, `The page ${page} does not exist.`);
 	}
 	return pg.revisions[0].revid;
 }
@@ -68,6 +71,14 @@ async function getLatestRevId(page: string) {
 function handleRedisError(e: Error) {
 	log(`[E] Error in redis operation: `, e);
 	return false; // in sismember check, act as if value is not present
+}
+
+class CustomError extends Error {
+	code: number;
+	constructor(code: number, msg: string) {
+		super(msg);
+		this.code = code;
+	}
 }
 
 export default router;
