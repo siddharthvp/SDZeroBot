@@ -269,16 +269,16 @@ ${replagMessage}
 
 			var editorString;
 			if (tabledata.creatorEdits) {
-				editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
+				editorString = `data-sort-value=${tabledata.creatorEdits} | [[Special:Contribs/${tabledata.creator}|${tabledata.creator}]] (${tabledata.creatorEdits})`;
 			} else {
 				// lowercase IPv6 address and split to 2 lines to reduce column width
 				if (Mwn.util.isIPv6Address(tabledata.creator)) {
 					var ip = tabledata.creator.toLowerCase();
 					var idx = Math.round(ip.length / 2);
 					ip = ip.slice(0, idx) + '<br>' + ip.slice(idx);
-					editorString = `[[Special:Contribs/${tabledata.creator}|${ip}]]`;
+					editorString = `data-sort-value=0 | [[Special:Contribs/${tabledata.creator}|${ip}]]`;
 				} else {
-					editorString = `[[Special:Contribs/${tabledata.creator}|${tabledata.creator}]]`;
+					editorString = `data-sort-value=0 | [[Special:Contribs/${tabledata.creator}|${tabledata.creator}]]`;
 				}
 			}
 
