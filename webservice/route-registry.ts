@@ -8,6 +8,7 @@ import gansRouter from '../../SDZeroBot/most-gans/web-endpoint';
 import articleSearchRouter from './routes/articlesearch';
 import dykRouter from './routes/dyk';
 import gitsync from "./routes/gitsync";
+import botMonitorRouter from '../../SDZeroBot/bot-monitor/web-endpoint'
 
 export function registerRoutes(app: express.Router) {
 	app.use('/', indexRouter);
@@ -19,4 +20,5 @@ export function registerRoutes(app: express.Router) {
 	app.use('/articlesearch', articleSearchRouter);
 	app.use('/dyk', dykRouter);
 	app.use('/gitsync', gitsync);
+	app.use('/bot-monitor', botMonitorRouter);
 }
