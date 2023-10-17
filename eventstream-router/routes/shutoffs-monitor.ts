@@ -1,5 +1,6 @@
 import {Route} from "../app";
 import {bot, sendMail} from "../../botbase";
+import {NS_USER} from "../../namespaces";
 
 export default class ShutoffsMonitorTask extends Route {
     readonly name: string = 'shutoff-monitor';
@@ -11,7 +12,7 @@ export default class ShutoffsMonitorTask extends Route {
 
     filter(data): boolean {
         return data.wiki === 'enwiki' &&
-            data.namespace === 2 &&
+            data.namespace === NS_USER &&
             data.type === 'edit' &&
             data.title.startsWith('User:SDZeroBot/Shutoff/') &&
             data.user !== 'SD0001'

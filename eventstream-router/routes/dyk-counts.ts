@@ -29,6 +29,7 @@ export default class DykCountsTask extends Route {
 		await bot.getTokensAndSiteInfo();
 
 		await this.refreshCountsFromDb();
+		// TODO: skip periodic refresh if db is lagged by more than 15 minutes
 		setInterval(() => this.refreshCountsFromDb(), this.dbRefreshInterval);
 	}
 

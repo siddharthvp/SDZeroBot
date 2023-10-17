@@ -1,10 +1,12 @@
 import * as express from "express";
 import * as multer from 'multer';
 import {Mwn} from "../../../mwn";
+import {NS_MAIN} from "../../../SDZeroBot/namespaces";
 
 const router = express.Router();
 const upload = multer();
 
+// Web endpoint used by https://github.com/wikimedia-gadgets/deploy-action
 // Handles multipart/form-data requests
 router.post('/savepage', upload.none(), async (req, res) => {
 
@@ -16,7 +18,7 @@ router.post('/savepage', upload.none(), async (req, res) => {
             OAuth2AccessToken: req.body.oauth2Token,
             userAgent: 'gitsync ([[en:User:SD0001]])'
         })
-        if (new client.title(req.body.page).namespace === 0) {
+        if (new client.Title(req.body.page).namespace === NS_MAIN) {
             return res.status(400).contentType('json').send({
                 error: 'Aborting edit to target page as it is in main namespace'
             })
