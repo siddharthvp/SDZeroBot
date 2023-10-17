@@ -7,7 +7,7 @@ process.chdir(__dirname);
 	await bot.getTokensAndSiteInfo();
 
 	/** Get list of all active users */
-	var activeusers;
+	let activeusers;
 	if (argv.noactiveusers) {
 		activeusers = require('./active-users');
 	} else {
@@ -34,8 +34,7 @@ process.chdir(__dirname);
 
 	/** Get the first 5000 JS pages sorted by number of backlinks
 	 * Should cover every script that has at least 2 backlinks, and many others. */
-	var scriptList = await bot.request({
-		"action": "query",
+	const scriptList = await bot.query({
 		"list": "search",
 		"srsearch": "contentmodel:javascript",
 		"srnamespace": "2",
@@ -44,14 +43,14 @@ process.chdir(__dirname);
 		"srsort": "incoming_links_desc"
 	}).then(json => {
 		log('[S] Got basic script list');
-		scriptList = json.query.search.map(e => e.title);
-		utils.saveObject('scriptList', scriptList);
-		return scriptList;
+		let list = json.query.search.map(e => e.title);
+		utils.saveObject('scriptList', list);
+		return list;
 	});
 
-	var table = {};
+	let table: Record<string, { total: number, active?: number }> = {};
 
-	await bot.batchOperation(scriptList, function(title, idx) {
+	await bot.batchOperation(scriptList, async function(title, idx) {
 		log(`[i][${idx}/${scriptList.length}] Processing ${title}`);
 		var subpagename = title.slice(title.indexOf('/') + 1);
 
@@ -62,7 +61,7 @@ process.chdir(__dirname);
 				total: -1,
 				active: -1
 			};
-			return Promise.resolve();
+			return;
 		}
 
 		return bot.continuedQuery({  // only 1 or 2
@@ -82,7 +81,6 @@ process.chdir(__dirname);
 			};
 			if (installCount === 0) {
 				table[title].active = 0;
-				table[title].activeusers = [];
 				return; // code below won't work
 			}
 
@@ -92,7 +90,7 @@ process.chdir(__dirname);
 
 		});
 
-	}, /* batchSize */ 1, /* retries */ 10).then(failures => {
+	}, /* batchSize */ 1, /* retries */ 3).then(failures => {
 		utils.saveObject('failures', failures.failures);
 	});
 
@@ -114,20 +112,16 @@ process.chdir(__dirname);
 	}
 
 	// Sort the table by total:
-	var tableList = [];
-	Object.entries(table).forEach(([title, data]) => {
-		tableList.push([title, data.total, data.active]);
-	});
-	var tableSorted = {};
-	tableList.sort((a, b) => {
-		if (b[1] - a[1] !== 0) {
-			return b[1] - a[1];
-		}
-		return b[2] - a[2];
-	}).forEach(function(e) {
-		tableSorted[e[0]] = table[e[0]];
-	});
-	utils.saveObject('importCounts', tableSorted);
+	let tableList = Object.entries(table)
+		.map(([title, data]) => [title, data.total, data.active] as [string, number, number])
+		.sort((a, b) => {
+			if (b[1] - a[1] !== 0) {
+				return b[1] - a[1];
+			}
+			return b[2] - a[2];
+		});
+
+	utils.saveObject('importCounts', tableList);
 	fs.writeFileSync('importCounts-time.txt', new Date().toString(), console.log);
 
 	// Create wikitable:
@@ -150,15 +144,15 @@ process.chdir(__dirname);
 // `;
 
 	let idx = 1, prevtotal;
-	for (let [name, count] of Object.entries(tableSorted)) {
+	for (let [name, totalCount, activeCount] of tableList) {
 		// count.deltaTotal = count.deltaTotal || count.total;
 		// var deltaTotal = count.deltaTotal + ' &nbsp; ' + (count.deltaTotal >= 0 ? '{{up}}' : '{{down}}');
 
-		if (idx >= 1000 && count.total !== prevtotal) {
+		if (idx >= 1000 && totalCount !== prevtotal) {
 			break;
 		}
-		wikitable.addRow([ idx++, `[[${name}]]`, count.total, count.active ]);
-		prevtotal = count.total;
+		wikitable.addRow([ idx++, `[[${name}]]`, totalCount, activeCount ]);
+		prevtotal = totalCount;
 
 	}
 
