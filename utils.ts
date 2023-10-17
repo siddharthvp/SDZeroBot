@@ -1,7 +1,7 @@
 import { bot, fs, log } from "./botbase";
 import { spawn } from "child_process";
-import { ENWIKI_DB_HOST, TOOLS_DB_HOST } from "./db";
-import { REDIS_HOST } from "./redis";
+import { ENWIKI_DB_HOST, TOOLS_DB_HOST, enwikidb, toolsdb } from "./db";
+import { getRedisInstance, REDIS_HOST } from "./redis";
 
 export function readFile(file) {
 	try {
@@ -84,7 +84,30 @@ export async function createLocalSSHTunnel(host: string, localPort?: number, rem
 				detached: true
 			})
 		);
-		await bot.sleep(5000);
+
+		let maxTries = 15;
+		let db = host === ENWIKI_DB_HOST ? new enwikidb() : host === TOOLS_DB_HOST ? new toolsdb('g13watch_p') : null;
+		if (db) {
+			while (maxTries--) {
+				try {
+					await db.pool.getConnection();
+					log(`[S] Db tunnel ping successful in ${15-maxTries} tries`);
+					break;
+				} catch (_) {}
+				await bot.sleep(500);
+			}
+		} else if (host === REDIS_HOST) {
+			while (maxTries--) {
+				try {
+					await getRedisInstance().ping();
+					log(`[S] Redis tunnel ping successful in ${15-maxTries} tries`);
+					break;
+				} catch (_) {}
+				await bot.sleep(500);
+			}
+		} else {
+			await bot.sleep(5000);
+		}
 	}
 }
 
