@@ -1,4 +1,4 @@
-select cl_from as subcat, page_id as parentcat
-from categorylinks
-join page on page_namespace = 14 and page_title = cl_to
-where cl_type = 'subcat';
+SELECT cl_from AS subcat, page_id AS parentcat
+FROM categorylinks
+JOIN page ON page_namespace = 14 AND page_title = cl_to
+WHERE cl_type = 'subcat';
