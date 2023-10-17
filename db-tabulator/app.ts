@@ -200,7 +200,7 @@ export class Query {
 
 		this.config.pagination = parseInt(this.getTemplateValue('pagination'));
 		if (isNaN(this.config.pagination)) {
-			this.config.pagination = Infinity;
+			this.config.pagination = 1000;
 		}
 		this.config.maxPages = Math.min(MAX_SUBPAGES,
 			this.getTemplateValue('max_pages') ? parseInt(this.getTemplateValue('max_pages')) : 5
@@ -219,6 +219,7 @@ export class Query {
 
 	async runQuery() {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.config.sql.trim()}`;
+		query = this.appendLimit(query);
 		queriesLog(`Page: [[${this.page}]], context: ${this.context}, query: ${query}`);
 		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
 			this.queryRuntime = timeTaken.toFixed(2);
@@ -243,6 +244,18 @@ export class Query {
 				throw err;
 			}
 		});
+	}
+
+	appendLimit(query: string): string {
+		let proposedLimit = this.config.pagination * this.config.maxPages;
+
+		let existingLimitRgx = /limit\s+(\d+);?$/i;
+		let matchResult = query.match(existingLimitRgx);
+		if (matchResult) {
+			let existingLimit = parseInt(matchResult[1]);
+			proposedLimit = Math.min(existingLimit, proposedLimit);
+		}
+		return query.replace(existingLimitRgx, '') + ` LIMIT ${proposedLimit}`;
 	}
 
 	transformColumn(result: Array<Record<string, string>>, columnIdx: number, transformer: (cell: string, rowIdx: number) => string): Array<Record<string, string>> {
