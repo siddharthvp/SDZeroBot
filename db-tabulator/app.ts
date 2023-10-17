@@ -3,8 +3,9 @@ import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
 import { arrayChunk, createLogStream, lowerFirst, readFile, writeFile } from "../utils";
 import {NS_CATEGORY, NS_FILE, NS_MAIN} from "../namespaces";
-import { MwnDate } from "../../mwn/build/date";
 import { formatSummary } from "../reports/commons";
+import {MetadataStore} from "./MetadataStore";
+import {HybridMetadataStore} from "./HybridMetadataStore";
 
 export const BOT_NAME = 'SDZeroBot';
 export const TEMPLATE = 'Database report';
@@ -21,24 +22,17 @@ const db = new enwikidb({
 	connectionLimit: CONCURRENCY
 });
 
+export const metadataStore: MetadataStore = new HybridMetadataStore();
+
 export async function fetchQueries(): Promise<Record<string, Query[]>> {
 	if (argv.fake) {
 		let text = readFile(FAKE_INPUT_FILE);
 		return { 'Fake-Configs': getQueriesFromText(text, 'Fake-Configs') };
 	}
-	let allQueries: Record<string, Query[]> = {};
-	let pages = (await new bot.page('Template:' + TEMPLATE).transclusions());
-	for await (let pg of bot.readGen(pages)) {
-		if (pg.ns === 0) { // sanity check: don't work in mainspace
-			continue;
-		}
-		let text = pg.revisions[0].content;
-		allQueries[pg.title] = getQueriesFromText(text, pg.title);
-	}
-	return allQueries;
+	return metadataStore.getQueriesToRun();
 }
 
-function getQueriesFromText(text: string, title: string): Query[] {
+export function getQueriesFromText(text: string, title: string): Query[] {
 	let templates = bot.wikitext.parseTemplates(text, {
 		namePredicate: name => name === TEMPLATE
 	});
@@ -49,29 +43,8 @@ function getQueriesFromText(text: string, title: string): Query[] {
 	return templates.map((template, idx) => new Query(template, title, idx + 1));
 }
 
-let lastEditsData: Record<string, MwnDate>;
-
 // Called from the cronjob
 export async function processQueries(allQueries: Record<string, Query[]>) {
-	await db.getReplagHours();
-	// Get the date of the bot's last edit to each of the subscribed pages
-	// The API doesn't have an efficient query for this, so using the DB instead
-	let [timeTaken, lastEditsDb] = await db.timedQuery(`
-		SELECT page_namespace, page_title,
-			(SELECT MAX(rc_timestamp) FROM recentchanges_userindex
-			 JOIN actor_recentchanges ON rc_actor = actor_id AND actor_name = ?
-			 WHERE rc_namespace = page_namespace AND rc_title = page_title
-			) AS last_edit
-		FROM page 
-		JOIN categorylinks ON cl_from = page_id AND cl_to = ?
-	`, [BOT_NAME, SUBSCRIPTIONS_CATEGORY.replace(/ /g, '_')]);
-	log(`[i] Retrieved last edits data. DB query took ${timeTaken.toFixed(2)} seconds.`);
-
-	lastEditsData = Object.fromEntries(lastEditsDb.map((row) => [
-		new bot.page(row.page_title as string, row.page_namespace as number).toText(),
-		row.last_edit && new bot.date(row.last_edit)
-	]));
-
 	await bot.batchOperation(Object.entries(allQueries), async ([page, queries]) => {
 		log(`[+] Processing page ${page}`);
 		await processQueriesForPage(queries);
@@ -132,6 +105,7 @@ export class Query {
 		maxPages?: number;
 		removeUnderscores?: number[];
 		hiddenColumns?: number[];
+		interval?: number;
 	} = {};
 
 	/** Warnings generated while template parsing or result formatting, to be added to the page */
@@ -160,6 +134,7 @@ export class Query {
 			const result = await this.runQuery();
 			const resultText = await this.formatResults(result);
 			await this.save(resultText);
+			await metadataStore.updateLastTimestamp(this);
 		} catch (err) {
 			if (err instanceof HandledError) return;
 			emailOnError(err, 'db-tabulator');
@@ -171,27 +146,9 @@ export class Query {
 		return this.template.getValue(param)?.replace(/<!--.*?-->/g, '').trim();
 	}
 
-	static checkIfUpdateDue(lastUpdate: MwnDate, interval: number): boolean {
-		if (!lastUpdate) {
-			return true;
-		}
-		let daysDiff = (new bot.date().getTime() - lastUpdate.getTime())/8.64e7;
-		return daysDiff >= interval - 0.5;
-	}
-
 	// Errors in configs are reported to user through [[Module:Database report]] in Lua
 	parseQuery() {
-		if (this.context === 'cron') {
-			let interval = parseInt(this.getTemplateValue('interval'));
-			if (isNaN(interval)) {
-				log(`[+] Skipping ${this} as periodic updates are not configured`);
-				throw new HandledError();
-			}
-			if (!Query.checkIfUpdateDue(lastEditsData[this.page], interval)) {
-				log(`[+] Skipping ${this} as update is not due.`);
-				throw new HandledError();
-			}
-		}
+		this.config.interval = parseInt(this.getTemplateValue('interval'));
 
 		// Use of semicolons for multiple statements will be flagged as error at query runtime
 		this.config.sql = this.getTemplateValue('sql')
@@ -613,6 +570,7 @@ export class Query {
 		}
 		let textToReplace = text.slice(
 			beginTemplateEndIdx,
+			// TODO: If end template not found, mention that in edit summary
 			endTemplateStartIdx === -1 ? undefined : endTemplateStartIdx
 		);
 		return text.slice(0, beginTemplateEndIdx) +
