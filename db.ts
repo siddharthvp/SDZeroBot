@@ -13,7 +13,9 @@ export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.wikimedia.cloud';
 export const TOOLS_DB_HOST = 'tools.db.svc.wikimedia.cloud';
 
 export abstract class db {
+	dbName: string;
 	pool: mysql.Pool;
+	outageHandler: DbOutageHandler;
 
 	protected constructor(customOptions: mysql.PoolOptions = {}) {
 		this.pool = mysql.createPool({
@@ -21,16 +23,21 @@ export abstract class db {
 			...AuthManager.get('sdzerobot'),
 			waitForConnections: true,
 			connectionLimit: 5,
+			// maxIdle: 0,
+			// idleTimeout: 5000,
 			//timezone: 'Z',
 			typeCast: function (field, next) {
 				if (field.type === 'BIT' && field.length === 1) {
 					return field.buffer()[0] === 1;
+				// } else if (field.type === 'BLOB') {
+				// 	return field.buffer()[0].toString();
 				} else {
 					return next();
 				}
 			},
 			...customOptions
 		});
+		this.dbName = customOptions.database;
 
 		// Toolforge policy does not allow holding idle connections
 		// Destroy connections on 5 seconds of inactivity. This avoids holding
@@ -44,6 +51,8 @@ export abstract class db {
 		this.pool.on('acquire', function (connection) {
 			clearTimeout(connection.inactiveTimeout);
 		});
+
+		this.outageHandler = new DbOutageHandler(this.dbName);
 
 		return this;
 	}
@@ -89,10 +98,16 @@ export abstract class db {
 		if (args[1] instanceof Array) {
 			args[1] = args[1].map(item => item === undefined ? null : item);
 		}
-		let conn = await this.getConnection();
+		let conn = await this.getConnection().catch(err => {
+			// in case of db being unreachable,
+			if (err.code === 'ECONNREFUSED') { // XXX: check and fix
+				this.outageHandler.recordOutageStart();
+			}
+		});
 		return await conn.execute(...args).finally(() => {
 			conn.release();
 		});
+		// TODO: consider logging statement to a file during ToolsDB outages
 	}
 
 	async transaction(func: (conn: mysql.PoolConnection) => Promise<void>) {
@@ -127,6 +142,7 @@ export class enwikidb extends db {
 
 	async getReplagHours() {
 		log('[V] Querying database lag');
+		// TODO: use heartbeat_p for getting replag
 		const lastrev = await this.query(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
 		const lastrevtime = new bot.date(lastrev[0].ts);
 		this.replagHours = Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60);
@@ -152,9 +168,33 @@ export class toolsdb extends db {
 		super({
 			host: onToolforge() ? TOOLS_DB_HOST : '127.0.0.1',
 			port: onToolforge() ? 3306 : 4712,
-			database: 's54328__' + dbname,
+			database: dbname.includes('__') ? dbname : ('s54328__' + dbname),
 			...customOptions
 		});
+	}
+}
+
+class DbOutageHandler {
+	inOutage = false;
+	outageStartTime = -1;
+	commandsLogFile: string;
+
+	constructor(dbName: string) {
+		this.commandsLogFile = `db-exec-${dbName}.out`;
+	}
+
+	recordOutageStart() {
+		if (!this.inOutage) {
+			this.inOutage = true;
+			this.outageStartTime = Date.now();
+		}
+	}
+	recordOutageEnd() {
+		this.inOutage = false;
+		this.outageStartTime = -1;
+	}
+	replayCommands() {
+
 	}
 }
 
