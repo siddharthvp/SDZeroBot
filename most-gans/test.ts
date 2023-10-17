@@ -15,6 +15,7 @@ describe('most-gans', () => {
 			['Fight for This Love', 'Lil-unique1', '2010-06-25'], // has rev-delled talkpage revs
 			['Norman Finkelstein', 'Giggy'],
 			['Etchmiadzin Cathedral', 'Yerevantsi', '2013-12-27'], // user renamed between nomination and promotion
+			['Panagiotis Stamatakis', 'UndercoverClassicist', '2023-02-04']
 		];
 		for (let [article, nomExpected, dateExpected] of testCases) {
 			const [nom, date] = await processArticle(article);

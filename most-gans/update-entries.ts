@@ -3,6 +3,8 @@ import {argv, bot, emailOnError, log} from "../botbase";
 import {closeTunnels, createLocalSSHTunnel, createLogStream} from "../utils";
 import {TOOLS_DB_HOST} from "../db";
 
+// TODO: rewrite this as part of eventstream listener, making this real-time
+
 (async function () {
 	bot.setOptions({ silent: true });
 	await createLocalSSHTunnel(TOOLS_DB_HOST);
