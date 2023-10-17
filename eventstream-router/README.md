@@ -6,8 +6,7 @@ Files:
 
 - main.ts: Main file executed on the grid using `jstart` command (see package.json)
 - EventSource.js: Fork of the npm EventSource module with some modifications around error handling.
-- routes.json: lists the "routes" – this is a JSON object mapping the route name to the route file path (without extension). 
-- route.ts: abstract class extended by all route classes.
+- app.ts: Most of the logic 
 
 To create a new task consuming the event stream, create a file from this template:
 ```ts
