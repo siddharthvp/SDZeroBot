@@ -22,6 +22,7 @@ const OresUtils = require('./OresUtils');
 		AND page_is_redirect = 0
 		AND rev_timestamp < "${fiveMonthOldTs}"
 		AND rev_timestamp > "${sixMonthOldTs}"
+		AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'All_drafts_subject_to_special_procedures')
 
 		UNION
 		
