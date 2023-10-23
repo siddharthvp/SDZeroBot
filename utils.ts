@@ -122,7 +122,7 @@ export function makeSentence(list: string[]) {
 	return text;
 }
 
-export function arrayChunk(arr, size) {
+export function arrayChunk<T>(arr: Array<T>, size: number): Array<Array<T>> {
 	var numChunks = Math.ceil(arr.length / size);
 	var result = new Array(numChunks);
 	for(var i = 0; i < numChunks; i++) {
