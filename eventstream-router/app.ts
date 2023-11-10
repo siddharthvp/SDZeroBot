@@ -22,6 +22,7 @@ export abstract class Route {
 	readonly abstract name: string;
 	log: ((...msg: any[]) => void);
 
+	// TODO: init timeout to avoid overflow of memory (while buffering events waiting for init)
 	init(): void | Promise<void> {
 		this.log = createLogStream('./' + this.name + '.out');
 	}
@@ -165,6 +166,10 @@ async function run(routes: RouteValidator[], lastSeen: LastSeen) {
 
 	stream.onmessage = function (event) {
 		let data: RecentChangeStreamEvent = JSON.parse(event.data);
+		if (data.meta.domain === 'canary') {
+			// Ignore canary events, https://phabricator.wikimedia.org/T266798
+			return;
+		}
 		lastSeen.ts = data.timestamp;
 		for (let route of routes) {
 			// the filter method is only invoked after the init(), so that init()
