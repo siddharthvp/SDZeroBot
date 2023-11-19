@@ -33,7 +33,9 @@ process.chdir(__dirname);
 
 
 	/** Get the first 5000 JS pages sorted by number of backlinks
-	 * Should cover every script that has at least 2 backlinks, and many others. */
+	 * Should cover every script that has at least 2 backlinks, and many others.
+	 * This misses some entries (see [[Wikipedia_talk:User_scripts/Most_imported_scripts#New_script_not_included]]),
+	 * so include everything linked from Wikipedia:User scripts/List as well. */
 	var scriptList = await bot.request({
 		"action": "query",
 		"list": "search",
@@ -41,10 +43,16 @@ process.chdir(__dirname);
 		"srnamespace": "2",
 		"srlimit": "5000",
 		"srprop": "",
-		"srsort": "incoming_links_desc"
+		"srsort": "incoming_links_desc",
+		"prop": "links",
+		"titles": "Wikipedia:User scripts/List",
+		"plnamespace": "2",
+		"pllimit": "max"
 	}).then(json => {
 		log('[S] Got basic script list');
-		scriptList = json.query.search.map(e => e.title);
+		scriptList = json.query.search.map(e => e.title).concat(
+			json.query.pages[0].links.map(e => e.title).filter(e => e.endsWith('.js'))
+		);
 		utils.saveObject('scriptList', scriptList);
 		return scriptList;
 	});
