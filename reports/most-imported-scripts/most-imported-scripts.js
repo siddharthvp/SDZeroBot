@@ -50,9 +50,9 @@ process.chdir(__dirname);
 		"pllimit": "max"
 	}).then(json => {
 		log('[S] Got basic script list');
-		scriptList = json.query.search.map(e => e.title).concat(
+		scriptList = [...new Set(json.query.search.map(e => e.title).concat(
 			json.query.pages[0].links.map(e => e.title).filter(e => e.endsWith('.js'))
-		);
+		))];
 		utils.saveObject('scriptList', scriptList);
 		return scriptList;
 	});
