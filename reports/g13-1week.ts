@@ -248,32 +248,39 @@ async function makeOldLinks() {
 	await createLocalSSHTunnel(ENWIKI_DB_HOST);
 	process.chdir(__dirname);
 
-	let lastRunDate;
-	try {
-		const lastEditSummary = (await getRecentEdits(1))[0].comment;
-		lastRunDate = dateFromEditSummary(lastEditSummary);
-	} catch (e) {} finally {
-		if (!lastRunDate) {
-			lastRunDate = new bot.date().subtract(1, 'day').subtract(6, 'months').add(6, 'days');
+	if (argv.runDate) {
+		const runDate = new bot.Date(argv.runDate);
+		log(`[+] Running for drafts with last edit on ${runDate.format('D MMMM YYYY')}`);
+		await runForDate(runDate);
+
+	} else {
+		let lastRunDate;
+		try {
+			const lastEditSummary = (await getRecentEdits(1))[0].comment;
+			lastRunDate = dateFromEditSummary(lastEditSummary);
+		} catch (e) {} finally {
+			if (!lastRunDate) {
+				lastRunDate = new bot.date().subtract(1, 'day').subtract(6, 'months').add(6, 'days');
+			}
 		}
+
+		let runTillDate = new bot.date().subtract(6, 'months').add(6, 'days');
+
+		// zero out times for easy comparison
+		// and for the SQL to work out right
+		runTillDate.setUTCHours(0, 0, 0, 0);
+		lastRunDate.setUTCHours(0, 0, 0, 0);
+
+		// Most of the days, this would run once.
+		// On beginning/end of certain months, this can run multiple times or not at all
+		let date = lastRunDate.add(1, 'day');
+		while (!date.isAfter(runTillDate)) {
+			log(`[+] Running for drafts with last edit on ${date.format('D MMMM YYYY')}`);
+			await runForDate(date);
+			date = date.add(1, 'day');
+		}
+		// Note: remember that above all date methods modify the original object
 	}
-
-	let runTillDate = new bot.date().subtract(6, 'months').add(6, 'days');
-
-	// zero out times for easy comparison
-	// and for the SQL to work out right
-	runTillDate.setUTCHours(0, 0, 0, 0);
-	lastRunDate.setUTCHours(0, 0, 0, 0);
-
-	// Most of the days, this would run once.
-	// On beginning/end of certain months, this can run multiple times or not at all
-	let date = lastRunDate.add(1, 'day');
-	while (!date.isAfter(runTillDate)) {
-		log(`[+] Running for drafts with last edit on ${date.format('D MMMM YYYY')}`);
-		await runForDate(date);
-		date = date.add(1, 'day');
-	}
-	// Note: remember that above all date methods modify the original object
 
 	log(`[i] Finished`);
 
