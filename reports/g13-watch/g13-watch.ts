@@ -87,7 +87,8 @@ import * as OresUtils from '../OresUtils';
            ],
            "clcategories": [
                "Category:Rejected AfC submissions",
-               "Category:Promising draft articles"
+               "Category:Promising draft articles",
+               "Category:All drafts subject to special procedures"
            ],
            "tllimit": "max",
            "cllimit": "max"
@@ -145,13 +146,14 @@ import * as OresUtils from '../OresUtils';
            let rejected = categories.includes('Rejected AfC submissions');
            let oresBad = oresData?.[pg.title]?.oresBad ?? false;
            let oresRating = oresData?.[pg.title]?.oresRating ?? 2;
+           let special = categories.includes('All drafts subject to special procedures');
            return g13db.run(`
                REPLACE INTO g13(name, description, excerpt, size, ts, declines, upe, coi, unsourced, 
-                                promising, blank, test, draftified, rejected, oresBad, oresRating)
-               VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                promising, blank, test, draftified, rejected, oresBad, oresRating, special)
+               VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            `, [
                title, desc, excerpt, size, lastEdited, declines, upe, coi, unsourced,
-               promising, blank, test, draftified, rejected, oresBad, oresRating
+               promising, blank, test, draftified, rejected, oresBad, oresRating, special
            ]).catch(e => {
                log(`[E] Error inserting ${pg} into g13 db`);
                log(e);
@@ -277,6 +279,7 @@ import * as OresUtils from '../OresUtils';
         if (details.blank) notes.push('blank');
         if (details.test) notes.push('test');
         if (details.draftified) notes.push('draftified');
+        if (details.special) notes.push('5-year');
 
         table.addRow([
             // details.ts ? new bot.date(details.ts).format('YYYY-MM-DD HH:mm') : '',
