@@ -190,7 +190,8 @@ function formatSummary(text) {
 	}
 	return text
 		.replace(/\{\{.*?\}\}/g, '<nowiki>$&</nowiki>')
-		.replace(/\[\[((?:Category|File|Image):.*?)\]\]/gi, '[[:$1]]');
+		.replace(/\[\[((?:Category|File|Image):.*?)\]\]/gi, '[[:$1]]')
+		.replace(/~{3,5}/g, '<nowiki>$&</nowiki>');
 }
 
 /**
