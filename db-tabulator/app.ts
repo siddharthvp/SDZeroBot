@@ -480,6 +480,10 @@ export class Query {
 				}));
 				tableText = table.text;
 			}
+		} else {
+			if (header_template) {
+				tableText = '{{' + header_template + '}}\n';
+			}
 		}
 
 		if (row_template) {
