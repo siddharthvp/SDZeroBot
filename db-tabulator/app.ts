@@ -456,6 +456,7 @@ export class Query {
 
 		const row_template = this.getTemplateValue('row_template');
 		const header_template = this.getTemplateValue('header_template');
+		const footer_template = this.getTemplateValue('footer_template');
 		const skip_table = this.getTemplateValue('skip_table');
 
 		let table: InstanceType<typeof Mwn.table>;
@@ -499,6 +500,10 @@ export class Query {
 			tableText = TextExtractor.finalSanitise(table.getText());
 			// XXX: header gets skipped if header_template is used without row_template,
 			// but module does show a warning
+		}
+
+		if (skip_table && footer_template) {
+			tableText += '{{' + footer_template + '}}\n';
 		}
 
 		// Get DB replag, but no need to do this any more than once in 6 hours (when triggered via
@@ -613,6 +618,7 @@ export class Query {
 		}
 		let textToReplace = text.slice(
 			beginTemplateEndIdx,
+			// TODO: If end template not found, mention that in edit summary
 			endTemplateStartIdx === -1 ? undefined : endTemplateStartIdx
 		);
 		return text.slice(0, beginTemplateEndIdx) +
