@@ -189,6 +189,9 @@ function formatSummary(text) {
 		return '';
 	}
 	return text
+		// Ensure HTML comments are displayed as-is, and <div> and other tags don't render
+		.replace(/</g, '&lt;')
+
 		.replace(/\{\{.*?\}\}/g, '<nowiki>$&</nowiki>')
 		.replace(/\[\[((?:Category|File|Image):.*?)\]\]/gi, '[[:$1]]')
 		.replace(/~{3,5}/g, '<nowiki>$&</nowiki>');
