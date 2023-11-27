@@ -458,12 +458,18 @@ export class Query {
 		const header_template = this.getTemplateValue('header_template');
 		const footer_template = this.getTemplateValue('footer_template');
 		const skip_table = this.getTemplateValue('skip_table');
+		const table_style = this.getTemplateValue('table_style') || 'overflow-wrap: anywhere';
+		const table_class = (this.getTemplateValue('table_class') || 'wikitable sortable')
+			.split(/\s+/g).map(e => e.trim()).filter(e => e);
 
 		let table: InstanceType<typeof Mwn.table>;
 		let tableText = '';
 		if (!skip_table) {
 			table = new Mwn.table({
-				style: this.getTemplateValue('table_style') || 'overflow-wrap: anywhere'
+				style: table_style,
+				classes: table_class,
+				sortable: table_class.includes('sortable'),
+				plain: !table_class.includes('wikitable')
 			});
 			if (header_template) {
 				tableText = table.text + '{{' + header_template + '}}\n';
