@@ -464,6 +464,12 @@ export class Query {
 
 		let table: InstanceType<typeof Mwn.table>;
 		let tableText = '';
+		// NOTE: header_template appears:
+		// - above table start if row_template is not being used
+		// - below table start if row_template is being used
+		if (header_template && (skip_table || !row_template)) {
+			tableText = '{{' + header_template + '}}\n';
+		}
 		if (!skip_table) {
 			table = new Mwn.table({
 				style: table_style,
@@ -471,11 +477,9 @@ export class Query {
 				sortable: table_class.includes('sortable'),
 				plain: !table_class.includes('wikitable')
 			});
-			if (header_template) {
-				tableText = table.text + '{{' + header_template + '}}\n';
-			}
-			if (!row_template) {
-				// row_template not being used? Add table headers, possibly in addition to the header_template.
+			if (header_template && row_template) {
+				tableText += table.text + '{{' + header_template + '}}\n';
+			} else {
 				table.addHeaders(Object.keys(result[0]).map((columnName, columnIndex) => {
 					let columnConfig: { label: string, style?: string } = {
 						label: columnName,
@@ -486,11 +490,7 @@ export class Query {
 					}
 					return columnConfig;
 				}));
-				tableText = table.text;
-			}
-		} else {
-			if (header_template) {
-				tableText = '{{' + header_template + '}}\n';
+				tableText += table.text;
 			}
 		}
 
