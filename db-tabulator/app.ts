@@ -467,7 +467,9 @@ export class Query {
 			});
 			if (header_template) {
 				tableText = table.text + '{{' + header_template + '}}\n';
-			} else {
+			}
+			if (!row_template) {
+				// row_template not being used? Add table headers, possibly in addition to the header_template.
 				table.addHeaders(Object.keys(result[0]).map((columnName, columnIndex) => {
 					let columnConfig: { label: string, style?: string } = {
 						label: columnName,
