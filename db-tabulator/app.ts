@@ -143,6 +143,9 @@ export class Query {
 	/** Invocation mode */
 	context: string;
 
+	/** Internal tracking for edit summary */
+	endNotFound = false;
+
 	constructor(template: Template, page: string, idxOnPage: number) {
 		this.page = page;
 		this.template = template;
@@ -566,12 +569,7 @@ export class Query {
 				let newText = this.insertResultIntoPageText(text, firstPageResult);
 				return {
 					text: newText,
-					summary: (isError ? 'Encountered error in updating database report' : 'Updating database report') + (
-						this.context === 'web' ? ': web triggered' :
-							this.context === 'cron' ? ': periodic update' :
-								this.context === 'eventstream' ? ': new transclusion' :
-									'manual'
-					)
+					summary: this.generateEditSummary(isError)
 				};
 			});
 		} catch (err) {
@@ -613,6 +611,18 @@ export class Query {
 		}
 	}
 
+	generateEditSummary(isError: boolean) {
+		const updateMode =
+			this.context === 'web' ? 'web triggered' :
+				this.context === 'cron' ? 'periodic update' :
+					this.context === 'eventstream' ? 'new transclusion' :
+						'manual';
+		const endNotFoundNote = this.endNotFound ?
+			', overwriting rest of page as end template not found' : '';
+		return (isError ? 'Encountered error in updating database report' : 'Updating database report')
+			+ ': ' + updateMode + endNotFoundNote;
+	}
+
 	async saveWithError(message: string): Promise<never> {
 		await this.save(`{{error|1=[${message}]}}`, true);
 		throw new HandledError();
@@ -631,10 +641,13 @@ export class Query {
 		let endTemplateStartIdx = text.indexOf(`{{${TEMPLATE_END}}}`, beginTemplateEndIdx);
 		if (endTemplateStartIdx === -1) { // caps, XXX
 			endTemplateStartIdx = text.indexOf(`{{${lowerFirst(TEMPLATE_END)}}}`, beginTemplateEndIdx);
+			if (endTemplateStartIdx === -1) {
+				// Still no? Record for edit summary
+				this.endNotFound = true;
+			}
 		}
 		let textToReplace = text.slice(
 			beginTemplateEndIdx,
-			// TODO: If end template not found, mention that in edit summary
 			endTemplateStartIdx === -1 ? undefined : endTemplateStartIdx
 		);
 		return text.slice(0, beginTemplateEndIdx) +
