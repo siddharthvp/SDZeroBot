@@ -415,16 +415,15 @@ export class Query {
 				nsColNumber = parseInt(namespace.slice(1)) - 1;
 			}
 			result = this.transformColumn(result, columnIndex, (value, rowIdx) => {
-				try {
-					let title = new bot.title(value, nsId ?? Number(Object.values(result[rowIdx])[nsColNumber]));
-					// title.getNamespaceId() need not be same as namespace passed to new bot.title
-					let colon = [NS_CATEGORY, NS_FILE].includes(title.getNamespaceId()) ? ':' : '';
-					let pageName = title.toText();
-					return (showNamespace || title.getNamespaceId() === NS_MAIN) ?
-						`[[${colon}${pageName}]]` : `[[${colon}${pageName}|${value.replace(/_/g, ' ')}]]`;
-				} catch (e) {
+				let title = bot.title.makeTitle(nsId ?? Number(Object.values(result[rowIdx])[nsColNumber]), value);
+				if (!title) {
 					return value.replace(/_/g, ' ');
 				}
+				// title.getNamespaceId() need not be same as namespace passed to bot.title.makeTitle
+				let colon = [NS_CATEGORY, NS_FILE].includes(title.getNamespaceId()) ? ':' : '';
+				let pageName = title.toText();
+				return (showNamespace || title.getNamespaceId() === NS_MAIN) ?
+					`[[${colon}${pageName}]]` : `[[${colon}${pageName}|${value.replace(/_/g, ' ')}]]`;
 			});
 		});
 
