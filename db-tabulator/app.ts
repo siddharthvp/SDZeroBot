@@ -464,6 +464,7 @@ export class Query {
 
 		let table: InstanceType<typeof Mwn.table>;
 		let tableText = '';
+
 		// NOTE: header_template appears:
 		// - above table start if row_template is not being used
 		// - below table start if row_template is being used
@@ -490,11 +491,16 @@ export class Query {
 					}
 					return columnConfig;
 				}));
-				tableText += table.text;
 			}
 		}
 
 		if (row_template) {
+			if (!skip_table && !header_template) {
+				// Add table top structure.
+				// Not applicable if skip_table is used.
+				// If header_template is there, tableText already include table top structure by now.
+				tableText += table.text;
+			}
 			for (let row of result) {
 				tableText += '{{' + row_template + Object.values(row).map((val, idx) => `|${idx + 1}=` + val).join('') + '}}\n';
 			}
@@ -509,9 +515,7 @@ export class Query {
 			for (let row of result) {
 				table.addRow(Object.values(row));
 			}
-			tableText = TextExtractor.finalSanitise(table.getText());
-			// XXX: header gets skipped if header_template is used without row_template,
-			// but module does show a warning
+			tableText += TextExtractor.finalSanitise(table.getText());
 		}
 
 		if (skip_table && footer_template) {
