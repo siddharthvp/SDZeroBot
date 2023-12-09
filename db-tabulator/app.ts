@@ -108,6 +108,8 @@ export class Query {
 		interval?: number;
 	} = {};
 
+	isValid = true;
+
 	/** Warnings generated while template parsing or result formatting, to be added to the page */
 	warnings: string[] = [];
 
@@ -156,7 +158,12 @@ export class Query {
 		// Use of semicolons for multiple statements will be flagged as error at query runtime
 		this.config.sql = this.getTemplateValue('sql')
 			// Allow pipes to be written as {{!}}
-			.replace(/\{\{!\}\}/g, '|');
+			?.replace(/\{\{!\}\}/g, '|');
+
+		if (!this.config.sql) {
+			this.isValid = false;
+			return;
+		}
 
 		this.config.wikilinks = this.getTemplateValue('wikilinks')
 			?.split(',')

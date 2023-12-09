@@ -2,6 +2,7 @@ import {MetadataStore} from "./MetadataStore";
 import {Query} from "./app";
 import {MariadbMetadataStore} from "./MariadbMetadataStore";
 import {NoMetadataStore} from "./NoMetadataStore";
+import {log} from "../botbase";
 
 export class HybridMetadataStore implements MetadataStore {
 
@@ -17,12 +18,19 @@ export class HybridMetadataStore implements MetadataStore {
                 await store.init();
                 this.activeStore = store;
                 break;
-            } catch (e) {}
+            } catch (e) {
+                log(`[E] Failed to init ${store}`);
+                log(e);
+            }
         }
     }
 
     getQueriesToRun() {
         return this.activeStore.getQueriesToRun();
+    }
+
+    getAllPages() {
+        return this.activeStore.getAllPages();
     }
 
     removeOthers(pages: Set<string>) {

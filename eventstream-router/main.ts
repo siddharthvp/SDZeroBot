@@ -14,7 +14,13 @@ import dbTabulatorMetadata from "../db-tabulator/eventstream-metadata-maintainer
 import shutoffsMonitor from "./routes/shutoffs-monitor";
 import dykCountsTask from "./routes/dyk-counts";
 
-const routeClasses = [gans, dykCountsTask, botActivityMonitor, dbTabulatorMetadata, shutoffsMonitor];
+const routeClasses = [
+    gans,
+    dykCountsTask,
+    botActivityMonitor,
+    dbTabulatorMetadata,
+    shutoffsMonitor,
+];
 
 // debugging a single route example: -r "./test"
 streamWithRoutes(argv.r ? [require(argv.r).default] : routeClasses);

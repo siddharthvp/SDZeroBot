@@ -12,6 +12,10 @@ export class NoMetadataStore implements MetadataStore {
 
     async updateMetadata(page: string, queries: Query[]) {}
 
+    async getAllPages() {
+        return [];
+    }
+
     async removeOthers(pages: Set<string>) {}
 
     async updateLastTimestamp() {}

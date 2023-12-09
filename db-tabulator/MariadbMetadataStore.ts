@@ -8,9 +8,10 @@ export class MariadbMetadataStore implements MetadataStore {
     db: toolsdb;
 
     async init() {
-        this.db = new toolsdb('dbreports_p');
         await createLocalSSHTunnel(TOOLS_DB_HOST);
-        await this.db.query(`
+        this.db = new toolsdb('dbreports_p');
+        // TODO: database indexes and primary key
+        await this.db.run(`
             CREATE TABLE IF NOT EXISTS dbreports(
                 page VARCHAR(255),
                 idx SMALLINT UNSIGNED,
@@ -18,12 +19,14 @@ export class MariadbMetadataStore implements MetadataStore {
                 intervalDays SMALLINT UNSIGNED,
                 lastUpdate DATETIME
             )
-        `); // Primary key?
+        `);
     }
 
     async updateMetadata(page: string, queries: Query[]) {
-        const existingQueryMd5s = new Set((await this.db.query('SELECT templateMd5 FROM dbreports'))
-            .map(q => q.templateMd5));
+        const existingQueryMd5s = new Set((await this.db.query(`
+            SELECT templateMd5 FROM dbreports
+            WHERE page = ?
+        `, [page])).map(q => q.templateMd5));
         const newQueryMd5s = new Set(queries.map(q => this.makeMd5(q)));
 
         await this.db.transaction(async conn => {
@@ -54,12 +57,20 @@ export class MariadbMetadataStore implements MetadataStore {
         return crypto.createHash('md5').update(query.template.wikitext).digest('hex');
     }
 
+    /**
+     * Remove pages from database, except for the pages present in the passed-in set.
+     */
     async removeOthers(pages: Set<string>) {
         const questionMarks = Array(pages.size).fill('?').join(',')
         await this.db.run(
             `DELETE FROM dbreports WHERE page NOT IN (${questionMarks})`,
             [...pages]
         )
+    }
+
+    async getAllPages() {
+        const rows = await this.db.query(`SELECT DISTINCT page FROM dbreports`);
+        return rows.map(row => row.page) as string[];
     }
 
     async getQueriesToRun() {
