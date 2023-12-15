@@ -10,16 +10,6 @@ export class MariadbMetadataStore implements MetadataStore {
     async init() {
         await createLocalSSHTunnel(TOOLS_DB_HOST);
         this.db = new toolsdb('dbreports_p');
-        // TODO: database indexes and primary key
-        await this.db.run(`
-            CREATE TABLE IF NOT EXISTS dbreports(
-                page VARCHAR(255),
-                idx SMALLINT UNSIGNED,
-                templateMd5 CHAR(32),
-                intervalDays SMALLINT UNSIGNED,
-                lastUpdate DATETIME
-            )
-        `);
     }
 
     async updateMetadata(page: string, queries: Query[]) {
@@ -34,7 +24,7 @@ export class MariadbMetadataStore implements MetadataStore {
                 conn.execute('DELETE FROM dbreports WHERE page = ? AND templateMd5 = ?', [page, md5]);
             });
 
-            // Don't delete lastUpdate values on service restart (or when other reports are added to page)
+            // Don't delete lastUpdate values of unchanged reports when updating metadata
             for (let query of queries) {
                 const md5 = this.makeMd5(query);
                 const intervalDays = isNaN(query.config.interval) ? null : query.config.interval;

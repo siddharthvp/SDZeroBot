@@ -41,7 +41,7 @@ export class NoMetadataStore implements MetadataStore {
 
         let allQueries: Record<string, Query[]> = {};
         let pages = (await new bot.page('Template:' + TEMPLATE).transclusions());
-        for await (let pg of bot.readGen(pages)) {
+        for await (let pg of bot.readGen(pages, {}, 50)) {
             if (pg.ns === 0) { // sanity check: don't work in mainspace
                 continue;
             }

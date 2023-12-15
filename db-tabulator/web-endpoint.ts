@@ -1,5 +1,5 @@
 import * as express from "express";
-import { checkShutoff, fetchQueriesForPage, processQueriesForPage, SHUTOFF_PAGE, TEMPLATE } from "./app";
+import {checkShutoff, fetchQueriesForPage, metadataStore, processQueriesForPage, SHUTOFF_PAGE, TEMPLATE} from "./app";
 import { createLogStream, mapPath } from "../utils";
 import {bot} from "../botbase";
 import {getRedisInstance} from "../redis";
@@ -21,6 +21,7 @@ router.get('/', async function (req, res, next) {
 		getLatestRevId(page).catch(err => {
 			res.status(err.code || 500).render('oneline', { text: err.message });
 		}),
+		metadataStore.init(),
 	]);
 
 	if (!revId) return;
