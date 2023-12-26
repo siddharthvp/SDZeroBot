@@ -93,7 +93,7 @@ async function runForDate(date: MwnDate) {
 				if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
 					// the db query should omit redirects, this happens only because of db lag
 					// or if the page was converted to redirect after the db fetch
-					tableInfo[page.title].skip = true; // skip it
+					tableInfo[pg.title].skip = true; // skip it
 					continue;
 				}
 			}
@@ -249,7 +249,7 @@ async function makeOldLinks() {
 	process.chdir(__dirname);
 
 	if (argv.runDate) {
-		const runDate = new bot.Date(argv.runDate);
+		const runDate = new bot.Date(argv.runDate + " Z");
 		log(`[+] Running for drafts with last edit on ${runDate.format('D MMMM YYYY')}`);
 		await runForDate(runDate);
 
