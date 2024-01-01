@@ -103,11 +103,13 @@ export default class Purger extends Route {
         const existingEntries = Object.fromEntries(
             [...this.scheduledPurges.keys()].map(e => [e.serialize(), e])
         );
-        return new Set(entries.map(e => {
-            const entry = new PurgeEntry(e);
-            // return reference to existing entry if present, as that facilitates easy setDifference
-            return existingEntries[entry.serialize()] ?? entry;
-        }));
+        const parsedEntries = entries.map(e => new PurgeEntry(e))
+            // filter out invalid ones
+            .filter(e => e.page)
+            // use reference to existing entry if present, as that facilitates easy setDifference
+            .map(e => existingEntries[e.serialize()] ?? e);
+
+        return new Set(parsedEntries);
     }
 
 }
@@ -118,8 +120,12 @@ class PurgeEntry {
     forceLinkUpdate: boolean
     forceRecursiveLinkUpdate: boolean
     constructor(entry: Template) {
+        const pageParam = entry.getParam(1) || entry.getParam('page');
+        if (!pageParam) {
+            return;
+        }
         // strip link syntax from page name, maybe generated due to database report
-        this.page = entry.getParam(1).value.replace(/^\s*\[\[(.*?)\]\]\s*$/, '$1');
+        this.page = pageParam.value.replace(/^\s*\[\[(.*?)\]\]\s*$/, '$1');
         this.intervalDays = parseInt(entry.getParam('interval')?.value);
 
         // any non-empty value represents true!
