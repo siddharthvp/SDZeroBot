@@ -77,9 +77,13 @@ export default class Purger extends Route {
 
     async executePurgeRequest(purgeParams: ApiPurgeParams) {
         try {
-            await bot.request(purgeParams);
-            this.log(`[V] Purged titles ${purgeParams.titles}`);
-            this.log(`[+] Purged batch of ${purgeParams.titles.length} pages`);
+            const response = await bot.request(purgeParams);
+            const invalidPurges = response.purge.filter(r => r.invalid);
+            this.log(`[+] Purged batch of ${purgeParams.titles.length} pages` +
+                (invalidPurges.length ? `, of which ${invalidPurges.length} were invalid` : ''));
+            if (invalidPurges.length) {
+                this.log(`[E] Invalid purges: ${invalidPurges.map(e => e.title)}`);
+            }
             await bot.sleep(2000); // Sleep interval between successive purges
         } catch (e) {
             this.log(`[V] Failed to purge titles ${purgeParams.titles}`);
