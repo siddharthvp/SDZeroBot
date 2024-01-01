@@ -85,6 +85,7 @@ export default class Purger extends Route {
             this.log(`[V] Failed to purge titles ${purgeParams.titles}`);
             this.log(`[E] Failed to purge batch of ${purgeParams.titles.length} pages`);
             this.log(e);
+            await bot.sleep(500);
         }
     }
 
@@ -113,7 +114,8 @@ class PurgeEntry {
     forceLinkUpdate: boolean
     forceRecursiveLinkUpdate: boolean
     constructor(entry: Template) {
-        this.page = entry.getParam(1).value;
+        // strip link syntax from page name, maybe generated due to database report
+        this.page = entry.getParam(1).value.replace(/^\s*\[\[(.*?)\]\]\s*$/, '$1');
         this.intervalDays = parseInt(entry.getParam('interval')?.value);
 
         // any non-empty value represents true!
