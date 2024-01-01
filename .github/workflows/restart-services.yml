@@ -7,7 +7,7 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: garygrossgarten/github-action-ssh@915e492551885a89131e21d85f2e043c96abff80
         with:
           command: >-
