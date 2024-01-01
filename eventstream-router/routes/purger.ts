@@ -59,10 +59,9 @@ export default class Purger extends Route {
     async queuePurgeRequest(entries: Array<PurgeEntry>) {
         // 4 permutations
         [
-            entries.filter(e => e.forceLinkUpdate && e.forceRecursiveLinkUpdate),
+            entries.filter(e => e.forceRecursiveLinkUpdate),
             entries.filter(e => e.forceLinkUpdate && !e.forceRecursiveLinkUpdate),
             entries.filter(e => !e.forceLinkUpdate && !e.forceRecursiveLinkUpdate),
-            entries.filter(e => !e.forceLinkUpdate && e.forceRecursiveLinkUpdate),
         ].forEach(batch => {
             const subBatches = arrayChunk(batch, 100);
             subBatches.forEach(subBatch => {
@@ -70,7 +69,7 @@ export default class Purger extends Route {
                     action: 'purge',
                     titles: subBatch.map(e => e.page),
                     forcelinkupdate: subBatch[0].forceLinkUpdate,
-                    forcerecursivelinkupdate: subBatch[0].forceRecursiveLinkUpdate
+                    forcerecursivelinkupdate: subBatch[0].forceRecursiveLinkUpdate,
                 });
             });
         });
@@ -92,7 +91,7 @@ export default class Purger extends Route {
     async parseEntries() {
         const text = (await bot.read(this.CONF_PAGE)).revisions[0].content;
         const entries = bot.Wikitext.parseTemplates(text, {
-            namePredicate: name => name === '/purge'
+            namePredicate: name => name === '/Entry'
         });
         this.log(`[V] Parsed ${entries.length} titles from ${this.CONF_PAGE}`);
 
