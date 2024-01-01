@@ -421,6 +421,7 @@ export class Query {
 		});
 
 		const row_template = this.getTemplateValue('row_template');
+		const row_template_named_params = this.getTemplateValue('row_template_named_params')
 		const header_template = this.getTemplateValue('header_template');
 		const footer_template = this.getTemplateValue('footer_template');
 		const skip_table = this.getTemplateValue('skip_table');
@@ -468,7 +469,11 @@ export class Query {
 				tableText += table.text;
 			}
 			for (let row of result) {
-				tableText += '{{' + row_template + Object.values(row).map((val, idx) => `|${idx + 1}=` + val).join('') + '}}\n';
+				if (row_template_named_params) {
+					tableText += '{{' + row_template + Object.entries(row).map(([key, val]) => `|${key}=` + val).join('') + '}}\n';
+				} else {
+					tableText += '{{' + row_template + Object.values(row).map((val, idx) => `|${idx + 1}=` + val).join('') + '}}\n';
+				}
 			}
 			if (!skip_table) {
 				tableText += '|}'; // complete the table syntax
