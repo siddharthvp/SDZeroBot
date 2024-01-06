@@ -57,13 +57,13 @@ export default class Purger extends Route {
     }
 
     async queuePurgeRequest(entries: Array<PurgeEntry>) {
-        // 4 permutations
+        // 3 permutations
         [
             entries.filter(e => e.forceRecursiveLinkUpdate),
             entries.filter(e => e.forceLinkUpdate && !e.forceRecursiveLinkUpdate),
             entries.filter(e => !e.forceLinkUpdate && !e.forceRecursiveLinkUpdate),
         ].forEach(batch => {
-            const subBatches = arrayChunk(batch, 100);
+            const subBatches = arrayChunk(batch, 20);
             subBatches.forEach(subBatch => {
                 this.purgeRequestQueue.push({
                     action: 'purge',
@@ -84,7 +84,7 @@ export default class Purger extends Route {
             if (invalidPurges.length) {
                 this.log(`[E] Invalid purges: ${invalidPurges.map(e => e.title)}`);
             }
-            await bot.sleep(2000); // Sleep interval between successive purges
+            await bot.sleep(1000); // Sleep interval between successive purges
         } catch (e) {
             this.log(`[V] Failed to purge titles ${purgeParams.titles}`);
             this.log(`[E] Failed to purge batch of ${purgeParams.titles.length} pages`);
