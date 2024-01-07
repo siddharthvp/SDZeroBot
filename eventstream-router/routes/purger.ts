@@ -94,11 +94,12 @@ export default class Purger extends Route {
     }
 
     async parseEntries() {
-        const text = (await bot.read(this.CONF_PAGE)).revisions[0].content;
+        const rev = (await bot.read(this.CONF_PAGE, { rvprop: ['content', 'timestamp', 'ids'] })).revisions[0];
+        const text = rev.content;
         const entries = bot.Wikitext.parseTemplates(text, {
             namePredicate: name => name === '/Entry'
         });
-        this.log(`[V] Parsed ${entries.length} titles from ${this.CONF_PAGE}`);
+        this.log(`[V] Parsed ${entries.length} titles from ${this.CONF_PAGE} (revid ${rev.revid})`);
 
         const existingEntries = Object.fromEntries(
             [...this.scheduledPurges.keys()].map(e => [e.serialize(), e])
