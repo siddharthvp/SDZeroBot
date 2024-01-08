@@ -23,7 +23,7 @@ export default class Purger extends Route {
     }
 
     filter(data: RecentChangeStreamEvent): boolean {
-        return data.wiki === 'enwiki' && data.title === this.CONF_PAGE;
+        return data.wiki === 'enwiki' && data.type === 'edit' && data.title === this.CONF_PAGE;
     }
 
     async worker(data: RecentChangeStreamEvent) {
