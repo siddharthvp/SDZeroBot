@@ -67,8 +67,8 @@ export class MariadbMetadataStore implements MetadataStore {
         const data = await this.db.query(`
             SELECT page, idx FROM dbreports
             WHERE intervalDays IS NOT NULL 
-              AND (lastUpdate IS NULL OR lastUpdate < NOW() - INTERVAL intervalDays DAY)
-        `);
+              AND (lastUpdate IS NULL OR lastUpdate < NOW() - INTERVAL intervalDays DAY + INTERVAL 10 MINUTE)
+        `); // +10 mins helps get the reports update around the same time every day
         let pages: Record<string, Set<number>> = {};
         data.forEach(row => {
             if (!pages[row.page]) {
