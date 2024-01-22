@@ -51,7 +51,7 @@ export default class DbTabulatorMetadata extends Route {
     filter(data: RecentChangeStreamEvent): boolean {
         return data.wiki === 'enwiki' &&
             ((data.type === 'categorize' && data.title === 'Category:' + SUBSCRIPTIONS_CATEGORY) ||
-            ((data.type === 'edit' || (data.type === 'log' && (data.log_type === 'move' || data.log_type === 'delete')))
+            ((data.type === 'edit' || (data.type === 'log' && (data.log_action === 'move' || data.log_action === 'delete')))
                 && this.subscriptions.has(data.title) && data.user !== BOT_NAME));
     }
 
@@ -64,10 +64,18 @@ export default class DbTabulatorMetadata extends Route {
                 this.subscriptions.delete(page.title);
             }
             this.updateMetadata(page.title);
-        } else if (data.log_type === 'move') {
+
+        } else if (data.log_action === 'move') {
             this.updateMetadata(data.title);
+            this.subscriptions.delete(data.title);
             this.updateMetadata(data.log_params.target);
-        } else { // edits, deletions
+            this.subscriptions.add(data.log_params.target);
+
+        } else if (data.log_action === 'delete') {
+            this.updateMetadata(data.title);
+            this.subscriptions.delete(data.title);
+
+        } else { // edit
             this.updateMetadata(data.title);
         }
     }
