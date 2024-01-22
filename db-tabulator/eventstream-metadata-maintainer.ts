@@ -5,6 +5,7 @@ import {HybridMetadataStore} from "./HybridMetadataStore";
 import {NoMetadataStore} from "./NoMetadataStore";
 import {createLocalSSHTunnel, setDifference} from "../utils";
 import {ENWIKI_DB_HOST} from "../db";
+import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
 
 /**
  * If there are a large number of reports, we want to identify which reports need updating without reading in the pages.
@@ -47,13 +48,14 @@ export default class DbTabulatorMetadata extends Route {
         await this.refreshExistingMetadata();
     }
 
-    filter(data): boolean {
+    filter(data: RecentChangeStreamEvent): boolean {
         return data.wiki === 'enwiki' &&
             ((data.type === 'categorize' && data.title === 'Category:' + SUBSCRIPTIONS_CATEGORY) ||
-            (data.type === 'edit' && this.subscriptions.has(data.title) && data.user !== BOT_NAME));
+            ((data.type === 'edit' || (data.type === 'log' && (data.log_type === 'move' || data.log_type === 'delete')))
+                && this.subscriptions.has(data.title) && data.user !== BOT_NAME));
     }
 
-    async worker(data) {
+    async worker(data: RecentChangeStreamEvent) {
         if (data.type === 'categorize') {
             let page = pageFromCategoryEvent(data);
             if (page.added) {
@@ -62,7 +64,10 @@ export default class DbTabulatorMetadata extends Route {
                 this.subscriptions.delete(page.title);
             }
             this.updateMetadata(page.title);
-        } else {
+        } else if (data.log_type === 'move') {
+            this.updateMetadata(data.title);
+            this.updateMetadata(data.log_params.target);
+        } else { // edits, deletions
             this.updateMetadata(data.title);
         }
     }
