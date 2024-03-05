@@ -1,5 +1,5 @@
 ---
-- {"continuous": true, "name": "stream", "command": "~/bin/node ~/SDZeroBot/eventstream-router/main.js", mem: "2Gi", "image": "node16", "emails": "onfailure"}
+- {"continuous": true, "name": "stream", "command": "~/bin/node ~/SDZeroBot/eventstream-router/main.js", mem: "2Gi", "image": "node16"}
 - {"schedule": "0 2 1,15 * *", "name": "job-mostimported", mem: "256Mi", "command": "~/SDZeroBot/job reports/most-imported-scripts/most-imported-scripts.js", "image": "node16", "emails": "onfailure"}
 - {"schedule": "0 2,10,18 * * *", "name": "job-afc", mem: "256Mi", "command": "~/SDZeroBot/job reports/afc-sorting/afc-sorting.js", "image": "node16", "emails": "onfailure"}
 - {"schedule": "15 2,10,18 * * *", "name": "job-pafc", mem: "256Mi", "command": "~/SDZeroBot/job reports/pending-afc.js", "image": "node16", "emails": "onfailure"}
