@@ -151,14 +151,25 @@ export class Query {
 		return this.template.getValue(param)?.replace(/<!--.*?-->/g, '').trim();
 	}
 
+	getSql() {
+		let sql = this.getTemplateValue('sql');
+		if (/^\s*<nowiki ?>/.test(sql)) {
+			return sql.replace(/^\s*<nowiki ?>/, '')
+				.replace(/<\/nowiki ?>\s*$/, '');
+		} else {
+			// @deprecated
+			return sql
+				// Allow pipes to be written as {{!}}
+				?.replace(/\{\{!\}\}/g, '|');
+		}
+	}
+
 	// Errors in configs are reported to user through [[Module:Database report]] in Lua
 	parseQuery() {
 		this.config.interval = parseInt(this.getTemplateValue('interval'));
 
 		// Use of semicolons for multiple statements will be flagged as error at query runtime
-		this.config.sql = this.getTemplateValue('sql')
-			// Allow pipes to be written as {{!}}
-			?.replace(/\{\{!\}\}/g, '|');
+		this.config.sql = this.getSql();
 
 		if (!this.config.sql) {
 			this.isValid = false;

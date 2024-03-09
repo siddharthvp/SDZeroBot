@@ -67,7 +67,7 @@ jobs:
                   exit 1;
                 fi;
                 npm restart;
-              elif [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "web-endpoint")" -gt 0 || "$(git rev-list --format=%B --max-count=1 HEAD)" == *"!restart"* ]]; then
+              elif [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "web-endpoint")" -gt 0 || "$(git rev-list --format=%B --max-count=1 HEAD)" == *"!restart"* || "$(git rev-list --format=%B --max-count=1 HEAD)" == *"!web-restart"* ]]; then
                 echo "Restarting SDZeroBot webservice ...";
                 cd /data/project/sdzerobot/www/js && npm restart;
               fi;
