@@ -1,7 +1,7 @@
 import * as express from "express";
-import {checkShutoff, fetchQueriesForPage, metadataStore, processQueriesForPage, SHUTOFF_PAGE, TEMPLATE} from "./app";
+import {checkShutoff, fetchQueriesForPage, metadataStore, processQueriesForPage, SHUTOFF_PAGE, TEMPLATE, SUBSCRIPTIONS_CATEGORY} from "./app";
 import { createLogStream, mapPath } from "../utils";
-import {bot} from "../botbase";
+import {bot, enwikidb} from "../botbase";
 import {getRedisInstance} from "../redis";
 
 const router = express.Router();
@@ -12,10 +12,14 @@ const redis = getRedisInstance();
 /** Store the list of pages currently undergoing update as a redis set */
 const redisKey = 'web-db-tabulator-pages';
 
+const db = new enwikidb();
+
+// TODO: show status of requested updates on web UI, with JS polling
+
 router.get('/', async function (req, res, next) {
 	let {page} = req.query as {page: string};
 
-	const [shutoffText, queries, revId] = await Promise.all([
+	let [shutoffText, queries, revId] = await Promise.all([
 		checkShutoff(),
 		fetchQueriesForPage(page),
 		getLatestRevId(page).catch(err => {
@@ -40,6 +44,32 @@ router.get('/', async function (req, res, next) {
 		});
 	}
 	redis.sadd(redisKey, pgKey).catch(handleRedisError);
+
+	// If no queries found, link clicked was probably from a transcluded report.
+	// Check if any transclusion(s) are in SUBSCRIPTION_CATEGORY and update them.
+	if (queries.length === 0) {
+		const title = bot.Title.newFromText(page);
+		try {
+			// FIXME: use the web replica here as this is a blocking call?
+			const transcludedReportPages = await db.query(`
+				SELECT lt_namespace, lt_title FROM templatelinks
+				JOIN linktarget ON tl_target_id = lt_id
+				WHERE tl_from = (SELECT page_id FROM page WHERE page_namespace = ? AND page_title = ?)
+				AND (lt_namespace, lt_title) IN (
+					SELECT page_namespace, page_title FROM categorylinks
+					JOIN page ON page_id = cl_from
+					WHERE cl_to = ?
+				)
+			`, [title.getNamespaceId(), title.getMainText(), SUBSCRIPTIONS_CATEGORY.replace(/ /g, '_')])
+			for (let row of transcludedReportPages) {
+				let page = new bot.Title(row.lt_title as string, row.lt_namespace as number).toText();
+				queries = queries.concat(await fetchQueriesForPage(page));
+			}
+		} catch (e) {
+			log(`[E] Failed to look up transcluded reports`);
+			log(e);
+		}
+	}
 
 	res.status(queries.length ? 202 : 400).render('database-report', {
 		page,

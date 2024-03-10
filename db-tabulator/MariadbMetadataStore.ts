@@ -79,6 +79,7 @@ export class MariadbMetadataStore implements MetadataStore {
         const result: Record<string, Query[]> = {};
         for (const [page, indices] of Object.entries(pages)) {
             const queries = await fetchQueriesForPage(page);
+            // TODO: if no queries (page is being transcluded), note that in db
             result[page] = queries.filter(q => indices.has(q.idx));
         }
         return result;
