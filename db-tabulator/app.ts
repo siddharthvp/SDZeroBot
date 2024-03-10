@@ -275,13 +275,13 @@ export class Query {
 		}
 		let proposedLimit = this.config.pagination * this.config.maxPages;
 
-		let existingLimitRgx = /limit\s+(\d+);?\s*$/i;
-		let matchResult = query.match(existingLimitRgx);
-		if (matchResult) {
+		let endRgx = /(?:limit\s+(\d+))?;?\s*$/i; // can either the limit clause or just a semicolon
+		let matchResult = query.match(endRgx);
+		if (matchResult?.[1]) {
 			let existingLimit = parseInt(matchResult[1]);
 			proposedLimit = Math.min(existingLimit, proposedLimit);
 		}
-		return query.replace(existingLimitRgx, '') + ` LIMIT ${proposedLimit}`;
+		return query.replace(endRgx, '') + ` LIMIT ${proposedLimit}`;
 	}
 
 	transformColumn(result: Array<Record<string, string>>, columnIdx: number, transformer: (cell: string, rowIdx: number) => string): Array<Record<string, string>> {
