@@ -106,6 +106,7 @@ export class Query {
 		removeUnderscores?: number[];
 		hiddenColumns?: number[];
 		interval?: number;
+		silent?: boolean;
 	} = {};
 
 	isValid = true;
@@ -236,6 +237,7 @@ export class Query {
 			}
 		}
 
+		this.config.silent = !!this.getTemplateValue('silent');
 	}
 
 	async runQuery() {
@@ -534,14 +536,15 @@ export class Query {
 		return (pageNumber <= 1 ? warningsText : '') +
 			db.makeReplagMessage(2) +
 			tableText + '\n' +
-			'----\n' +
-			Mwn.template('Database report/footer', {
-				count: result.length,
-				page: pageNumber && String(pageNumber),
-				num_pages: pageNumber && String(this.numPages),
-				query_runtime: this.queryRuntime,
-				last_updated: new bot.date().format('D MMMM YYYY HH:mm') + ' (UTC)',
-			});
+			(this.config.silent ? '' : '----\n' +
+				Mwn.template('Database report/footer', {
+					count: result.length,
+					page: pageNumber && String(pageNumber),
+					num_pages: pageNumber && String(this.numPages),
+					query_runtime: this.queryRuntime,
+					last_updated: new bot.date().format('D MMMM YYYY HH:mm') + ' (UTC)',
+				})
+			);
 	}
 
 	async save(queryResult: string | string[], isError = false) {
