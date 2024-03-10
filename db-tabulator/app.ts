@@ -240,6 +240,7 @@ export class Query {
 
 	async runQuery() {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.config.sql.trim()}`;
+		query = this.appendLimit(query);
 		queriesLog(`Page: [[${this.page}]], context: ${this.context}, query: ${query}`);
 		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
 			this.queryRuntime = timeTaken.toFixed(2);
@@ -264,6 +265,21 @@ export class Query {
 				throw err;
 			}
 		});
+	}
+
+	appendLimit(query: string): string {
+		if (!Number.isFinite(this.config.pagination)) {
+			return query;
+		}
+		let proposedLimit = this.config.pagination * this.config.maxPages;
+
+		let existingLimitRgx = /limit\s+(\d+);?\s*$/i;
+		let matchResult = query.match(existingLimitRgx);
+		if (matchResult) {
+			let existingLimit = parseInt(matchResult[1]);
+			proposedLimit = Math.min(existingLimit, proposedLimit);
+		}
+		return query.replace(existingLimitRgx, '') + ` LIMIT ${proposedLimit}`;
 	}
 
 	transformColumn(result: Array<Record<string, string>>, columnIdx: number, transformer: (cell: string, rowIdx: number) => string): Array<Record<string, string>> {
