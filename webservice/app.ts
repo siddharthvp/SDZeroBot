@@ -41,7 +41,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 bot.getSiteInfo();
 setInterval(function () {
 	bot.getTokens();
-}, 60000);
+}, 600000);
 
 bot.setOptions({
 	retryPause: 2000,
