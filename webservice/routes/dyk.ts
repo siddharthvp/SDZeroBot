@@ -1,18 +1,10 @@
 import * as express from "express";
-import * as expressRedisCache from 'express-redis-cache';
 import { enwikidb } from "../../../SDZeroBot/db";
-import { getRedisConfig } from "../../../SDZeroBot/redis";
 
 const router = express.Router();
-const cache = expressRedisCache({
-	...getRedisConfig(),
-	expire: {
-		200: 120, // 2 minutes
-		'4xx': 1,
-		'5xx': 1
-	}
-});
 const db = new enwikidb();
+
+// TODO: Fix up redis caching, last present in f541de61
 
 router.get('/credits/:user', async (req, res, next) => {
 	const user = req.params.user.replace(/ /g, '_');
@@ -28,7 +20,7 @@ router.get('/credits/:user', async (req, res, next) => {
 	res.end(String(count));
 });
 
-router.get('/noms/:user', cache.route(), async (req, res, next) => {
+router.get('/noms/:user', async (req, res, next) => {
 	const user = req.params.user.replace(/ /g, '_');
 	const result = await db.query(`
 		SELECT COUNT(*) AS count FROM revision_userindex
