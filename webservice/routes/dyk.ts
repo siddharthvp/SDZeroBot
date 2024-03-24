@@ -1,6 +1,6 @@
 import * as express from "express";
 import { enwikidb } from "../../../SDZeroBot/db";
-import {getRedisInstance} from "../../redis";
+import { getRedisInstance } from "../../../SDZeroBot/redis";
 
 const router = express.Router();
 const db = new enwikidb();
