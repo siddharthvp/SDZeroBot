@@ -2,11 +2,14 @@ import { bot } from "../../botbase";
 import { Route } from "../app";
 import { createLocalSSHTunnel } from "../../utils";
 import { ENWIKI_DB_HOST, enwikidb } from "../../db";
+import {Redis, getRedisInstance} from "../../redis";
+import {RecentChangeStreamEvent} from "../RecentChangeStreamEvent";
 
 export default class DykCountsTask extends Route {
     name = 'dyk-counts';
 
 	db: enwikidb;
+	redis: Redis;
 
 	counts: Record<string, number> = {};
 	unflushedChanges: Record<string, string[]> = {};
@@ -24,6 +27,7 @@ export default class DykCountsTask extends Route {
 
 		await createLocalSSHTunnel(ENWIKI_DB_HOST);
 		this.db = new enwikidb();
+		this.redis = getRedisInstance();
 
 		bot.setOptions({ maxRetries: 0, defaultParams: { maxlag: undefined } });
 		await bot.getTokensAndSiteInfo();
@@ -50,6 +54,10 @@ export default class DykCountsTask extends Route {
 			`);
 			this.counts = Object.fromEntries(queryResult.map(e => [e.username, parseInt(e.noms as string)]));
 			await this.saveCounts('Refreshing counts from database');
+
+			const keyValues = queryResult.flatMap(e => [e.username, e.noms]) as string[];
+			await this.redis.del('dyk-counts').catch(e => this.redisError(e));
+			await this.redis.hmset.apply(null, ['dyk-counts'].concat(keyValues)).catch(e => this.redisError(e));
 		} catch (e) {
 			this.log(`[E] Error while running db refresh`, e);
 		}
@@ -81,15 +89,16 @@ export default class DykCountsTask extends Route {
 		}
 	}
 
-	filter(data): boolean {
+	filter(data: RecentChangeStreamEvent): boolean {
 		return data.wiki === 'enwiki' &&
 			data.type === 'new' &&
 			data.title.startsWith('Template:Did you know nominations/');
 	}
 
-	async worker(data) {
+	async worker(data: RecentChangeStreamEvent) {
 		let {user, title} = data;
 		this.counts[user] = (this.counts[user] || 0) + 1;
+		this.redis.hincrby('dyk-counts', user, 1).catch(e => this.redisError(e));
 		this.unflushedChanges[user] = (this.unflushedChanges[user] || []).concat(title);
 		this.log(`[i] Crediting "${user}" for [[${data.title}]]`);
 
@@ -102,5 +111,9 @@ export default class DykCountsTask extends Route {
 				setTimeout(() => this.flushCounts(), this.minFlushInterval);
 			}
 		}
+	}
+
+	redisError(err: Error) {
+		this.log(`[E] Redis error: `, err)
 	}
 }

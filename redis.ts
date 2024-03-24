@@ -8,7 +8,7 @@ import { onToolforge, readFile } from "./utils";
 type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 type Omitted = Omit<redis.RedisClient, keyof redis.Commands<boolean>>;
 
-interface Redis<T = redis.RedisClient> extends Omitted, redis.Commands<Promise<boolean>> {}
+export interface Redis<T = redis.RedisClient> extends Omitted, redis.Commands<Promise<boolean>> {}
 
 export const REDIS_HOST = 'tools-redis';
 
@@ -47,7 +47,7 @@ export function getRedisConfig(config: redis.ClientOpts = {}): redis.ClientOpts 
 
 /**
  * For typical usage with the default options.
- * Note: this can trigger a network request even though it doesn't take a callback or return a
+ * Note: this triggers a network request even though it doesn't take a callback or return a
  * promise.
  */
 export function getRedisInstance(): Redis {
