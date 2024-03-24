@@ -22,7 +22,7 @@ router.get('/credits/:user', async (req, res, next) => {
 });
 
 router.get('/noms/:user', async (req, res, next) => {
-	const user = req.params.user.replace(/ /g, '_');
+	const user = req.params.user.replace(/_/g, ' ');
 
 	let count = await redis.hget('dyk-counts', user) as unknown as string;
 	if (!count) {
