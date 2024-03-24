@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "start": "env WEB=true /data/project/sdzerobot/bin/node server.js",
+    "tunnels": "node tunnels.js",
     "test": "nodemon server.ts",
     "debug": "node --require ts-node/register server.js",
     "restart": "webservice --backend kubernetes node16 restart",
