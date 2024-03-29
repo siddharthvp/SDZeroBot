@@ -12,7 +12,7 @@ import botActivityMonitor from "../bot-monitor/eventstream-trigger";
 import dbTabulator from "../db-tabulator/eventstream-trigger";
 import dbTabulatorMetadata from "../db-tabulator/eventstream-metadata-maintainer";
 import shutoffsMonitor from "./routes/shutoffs-monitor";
-import dykCountsTask from "./routes/dyk-counts";
+import dykCountsTask from "../dyk-counts/eventstream-trigger";
 import purger from "./routes/purger"
 
 const routeClasses = [

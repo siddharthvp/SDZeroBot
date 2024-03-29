@@ -6,7 +6,7 @@ import summaryRouter from "./routes/summary";
 import dbReportRouter from '../../SDZeroBot/db-tabulator/web-endpoint';
 import gansRouter from '../../SDZeroBot/most-gans/web-endpoint';
 import articleSearchRouter from './routes/articlesearch';
-import dykRouter from './routes/dyk';
+import dykRouter from '../../SDZeroBot/dyk-counts/web-endpoint';
 import gitsync from "./routes/gitsync";
 
 export function registerRoutes(app: express.Router) {

@@ -1,9 +1,11 @@
-import { bot } from "../../botbase";
-import { Route } from "../app";
-import { createLocalSSHTunnel } from "../../utils";
-import { ENWIKI_DB_HOST, enwikidb } from "../../db";
-import {Redis, getRedisInstance} from "../../redis";
-import {RecentChangeStreamEvent} from "../RecentChangeStreamEvent";
+import { bot } from "../botbase";
+import { Route } from "../eventstream-router/app";
+import { createLocalSSHTunnel } from "../utils";
+import { ENWIKI_DB_HOST, enwikidb } from "../db";
+import {Redis, getRedisInstance} from "../redis";
+import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
+import {Cache, CacheClass} from "memory-cache";
+import {ReplyError} from 'redis';
 
 export default class DykCountsTask extends Route {
     name = 'dyk-counts';
@@ -13,6 +15,7 @@ export default class DykCountsTask extends Route {
 
 	counts: Record<string, number> = {};
 	unflushedChanges: Record<string, string[]> = {};
+	dupeCache: CacheClass<string, boolean> = new Cache();
 	lastFlushTime: number = 0;
 	isFlushScheduled = false;
 
@@ -97,10 +100,18 @@ export default class DykCountsTask extends Route {
 
 	async worker(data: RecentChangeStreamEvent) {
 		let {user, title} = data;
+
+		// Check that we are not getting the same event a second time, which happens occasionally
+		if (this.dupeCache.get(title)) {
+			this.log(`[E] Ignoring [[${title}]] present in dupe cache`);
+			return;
+		}
+		this.dupeCache.put(title, true, 300); // 5 min timeout
+
 		this.counts[user] = (this.counts[user] || 0) + 1;
 		this.redis.hincrby('dyk-counts', user, 1).catch(e => this.redisError(e));
 		this.unflushedChanges[user] = (this.unflushedChanges[user] || []).concat(title);
-		this.log(`[i] Crediting "${user}" for [[${data.title}]]`);
+		this.log(`[i] Crediting "${user}" for [[${title}]]`);
 
 		if (Date.now() - this.lastFlushTime > this.minFlushInterval) {
 			this.flushCounts();
@@ -113,7 +124,10 @@ export default class DykCountsTask extends Route {
 		}
 	}
 
-	redisError(err: Error) {
+	redisError(err: ReplyError) {
+		if (err.command === 'HMSET') {
+			err.args = [err.args[0], '<snipped>']; // too big to log!
+		}
 		this.log(`[E] Redis error: `, err)
 	}
 }
