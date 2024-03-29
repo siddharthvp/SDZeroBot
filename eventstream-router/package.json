@@ -1,6 +1,6 @@
 {
 	"scripts": {
 		"test": "node --require ts-node/register main.ts",
-		"restart": "toolforge-jobs restart stream"
+		"restart": "toolforge jobs restart stream"
 	}
 }

@@ -45,7 +45,7 @@ jobs:
               fi;
               if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c jobs.yml)" -gt 0 ]]; then
                 echo "Updating jobs.yml ...";
-                toolforge-jobs load jobs.yml;
+                toolforge jobs load jobs.yml;
               fi; 
               if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c eventstream)" -gt 0 || "$(git rev-list --format=%B --max-count=1 HEAD)" == *"!restart"* ]]; then
                 echo "Restarting eventstream-router ...";
