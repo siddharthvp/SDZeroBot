@@ -1,6 +1,7 @@
 import * as redis from 'redis';
 import * as asyncRedis from "async-redis";
 import { onToolforge, readFile } from "./utils";
+import { log } from "./botbase";
 
 // Source: https://github.com/moaxaca/async-redis (MIT)
 // for some reason the Promisified type that we need isn't exported from there
@@ -53,6 +54,10 @@ export function getRedisConfig(config: redis.ClientOpts = {}): redis.ClientOpts 
 export function getRedisInstance(): Redis {
 	if (!instance) {
 		instance = createRedisClient();
+		instance.on('error', (err: Error) => {
+			log(`[E] Redis error`);
+			log(err);
+		});
 	}
 	return instance;
 }
