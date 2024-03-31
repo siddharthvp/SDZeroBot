@@ -1,4 +1,4 @@
-import {BOT_NAME, fetchQueriesForPage, SUBSCRIPTIONS_CATEGORY, metadataStore} from "./app";
+import {BOT_NAME, fetchQueriesForPage, SUBSCRIPTIONS_CATEGORY, metadataStore, Query} from "./app";
 import {pageFromCategoryEvent, Route} from "../eventstream-router/app";
 import {bot} from "../botbase";
 import {HybridMetadataStore} from "./HybridMetadataStore";
@@ -6,6 +6,7 @@ import {NoMetadataStore} from "./NoMetadataStore";
 import {createLocalSSHTunnel, setDifference} from "../utils";
 import {ENWIKI_DB_HOST} from "../db";
 import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
+import {Template} from "mwn/build/wikitext";
 
 /**
  * If there are a large number of reports, we want to identify which reports need updating without reading in the pages.
@@ -17,7 +18,6 @@ import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamE
 export default class DbTabulatorMetadata extends Route {
     name = "db-tabulator-metadata";
 
-    // TODO: deal with pages that transclude pages with reports - they are in the category but have no template
     subscriptions: Set<string>;
 
      // Store metadata along with last update
@@ -60,10 +60,11 @@ export default class DbTabulatorMetadata extends Route {
             let page = pageFromCategoryEvent(data);
             if (page.added) {
                 this.subscriptions.add(page.title);
+                this.updateMetadata(page.title, true);
             } else {
                 this.subscriptions.delete(page.title);
+                this.updateMetadata(page.title);
             }
-            this.updateMetadata(page.title);
 
         } else if (data.log_action === 'move') {
             this.updateMetadata(data.title);
@@ -80,11 +81,17 @@ export default class DbTabulatorMetadata extends Route {
         }
     }
 
-    async updateMetadata(page: string) {
+    async updateMetadata(page: string, recordIfNone = false) {
         this.log(`[+] Updating metadata for ${page}`);
         const queries = await fetchQueriesForPage(page);
         queries.forEach(q => q.parseQuery());
-        await metadataStore.updateMetadata(page, queries.filter(q => q.isValid));
+        let validQueries = queries.filter(q => q.isValid);
+        if (validQueries.length === 0 && recordIfNone) {
+            // This deals with pages that transclude pages with reports - they are in the category but have no template.
+            // Add a dummy query to the database.
+            validQueries = [ new Query(new Template('{{}}'), page, -1) ];
+        }
+        await metadataStore.updateMetadata(page, validQueries);
     }
 
     /**
@@ -104,6 +111,6 @@ export default class DbTabulatorMetadata extends Route {
         if (newPages.length) {
             this.log(`[+] Found untracked new pages in category: ${newPages.join(', ')}`);
         }
-        await bot.batchOperation(newPages, page => this.updateMetadata(page), 10);
+        await bot.batchOperation(newPages, page => this.updateMetadata(page, true), 10);
     }
 }

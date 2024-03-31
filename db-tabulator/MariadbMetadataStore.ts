@@ -68,7 +68,10 @@ export class MariadbMetadataStore implements MetadataStore {
             SELECT page, idx FROM dbreports
             WHERE intervalDays IS NOT NULL 
               AND (lastUpdate IS NULL OR lastUpdate < NOW() - INTERVAL intervalDays DAY + INTERVAL 10 MINUTE)
-        `); // +10 mins helps get the reports update around the same time every day
+              AND idx != -1
+        `);
+        // +10 mins helps get the reports update around the same time every day.
+        // idx != -1 filters out dummy db rows indicating pages merely transcluding reports.
         let pages: Record<string, Set<number>> = {};
         data.forEach(row => {
             if (!pages[row.page]) {
@@ -79,7 +82,6 @@ export class MariadbMetadataStore implements MetadataStore {
         const result: Record<string, Query[]> = {};
         for (const [page, indices] of Object.entries(pages)) {
             const queries = await fetchQueriesForPage(page);
-            // TODO: if no queries (page is being transcluded), note that in db
             result[page] = queries.filter(q => indices.has(q.idx));
         }
         return result;
