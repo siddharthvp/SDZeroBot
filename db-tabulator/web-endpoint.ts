@@ -22,7 +22,7 @@ router.get('/', async function (req, res, next) {
 	let [shutoffText, queries, revId] = await Promise.all([
 		checkShutoff(),
 		fetchQueriesForPage(page),
-		getLatestRevId(page).catch(err => {
+		getLastNonBotRevId(page).catch(err => {
 			res.status(err.code || 500).render('oneline', { text: err.message });
 		}),
 		metadataStore.init(),
@@ -87,8 +87,14 @@ router.get('/', async function (req, res, next) {
 	}
 });
 
-async function getLatestRevId(page: string) {
-	let response = await bot.query({ prop: 'revisions', titles: page, rvprop: 'ids', rvlimit: 1 });
+async function getLastNonBotRevId(page: string) {
+	let response = await bot.query({
+		prop: 'revisions',
+		titles: page,
+		rvprop: 'ids',
+		rvlimit: 1,
+		rvexcludeuser: 'SDZeroBot'
+	});
 	let pg = response?.query?.pages?.[0];
 	if (!pg) {
 		throw new CustomError(500, 'Encountered error while fetching page content.');
