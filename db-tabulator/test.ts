@@ -4,6 +4,7 @@ import assert = require("assert");
 import {NoMetadataStore} from "./NoMetadataStore";
 import {Template} from "../../mwn/build/wikitext";
 import {MwnDate} from "../../mwn";
+import {applyJsPreprocessing} from "./preprocess";
 
 describe('db-tabulator', () => {
 
@@ -26,5 +27,16 @@ describe('db-tabulator', () => {
 		assert.strictEqual(isUpdateDue(new bot.date().subtract(36, 'hour'), 2), true);
 		assert.strictEqual(isUpdateDue(new bot.date().subtract(40, 'hour'), 2), true);
 	});
+
+	it('applyJsPreprocessing', async () => {
+		console.log(await applyJsPreprocessing(
+			[{id: '1', name: 'Main Page'}, {id: '2', name: "Talk:Main Page"}],
+			`function preprocess(rows) {
+				rows.forEach(row => {
+					row.id = parseInt(row.id) + 100;
+				})
+				return rows;    
+			}`, 'test', { warnings: [], needsForceKill: false }));
+	})
 
 });

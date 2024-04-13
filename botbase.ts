@@ -25,7 +25,7 @@ export function emailOnError(err: Error, taskname: string, isFatal = true) {
     sendMail(`${taskname} error`, `${taskname} task resulted in the error:\n\n${err.stack}\n`);
     // exit normally
 }
-export function logFullError(err: Error, isFatal = true) {
+export function logFullError(err: any, isFatal = true) {
     if (err.request?.headers?.Authorization) {
         err.request.headers.Authorization = '***';
     }

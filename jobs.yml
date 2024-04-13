@@ -21,7 +21,7 @@
 - {"schedule": "5 0 * * *", "name": "job-g13watch", mem: "256Mi", "command": "~/SDZeroBot/job reports/g13-watch/g13-watch.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "15,45 * * * *", "name": "stream-check", mem: "128Mi", "command": "~/SDZeroBot/job eventstream-router/check.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "20 * * * *", "name": "bot-monitor", mem: "256Mi", "command": "~/SDZeroBot/job bot-monitor/main.js", "image": "node18", "emails": "onfailure"}
-- {"schedule": "25 1,5,9,13,17,21 * * *", "name": "db-tabulator", mem: "256Mi", "command": "~/SDZeroBot/job db-tabulator/main.js", "image": "node18", "emails": "onfailure"}
+- {"schedule": "25 1,5,9,13,17,21 * * *", "name": "db-tabulator", mem: "512Mi", "command": "~/SDZeroBot/job db-tabulator/main.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "8 16 * * *", "name": "gans-list", mem: "256Mi", "command": "~/SDZeroBot/job most-gans/gans-lister.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "0 3 1 * *", "name": "gans-users", mem: "256Mi", "command": "~/SDZeroBot/job most-gans/update-entries.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "0 4 * * *", "name": "shells", mem: "128Mi", "command": "~/SDZeroBot/job terminate-shell-pods.js", "image": "node18", "emails": "onfailure"}

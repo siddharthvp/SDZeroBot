@@ -1,14 +1,13 @@
-import {TOOLS_DB_HOST, toolsdb} from "../db";
+import {toolsdb} from "../db";
 import {fetchQueriesForPage, Query} from "./app";
 import {MetadataStore} from "./MetadataStore";
-import {createLocalSSHTunnel, setDifference} from "../utils";
+import {setDifference} from "../utils";
 import * as crypto from "crypto";
 
 export class MariadbMetadataStore implements MetadataStore {
     db: toolsdb;
 
     async init() {
-        await createLocalSSHTunnel(TOOLS_DB_HOST);
         this.db = new toolsdb('dbreports_p');
     }
 

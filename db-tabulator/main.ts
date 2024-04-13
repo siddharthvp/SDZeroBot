@@ -1,7 +1,6 @@
 import { argv, bot, emailOnError, log } from "../botbase";
-import { closeTunnels, createLocalSSHTunnel, writeFile } from "../utils";
+import { closeTunnels, writeFile } from "../utils";
 import { checkShutoff, FAKE_OUTPUT_FILE, fetchQueries, processQueries, metadataStore } from "./app";
-import { ENWIKI_DB_HOST } from "../db";
 
 /**
  * Specs:
@@ -37,7 +36,6 @@ import { ENWIKI_DB_HOST } from "../db";
 	await Promise.all([
 		bot.getTokensAndSiteInfo(),
 		metadataStore.init(),
-		createLocalSSHTunnel(ENWIKI_DB_HOST),
 	]);
 
 	if (argv.fake) {

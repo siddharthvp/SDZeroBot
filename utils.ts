@@ -3,7 +3,7 @@ import { spawn } from "child_process";
 import { ENWIKI_DB_HOST, TOOLS_DB_HOST } from "./db";
 import { REDIS_HOST } from "./redis";
 
-export function readFile(file) {
+export function readFile(file: string) {
 	try {
 		return fs.readFileSync(file).toString();
 	} catch (e) {
@@ -107,6 +107,11 @@ export function stringifyObject(obj) {
 	} catch (e) {
 		return null;
 	}
+}
+
+export function stripOuterNowikis(str: string): string {
+	return str.replace(/^\s*<nowiki ?>/, '')
+		.replace(/<\/nowiki ?>\s*$/, '');
 }
 
 export function makeSentence(list: string[]) {

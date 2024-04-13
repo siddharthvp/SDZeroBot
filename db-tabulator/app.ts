@@ -1,11 +1,12 @@
 import { argv, bot, emailOnError, log, Mwn, TextExtractor } from "../botbase";
 import { enwikidb, SQLError } from "../db";
 import { Template } from "../../mwn/build/wikitext";
-import { arrayChunk, createLogStream, lowerFirst, readFile, writeFile } from "../utils";
+import { arrayChunk, createLogStream, lowerFirst, readFile, stripOuterNowikis, writeFile } from "../utils";
 import {NS_CATEGORY, NS_FILE, NS_MAIN} from "../namespaces";
 import { formatSummary } from "../reports/commons";
 import {MetadataStore} from "./MetadataStore";
 import {HybridMetadataStore} from "./HybridMetadataStore";
+import {applyJsPreprocessing, processQueriesExternally} from "./preprocess";
 
 export const BOT_NAME = 'SDZeroBot';
 export const TEMPLATE = 'Database report';
@@ -40,18 +41,27 @@ export function getQueriesFromText(text: string, title: string): Query[] {
 		log(`[E] Failed to find template on ${title}`);
 		return [];
 	}
-	return templates.map((template, idx) => new Query(template, title, idx + 1));
+	return templates.map((template, idx) =>
+		new Query(template, title, idx + 1, !!template.getValue('js_preprocess')?.trim()));
 }
 
-// Called from the cronjob
 export async function processQueries(allQueries: Record<string, Query[]>) {
 	await bot.batchOperation(Object.entries(allQueries), async ([page, queries]) => {
-		log(`[+] Processing page ${page}`);
-		await processQueriesForPage(queries);
+		if (queries.filter(q => q.needsExternalRun).length > 0) {
+			// Needs an external process for security
+			log(`[+] Processing page ${page} using child process`);
+			await processQueriesExternally(page);
+		} else {
+			log(`[+] Processing page ${page}`);
+			await processQueriesForPage(queries);
+		}
 	}, CONCURRENCY);
 }
 
 export async function fetchQueriesForPage(page: string): Promise<Query[]> {
+	if (argv.fake) {
+		return getQueriesFromText(readFile(FAKE_INPUT_FILE), 'Fake-Configs');
+	}
 	let text = (await bot.read(page, { redirects: false }))?.revisions?.[0]?.content;
 	if (!text) {
 		return [];
@@ -120,13 +130,18 @@ export class Query {
 	/** Invocation mode */
 	context: string;
 
-	/** Internal tracking for edit summary */
+	/** Internal tracking: for edit summary */
 	endNotFound = false;
 
-	constructor(template: Template, page: string, idxOnPage: number) {
+	/** Internal tracking: for queries with JS preprocessing enabled */
+	needsExternalRun = false;
+	needsForceKill = false;
+
+	constructor(template: Template, page: string, idxOnPage: number, external?: boolean) {
 		this.page = page;
 		this.template = template;
 		this.idx = idxOnPage;
+		this.needsExternalRun = external;
 		this.context = getContext();
 	}
 
@@ -155,8 +170,7 @@ export class Query {
 	getSql() {
 		let sql = this.getTemplateValue('sql');
 		if (/^\s*<nowiki ?>/.test(sql)) {
-			return sql.replace(/^\s*<nowiki ?>/, '')
-				.replace(/<\/nowiki ?>\s*$/, '');
+			return stripOuterNowikis(sql);
 		} else {
 			// @deprecated
 			return sql
@@ -238,6 +252,8 @@ export class Query {
 		}
 
 		this.config.silent = !!this.getTemplateValue('silent');
+
+		return this;
 	}
 
 	async runQuery() {
@@ -371,6 +387,15 @@ export class Query {
 				if (value instanceof Date) return value.toISOString();
 				return String(value);
 			});
+		}
+		if (this.getTemplateValue('js_preprocess')) {
+			const jsCode = stripOuterNowikis(this.getTemplateValue('js_preprocess'));
+			try {
+				result = await applyJsPreprocessing(result, jsCode, this.toString(), this);
+			} catch (e) {
+				log(`[E] Error in applyJsPreprocessing`);
+				log(e);
+			}
 		}
 
 		// Add excerpts

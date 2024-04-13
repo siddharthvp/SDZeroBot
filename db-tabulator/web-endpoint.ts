@@ -1,5 +1,13 @@
 import * as express from "express";
-import {checkShutoff, fetchQueriesForPage, metadataStore, processQueriesForPage, SHUTOFF_PAGE, TEMPLATE, SUBSCRIPTIONS_CATEGORY} from "./app";
+import {
+	checkShutoff,
+	fetchQueriesForPage,
+	metadataStore,
+	SHUTOFF_PAGE,
+	TEMPLATE,
+	SUBSCRIPTIONS_CATEGORY,
+	processQueries
+} from "./app";
 import { createLogStream, mapPath } from "../utils";
 import {bot, enwikidb} from "../botbase";
 import {getRedisInstance} from "../redis";
@@ -78,8 +86,8 @@ router.get('/', async function (req, res, next) {
 	});
 	if (queries) {
 		log(`Started processing ${page}`);
-		try { // should never throw but still ...
-			await processQueriesForPage(queries);
+		try {
+			await processQueries({[page]: queries});
 		} finally {
 			redis.srem(redisKey, pgKey).catch(handleRedisError);
 		}
