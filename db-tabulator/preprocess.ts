@@ -11,9 +11,26 @@ interface PreprocessContext {
     needsForceKill: boolean;
 }
 
+async function timedPromise(timeout: number, promise: Promise<void>, cleanup: () => void) {
+    let t: NodeJS.Timeout;
+    await Promise.race([
+        promise.then(() => true),
+        new Promise<boolean>((resolve) => {
+            t = setTimeout(() => resolve(false), timeout);
+        }),
+    ]).then(completed => {
+        if (completed) {
+            clearTimeout(t);
+        } else {
+            cleanup();
+        }
+    });
+}
+
 export async function processQueriesExternally(page: string) {
     const controller = new AbortController();
-    await Promise.race([
+    await timedPromise(
+        processTimeout,
         new Promise<void>((resolve, reject) => {
             const { signal } = controller;
             const child = fork(
@@ -36,12 +53,12 @@ export async function processQueriesExternally(page: string) {
             })
             child.on('exit', () => resolve());
         }),
-        sleep(processTimeout).then(() => {
-            log(`[E] Aborting child process as it took more than 30 seconds`);
+        () => {
+            log(`[E] Aborting child process as it took more than ${processTimeout/1000} seconds`);
             // FIXME? looks necessary as some errors in child process cause it to never resolve/reject
             controller.abort();
-        })
-    ]);
+        }
+    );
 }
 
 export async function applyJsPreprocessing(rows: Record<string, string>[], jsCode: string, queryId: string,
@@ -64,7 +81,7 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
     await jail.set('__dbQueryResult', JSON.stringify(rows));
 
     let result = rows;
-    let preProcessingComplete = false;
+
     let doPreprocessing = async () => {
         try {
             // jsCode is expected to declare function preprocess(rows) {...}
@@ -92,22 +109,18 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
             log(`[E] JS preprocessing for ${queryId} failed: ${e.toString()}`);
             log(e);
             ctx.warnings.push(`JS preprocessing failed: ${e.toString()}`);
-        } finally {
-            preProcessingComplete = true;
         }
     }
 
-    await Promise.race([
+    await timedPromise(
+        hardTimeout,
         doPreprocessing(),
-
-        // In case isolated-vm timeout doesn't work
-        sleep(hardTimeout).then(() => {
-            if (!preProcessingComplete) {
-                log(`[E] Past ${hardTimeout/1000} second timeout, force-disposing isolate`);
-                isolate.dispose();
-            }
-        })
-    ]);
+        () => {
+            // In case isolated-vm timeout doesn't work
+            log(`[E] Past ${hardTimeout/1000} second timeout, force-disposing isolate`);
+            isolate.dispose();
+        }
+    );
 
     let endTime = process.hrtime.bigint();
     let timeTaken = Number(endTime - startTime) / 1e9;
