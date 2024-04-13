@@ -17,7 +17,7 @@ export async function processQueriesExternally(page: string) {
         new Promise<void>((resolve, reject) => {
             const { signal } = controller;
             const child = fork(
-                'external-update.js',
+                __dirname + '/external-update.js',
                 [page].concat(argv.fake ? ['--fake'] : []),
                 {
                     execArgv: ['--no-node-snapshot'], // required for node 20+

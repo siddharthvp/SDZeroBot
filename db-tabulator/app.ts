@@ -42,7 +42,7 @@ export function getQueriesFromText(text: string, title: string): Query[] {
 		return [];
 	}
 	return templates.map((template, idx) =>
-		new Query(template, title, idx + 1, !!template.getValue('js_preprocess')?.trim()));
+		new Query(template, title, idx + 1, !!template.getValue('preprocess_js')?.trim()));
 }
 
 export async function processQueries(allQueries: Record<string, Query[]>) {
@@ -388,8 +388,8 @@ export class Query {
 				return String(value);
 			});
 		}
-		if (this.getTemplateValue('js_preprocess')) {
-			const jsCode = stripOuterNowikis(this.getTemplateValue('js_preprocess'));
+		if (this.getTemplateValue('preprocess_js')) {
+			const jsCode = stripOuterNowikis(this.getTemplateValue('preprocess_js'));
 			try {
 				result = await applyJsPreprocessing(result, jsCode, this.toString(), this);
 			} catch (e) {
