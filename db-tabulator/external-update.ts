@@ -15,10 +15,21 @@ import {metadataStore, fetchQueriesForPage, processQueriesForPage} from "./app";
     ]);
 
     const queries = await fetchQueriesForPage(argv.page);
+
+    // Send progress events to parent process for display in web UI
+    for (let query of queries) {
+        query.on('message', (...args) => {
+            process.send({
+                code: args[0],
+                args: args.slice(1)
+            });
+        });
+    }
+
     await processQueriesForPage(queries);
 
     if (queries.filter(q => q.needsForceKill).length > 0) {
-        process.send({ code: 'catastrophic-error' });
+        process.send({ code: 'catastrophic-error', args: [] });
     }
 
 })().catch(e => emailOnError(e, 'db-tabulator-child'));

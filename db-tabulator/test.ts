@@ -36,7 +36,7 @@ describe('db-tabulator', () => {
 					row.id = parseInt(row.id) + 100;
 				})
 				return rows;    
-			}`, 'test', { warnings: [], needsForceKill: false }));
+			}`, new Query(new Template('{{}}'), '', 1)));
 	})
 
 });

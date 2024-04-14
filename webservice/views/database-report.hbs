@@ -1,6 +1,119 @@
-{{#if noQueries}}
-<p>Couldn't find any transclusions of \{{<!-- -->{{{wikilink template}}}<!-- -->}} on the page {{{wikilink page}}} :(</p>
-{{else}}
-<p>Your request for regenerating the database report on {{{wikilink page}}} has been registered. It may take the bot a few minutes to make the edit, depending on the efficiency of the query provided.</p>
-{{/if}}
+<h2>Live update: {{page}}</h2>
+<div id="report-updates"></div>
+<img src="/images/loading.gif" height="40" width="40" id="loading-sign" alt="loading">
 
+<script>
+    function addUpdate(msg) {
+        let p = document.createElement('p');
+        p.innerHTML = msg;
+        document.getElementById('report-updates').appendChild(p);
+    }
+	function link(pageName, displayName) {
+        return `<a href="https://en.wikipedia.org/w/index.php?title=${encodeURIComponent(pageName)}" title="${pageName.replace(/"/g, '&#34;')}">${typeof displayName === 'string' ? displayName : pageName}</a>`;
+    }
+	function shorten(str, length) {
+        return str.length < length ? str : str.slice(0, length) + ' ...';
+    }
+	function error(msg) {
+		return `<span style="color: red; font-weight: bold">${msg}</span>`;
+    }
+
+    let params = new Map(new URLSearchParams(location.search))
+    let page = params.get('page');
+    let source = new EventSource('/database-report/stream?page=' + encodeURIComponent(page));
+
+    function finish() {
+        document.getElementById('loading-sign').remove();
+        source.close();
+    }
+
+	source.onopen = function () {
+		console.log('Connected to stream');
+    }
+	source.onmessage = function (msg) {
+		let data = JSON.parse(msg.data);
+		let code = data.code;
+		switch (code) {
+            case 'failed-get-last-revid':
+				addUpdate('ERROR: Failed to retrieve last revision id for this page.');
+				break;
+            case 'shutoff':
+				addUpdate(`Bot is currently shut off via ${link(data.SHUTOFF_PAGE)}. The shutoff page should be blank for it to work.`);
+				break;
+            case 'shutoff-checked':
+				break;
+            case 'already-in-progress':
+				addUpdate(`An update is already in progress for report(s) on page ${link(page)} (revid ${data.revId}).`);
+				break;
+            case 'looking-up-transclusions':
+				addUpdate(`No reports found on ${link(page)}. Looking up pages transcluded on ${page}.`);
+				break;
+            case 'started':
+				addUpdate(data.numQueries === 1 ? `Found 1 query.` : `Found ${data.numQueries} queries.`);
+				break;
+            case 'no-queries':
+				addUpdate(`Did not find any instances of {` + `{${link('Template:Database report', 'database report')}}} on ${link(page)}.`);
+				break;
+
+            // From Query class:
+            case 'query-executing':
+				addUpdate(`Query (<code>${shorten(data.args[0], 80)}</code>) submitted to database.`);
+				break;
+            case 'query-executed':
+				addUpdate(`Query finished running in ${data.args[0]} seconds.`);
+				break;
+            case 'preprocessing':
+				addUpdate(`Started JS preprocessing on query result.`);
+				break;
+            case 'js-no-array':
+				addUpdate(error(`JS preprocess() must return an array. `) + 'Saving result without preprocessing.');
+				break;
+            case 'js-invalid-return':
+				addUpdate(error(`JS preprocess() returned a value which is not transferable. `) + 'Saving result without preprocessing.');
+				break;
+            case 'js-failed':
+				addUpdate(error(`JS preprocessing failed. `) + `Error: ${data.args[0]}. Saving result without preprocessing.`);
+				break;
+            case 'process-timed-out':
+				addUpdate(error(`Child process timed out`));
+				break;
+            case 'preprocessing-complete':
+				addUpdate(`Finished JS preprocessing on query result in ${data.args[0]} seconds.`);
+				break;
+            case 'catastrophic-error':
+				addUpdate(error(`Your custom JS code was force-terminated due to excessive memory or time usage.`));
+				break;
+            case 'saving':
+				addUpdate(`Saving ${link(data.args[0])}.`);
+				break;
+            case 'end-not-found':
+				addUpdate(`[WARNING]: No {` + `{database report end}} template was found. Overwriting rest of the page.`);
+				break;
+            case 'save-success':
+				addUpdate(`Successfully saved page ${link(data.args[0])}.`);
+				break;
+            case 'save-failure':
+				addUpdate(`Failed to save page ${link(data.args[0])}. Error: ${data.args[1]}`);
+				break;
+            case 'done-one':
+				addUpdate(`<br>`);
+				break;
+            case 'completed':
+				addUpdate(`<span style="font-weight: bold">Updates completed.</span>`);
+				break;
+
+            case 'end':
+                finish();
+                break;
+
+            default:
+                addUpdate(`Unknown update: ${code}`);
+                console.error(data);
+        }
+    }
+	source.onerror = function (err) {
+        finish();
+        addUpdate(`${error('Something bad happened :(')} <br> The reports may or may not have been updated or are being updated. Please check the page history in a while.`);
+        console.error(err);
+    }
+</script>

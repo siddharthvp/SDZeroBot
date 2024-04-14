@@ -4,13 +4,14 @@ import {
 	fetchQueriesForPage,
 	metadataStore,
 	SHUTOFF_PAGE,
-	TEMPLATE,
 	SUBSCRIPTIONS_CATEGORY,
-	processQueries
+	processQueries,
+	BOT_NAME
 } from "./app";
 import { createLogStream, mapPath } from "../utils";
 import {bot, enwikidb} from "../botbase";
 import {getRedisInstance} from "../redis";
+import {EventEmitter} from "events";
 
 const router = express.Router();
 
@@ -22,16 +23,33 @@ const redisKey = 'web-db-tabulator-pages';
 
 const db = new enwikidb();
 
-// TODO: show status of requested updates on web UI, with JS polling
+router.get('/stream', async (req, res) => {
+	const {page} = req.query as Record<string, string>;
 
-router.get('/', async function (req, res, next) {
-	let {page} = req.query as {page: string};
+	res.writeHead(200, {
+		"Connection": "keep-alive",
+		"Cache-Control": "no-cache",
+		"Content-Type": "text/event-stream",
+	});
+
+	res.on('close', () => {
+		log(`[W] Client closed the connection`);
+		res.end();
+	});
+
+	function stream(code: string, args?: Record<string, any>) {
+		res.write(`data: ${JSON.stringify(Object.assign( {}, { code }, args || {}))}\n\n`);
+	}
+	function endStream() {
+		stream('end');
+	}
 
 	let [shutoffText, queries, revId] = await Promise.all([
 		checkShutoff(),
 		fetchQueriesForPage(page),
 		getLastNonBotRevId(page).catch(err => {
-			res.status(err.code || 500).render('oneline', { text: err.message });
+			stream('failed-get-last-revid', { code: err.code, message: err.message });
+			endStream();
 		}),
 		metadataStore.init(),
 	]);
@@ -39,23 +57,23 @@ router.get('/', async function (req, res, next) {
 	if (!revId) return;
 
 	if (shutoffText) {
-		log(`[E] Refused run on ${page} as task is shut off. Shutoff page content: ${shutoffText}`);
-		return res.status(422).render('oneline', {
-			text: `Bot is current shut off via ${SHUTOFF_PAGE}. The page should be blank for it to work.`
-		});
+		stream('shutoff', { SHUTOFF_PAGE });
+		return endStream();
+	} else {
+		stream('shutoff-checked');
 	}
 
 	const pgKey = page + ':' + revId;
 	if (await redis.sismember(redisKey, pgKey).catch(handleRedisError)) {
-		return res.status(409).render('oneline', {
-			text: `An update is already in progress for report(s) on page ${page} (revid ${revId})`
-		});
+		stream('already-in-progress', { page, revId });
+		return endStream();
 	}
 	redis.sadd(redisKey, pgKey).catch(handleRedisError);
 
 	// If no queries found, link clicked was probably from a transcluded report.
 	// Check if any transclusion(s) are in SUBSCRIPTION_CATEGORY and update them.
 	if (queries.length === 0) {
+		stream('looking-up-transclusions');
 		const title = bot.Title.newFromText(page);
 		try {
 			// FIXME: use the web replica here as this is a blocking call?
@@ -79,20 +97,36 @@ router.get('/', async function (req, res, next) {
 		}
 	}
 
-	res.status(queries.length ? 202 : 400).render('database-report', {
-		page,
-		template: TEMPLATE,
-		noQueries: queries.length === 0
-	});
-	if (queries) {
-		log(`Started processing ${page}`);
-		try {
-			await processQueries({[page]: queries});
-		} finally {
-			redis.srem(redisKey, pgKey).catch(handleRedisError);
-		}
-		log(`Finished processing ${page}`);
+	if (queries.length) {
+		stream('started', { numQueries: queries.length });
+	} else {
+		stream('no-queries');
+		redis.srem(redisKey, pgKey).catch(handleRedisError);
+		return endStream();
 	}
+
+	let handleMessage = (...args) => {
+		stream(args[0], { args: args.slice(1) })
+	};
+
+	const notifier = new EventEmitter();
+	notifier.on('message', handleMessage); // If custom JS is enabled
+	queries.forEach(q => q.on('message', handleMessage)); // If custom JS is not enabled
+
+	log(`Started processing ${page}`);
+	try {
+		await processQueries({[page]: queries}, notifier);
+	} finally {
+		redis.srem(redisKey, pgKey).catch(handleRedisError);
+	}
+	log(`Finished processing ${page}`);
+	stream('completed');
+	return endStream();
+});
+
+router.get('/', async function (req, res, next) {
+	const {page} = req.query as Record<string, string>;
+	res.status(200).render('database-report', { page });
 });
 
 async function getLastNonBotRevId(page: string) {
@@ -101,7 +135,7 @@ async function getLastNonBotRevId(page: string) {
 		titles: page,
 		rvprop: 'ids',
 		rvlimit: 1,
-		rvexcludeuser: 'SDZeroBot'
+		rvexcludeuser: BOT_NAME
 	});
 	let pg = response?.query?.pages?.[0];
 	if (!pg) {

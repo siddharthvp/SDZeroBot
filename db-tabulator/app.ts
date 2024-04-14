@@ -7,6 +7,7 @@ import { formatSummary } from "../reports/commons";
 import {MetadataStore} from "./MetadataStore";
 import {HybridMetadataStore} from "./HybridMetadataStore";
 import {applyJsPreprocessing, processQueriesExternally} from "./preprocess";
+import {EventEmitter} from "events";
 
 export const BOT_NAME = 'SDZeroBot';
 export const TEMPLATE = 'Database report';
@@ -45,12 +46,12 @@ export function getQueriesFromText(text: string, title: string): Query[] {
 		new Query(template, title, idx + 1, !!template.getValue('preprocess_js')?.trim()));
 }
 
-export async function processQueries(allQueries: Record<string, Query[]>) {
+export async function processQueries(allQueries: Record<string, Query[]>, notifier?: EventEmitter) {
 	await bot.batchOperation(Object.entries(allQueries), async ([page, queries]) => {
 		if (queries.filter(q => q.needsExternalRun).length > 0) {
 			// Needs an external process for security
 			log(`[+] Processing page ${page} using child process`);
-			await processQueriesExternally(page);
+			await processQueriesExternally(page, notifier);
 		} else {
 			log(`[+] Processing page ${page}`);
 			await processQueriesForPage(queries);
@@ -85,7 +86,7 @@ export async function checkShutoff() {
 
 const queriesLog = createLogStream('queries.log');
 
-export class Query {
+export class Query extends EventEmitter {
 
 	/// Step 1. Parse the query
 	/// Step 2. Run the query
@@ -138,11 +139,17 @@ export class Query {
 	needsForceKill = false;
 
 	constructor(template: Template, page: string, idxOnPage: number, external?: boolean) {
+		super();
 		this.page = page;
 		this.template = template;
 		this.idx = idxOnPage;
 		this.needsExternalRun = external;
 		this.context = getContext();
+	}
+
+	/** Produce events for progress tracking from web UI (if invoked from web endpoint) */
+	emit(...args) {
+		return super.emit('message', ...args);
 	}
 
 	toString() {
@@ -156,6 +163,7 @@ export class Query {
 			const resultText = await this.formatResults(result);
 			await this.save(resultText);
 			await metadataStore.updateLastTimestamp(this);
+			this.emit('done-one');
 		} catch (err) {
 			if (err instanceof HandledError) return;
 			emailOnError(err, 'db-tabulator');
@@ -260,8 +268,10 @@ export class Query {
 		let query = `SET STATEMENT max_statement_time = ${QUERY_TIMEOUT} FOR ${this.config.sql.trim()}`;
 		query = this.appendLimit(query);
 		queriesLog(`Page: [[${this.page}]], context: ${this.context}, query: ${query}`);
+		this.emit('query-executing', this.config.sql);
 		return db.timedQuery(query).then(([timeTaken, queryResult]) => {
 			this.queryRuntime = timeTaken.toFixed(2);
+			this.emit('query-executed', this.queryRuntime);
 			log(`[+] ${this}: Took ${this.queryRuntime} seconds`);
 			return queryResult;
 		}).catch(async (err: SQLError) => {
@@ -378,7 +388,6 @@ export class Query {
 	}
 
 	async formatResultSet(result, pageNumber: number) {
-
 		let numColumns = Object.keys(result[0]).length;
 		for (let i = 1; i <= numColumns; i++) {
 			// Stringify everything
@@ -391,7 +400,7 @@ export class Query {
 		if (this.getTemplateValue('preprocess_js')) {
 			const jsCode = stripOuterNowikis(this.getTemplateValue('preprocess_js'));
 			try {
-				result = await applyJsPreprocessing(result, jsCode, this.toString(), this);
+				result = await applyJsPreprocessing(result, jsCode, this);
 			} catch (e) {
 				log(`[E] Error in applyJsPreprocessing`);
 				log(e);
@@ -584,6 +593,7 @@ export class Query {
 			return;
 		}
 		let outputPage = this.config.outputPage || this.page;
+		this.emit('saving', outputPage);
 		let page = new bot.page(outputPage);
 		let firstPageResult = Array.isArray(queryResult) ? queryResult[0] : queryResult;
 		try {
@@ -595,6 +605,7 @@ export class Query {
 					summary: this.generateEditSummary(isError)
 				};
 			});
+			this.emit('save-success', outputPage);
 		} catch (err) {
 			if (isError) { // error on an error logging attempt, just throw now
 				throw err;
@@ -606,6 +617,7 @@ export class Query {
 			if (err.code === 'protectedpage') {
 				throw err;
 			}
+			this.emit('save-failed', outputPage, err.message);
 			return this.saveWithError(`Error while saving report: ${err.message}`);
 		}
 		if (Array.isArray(queryResult)) { // paginated result (output_page is not applicable in this case)
@@ -613,11 +625,13 @@ export class Query {
 				let pageNumber = parseInt(idx) + 1;
 				if (pageNumber ===  1) continue; // already saved above
 				let subpage = new bot.page(outputPage + '/' + pageNumber);
+				this.emit('saving', subpage.getPrefixedText());
 				await subpage.save(
 					`{{Database report/subpage|page=${pageNumber}|num_pages=${this.numPages}}}\n` +
 					resultText,
 					'Updating database report'
 				);
+				this.emit('save-success', subpage.getPrefixedText());
 			}
 			for (let i = this.numPages + 1; i <= MAX_SUBPAGES; i++) {
 				let subpage = new bot.page(outputPage + '/' + i);
@@ -667,6 +681,7 @@ export class Query {
 			if (endTemplateStartIdx === -1) {
 				// Still no? Record for edit summary
 				this.endNotFound = true;
+				this.emit('end-not-found');
 			}
 		}
 		let textToReplace = text.slice(
