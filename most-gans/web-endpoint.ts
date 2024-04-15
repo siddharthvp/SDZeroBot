@@ -14,7 +14,7 @@ const db = new toolsdb('goodarticles_p', {
 router.get('/', async function (req, res) {
 	if (!req.query.user) {
 		// Landing page
-		res.render('gans-landing');
+		res.render('most-gans/gans-landing');
 		return;
 	}
 	const {user} = req.query;
@@ -25,7 +25,7 @@ router.get('/', async function (req, res) {
 		ORDER BY date DESC 
 	`, [user]);
 
-	res.render('gans', {
+	res.render('most-gans/gans', {
 		user,
 		dbresult: dbresult.map(row => ({ article: row.article, date: new bot.date(row.date).format('YYYY-MM-DD') }))
 	});
@@ -37,7 +37,7 @@ router.get('/credit/:article', async function (req, res) {
 	if (req.query.raw) {
 		return res.type('text').send(result?.[0]?.nominator || '<Unknown>');
 	}
-	res.render('oneline', {
+	res.render('webservice/views/oneline', {
 		text: result?.[0]?.nominator
 			? `The nominator of "${article}" is ${result[0].nominator}`
 			: `Some error occurred.`

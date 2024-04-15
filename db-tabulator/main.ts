@@ -1,5 +1,5 @@
 import { argv, bot, emailOnError, log } from "../botbase";
-import { closeTunnels, writeFile } from "../utils";
+import { writeFile } from "../utils";
 import { checkShutoff, FAKE_OUTPUT_FILE, fetchQueries, processQueries, metadataStore } from "./app";
 
 /**
@@ -53,5 +53,4 @@ import { checkShutoff, FAKE_OUTPUT_FILE, fetchQueries, processQueries, metadataS
 
 	await processQueries(queries);
 
-	closeTunnels();
 })().catch(e => emailOnError(e, 'db-tabulator'));

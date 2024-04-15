@@ -126,7 +126,7 @@ router.get('/stream', async (req, res) => {
 
 router.get('/', async function (req, res, next) {
 	const {page} = req.query as Record<string, string>;
-	res.status(200).render('database-report', { page });
+	res.status(200).render( 'db-tabulator/database-report', { page });
 });
 
 async function getLastNonBotRevId(page: string) {

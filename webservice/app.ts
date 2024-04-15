@@ -15,8 +15,9 @@ import { registerRoutes } from "./route-registry";
 const app = express();
 
 // view engine setup
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', path.join(__dirname, '../../SDZeroBot'));
 app.set('view engine', 'hbs');
+app.set('view options', { layout: 'webservice/views/layout' });
 hbs.registerHelper('wikilink',  (pageName, displayName) => {
 	return `<a href="https://en.wikipedia.org/wiki/${Mwn.util.wikiUrlencode(pageName)}" title="${pageName.replace(/"/g, '&#34;')}">${typeof displayName === 'string' ? displayName : pageName}</a>`;
 });
@@ -62,7 +63,7 @@ app.use(function (err, req, res, next) {
 
 	// render the error page
 	res.status(err.status || 500);
-	res.render('error');
+	res.render('webservice/views/error');
 });
 
 export default app;

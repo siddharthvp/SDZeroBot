@@ -30,7 +30,7 @@ router.get('/', async (req, res, next) => {
 		pages[i].excerpt = pElement ? pElement.innerHTML : '[Not found]';
 	}
 
-	res.render('articlesearch', {
+	res.render('webservice/views/articlesearch', {
 		query: req.query.query,
 		data: pages,
 	});
