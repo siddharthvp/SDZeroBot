@@ -3,42 +3,77 @@ import {MwnDate} from "mwn";
 import {getKey, Rule} from "./Rule";
 import {bot, toolsdb} from "../botbase";
 import * as fs from "fs/promises";
+import * as crypto from "crypto";
 import {getRedisInstance, Redis} from "../redis";
-import {createLocalSSHTunnel} from "../utils";
-import {TOOLS_DB_HOST} from "../db";
+import {ResultSetHeader} from "mysql2";
+import {CustomError} from "./web-endpoint";
 
 interface AlertsDb {
     connect(): Promise<void>;
     getLastEmailedTime(rule: Rule): Promise<MwnDate>;
     saveLastEmailedTime(rule: Rule): Promise<void>;
+    getPausedTillTime(bot: string, webKey: string): Promise<MwnDate>;
+    setPausedTillTime(bot: string, webKey: string, pauseTill?: Date): Promise<number>;
 }
+
+// To allow user to disable checks for some time period:
+// Generate a secret for each email sent and persist in db
+// Provide a disable link with secret as query string in the email
+// When clicked, check if secret is valid and disable notifications.
 
 class MariadbAlertsDb implements AlertsDb {
     db: toolsdb;
     async connect(): Promise<void> {
-        await createLocalSSHTunnel(TOOLS_DB_HOST);
         this.db = new toolsdb('botmonitor');
-        await this.db.run(`
-            CREATE TABLE IF NOT EXISTS alerts(
-                name VARCHAR(255) PRIMARY KEY,
-                lastEmailed TIMESTAMP
-            )
-        `);
     }
 
     async getLastEmailedTime(rule: Rule): Promise<MwnDate> {
-        let data = await this.db.query(
-            `SELECT lastEmailed FROM alerts WHERE name = ?`,
-            [ getKey(rule, 250) ]
+        let data = await this.db.query(`
+            SELECT lastEmailed, paused FROM alerts 
+            WHERE name = ?
+        `, [ getKey(rule, 250) ]
         );
-        return data[0] ? new bot.Date(data[0].lastEmailed) : new bot.Date(0);
+        if (data[0]) {
+            if (data[0].paused && new bot.Date(data[0].paused).isAfter(new Date())) {
+                return new bot.Date(data[0].paused);
+            }
+            return new bot.Date(data[0].lastEmailed);
+        } else {
+            return new bot.Date(0);
+        }
     }
 
     async saveLastEmailedTime(rule: Rule): Promise<void> {
         await this.db.run(
-            `REPLACE INTO alerts (name, lastEmailed) VALUES(?, UTC_TIMESTAMP())`,
-            [ getKey(rule, 250) ]
+            `REPLACE INTO alerts (name, lastEmailed, webKey) VALUES(?, UTC_TIMESTAMP(), ?)`,
+            [ getKey(rule, 250), crypto.randomBytes(32).toString('hex') ]
         );
+    }
+
+    async getPausedTillTime(name: string, webKey: string) {
+        let data = await this.db.query(`
+            SELECT webKey, paused FROM alerts
+            WHERE name = ?
+        `, [name]);
+        if (!data[0]) {
+            throw new CustomError(404, 'No such bot task is configured.');
+        }
+        if (data[0].webKey !== webKey) {
+            throw new CustomError(403, `Invalid or expired webKey. Please use the link from the latest SDZeroBot email.`);
+        }
+        if (data[0].paused) {
+            return new bot.Date(data[0].paused);
+        }
+    }
+
+    async setPausedTillTime(name: string, webKey: string, pauseTill?: MwnDate): Promise<number> {
+        const result = await this.db.run(`
+            UPDATE alerts
+            SET paused = ?
+            WHERE name = ?
+            AND webKey = ?
+        `, [pauseTill ? pauseTill.format('YYYY-MM-DD') : null, name, webKey]);
+        return (result?.[0] as ResultSetHeader)?.affectedRows;
     }
 }
 
@@ -63,6 +98,8 @@ class CassandraAlertsDb implements AlertsDb {
             [ getKey(rule) ]
         );
     }
+    async getPausedTillTime(name: string, webKey: string) { return new bot.Date(0); }
+    async setPausedTillTime(bot: string, webKey: string, pauseTill: MwnDate) { return -1; }
 }
 
 class FileSystemAlertsDb implements AlertsDb {
@@ -85,6 +122,8 @@ class FileSystemAlertsDb implements AlertsDb {
         // only needed on the last save, but done everytime anyway
         await fs.writeFile(this.file, JSON.stringify(this.data));
     }
+    async getPausedTillTime(name: string, webKey: string) { return new bot.Date(0); }
+    async setPausedTillTime(bot: string, webKey: string, pauseTill: MwnDate) { return -1; }
 }
 
 class RedisAlertsDb implements AlertsDb {
@@ -99,6 +138,8 @@ class RedisAlertsDb implements AlertsDb {
     async saveLastEmailedTime(rule: Rule) {
         await this.redis.hset('botmonitor-last-emailed', getKey(rule), new bot.date().toISOString);
     }
+    async getPausedTillTime(name: string, webKey: string) { return new bot.Date(0); }
+    async setPausedTillTime(bot: string, webKey: string, pauseTill: MwnDate) { return -1; }
 }
 
 export const alertsDb: AlertsDb = new MariadbAlertsDb();

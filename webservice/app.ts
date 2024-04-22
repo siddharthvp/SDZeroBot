@@ -8,7 +8,7 @@ import * as cors from 'cors';
 
 // All paths to SDZeroBot files must be via ../../SDZeroBot rather than via ../
 // The latter will work locally but not when inside toolforge www/js directory!
-import { bot, Mwn } from "../../SDZeroBot/botbase";
+import {bot, logFullError, Mwn} from "../../SDZeroBot/botbase";
 import { humanDate } from "../../mwn/build/log";
 import { registerRoutes } from "./route-registry";
 
@@ -64,6 +64,10 @@ app.use(function (err, req, res, next) {
 	// render the error page
 	res.status(err.status || 500);
 	res.render('webservice/views/error');
+
+	if (!err.status || err.status === 500) {
+		logFullError(err, false);
+	}
 });
 
 export default app;

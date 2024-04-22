@@ -1,5 +1,6 @@
 import { argv, bot, log, mailTransporter, Mwn } from "../botbase";
 import {Rule, RuleError, Monitor, subtractFromNow, alertsDb} from "./index";
+import * as crypto from "crypto";
 
 export class Alert {
     rule: Rule
@@ -60,17 +61,18 @@ export class Alert {
         log(`[i] Sending email for "${this.name}" to ${this.rule.email}`);
         let subject = `[${this.rule.bot}] ${this.rule.task} failure`;
 
+        const webKey = crypto.randomBytes(32).toString('hex');
         if (this.rule.email.includes('@')) {
             await mailTransporter.sendMail({
                 from: 'tools.sdzerobot@tools.wmflabs.org',
                 to: this.rule.email,
                 subject: subject,
-                html: this.getEmailBodyHtml(),
+                html: this.getEmailBodyHtml(webKey),
             });
         } else {
             await new bot.User(this.rule.email).email(
                 subject,
-                this.getEmailBodyPlain(),
+                this.getEmailBodyPlain(webKey),
                 {ccme: true}
             ).catch(err => {
                 if (err.code === 'notarget') {
@@ -86,18 +88,26 @@ export class Alert {
         });
     }
 
-    getEmailBodyHtml(): string {
+    getEmailBodyHtml(webKey: string): string {
+        const taskKey = `${this.rule.bot}: ${this.rule.task}`;
         return `${this.rule.bot}'s task <b>${this.rule.task}</b> failed to run per the configuration specified at <a href="https://en.wikipedia.org/wiki/Wikipedia:Bot_activity_monitor/Configurations">Wikipedia:Bot activity monitor/Configurations</a>. Detected only ${this.actions} ${this.rule.action === 'edit' ? 'edit' : `"${this.rule.action}" action`}s in the last ${this.rule.duration}, whereas at least ${this.rule.minEdits} were expected.` +
             `<br><br>` +
             `If your bot is behaving as expected, then you may want to <a href="https://en.wikipedia.org/wiki/Wikipedia:Bot_activity_monitor/Configurations?action=edit">modify the task configuration instead</a>. Or to unsubscribe from these email notifications, remove the |email= parameter from the {{/task}} template.` +
             `<br><br>` +
+            `To temporarily pause these notifications, click here: https://sdzerobot.toolforge.org/bot-monitor/pause?task=${encodeURIComponent(taskKey)}&webKey=${webKey}` +
+            `<br><br>` +
             `Thanks!`;
     }
 
-    getEmailBodyPlain(): string {
+    getEmailBodyPlain(webKey: string): string {
+        const taskKey = `${this.rule.bot}: ${this.rule.task}`;
         return `${this.rule.bot}'s task "${this.rule.task}" failed to run per the configuration specified at Wikipedia:Bot activity monitor/Configurations (<https://en.wikipedia.org/wiki/Wikipedia:Bot_activity_monitor/Configurations>). Detected only ${this.actions} ${this.rule.action === 'edit' ? 'edit' : `"${this.rule.action}" action`}s in the last ${this.rule.duration}, whereas at least ${this.rule.minEdits} were expected.` +
             `\n\n` +
-            `If your bot is behaving as expected, then you may want to modify the task configuration instead. Or to unsubscribe from these email notifications, remove the |email= parameter from the {{/task}} template. Thanks!`;
+            `If your bot is behaving as expected, then you may want to modify the task configuration instead. Or to unsubscribe from these email notifications, remove the |email= parameter from the {{/task}} template.` +
+            `\n\n` +
+            `To temporarily pause these notifications, click here: https://sdzerobot.toolforge.org/bot-monitor/pause?task=${encodeURIComponent(taskKey)}&webKey=${webKey}` +
+            `\n\n` +
+            `Thanks!`;
     }
 
     // static pingpage = 'Wikipedia:Bot activity monitor/Pings'

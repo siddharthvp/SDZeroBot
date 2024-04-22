@@ -1,0 +1,18 @@
+<h2>Pausing failure notifications for {{task}}</h2>
+{{#if current}}
+    <form method="post">
+        <label>{{{current}}}</label>
+        <input type="hidden" name="task" value="{{task}}">
+        <input type="hidden" name="webKey" value="{{webKey}}">
+        <input type="hidden" name="unpause" value="1">
+        <input type="submit" value="Unpause">
+    </form>
+{{/if}}
+<br>
+<form method="post">
+    <input type="hidden" name="task" value="{{task}}">
+    <input type="hidden" name="webKey" value="{{webKey}}">
+    <label for="till">Pause notifications till:</label>
+    <input id="till" name="date" type="date" value="{{dateVal}}" required>
+    <input type="submit" value="Pause">
+</form>
