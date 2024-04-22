@@ -6,7 +6,7 @@ import * as fs from "fs/promises";
 import * as crypto from "crypto";
 import {getRedisInstance, Redis} from "../redis";
 import {ResultSetHeader} from "mysql2";
-import {CustomError} from "./web-endpoint";
+import {CustomError} from "../utils";
 
 interface AlertsDb {
     connect(): Promise<void>;

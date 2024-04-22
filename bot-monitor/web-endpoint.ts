@@ -1,6 +1,7 @@
 import * as express from "express";
 import {alertsDb} from "./AlertsDb";
 import {bot} from "../botbase";
+import {CustomError} from "../utils";
 
 const router = express.Router();
 
@@ -48,14 +49,6 @@ router.all('/pause', async (req, res, next) => {
         next(e);
     }
 });
-
-export class CustomError extends Error {
-    status: number;
-    constructor(status: number, msg: string) {
-        super(msg);
-        this.status = status;
-    }
-}
 
 
 export default router;

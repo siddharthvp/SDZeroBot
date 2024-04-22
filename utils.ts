@@ -167,3 +167,12 @@ export function setUnion<T>(a: Iterable<T>, b: Iterable<T>): Set<T> {
 export function setDifference<T>(a: Iterable<T>, b: Set<T>): Set<T> {
 	return new Set([...a].filter(x => !b.has(x)));
 }
+
+export class CustomError extends Error {
+    status: number;
+
+    constructor(status: number, msg: string) {
+        super(msg);
+        this.status = status;
+    }
+}
