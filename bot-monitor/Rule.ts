@@ -18,6 +18,7 @@ export interface Rule {
     fromDate: MwnDate
     alertPage: MwnTitle
     email: string
+    webKey?: string
 
     // pingUser: string
 }

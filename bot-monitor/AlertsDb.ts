@@ -3,7 +3,6 @@ import {MwnDate} from "mwn";
 import {getKey, Rule} from "./Rule";
 import {bot, toolsdb} from "../botbase";
 import * as fs from "fs/promises";
-import * as crypto from "crypto";
 import {getRedisInstance, Redis} from "../redis";
 import {ResultSetHeader} from "mysql2";
 import {CustomError} from "../utils";
@@ -46,7 +45,7 @@ class MariadbAlertsDb implements AlertsDb {
     async saveLastEmailedTime(rule: Rule): Promise<void> {
         await this.db.run(
             `REPLACE INTO alerts (name, lastEmailed, webKey) VALUES(?, UTC_TIMESTAMP(), ?)`,
-            [ getKey(rule, 250), crypto.randomBytes(32).toString('hex') ]
+            [ getKey(rule, 250), rule.webKey ]
         );
     }
 
