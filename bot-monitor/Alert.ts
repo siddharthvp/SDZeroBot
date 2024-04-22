@@ -53,7 +53,11 @@ export class Alert {
     }
 
     async alertEmail() {
-        let lastAlertedTime = await alertsDb.getLastEmailedTime(this.rule);
+        let [paused, lastAlertedTime] = await alertsDb.getPausedOrLastEmailedTime(this.rule);
+        if (paused) {
+            log(`[i] Aborting email for "${this.name}" as emails are paused`);
+            return;
+        }
         if (lastAlertedTime.isAfter(subtractFromNow(this.rule.duration, 1))) {
             log(`[i] Aborting email for "${this.name}" because one was already sent in the last ${this.rule.duration}`);
             return;

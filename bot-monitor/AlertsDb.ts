@@ -9,7 +9,7 @@ import {CustomError} from "../utils";
 
 interface AlertsDb {
     connect(): Promise<void>;
-    getLastEmailedTime(rule: Rule): Promise<MwnDate>;
+    getPausedOrLastEmailedTime(rule: Rule): Promise<[boolean, MwnDate]>;
     saveLastEmailedTime(rule: Rule): Promise<void>;
     getPausedTillTime(bot: string, webKey: string): Promise<MwnDate>;
     setPausedTillTime(bot: string, webKey: string, pauseTill?: Date): Promise<number>;
@@ -26,7 +26,7 @@ class MariadbAlertsDb implements AlertsDb {
         this.db = new toolsdb('botmonitor');
     }
 
-    async getLastEmailedTime(rule: Rule): Promise<MwnDate> {
+    async getPausedOrLastEmailedTime(rule: Rule): Promise<[boolean, MwnDate]> {
         let data = await this.db.query(`
             SELECT lastEmailed, paused FROM alerts 
             WHERE name = ?
@@ -34,11 +34,11 @@ class MariadbAlertsDb implements AlertsDb {
         );
         if (data[0]) {
             if (data[0].paused && new bot.Date(data[0].paused).isAfter(new Date())) {
-                return new bot.Date(data[0].paused);
+                return [true, new bot.Date(data[0].lastEmailed)];
             }
-            return new bot.Date(data[0].lastEmailed);
+            return [false, new bot.Date(data[0].lastEmailed)];
         } else {
-            return new bot.Date(0);
+            return [false, new bot.Date(0)];
         }
     }
 
@@ -76,6 +76,8 @@ class MariadbAlertsDb implements AlertsDb {
     }
 }
 
+/*
+UNMAINTAINED IMPLEMENTATIONS:
 class CassandraAlertsDb implements AlertsDb {
     cs: Cassandra = new Cassandra();
 
@@ -140,5 +142,5 @@ class RedisAlertsDb implements AlertsDb {
     async getPausedTillTime(name: string, webKey: string) { return new bot.Date(0); }
     async setPausedTillTime(bot: string, webKey: string, pauseTill: MwnDate) { return -1; }
 }
-
+*/
 export const alertsDb: AlertsDb = new MariadbAlertsDb();

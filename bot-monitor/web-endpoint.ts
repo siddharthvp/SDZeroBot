@@ -19,6 +19,7 @@ router.all('/pause', async (req, res, next) => {
         let dateVal = '';
         if (date) { // POST
             const tillDate = new bot.Date(date);
+            tillDate.setUTCHours(23, 59, 59); // pause till end of selected day
             const rowsUpdated = await alertsDb.setPausedTillTime(task, webKey, tillDate);
             if (!rowsUpdated) {
                 return next(new CustomError(403, "Unauthorized"));
