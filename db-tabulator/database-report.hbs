@@ -4,6 +4,7 @@
 
 <script>
     function addUpdate(msg) {
+		if (!msg) return;
         let p = document.createElement('p');
         p.innerHTML = msg;
         document.getElementById('report-updates').appendChild(p);
@@ -30,85 +31,47 @@
 	source.onopen = function () {
 		console.log('Connected to stream');
     }
+
+    let messages = {
+        'failed-get-last-revid': _ => 'ERROR: Failed to retrieve last revision id for this page.',
+        'shutoff': data => `Bot is currently shut off via ${link(data.SHUTOFF_PAGE)}. The shutoff page should be blank for it to work.`,
+        'shutoff-checked': _ => '',
+        'already-in-progress': data => `An update is already in progress for report(s) on page ${link(page)} (revid ${data.revId}).`,
+        'looking-up-transclusions': _ => `No reports found on ${link(page)}. Looking up pages transcluded on ${page}.`,
+        'started': data => data.numQueries === 1 ? `Found 1 query.` : `Found ${data.numQueries} queries.`,
+        'no-queries': _ => `Did not find any instances of {` +
+                `{${link('Template:Database report', 'database report')}}} on ${link(page)}.`,
+
+        // From Query class:
+        'query-executing': data => `Query (<code>${shorten(data.args[0], 80)}</code>) submitted to database.`,
+        'query-executed': data => `Query finished running in ${data.args[0]} seconds.`,
+        'preprocessing': _ => `Started JS preprocessing on query result.`,
+        'js-no-array': _ => error(`JS preprocess() must return an array. `) + 'Saving result without preprocessing.',
+        'js-invalid-return': _ => error(`JS preprocess() returned a value which is not transferable. `) +
+                'Saving result without preprocessing.',
+        'js-failed': data => error(`JS preprocessing failed. `) + `Error: ${data.args[0]}. Saving result without preprocessing.`,
+        'process-timed-out': _ => error(`Child process timed out`),
+        'preprocessing-complete': data => `Finished JS preprocessing on query result in ${data.args[0]} seconds.`,
+        'catastrophic-error': _ => error(`Your custom JS code was force-terminated due to excessive memory or time usage.`),
+        'saving': data => `Saving ${link(data.args[0])}.`,
+        'end-not-found': _ => `[WARNING]: No {` + `{database report end}} template was found. Overwriting rest of the page.`,
+        'save-success': data => `Successfully saved page ${link(data.args[0])}.`,
+        'save-failure': data => `Failed to save page ${link(data.args[0])}. Error: ${data.args[1]}`,
+        'done-one': _ => `<br>`,
+        'completed': _ => `<span style="font-weight: bold">Updates completed.</span>`,
+    };
+
 	source.onmessage = function (msg) {
 		let data = JSON.parse(msg.data);
 		let code = data.code;
-		switch (code) {
-            case 'failed-get-last-revid':
-				addUpdate('ERROR: Failed to retrieve last revision id for this page.');
-				break;
-            case 'shutoff':
-				addUpdate(`Bot is currently shut off via ${link(data.SHUTOFF_PAGE)}. The shutoff page should be blank for it to work.`);
-				break;
-            case 'shutoff-checked':
-				break;
-            case 'already-in-progress':
-				addUpdate(`An update is already in progress for report(s) on page ${link(page)} (revid ${data.revId}).`);
-				break;
-            case 'looking-up-transclusions':
-				addUpdate(`No reports found on ${link(page)}. Looking up pages transcluded on ${page}.`);
-				break;
-            case 'started':
-				addUpdate(data.numQueries === 1 ? `Found 1 query.` : `Found ${data.numQueries} queries.`);
-				break;
-            case 'no-queries':
-				addUpdate(`Did not find any instances of {` + `{${link('Template:Database report', 'database report')}}} on ${link(page)}.`);
-				break;
 
-            // From Query class:
-            case 'query-executing':
-				addUpdate(`Query (<code>${shorten(data.args[0], 80)}</code>) submitted to database.`);
-				break;
-            case 'query-executed':
-				addUpdate(`Query finished running in ${data.args[0]} seconds.`);
-				break;
-            case 'preprocessing':
-				addUpdate(`Started JS preprocessing on query result.`);
-				break;
-            case 'js-no-array':
-				addUpdate(error(`JS preprocess() must return an array. `) + 'Saving result without preprocessing.');
-				break;
-            case 'js-invalid-return':
-				addUpdate(error(`JS preprocess() returned a value which is not transferable. `) + 'Saving result without preprocessing.');
-				break;
-            case 'js-failed':
-				addUpdate(error(`JS preprocessing failed. `) + `Error: ${data.args[0]}. Saving result without preprocessing.`);
-				break;
-            case 'process-timed-out':
-				addUpdate(error(`Child process timed out`));
-				break;
-            case 'preprocessing-complete':
-				addUpdate(`Finished JS preprocessing on query result in ${data.args[0]} seconds.`);
-				break;
-            case 'catastrophic-error':
-				addUpdate(error(`Your custom JS code was force-terminated due to excessive memory or time usage.`));
-				break;
-            case 'saving':
-				addUpdate(`Saving ${link(data.args[0])}.`);
-				break;
-            case 'end-not-found':
-				addUpdate(`[WARNING]: No {` + `{database report end}} template was found. Overwriting rest of the page.`);
-				break;
-            case 'save-success':
-				addUpdate(`Successfully saved page ${link(data.args[0])}.`);
-				break;
-            case 'save-failure':
-				addUpdate(`Failed to save page ${link(data.args[0])}. Error: ${data.args[1]}`);
-				break;
-            case 'done-one':
-				addUpdate(`<br>`);
-				break;
-            case 'completed':
-				addUpdate(`<span style="font-weight: bold">Updates completed.</span>`);
-				break;
-
-            case 'end':
-                finish();
-                break;
-
-            default:
-                addUpdate(`Unknown update: ${code}`);
-                console.error(data);
+		if (messages[code]) {
+			addUpdate(messages[code](data));
+        } else if (code === 'end') {
+            finish();
+        } else {
+            addUpdate(`Unknown update: ${code}`);
+            console.error(data);
         }
     }
 	source.onerror = function (err) {
