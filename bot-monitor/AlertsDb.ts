@@ -71,7 +71,7 @@ class MariadbAlertsDb implements AlertsDb {
             SET paused = ?
             WHERE name = ?
             AND webKey = ?
-        `, [pauseTill ? pauseTill.format('YYYY-MM-DD') : null, name, webKey]);
+        `, [pauseTill ? pauseTill.format('YYYY-MM-DD HH:mm:ss') : null, name, webKey]);
         return (result?.[0] as ResultSetHeader)?.affectedRows;
     }
 }
