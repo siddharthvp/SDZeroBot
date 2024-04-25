@@ -3,7 +3,7 @@
  * stream process is still working, and restart
  * it if it isn't.
  */
-import {emailOnError} from '../botbase';
+import {bot, emailOnError, fs} from '../botbase';
 import {mapPath} from "../utils";
 import {execSync} from 'child_process';
 import {restartDeployment} from "../k8s";
@@ -21,8 +21,8 @@ for (const [job, dir] of Object.entries(streamJobs)) {
 	// eslint-disable-next-line no-empty
 	let match; for (match of tail.matchAll(testRgx)) {} // now match is the last matched
 
-	let date = new Date(match?.[1]);
-	let currentDate = new Date();
+	let date = new bot.Date(match?.[1]);
+	let currentDate = new bot.Date();
 
 	let diff = currentDate.getTime() - date.getTime();
 
@@ -30,7 +30,13 @@ for (const [job, dir] of Object.entries(streamJobs)) {
 
 	if (!match || minutesDiff > 30) {
 		let err = new Error();
-		err.stack = `no recent entries. Restarting ${job}\n\nLast entry found: ${match?.[0]} `;
+		let lastSeenTime =  new bot.Date(parseInt(fs.readFileSync('./last-seen.txt').toString()) * 1000);
+		err.stack = [
+			`no recent log entries. Restarting ${job}`,
+			`Last log entry: ${match?.[0]}`,
+			`Last event timestamp: ${lastSeenTime.format('YYYY-MM-DD HH:mm:ss')}`,
+			`Current time: ${currentDate.format('YYYY-MM-DD HH:mm:ss')}`
+		].join('\n\n');
 		emailOnError(err, job);
 
 		process.chdir(mapPath(dir));
