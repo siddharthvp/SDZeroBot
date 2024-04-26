@@ -14,6 +14,8 @@ const streamJobs = {
 	'stream': '~/SDZeroBot/eventstream-router'
 };
 
+process.chdir(__dirname);
+
 for (const [job, dir] of Object.entries(streamJobs)) {
 
 	const tail = execSync(`tail -100 ${mapPath(`~/${job}.out`)}`).toString();
