@@ -89,7 +89,7 @@ export default class DbTabulatorMetadata extends Route {
         if (validQueries.length === 0 && recordIfNone) {
             // This deals with pages that transclude pages with reports - they are in the category but have no template.
             // Add a dummy query to the database.
-            validQueries = [ new Query(new Template('{{}}'), page, -1) ];
+            validQueries = [ new Query(new Template('{{}}'), page, 0) ];
         }
         await metadataStore.updateMetadata(page, validQueries);
     }
@@ -111,6 +111,11 @@ export default class DbTabulatorMetadata extends Route {
         if (newPages.length) {
             this.log(`[+] Found untracked new pages in category: ${newPages.join(', ')}`);
         }
-        await bot.batchOperation(newPages, page => this.updateMetadata(page, true), 10);
+        await bot.batchOperation(newPages, page => this.updateMetadata(page, true), 10)
+            .catch((data) => {
+                for (let [pg, err] of Object.entries(data.failures)) {
+                    this.log(`[E] Failed updating metadata for ${pg}:`, err);
+                }
+            });
     }
 }

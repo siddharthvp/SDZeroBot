@@ -1,3 +1,5 @@
+// DEPRECATED: reports are no longer updated on first save
+
 import { checkShutoff, fetchQueriesForPage, processQueriesForPage, SUBSCRIPTIONS_CATEGORY } from "./app";
 import { pageFromCategoryEvent, Route } from "../eventstream-router/app";
 import { log } from "../botbase";
