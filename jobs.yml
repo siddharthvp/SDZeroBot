@@ -7,6 +7,7 @@
 - {"schedule": "30 0,4,8,12,16,20 * * *", "name": "job-prod", mem: "256Mi", "command": "~/SDZeroBot/job reports/prod-sorting/prod-sorting.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "30 1,5,9,13,17,21 * * *", "name": "job-afd", mem: "256Mi", "command": "~/SDZeroBot/job reports/afd-sorting/afd-sorting.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "0 1 * * *", "name": "job-notifier", mem: "256Mi", "command": "~/SDZeroBot/job afd-notifications/notifier.js", "image": "node18", "emails": "onfailure"}
+- {"schedule": "18 * * * *", "name": "gadgets-sync", mem: "256Mi", "command": "~/SDZeroBot/job gadgets-sync/gadgets-sync.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "3 0 * * *", "name": "job-grid", mem: "256Mi", "command": "~/SDZeroBot/job reports/grid-afd-prod.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "0 5 * * *", "name": "job-gan", mem: "256Mi", "command": "~/SDZeroBot/job reports/gan-sorting.js", "image": "node18", "emails": "onfailure"}
 - {"schedule": "10 4 * * 1", "name": "job-g13-soon", mem: "256Mi", "command": "~/SDZeroBot/job reports/g13-soon.js", "image": "node18", "emails": "onfailure"}
