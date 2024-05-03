@@ -61,7 +61,7 @@ const editReqCategories = new Set([
 
         const substitutedHeader = header.replaceAll('$SOURCE', conf.source)
 
-        if (source.data !== destination.data.replace('^' + Mwn.util.escapeRegExp(substitutedHeader), '')) {
+        if (source.data !== destination.data.replace(substitutedHeader, '')) {
             if (await new bot.Page(talkTitle).exists()) {
                 let talkCategories = (await new bot.Page(talkTitle).categories()).map(e => e.category)
                 if (setIntersection(talkCategories, editReqCategories).size > 0) {
