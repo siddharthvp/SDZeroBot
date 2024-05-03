@@ -1,7 +1,7 @@
 import { argv, bot, log } from '../botbase';
 import { closeTunnels, createLocalSSHTunnel } from "../utils";
 import { TOOLS_DB_HOST } from "../db";
-import { processArticle, db, runManualEdits } from "./model";
+import { processArticle, db, TABLE, runManualEdits } from "./model";
 import { restartDeployment } from "../k8s";
 
 bot.setOptions({
@@ -13,7 +13,6 @@ bot.setOptions({
 });
 
 (async function () {
-	const TABLE = 'nominators2';
 
 	await createLocalSSHTunnel(TOOLS_DB_HOST);
 	await bot.getSiteInfo();

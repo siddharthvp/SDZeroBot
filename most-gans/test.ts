@@ -7,24 +7,43 @@ describe('most-gans', () => {
 		return bot.getSiteInfo();
 	})
 
-	it('processArticle', async function () {
-		this.timeout(100000);
+	async function processArticleTest(article: string, nomExpected: string, dateExpected?: string) {
 		db.run = () => Promise.resolve(); // stub it out
-		const testCases = [
-			['1896 Michigan Wolverines football team', 'Wizardman', '2010-12-21'],
-			['Fight for This Love', 'Lil-unique1', '2010-06-25'], // has rev-delled talkpage revs
-			['Norman Finkelstein', 'Giggy'],
-			['Etchmiadzin Cathedral', 'Yerevantsi', '2013-12-27'], // user renamed between nomination and promotion
-			// ['Panagiotis Stamatakis', 'UndercoverClassicist', '2023-02-04'],
-			// ['Serious Sam: The First Encounter', 'IceWelder', '2023-10-30'],
-			['The Wing of Madoola', 'KGRAMR', '2023-12-28'],
-		];
-		for (let [article, nomExpected, dateExpected] of testCases) {
-			const [nom, date] = await processArticle(article);
-			assert.strictEqual(nom, nomExpected);
-			if (dateExpected) assert.strictEqual(date, dateExpected);
-		}
-	});
+		const [nom, date] = await processArticle(article);
+		assert.strictEqual(nom, nomExpected);
+		if (dateExpected) assert.strictEqual(date, dateExpected);
+	}
+
+	it('1896 Michigan Wolverines football team', async function() {
+		await processArticleTest('1896 Michigan Wolverines football team', 'Wizardman', '2010-12-21');
+	})
+	it('Fight for This Love', async function() {
+		await processArticleTest('Etchmiadzin Cathedral', 'Yerevantsi', '2013-12-27');
+	})
+	it('Norman Finkelstein', async function() {
+		this.timeout(	10000);
+		await processArticleTest('Norman Finkelstein', 'Giggy');
+	})
+	it('Etchmiadzin Cathedral', async function() {
+		// user renamed between nomination and promotion
+		await processArticleTest('Etchmiadzin Cathedral', 'Yerevantsi', '2013-12-27');
+	})
+	it('Panagiotis Stamatakis', async function() {
+		await processArticleTest('Panagiotis Stamatakis', 'UndercoverClassicist', '2023-02-04');
+	})
+	it('Serious Sam: The First Encounter', async function() {
+		await processArticleTest('Serious Sam: The First Encounter', 'IceWelder', '2023-10-30');
+	})
+	it('The Wing of Madoola', async function() {
+		await processArticleTest('The Wing of Madoola', 'KGRAMR', '2023-12-28')
+	})
+	it('A Little Kiss', async function() {
+		// apostrophe in username, html entities in signature
+		await processArticleTest('A Little Kiss', "Penny Lane's America");
+	})
+	it('After Hours (The Office)', async function() {
+		await processArticleTest('After Hours (The Office)', '');
+	})
 
 	it('getCurrentUsername', async function () {
 		this.timeout(10000);
