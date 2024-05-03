@@ -1,6 +1,6 @@
 import assert = require("assert");
 import { bot } from "../botbase";
-import {getCurrentUsername, processArticle, db, getCurrentTitle} from "./model";
+import {getCurrentUsername, processArticle, db, getCurrentTitle, decodeHtmlEntities} from "./model";
 
 describe('most-gans', () => {
 	before(() => {
@@ -15,6 +15,9 @@ describe('most-gans', () => {
 			['Fight for This Love', 'Lil-unique1', '2010-06-25'], // has rev-delled talkpage revs
 			['Norman Finkelstein', 'Giggy'],
 			['Etchmiadzin Cathedral', 'Yerevantsi', '2013-12-27'], // user renamed between nomination and promotion
+			// ['Panagiotis Stamatakis', 'UndercoverClassicist', '2023-02-04'],
+			// ['Serious Sam: The First Encounter', 'IceWelder', '2023-10-30'],
+			['The Wing of Madoola', 'KGRAMR', '2023-12-28'],
 		];
 		for (let [article, nomExpected, dateExpected] of testCases) {
 			const [nom, date] = await processArticle(article);
@@ -48,6 +51,13 @@ describe('most-gans', () => {
 	it('getCurrentTitle', async function() {
 		this.timeout(10000);
 		assert.strictEqual(await getCurrentTitle('Shivers (song)', '2014-11-19'), 'Shivers (The Boys Next Door song)');
+	});
+
+	it('decodeHtmlEntities', function () {
+		assert.strictEqual(
+			decodeHtmlEntities('[[User:NoD&#39;ohnuts|NoD&#39;ohnuts]] ([[User talk:NoD&#39;ohnuts|talk]])'),
+			"[[User:NoD'ohnuts|NoD'ohnuts]] ([[User talk:NoD'ohnuts|talk]])"
+		);
 	});
 
 });

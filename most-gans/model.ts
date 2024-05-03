@@ -2,6 +2,7 @@ import { bot, log, toolsdb } from "../botbase";
 import { NS_USER, NS_USER_TALK } from "../namespaces";
 import { createLogStream } from "../utils";
 import * as fs from "fs";
+import { JSDOM } from 'jsdom';
 
 export const db = new toolsdb('goodarticles_p');
 export const TABLE = 'nominators';
@@ -82,11 +83,19 @@ function addToDb(article: string, nom: string, date, fallbackStrategy = false): 
 	return Promise.resolve([nom, date_str, fallbackStrategy]);
 }
 
+const { document } = new JSDOM('<html></html>').window;
+
+export function decodeHtmlEntities(str) {
+	const d = document.createElement('div');
+	d.innerHTML = str;
+	return d.innerHTML;
+}
+
 function getUsernameFromSignature(sig: string) {
 	if (typeof sig !== 'string') {
 		return;
 	}
-	let wkt = new bot.wikitext(sig);
+	let wkt = new bot.wikitext(decodeHtmlEntities(sig));
 	wkt.parseLinks();
 	let userPageLinks = [], userTalkPageLinks = [];
 	wkt.links.forEach(link => {
@@ -144,8 +153,8 @@ export async function getCurrentTitle(title: string, date: string): Promise<stri
 export async function getCurrentUsername(username: string, date: string): Promise<string> {
 	// This is called during the stream task as well, avoid API call in such cases
 	const dateParsed = new bot.date(date);
-	// if now - dateParsed < 30 seconds
-	if (new bot.date().subtract(30, 'seconds').isBefore(dateParsed)) {
+	// if now - dateParsed < 2 minutes
+	if (new bot.date().subtract(2, 'minutes').isBefore(dateParsed)) {
 		return username;
 	}
 	const rename = (await bot.query({
