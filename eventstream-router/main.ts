@@ -6,22 +6,20 @@ process.chdir(__dirname);
 
 process.env.EVENTSTREAM_ROUTER = 'true';
 
-import g13Watch from "../reports/g13-watch/eventstream-watch";
-import gans from "../most-gans/eventstream-updater";
-import botActivityMonitor from "../bot-monitor/eventstream-trigger";
-import dbTabulator from "../db-tabulator/eventstream-trigger";
-import dbTabulatorMetadata from "../db-tabulator/eventstream-metadata-maintainer";
-import shutoffsMonitor from "./routes/shutoffs-monitor";
-import dykCountsTask from "../dyk-counts/eventstream-trigger";
-import purger from "./routes/purger"
+import Gans from "../most-gans/eventstream-updater";
+import BotActivityMonitor from "../bot-monitor/eventstream-trigger";
+import DbTabulatorMetadata from "../db-tabulator/eventstream-metadata-maintainer";
+import ShutoffsMonitor from "./routes/shutoffs-monitor";
+import DykCounts from "../dyk-counts/eventstream-trigger";
+import Purger from "./routes/purger"
 
 const routeClasses = [
-    gans,
-    dykCountsTask,
-    botActivityMonitor,
-    dbTabulatorMetadata,
-    shutoffsMonitor,
-    purger,
+    Gans,
+    DykCounts,
+    BotActivityMonitor,
+    DbTabulatorMetadata,
+    ShutoffsMonitor,
+    Purger,
 ];
 
 // debugging a single route example: -r "./test"

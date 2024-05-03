@@ -6,8 +6,9 @@ import {Redis, getRedisInstance} from "../redis";
 import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
 import {Cache, CacheClass} from "memory-cache";
 import {ReplyError} from 'redis';
+import {DAY, SECOND} from "../millis";
 
-export default class DykCountsTask extends Route {
+export default class DykCounts extends Route {
     name = 'dyk-counts';
 
 	db: enwikidb;
@@ -21,8 +22,8 @@ export default class DykCountsTask extends Route {
 
 	readonly page = 'User:SDZeroBot/DYK_nomination_counts.json';
 	readonly minCountToSave = 5;
-	readonly minFlushInterval = 5000;
-	readonly dbRefreshInterval = 86400000;
+	readonly minFlushInterval = 5 * SECOND;
+	readonly dbRefreshInterval = DAY;
 
 	async init() {
 		super.init();

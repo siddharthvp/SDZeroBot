@@ -5,7 +5,7 @@ import { pageFromCategoryEvent, Route } from "../eventstream-router/app";
 /**
  * Keep the db updated with new GA promotions and demotions.
  */
-export default class gans extends Route {
+export default class Gans extends Route {
 	name = "gans";
 
 	async init() {
