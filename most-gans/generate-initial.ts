@@ -1,7 +1,7 @@
-import { bot, log } from '../botbase';
+import { argv, bot, log } from '../botbase';
 import { closeTunnels, createLocalSSHTunnel } from "../utils";
 import { TOOLS_DB_HOST } from "../db";
-import { processArticle, TABLE, db, runManualEdits } from "./model";
+import { processArticle, db, runManualEdits } from "./model";
 import { restartDeployment } from "../k8s";
 
 bot.setOptions({
@@ -13,6 +13,8 @@ bot.setOptions({
 });
 
 (async function () {
+	const TABLE = 'nominators2';
+
 	await createLocalSSHTunnel(TOOLS_DB_HOST);
 	await bot.getSiteInfo();
 
@@ -37,11 +39,13 @@ bot.setOptions({
 						  PRIMARY KEY (article)
 					  ) COLLATE 'utf8_unicode_ci'`);
 
-	// Restart the stream task, so that new GAs are processed
-	restartDeployment('stream').catch(err => {
-		log(`[E] Failed to restart stream task`);
-		log(err);
-	});
+	if (!argv.test) {
+		// Restart the stream task, so that new GAs are processed
+		restartDeployment('stream').catch(err => {
+			log(`[E] Failed to restart stream task`);
+			log(err);
+		});
+	}
 
 	let authorNotFound = [];
 
@@ -69,7 +73,9 @@ ${authorNotFound.map(p => `#[[${p}]]`).join('\n')}
 `);
 	log(`[S] Saved error list on-wiki`);
 
-	await runManualEdits();
+	if (!argv.test) {
+		await runManualEdits();
+	}
 	closeTunnels();
 
 })();
