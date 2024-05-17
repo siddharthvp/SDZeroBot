@@ -1,4 +1,5 @@
 import * as express from "express";
+import 'express-async-errors';
 import { toolsdb } from '../db';
 import { AuthManager, bot } from "../botbase";
 import { TABLE } from '../../SDZeroBot/most-gans/model';

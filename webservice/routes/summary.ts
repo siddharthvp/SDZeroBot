@@ -1,4 +1,5 @@
 import * as express from "express";
+import 'express-async-errors';
 import {bot, TextExtractor} from '../../../SDZeroBot/botbase';
 
 const router = express.Router();
