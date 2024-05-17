@@ -2,6 +2,7 @@ import { bot } from '../botbase';
 import { processArticle, TABLE, db } from "./model";
 import { pageFromCategoryEvent, Route } from "../eventstream-router/app";
 import type {ResultSetHeader} from "mysql2";
+import {NS_MAIN} from "../namespaces";
 
 /**
  * Keep the db updated with new GA promotions and demotions.
@@ -63,6 +64,10 @@ export default class Gans extends Route {
 	}
 
 	async processMove(oldTitle: string, newTitle: string) {
+		const oldTitleObj = bot.Title.newFromText(oldTitle);
+		if (oldTitleObj && oldTitleObj.getNamespaceId() !== NS_MAIN) {
+			return;
+		}
 		db.run(`
 			UPDATE ${TABLE} 
 			SET article = ?, lastUpdate = UTC_TIMESTAMP()
@@ -85,9 +90,7 @@ export default class Gans extends Route {
 			WHERE nominator = ?
 		`, [oldUsername, newUsername]).then(result => {
 			const affectedRows = (result?.[0] as ResultSetHeader)?.affectedRows;
-			if (affectedRows > 0) {
-				this.log(`[+] ${oldUsername} renamed to ${newUsername}. Updated ${affectedRows} row(s).`);
-			}
+			this.log(`[+] ${oldUsername} renamed to ${newUsername}. Updated ${affectedRows} row(s).`);
 		}).catch(err => {
 			this.log(`[E] Failed processing user rename: [[User:${oldUsername}]] to [[User:${newUsername}]]`);
 			this.log(err);
