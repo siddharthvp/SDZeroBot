@@ -1,9 +1,9 @@
-import { argv, bot, emailOnError, log, Mwn, TextExtractor } from "../botbase";
-import { enwikidb, SQLError } from "../db";
-import { Template } from "../../mwn/build/wikitext";
-import { arrayChunk, createLogStream, lowerFirst, readFile, stripOuterNowikis, writeFile } from "../utils";
+import {argv, bot, emailOnError, log, Mwn, TextExtractor} from "../botbase";
+import {enwikidb, SQLError} from "../db";
+import {Template} from "../../mwn/build/wikitext";
+import {arrayChunk, createLogStream, lowerFirst, readFile, stripOuterNowikis, writeFile} from "../utils";
 import {NS_CATEGORY, NS_FILE, NS_MAIN} from "../namespaces";
-import { formatSummary } from "../reports/commons";
+import {formatSummary} from "../reports/commons";
 import {MetadataStore} from "./MetadataStore";
 import {HybridMetadataStore} from "./HybridMetadataStore";
 import {applyJsPreprocessing, processQueriesExternally} from "./preprocess";

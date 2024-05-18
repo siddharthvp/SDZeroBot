@@ -1,7 +1,7 @@
 import * as express from "express";
 import 'express-async-errors';
-import { enwikidb } from "../db";
-import { getRedisInstance } from "../redis";
+import {enwikidb} from "../db";
+import {getRedisInstance} from "../redis";
 
 const router = express.Router();
 const db = new enwikidb();

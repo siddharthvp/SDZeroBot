@@ -1,8 +1,8 @@
-import { argv, bot, emailOnError, fs, log } from "../botbase";
-import { RecentChangeStreamEvent } from "./RecentChangeStreamEvent";
-import { createLogStream, stringifyObject } from "../utils";
+import {argv, bot, emailOnError, fs, log} from "../botbase";
+import {RecentChangeStreamEvent} from "./RecentChangeStreamEvent";
+import {createLogStream, stringifyObject} from "../utils";
 import EventSource = require("./EventSource");
-import { MINUTE, SECOND } from "../millis";
+import {MINUTE, SECOND} from "../millis";
 
 // TODO: improve logging
 

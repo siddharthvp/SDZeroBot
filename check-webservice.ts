@@ -1,4 +1,4 @@
-import { emailOnError, Mwn } from './botbase';
+import {emailOnError, Mwn} from './botbase';
 
 process.chdir(__dirname + '/webservice');
 

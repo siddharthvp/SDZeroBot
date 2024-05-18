@@ -1,8 +1,8 @@
-import { argv, bot, log } from '../botbase';
-import { closeTunnels, createLocalSSHTunnel } from "../utils";
-import { TOOLS_DB_HOST } from "../db";
-import { processArticle, db, TABLE, runManualEdits } from "./model";
-import { restartDeployment } from "../k8s";
+import {argv, bot, log} from '../botbase';
+import {closeTunnels, createLocalSSHTunnel} from "../utils";
+import {TOOLS_DB_HOST} from "../db";
+import {processArticle, db, TABLE, runManualEdits} from "./model";
+import {restartDeployment} from "../k8s";
 
 bot.setOptions({
 	silent: true,

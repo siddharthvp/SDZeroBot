@@ -1,6 +1,6 @@
-import { bot } from '../botbase';
-import { processArticle, TABLE, db } from "./model";
-import { pageFromCategoryEvent, Route } from "../eventstream-router/app";
+import {bot} from '../botbase';
+import {processArticle, TABLE, db} from "./model";
+import {pageFromCategoryEvent, Route} from "../eventstream-router/app";
 import type {ResultSetHeader} from "mysql2";
 import {NS_MAIN} from "../namespaces";
 

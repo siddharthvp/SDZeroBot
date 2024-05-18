@@ -3,7 +3,7 @@
  * sortlist tasks.
  */
 
-const { bot, utils, log } = require('../botbase');
+const {bot, utils, log} = require('../botbase');
 
 module.exports = {
 

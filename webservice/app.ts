@@ -9,8 +9,8 @@ import * as cors from 'cors';
 // All paths to SDZeroBot files must be via ../../SDZeroBot rather than via ../
 // The latter will work locally but not when inside toolforge www/js directory!
 import {bot, logFullError, Mwn} from "../../SDZeroBot/botbase";
-import { humanDate } from "../../mwn/build/log";
-import { registerRoutes } from "./route-registry";
+import {humanDate} from "../../mwn/build/log";
+import {registerRoutes} from "./route-registry";
 
 const app = express();
 

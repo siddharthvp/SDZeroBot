@@ -1,6 +1,6 @@
-import { argv, bot, emailOnError, log } from "../botbase";
-import { writeFile } from "../utils";
-import { checkShutoff, FAKE_OUTPUT_FILE, fetchQueries, processQueries, metadataStore } from "./app";
+import {argv, bot, emailOnError, log} from "../botbase";
+import {writeFile} from "../utils";
+import {checkShutoff, FAKE_OUTPUT_FILE, fetchQueries, processQueries, metadataStore} from "./app";
 
 /**
  * Specs:

@@ -1,4 +1,4 @@
-import { Route } from "./app";
+import {Route} from "./app";
 
 export default class Test extends Route {
 	init() {

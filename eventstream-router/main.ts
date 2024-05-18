@@ -1,5 +1,5 @@
-import { argv, log } from '../botbase';
-import { streamWithRoutes } from "./app";
+import {argv, log} from '../botbase';
+import {streamWithRoutes} from "./app";
 
 log(`[S] Started`);
 process.chdir(__dirname);

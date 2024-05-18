@@ -1,4 +1,4 @@
-import { argv, bot, emailOnError, enwikidb, log, Mwn, TextExtractor } from "../botbase";
+import {argv, bot, emailOnError, enwikidb, log, Mwn, TextExtractor} from "../botbase";
 import {
 	AfcDraftSize,
 	comparators,
@@ -6,9 +6,9 @@ import {
 	populateWikidataShortdescs,
 	preprocessDraftForExtract, saveWithBlacklistHandling
 } from "./commons";
-import { createLocalSSHTunnel, arrayChunk, len } from "../utils";
-import { ENWIKI_DB_HOST } from "../db";
-import { NS_DRAFT } from "../namespaces";
+import {createLocalSSHTunnel, arrayChunk, len} from "../utils";
+import {ENWIKI_DB_HOST} from "../db";
+import {NS_DRAFT} from "../namespaces";
 
 (async function() {
 

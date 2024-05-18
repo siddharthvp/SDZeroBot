@@ -1,7 +1,7 @@
-import { bot } from "../botbase";
-import { Route } from "../eventstream-router/app";
-import { createLocalSSHTunnel } from "../utils";
-import { ENWIKI_DB_HOST, enwikidb } from "../db";
+import {bot} from "../botbase";
+import {Route} from "../eventstream-router/app";
+import {createLocalSSHTunnel} from "../utils";
+import {ENWIKI_DB_HOST, enwikidb} from "../db";
 import {Redis, getRedisInstance} from "../redis";
 import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
 import {Cache, CacheClass} from "memory-cache";

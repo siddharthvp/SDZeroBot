@@ -1,4 +1,4 @@
-import { argv, bot, log, mailTransporter, Mwn } from "../botbase";
+import {argv, bot, log, mailTransporter, Mwn} from "../botbase";
 import {Rule, RuleError, Monitor, subtractFromNow, alertsDb} from "./index";
 import * as crypto from "crypto";
 

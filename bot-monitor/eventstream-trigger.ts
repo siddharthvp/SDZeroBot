@@ -1,5 +1,5 @@
-import { Route } from "../eventstream-router/app";
-import { invokeCronJob } from "../k8s";
+import {Route} from "../eventstream-router/app";
+import {invokeCronJob} from "../k8s";
 
 export default class BotActivityMonitor extends Route {
 	name = "bot-activity-monitor";

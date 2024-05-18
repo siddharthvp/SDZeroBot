@@ -1,5 +1,5 @@
-import { Query } from "./app";
-import { bot } from "../botbase";
+import {Query} from "./app";
+import {bot} from "../botbase";
 import assert = require("assert");
 import {NoMetadataStore} from "./NoMetadataStore";
 import {Template} from "../../mwn/build/wikitext";

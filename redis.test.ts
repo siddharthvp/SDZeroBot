@@ -1,6 +1,6 @@
-import { getRedisInstance, REDIS_HOST } from "./redis";
+import {getRedisInstance, REDIS_HOST} from "./redis";
 import assert = require("assert");
-import { createLocalSSHTunnel } from "./utils";
+import {createLocalSSHTunnel} from "./utils";
 
 it('redis', async function () {
 	this.timeout(10000);

@@ -1,7 +1,7 @@
-import { bot, fs, log } from "./botbase";
-import { spawn } from "child_process";
-import { ENWIKI_DB_HOST, TOOLS_DB_HOST } from "./db";
-import { REDIS_HOST } from "./redis";
+import {bot, fs, log} from "./botbase";
+import {spawn} from "child_process";
+import {ENWIKI_DB_HOST, TOOLS_DB_HOST} from "./db";
+import {REDIS_HOST} from "./redis";
 import {SECOND} from "./millis";
 
 export function readFile(file: string) {

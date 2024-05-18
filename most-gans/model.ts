@@ -1,8 +1,8 @@
-import { bot, log, toolsdb } from "../botbase";
-import { NS_USER, NS_USER_TALK } from "../namespaces";
-import { createLogStream } from "../utils";
+import {bot, log, toolsdb} from "../botbase";
+import {NS_USER, NS_USER_TALK} from "../namespaces";
+import {createLogStream} from "../utils";
 import * as fs from "fs";
-import { JSDOM } from 'jsdom';
+import {JSDOM} from 'jsdom';
 
 export const db = new toolsdb('goodarticles_p');
 export const TABLE = 'nominators';

@@ -1,4 +1,4 @@
-import { bot, Mwn, log, argv, enwikidb } from "../botbase";
+import {bot, Mwn, log, argv, enwikidb} from "../botbase";
 import {Monitor} from './index';
 
 import * as moment from "moment";

@@ -1,5 +1,5 @@
-import { argv, bot, emailOnError, log, Mwn, TextExtractor } from "../botbase";
-import { ApiRevision, MwnDate} from "../../mwn";
+import {argv, bot, emailOnError, log, Mwn, TextExtractor} from "../botbase";
+import {MwnDate} from "../../mwn";
 import {
 	AfcDraftSize,
 	comparators,
@@ -8,8 +8,8 @@ import {
 	preprocessDraftForExtract,
 	saveWithBlacklistHandling
 } from "./commons";
-import { arrayChunk, createLocalSSHTunnel } from "../utils";
-import { ENWIKI_DB_HOST, enwikidb } from "../db";
+import {arrayChunk, createLocalSSHTunnel} from "../utils";
+import {ENWIKI_DB_HOST, enwikidb} from "../db";
 
 const REPORT_PAGE = 'User:SDZeroBot/G13 soon' + (argv.sandbox ? '/sandbox2' : '');
 
