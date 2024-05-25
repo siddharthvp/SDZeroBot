@@ -1,10 +1,10 @@
-import {argv, log} from "../botbase";
+import {argv, fs, log, Mwn} from "../botbase";
 import {fork} from "child_process";
 import EventEmitter from "events";
 import type {Query} from "./app";
 
-const softTimeout = 1000;
-const hardTimeout = 1500;
+const softTimeout = 1500;
+const hardTimeout = 2000;
 const processTimeout = 30000;
 
 async function timedPromise(timeout: number, promise: Promise<void>, cleanup: () => void) {
@@ -61,13 +61,28 @@ export async function processQueriesExternally(page: string, notifier?: EventEmi
     );
 }
 
+const apiClient = new Mwn({
+    apiUrl: 'https://en.wikipedia.org/w/api.php',
+    maxRetries: 0,
+    silent: true,
+    userAgent: '[[w:en:Template:Database report]], [[w:en:SDZeroBot]], node.js isolated-vm',
+    defaultParams: {
+        maxlag: undefined
+    }
+});
+apiClient.setRequestOptions({ timeout: 10000 });
+
+const preprocessCodeTemplate = fs.readFileSync(__dirname + '/isolate.vm.js')
+    .toString()
+    .replace(/^\/\*.*?\*\/$/m, ''); // remove linter comments /* ... */
+
 export async function applyJsPreprocessing(rows: Record<string, string>[], jsCode: string, query: Query): Promise<Record<string, any>[]> {
     log(`[+] Applying JS preprocessing for ${query}`);
     query.emit('preprocessing');
     let startTime = process.hrtime.bigint();
 
     // Import dynamically as this has native dependencies
-    let {Isolate} = await import('isolated-vm');
+    let {Isolate, Reference} = await import('isolated-vm');
 
     const isolate = new Isolate({
         memoryLimit: 16,
@@ -80,15 +95,33 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
     const jail = context.global;
     await jail.set('__dbQueryResult', JSON.stringify(rows));
 
+    // Support readonly API access
+    await jail.set('__mwApiGet', new Reference(async function (rawParams: string) {
+        let params = JSON.parse(rawParams);
+        // Disallow write operations
+        params.action = 'query';
+        delete params.token;
+        try {
+            return JSON.stringify(await apiClient.query(params));
+        } catch (err) {
+            return Promise.reject(err.message);
+        }
+    }));
+
     let result = rows;
 
     let doPreprocessing = async () => {
         try {
             // jsCode is expected to declare function preprocess(rows) {...}
-            let userCode = await isolate.compileScript(jsCode +
-                '\n ; JSON.stringify(preprocess(JSON.parse(__dbQueryResult))); \n');
-
-            let userCodeResult = await userCode.run(context, { timeout: softTimeout });
+            let fullCode = preprocessCodeTemplate.replace('"${JS_CODE}"', jsCode);
+            let wrapped = await context.eval(fullCode, {
+                reference: true,
+                timeout: softTimeout
+            });
+            let userCodeResult = await wrapped.apply(undefined, [], {
+                result: { promise: true },
+                timeout: softTimeout
+            });
             try {
                 if (typeof userCodeResult === 'string') { // returns undefined if non-transferable
                     let userCodeResultParsed = JSON.parse(userCodeResult);
