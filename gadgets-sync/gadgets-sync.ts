@@ -1,4 +1,4 @@
-import {argv, bot, log, Mwn} from "../botbase";
+import {argv, bot, log} from "../botbase";
 import {setIntersection} from "../utils";
 
 const header = `
@@ -37,9 +37,9 @@ const editReqCategories = new Set([
             continue
         }
 
-        let source, destination;
+        let remote, local;
         try {
-            source = await bot.rawRequest({
+            remote = await bot.rawRequest({
                 url: `https://en.wikipedia.org/w/index.php?title=${conf.source}&action=raw`
             })
         } catch (e) {
@@ -49,7 +49,7 @@ const editReqCategories = new Set([
             } else throw e;
         }
         try {
-            destination = await bot.rawRequest({
+            local = await bot.rawRequest({
                 url: `https://en.wikipedia.org/w/index.php?title=${conf.page}&action=raw`
             })
         }  catch (e) {
@@ -61,29 +61,25 @@ const editReqCategories = new Set([
 
         const substitutedHeader = header.replaceAll('$SOURCE', conf.source)
 
-        if (source.data !== destination.data.replace(substitutedHeader, '')) {
-            if (await new bot.Page(talkTitle).exists()) {
-                let talkCategories = (await new bot.Page(talkTitle).categories()).map(e => e.category)
-                if (setIntersection(talkCategories, editReqCategories).size > 0) {
-                    log(`[+] Open edit request already exists on ${conf.talkPage}, skipping`)
-                    continue
-                }
-                log(`[+] [[${conf.page}]] does not match [[${conf.source}]]`)
-
-                // Copy the file locally so that a Special:ComparePages link can be generated
-                const syncPage = `User:SDZeroBot/sync/${conf.page}`
-                const syncPageData = substitutedHeader + source.data
-                const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]] for comparison`)
-
-                const curRevId = (await new bot.Page(conf.page).history(['ids'], 1))[0].revid;
-                const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?page1=${encodeURIComponent(conf.page)}&rev1=${curRevId}&page2=${encodeURIComponent(syncPage)}&rev2=${saveResult.newrevid}`
-
-                await bot.newSection(conf.talkPage, `Sync request {{subst:#time:j F Y}}`,
-                    `{{sudo|page=${conf.page}|answered=no}} Please sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
-                log(`[S] Created edit request on [[${conf.talkPage}]]`)
-            } else {
-                log(`[E] ${conf.talkPage} does not exist. Skipping.`)
+        if (remote.data !== local.data.replace(substitutedHeader, '')) {
+            let talkCategories = (await new bot.Page(talkTitle).categories()).map(e => e.category)
+            if (setIntersection(talkCategories, editReqCategories).size > 0) {
+                log(`[+] Open edit request already exists on ${conf.talkPage}, skipping`)
+                continue
             }
+            log(`[+] [[${conf.page}]] does not match [[${conf.source}]]`)
+
+            // Copy the file locally so that a Special:ComparePages link can be generated
+            const syncPage = `User:SDZeroBot/sync/${conf.page}`
+            const syncPageData = substitutedHeader + remote.data
+            const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]] for comparison`)
+
+            const curRevId = (await new bot.Page(conf.page).history(['ids'], 1))[0].revid;
+            const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?page1=${encodeURIComponent(conf.page)}&rev1=${curRevId}&page2=${encodeURIComponent(syncPage)}&rev2=${saveResult.newrevid}`
+
+            await bot.newSection(conf.talkPage, `Sync request {{subst:#time:j F Y}}`,
+                `{{sudo|page=${conf.page}|answered=no}} Please sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
+            log(`[S] Created edit request on [[${conf.talkPage}]]`)
         }
     }
 }())
