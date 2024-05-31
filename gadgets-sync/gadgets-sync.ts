@@ -43,7 +43,7 @@ const editReqCategories = new Set([
                 url: `https://en.wikipedia.org/w/index.php?title=${conf.source}&action=raw`
             })
         } catch (e) {
-            if (e.code === 404) {
+            if (e.response.status === 404) {
                 log(`[E] ${conf.source} does not exist. Skipping.`)
                 continue
             } else throw e;
@@ -73,12 +73,13 @@ const editReqCategories = new Set([
                 // Copy the file locally so that a Special:ComparePages link can be generated
                 const syncPage = `User:SDZeroBot/sync/${conf.page}`
                 const syncPageData = substitutedHeader + source.data
-                const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]]`)
+                const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]] for comparison`)
 
-                const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?page1=${encodeURIComponent(conf.page)}&page2=${encodeURIComponent(syncPage)}&rev2=${saveResult.newrevid}`
+                const curRevId = (await new bot.Page(conf.page).history(['ids'], 1))[0].revid;
+                const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?page1=${encodeURIComponent(conf.page)}&rev1=${curRevId}&page2=${encodeURIComponent(syncPage)}&rev2=${saveResult.newrevid}`
 
-                await bot.newSection(conf.talkPage, `Sync request {{subst:#time:Y-m-d}}`,
-                    `{{sudo|page=${conf.page}|answered=false}} Please sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
+                await bot.newSection(conf.talkPage, `Sync request {{subst:#time:j F Y}}`,
+                    `{{sudo|page=${conf.page}|answered=no}} Please sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
                 log(`[S] Created edit request on [[${conf.talkPage}]]`)
             } else {
                 log(`[E] ${conf.talkPage} does not exist. Skipping.`)
