@@ -1,5 +1,4 @@
 import {argv, bot, log} from "../botbase";
-import {setIntersection} from "../utils";
 
 const header = `
 /******************************************************************************/
@@ -19,12 +18,6 @@ async function getConfig() {
     const content = (await bot.read(CONFIG_PAGE)).revisions[0].content
     return JSON.parse(content)
 }
-
-const editReqCategories = new Set([
-    'Wikipedia_interface-protected_edit_requests',
-    'Wikipedia_fully_protected_edit_requests',
-    'Wikipedia_template-protected_edit_requests',
-]);
 
 (async function () {
     await bot.getTokensAndSiteInfo()
@@ -62,8 +55,8 @@ const editReqCategories = new Set([
         const substitutedHeader = header.replaceAll('$SOURCE', conf.source)
 
         if (remote.data !== local.data.replace(substitutedHeader, '')) {
-            let talkCategories = (await new bot.Page(talkTitle).categories()).map(e => e.category)
-            if (setIntersection(talkCategories, editReqCategories).size > 0) {
+            const pg = await bot.read(talkTitle)
+            if (!pg.missing && pg.revisions[0].content.includes(`{{sudo|page=${conf.page}|answered=no}}`)) {
                 log(`[+] Open edit request already exists on ${conf.talkPage}, skipping`)
                 continue
             }
@@ -77,8 +70,10 @@ const editReqCategories = new Set([
             const curRevId = (await new bot.Page(conf.page).history(['ids'], 1))[0].revid;
             const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?page1=${encodeURIComponent(conf.page)}&rev1=${curRevId}&page2=${encodeURIComponent(syncPage)}&rev2=${saveResult.newrevid}`
 
-            await bot.newSection(conf.talkPage, `Sync request {{subst:#time:j F Y}}`,
-                `{{sudo|page=${conf.page}|answered=no}} Please sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
+            const date = new bot.Date().format('D MMMM YYYY')
+            const isMatchingTalk = new bot.Page(conf.page).toText() === new bot.Title(conf.talkPage).getSubjectPage().toText()
+            await bot.newSection(conf.talkPage, `Sync request ${date}` + (isMatchingTalk ? '' : ` for ${conf.page}`),
+                `{{sudo|page=${conf.page}|answered=no}}\nPlease sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
             log(`[S] Created edit request on [[${conf.talkPage}]]`)
         }
     }
