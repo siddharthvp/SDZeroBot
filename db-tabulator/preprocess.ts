@@ -1,4 +1,4 @@
-import {argv, fs, log, Mwn} from "../botbase";
+import {argv, AuthManager, fs, log, Mwn} from "../botbase";
 import {fork} from "child_process";
 import EventEmitter from "events";
 import type {Query} from "./app";
@@ -65,7 +65,8 @@ const apiClient = new Mwn({
     apiUrl: 'https://en.wikipedia.org/w/api.php',
     maxRetries: 0,
     silent: true,
-    userAgent: '[[w:en:Template:Database report]], [[w:en:SDZeroBot]], node.js isolated-vm',
+    userAgent: '[[w:en:Template:Database report]] via [[w:en:SDZeroBot]], node.js isolated-vm',
+    OAuth2AccessToken: AuthManager.get('sdzerobot-dbreports').OAuth2AccessToken,
     defaultParams: {
         maxlag: undefined
     }
@@ -82,7 +83,7 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
     let startTime = process.hrtime.bigint();
 
     // Import dynamically as this has native dependencies
-    let {Isolate, Reference} = await import('isolated-vm');
+    let {Isolate, Callback, Reference} = await import('isolated-vm');
 
     const isolate = new Isolate({
         memoryLimit: 16,
@@ -95,16 +96,57 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
     const jail = context.global;
     await jail.set('__dbQueryResult', JSON.stringify(rows));
 
+    await jail.set('log', new Callback(function(arg) {
+        console.log(arg);
+        query.emit('js-logging', arg);
+    }));
+
     // Support readonly API access
     await jail.set('__mwApiGet', new Reference(async function (rawParams: string) {
         let params = JSON.parse(rawParams);
         // Disallow write operations
         params.action = 'query';
+        params.format = 'json';
         delete params.token;
         try {
             return JSON.stringify(await apiClient.query(params));
         } catch (err) {
             return Promise.reject(err.message);
+        }
+    }));
+
+    await jail.set('__rawReq', new Reference(async function (url: string) {
+        const allowedDomains = [
+            'https://en.wikipedia.org/api/rest_v1/', // Wikimedia REST API
+            'https://wikimedia.org/api/rest_v1/', // Wikimedia REST API
+            'https://en.wikipedia.org/w/rest.php/', // MediaWiki REST API
+            'https://en.wikipedia/org/w/api.php?', // Action API
+            'https://api.wikimedia.org/', // Wikimedia API gateway
+        ];
+
+        if (!allowedDomains.find(domain => url.startsWith(domain))) {
+            return JSON.stringify({ error: `Disallowed domain. Allowed domains are: ${allowedDomains.join(', ')}` });
+        }
+
+        try {
+            const response = await apiClient.rawRequest({
+                method: 'GET',
+                url: url,
+                timeout: 10000,
+                headers: {
+                    // Bot grant enables apihighlimit (for Action API), and helps avoid throttling for some REST APIs.
+                    // It has no write access.
+                    'Authorization': `Bearer ${AuthManager.get('sdzerobot-dbreports').OAuth2AccessToken}`
+                }
+            });
+            try {
+                return JSON.stringify(response.data);
+            } catch (e) {
+                return JSON.stringify({ error: `Non JSON response from ${url}: ${response.data}` });
+            }
+        } catch (err) {
+            let errMsg = err.statusCode ? (err.statusCode + ': ' + err.statusMessage) : err.message;
+            return JSON.stringify({ error: errMsg });
         }
     }));
 

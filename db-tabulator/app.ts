@@ -345,7 +345,7 @@ export class Query extends EventEmitter {
 		let excerpts: Record<string, string> = {};
 		for (let pageSet of arrayChunk(pages, 100)) {
 			for await (let pg of bot.readGen(pageSet, {
-				rvsection: 0,
+				rvsection: '0',
 				redirects: false
 			})) {
 				if (pg.invalid || pg.missing) {
