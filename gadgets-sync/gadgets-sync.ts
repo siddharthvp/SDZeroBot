@@ -56,7 +56,7 @@ async function getConfig() {
 
         if (remote.data !== local.data.replace(substitutedHeader, '')) {
             const pg = await bot.read(talkTitle)
-            if (!pg.missing && pg.revisions[0].content.includes(`{{sudo|page=${conf.page}|answered=no}}`)) {
+            if (!pg.missing && pg.revisions[0].content.includes(`{{sudo|1=${conf.page}|answered=no}}`)) {
                 log(`[+] Open edit request already exists on ${conf.talkPage}, skipping`)
                 continue
             }
@@ -73,7 +73,7 @@ async function getConfig() {
             const date = new bot.Date().format('D MMMM YYYY')
             const isMatchingTalk = new bot.Page(conf.page).toText() === new bot.Title(conf.talkPage).getSubjectPage().toText()
             await bot.newSection(conf.talkPage, `Sync request ${date}` + (isMatchingTalk ? '' : ` for ${conf.page}`),
-                `{{sudo|page=${conf.page}|answered=no}}\nPlease sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
+                `{{sudo|1=${conf.page}|answered=no}}\nPlease sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
             log(`[S] Created edit request on [[${conf.talkPage}]]`)
         }
     }
