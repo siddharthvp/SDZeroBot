@@ -26,13 +26,19 @@ export function emailOnError(err: Error, taskname: string, isFatal = true) {
     // exit normally
 }
 export function logFullError(err: any, isFatal = true) {
-    if (err.request?.headers?.Authorization) {
-        err.request.headers.Authorization = '***';
-    }
+    redactSecretsInError(err);
     // datetime similar to what mwn log produces, but can't use that directly as mwn may not have loaded
     const dateTimeString = new Date().toISOString().slice(0, 19).replace('T', ' ');
     console.log(`[${dateTimeString}] ${isFatal ? '[E] Fatal error' : '[E] Error'}`);
     console.log(err);
+}
+export function redactSecretsInError(err: any) {
+    if (err.request?.headers?.Authorization) {
+        err.request.headers.Authorization = '***';
+    }
+    if (err.config?.headers?.Authorization) {
+        err.config.headers.Authorization = '***';
+    }
 }
 
 // Errors occurring inside async functions are caught by emailOnError(),
