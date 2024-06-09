@@ -120,7 +120,7 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
             'https://en.wikipedia.org/api/rest_v1/', // Wikimedia REST API
             'https://wikimedia.org/api/rest_v1/', // Wikimedia REST API
             'https://en.wikipedia.org/w/rest.php/', // MediaWiki REST API
-            'https://en.wikipedia/org/w/api.php?', // Action API
+            'https://en.wikipedia.org/w/api.php?', // Action API
             'https://api.wikimedia.org/', // Wikimedia API gateway
         ];
 
