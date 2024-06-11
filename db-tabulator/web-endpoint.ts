@@ -87,7 +87,7 @@ router.get('/stream', async (req, res) => {
 					JOIN page ON page_id = cl_from
 					WHERE cl_to = ?
 				)
-			`, [title.getNamespaceId(), title.getMainText(), SUBSCRIPTIONS_CATEGORY.replace(/ /g, '_')])
+			`, [title.getNamespaceId(), title.getMain(), SUBSCRIPTIONS_CATEGORY.replace(/ /g, '_')])
 			for (let row of transcludedReportPages) {
 				let page = new bot.Title(row.lt_title as string, row.lt_namespace as number).toText();
 				queries = queries.concat(await fetchQueriesForPage(page));
