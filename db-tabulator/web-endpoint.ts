@@ -9,10 +9,11 @@ import {
 	processQueries,
 	BOT_NAME
 } from "./app";
-import { createLogStream, mapPath } from "../utils";
-import {bot, enwikidb} from "../botbase";
+import {createLogStream, mapPath} from "../utils";
+import {bot} from "../botbase";
 import {getRedisInstance} from "../redis";
 import {EventEmitter} from "events";
+import {EnwikiWebDb} from "../db";
 
 const router = express.Router();
 
@@ -22,7 +23,7 @@ const redis = getRedisInstance();
 /** Store the list of pages currently undergoing update as a redis set */
 const redisKey = 'web-db-tabulator-pages';
 
-const db = new enwikidb();
+const db = new EnwikiWebDb();
 
 router.get('/stream', async (req, res) => {
 	const {page} = req.query as Record<string, string>;
@@ -77,7 +78,6 @@ router.get('/stream', async (req, res) => {
 		stream('looking-up-transclusions');
 		const title = bot.Title.newFromText(page);
 		try {
-			// FIXME: use the web replica here as this is a blocking call?
 			const transcludedReportPages = await db.query(`
 				SELECT lt_namespace, lt_title FROM templatelinks
 				JOIN linktarget ON tl_target_id = lt_id

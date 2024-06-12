@@ -10,6 +10,7 @@ import type {MwnDate} from "../mwn";
 import {onToolforge} from "./utils";
 
 export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.wikimedia.cloud';
+export const ENWIKI_WEB_DB_HOST = 'enwiki.web.db.svc.wikimedia.cloud';
 export const TOOLS_DB_HOST = 'tools.db.svc.wikimedia.cloud';
 
 export abstract class db {
@@ -127,6 +128,7 @@ export class enwikidb extends db {
 
 	async getReplagHours() {
 		log('[V] Querying database lag');
+		// TODO: use heartbeat_p database for querying lag
 		const lastrev = await this.query(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
 		const lastrevtime = new bot.date(lastrev[0].ts);
 		this.replagHours = Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60);
@@ -140,6 +142,15 @@ export class enwikidb extends db {
 	 */
 	makeReplagMessage(threshold: number): string {
 		return this.replagHours > threshold ? `{{hatnote|Database replication lag is high. Changes newer than ${this.replagHours} hours may not be reflected.}}\n` : '';
+	}
+}
+
+export class EnwikiWebDb extends enwikidb {
+	constructor(customOptions: mysql.PoolOptions = {}) {
+		super({
+			host: onToolforge() ? ENWIKI_WEB_DB_HOST : '127.0.0.1',
+			...customOptions
+		});
 	}
 }
 
@@ -166,3 +177,9 @@ export interface SQLError extends Error {
 	sqlState: string;
 	sqlMessage: string;
 }
+
+
+const enweb = new EnwikiWebDb();
+(async function () {
+	console.log(await enweb.query('SELECT page_title FROM page limit 10'))
+})()
