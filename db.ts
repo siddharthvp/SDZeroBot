@@ -13,6 +13,10 @@ export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.wikimedia.cloud';
 export const ENWIKI_WEB_DB_HOST = 'enwiki.web.db.svc.wikimedia.cloud';
 export const TOOLS_DB_HOST = 'tools.db.svc.wikimedia.cloud';
 
+interface ToolforgePoolConnection extends mysql.PoolConnection {
+	inactiveTimeout?: NodeJS.Timeout;
+}
+
 export abstract class db {
 	pool: mysql.Pool;
 
@@ -37,12 +41,12 @@ export abstract class db {
 		// Destroy connections on 5 seconds of inactivity. This avoids holding
 		// idle connections and at the same time avoids the performance issue in
 		// creating new connections for every query in a sequential set
-		this.pool.on('release', (connection) => {
+		this.pool.on('release', (connection: ToolforgePoolConnection) => {
 			connection.inactiveTimeout = setTimeout(() => {
 				connection.destroy();
 			}, 5000);
 		});
-		this.pool.on('acquire', function (connection) {
+		this.pool.on('acquire', function (connection: ToolforgePoolConnection) {
 			clearTimeout(connection.inactiveTimeout);
 		});
 
@@ -128,10 +132,9 @@ export class enwikidb extends db {
 
 	async getReplagHours() {
 		log('[V] Querying database lag');
-		// TODO: use heartbeat_p database for querying lag
-		const lastrev = await this.query(`SELECT MAX(rev_timestamp) AS ts FROM revision`);
-		const lastrevtime = new bot.date(lastrev[0].ts);
-		this.replagHours = Math.round((Date.now() - lastrevtime.getTime()) / 1000 / 60 / 60);
+		const result = await this.query(`SELECT last_updated FROM heartbeat_p.heartbeat`);
+		const lastUpdated = new bot.date(result[0].last_updated + 'Z');
+		this.replagHours = Math.round((Date.now() - lastUpdated.getTime()) / 1000 / 60 / 60);
 		this.replagHoursCalculatedTime = new bot.date();
 		return this.replagHours;
 	}
@@ -177,9 +180,3 @@ export interface SQLError extends Error {
 	sqlState: string;
 	sqlMessage: string;
 }
-
-
-const enweb = new EnwikiWebDb();
-(async function () {
-	console.log(await enweb.query('SELECT page_title FROM page limit 10'))
-})()
