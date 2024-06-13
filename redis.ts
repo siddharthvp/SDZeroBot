@@ -57,6 +57,10 @@ export function getRedisInstance(): Redis {
 		instance.on('error', (err: Error) => {
 			log(`[E] Redis error`);
 			log(err);
+			if (err.code === 'NR_CLOSED') {
+				// XXX: reconnect for next time
+				instance = createRedisClient();
+			}
 		});
 	}
 	return instance;
