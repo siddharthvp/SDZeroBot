@@ -6,16 +6,14 @@ import * as morgan from "morgan";
 import * as hbs from 'hbs';
 import * as cors from 'cors';
 
-// All paths to SDZeroBot files must be via ../../SDZeroBot rather than via ../
-// The latter will work locally but not when inside toolforge www/js directory!
-import {bot, logFullError, Mwn} from "../../SDZeroBot/botbase";
+import {bot, logFullError, Mwn} from "../botbase";
 import {humanDate} from "../../mwn/build/log";
 import {registerRoutes} from "./route-registry";
 
 const app = express();
 
 // view engine setup
-app.set('views', path.join(__dirname, '../../SDZeroBot'));
+app.set('views', path.join(__dirname, '..'));
 app.set('view engine', 'hbs');
 app.set('view options', { layout: 'webservice/views/layout' });
 hbs.registerHelper('wikilink',  (pageName, displayName) => {
