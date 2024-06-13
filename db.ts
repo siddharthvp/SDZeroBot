@@ -13,9 +13,7 @@ export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.wikimedia.cloud';
 export const ENWIKI_WEB_DB_HOST = 'enwiki.web.db.svc.wikimedia.cloud';
 export const TOOLS_DB_HOST = 'tools.db.svc.wikimedia.cloud';
 
-interface ToolforgePoolConnection extends mysql.PoolConnection {
-	inactiveTimeout?: NodeJS.Timeout;
-}
+const inactiveTimeouts: WeakMap<mysql.PoolConnection, NodeJS.Timeout> = new WeakMap();
 
 export abstract class db {
 	pool: mysql.Pool;
@@ -41,13 +39,13 @@ export abstract class db {
 		// Destroy connections on 5 seconds of inactivity. This avoids holding
 		// idle connections and at the same time avoids the performance issue in
 		// creating new connections for every query in a sequential set
-		this.pool.on('release', (connection: ToolforgePoolConnection) => {
-			connection.inactiveTimeout = setTimeout(() => {
+		this.pool.on('release', (connection) => {
+			inactiveTimeouts.set(connection, setTimeout(() => {
 				connection.destroy();
-			}, 5000);
+			}, 5000));
 		});
-		this.pool.on('acquire', function (connection: ToolforgePoolConnection) {
-			clearTimeout(connection.inactiveTimeout);
+		this.pool.on('acquire', function (connection) {
+			clearTimeout(inactiveTimeouts.get(connection));
 		});
 
 		return this;
