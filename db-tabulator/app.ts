@@ -84,7 +84,7 @@ export async function checkShutoff() {
 	return text?.trim();
 }
 
-const queriesLog = createLogStream('queries.log');
+const queriesLog = createLogStream(__dirname + '/queries.log');
 
 export class Query extends EventEmitter {
 
