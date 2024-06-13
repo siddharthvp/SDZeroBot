@@ -1,6 +1,6 @@
 import {enwikidb} from "./db";
-import {sleep} from "mwn/build/utils";
-import * as assert from "assert";
+import {expect} from "chai";
+import * as sinon from 'sinon';
 
 const testDb = new enwikidb({
     host: '127.0.0.1',
@@ -14,18 +14,21 @@ const testDb = new enwikidb({
 it('destroy pooled connections on inactivity', async function () {
     this.timeout(10000);
     let conn1, conn2;
+    let clock = sinon.useFakeTimers();
 
     conn1 = await testDb.getConnection()
     conn1.release();
-    await sleep(1000);
+    clock.tick(1000)
     conn2 = await testDb.getConnection();
-    conn2.release()
-    assert(conn1.threadId === conn2.threadId)
+    conn2.release();
+    expect(conn1.threadId).to.eq(conn2.threadId)
 
     conn1 = await testDb.getConnection()
     conn1.release();
-    await sleep(5100);
+    clock.tick(5100);
     conn2 = await testDb.getConnection();
-    conn2.release()
-    assert(conn1.threadId !== conn2.threadId)
+    conn2.release();
+    expect(conn1.threadId).to.not.eq(conn2.threadId)
+
+    clock.restore();
 });
