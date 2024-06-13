@@ -1,7 +1,7 @@
 {
   "scripts": {
     "start": "env WEB=true node server.js",
-    "tunnels": "node tunnels.js",
+    "tunnels": "ssh -N -L 4711:enwiki.analytics.db.svc.wikimedia.cloud:3306 -L 4712:tools.db.svc.wikimedia.cloud:3306 -L 4713:tools-redis:6379 toolforge",
     "test": "nodemon server.ts --watch .. --ext ts,js,hbs",
     "debug": "node --require ts-node/register server.js",
     "restart": "webservice --backend kubernetes node18 restart",
