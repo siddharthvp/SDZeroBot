@@ -3,12 +3,13 @@ import * as express from "express";
 import indexRouter from "./routes/index";
 import logsRouter from "./routes/logs";
 import summaryRouter from "./routes/summary";
-import dbReportRouter from '../../SDZeroBot/db-tabulator/web-endpoint';
-import gansRouter from '../../SDZeroBot/most-gans/web-endpoint';
+import dbReportRouter from '../db-tabulator/web-endpoint';
+import gansRouter from '../most-gans/web-endpoint';
 import articleSearchRouter from './routes/articlesearch';
-import dykRouter from '../../SDZeroBot/dyk-counts/web-endpoint';
+import dykRouter from '../dyk-counts/web-endpoint';
 import gitsync from "./routes/gitsync";
-import botMonitorRouter from '../../SDZeroBot/bot-monitor/web-endpoint'
+import botMonitorRouter from '../bot-monitor/web-endpoint'
+import gitlabRouter from './routes/gitlab';
 
 export function registerRoutes(app: express.Router) {
 	app.use('/', indexRouter);
@@ -21,4 +22,5 @@ export function registerRoutes(app: express.Router) {
 	app.use('/dyk', dykRouter);
 	app.use('/gitsync', gitsync);
 	app.use('/bot-monitor', botMonitorRouter);
+	app.use('/gitlab', gitlabRouter);
 }
