@@ -30,26 +30,28 @@ async function getConfig() {
             continue
         }
 
-        let remote, local;
+        let remote, local
         try {
             remote = await bot.rawRequest({
-                url: `https://en.wikipedia.org/w/index.php?title=${conf.source}&action=raw`
+                url: `https://en.wikipedia.org/w/index.php?title=${conf.source}&action=raw`,
+                timeout: 5000
             })
         } catch (e) {
-            if (e.response.status === 404) {
+            if (e.response?.status === 404) {
                 log(`[E] ${conf.source} does not exist. Skipping.`)
                 continue
-            } else throw e;
+            } else throw e
         }
         try {
             local = await bot.rawRequest({
-                url: `https://en.wikipedia.org/w/index.php?title=${conf.page}&action=raw`
+                url: `https://en.wikipedia.org/w/index.php?title=${conf.page}&action=raw`,
+                timeout: 5000
             })
         }  catch (e) {
-            if (e.response.status === 404) {
+            if (e.response?.status === 404) {
                 log(`[E] ${conf.page} does not exist. Skipping.`)
                 continue
-            } else throw e;
+            } else throw e
         }
 
         const substitutedHeader = header.replaceAll('$SOURCE', conf.source)
