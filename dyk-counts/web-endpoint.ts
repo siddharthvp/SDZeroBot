@@ -1,12 +1,10 @@
 import * as express from "express";
 import 'express-async-errors';
 import {enwikidb} from "../db";
-import {getRedisInstance} from "../redis";
+import {redis} from "../redis-io";
 
 const router = express.Router();
 const db = new enwikidb();
-
-const redis = getRedisInstance()
 
 router.get('/credits/:user', async (req, res, next) => {
 	const user = req.params.user.replace(/ /g, '_');

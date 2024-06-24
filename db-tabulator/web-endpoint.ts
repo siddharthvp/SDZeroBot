@@ -11,14 +11,13 @@ import {
 } from "./app";
 import {createLogStream, mapPath} from "../utils";
 import {bot} from "../botbase";
-import {getRedisInstance} from "../redis";
 import {EventEmitter} from "events";
 import {EnwikiWebDb} from "../db";
+import {redis} from "../redis-io";
 
 const router = express.Router();
 
 const log = createLogStream(mapPath('~/web-dbtb.out'));
-const redis = getRedisInstance();
 
 /** Store the list of pages currently undergoing update as a redis set */
 const redisKey = 'web-db-tabulator-pages';

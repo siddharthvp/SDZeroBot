@@ -2,17 +2,16 @@ import {bot} from "../botbase";
 import {Route} from "../eventstream-router/app";
 import {createLocalSSHTunnel} from "../utils";
 import {ENWIKI_DB_HOST, enwikidb} from "../db";
-import {Redis, getRedisInstance} from "../redis";
 import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
 import {Cache, CacheClass} from "memory-cache";
 import {ReplyError} from 'redis';
 import {DAY, SECOND} from "../millis";
+import {redis} from "../redis-io";
 
 export default class DykCounts extends Route {
     name = 'dyk-counts';
 
 	db: enwikidb;
-	redis: Redis;
 
 	counts: Record<string, number> = {};
 	unflushedChanges: Record<string, string[]> = {};
@@ -31,7 +30,6 @@ export default class DykCounts extends Route {
 
 		await createLocalSSHTunnel(ENWIKI_DB_HOST);
 		this.db = new enwikidb();
-		this.redis = getRedisInstance();
 
 		bot.setOptions({ maxRetries: 0, defaultParams: { maxlag: undefined } });
 		await bot.getTokensAndSiteInfo();
@@ -60,8 +58,8 @@ export default class DykCounts extends Route {
 			await this.saveCounts('Refreshing counts from database');
 
 			const keyValues = queryResult.flatMap(e => [e.username, e.noms]) as string[];
-			await this.redis.del('dyk-counts').catch(e => this.redisError(e));
-			await this.redis.hmset.apply(null, ['dyk-counts'].concat(keyValues)).catch(e => this.redisError(e));
+			await redis.del('dyk-counts').catch(e => this.redisError(e));
+			await redis.hmset.apply(null, ['dyk-counts'].concat(keyValues)).catch(e => this.redisError(e));
 		} catch (e) {
 			this.log(`[E] Error while running db refresh`, e);
 		}
@@ -110,7 +108,7 @@ export default class DykCounts extends Route {
 		this.dupeCache.put(title, true, 300); // 5 min timeout
 
 		this.counts[user] = (this.counts[user] || 0) + 1;
-		this.redis.hincrby('dyk-counts', user, 1).catch(e => this.redisError(e));
+		redis.hincrby('dyk-counts', user, 1).catch(e => this.redisError(e));
 		this.unflushedChanges[user] = (this.unflushedChanges[user] || []).concat(title);
 		this.log(`[i] Crediting "${user}" for [[${title}]]`);
 
