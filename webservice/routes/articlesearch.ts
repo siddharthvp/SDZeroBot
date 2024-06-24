@@ -1,7 +1,7 @@
 import * as express from "express";
 import 'express-async-errors';
 import {JSDOM} from 'jsdom';
-import {bot, TextExtractor} from '../../../SDZeroBot/botbase';
+import {bot, TextExtractor} from '../../botbase';
 import {numericArg} from "../utils";
 
 const router = express.Router();

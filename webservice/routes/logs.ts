@@ -1,6 +1,6 @@
 import * as express from "express";
 import {exec} from "child_process";
-import {mapPath} from "../../../SDZeroBot/utils";
+import {mapPath} from "../../utils";
 import {numericArg} from "../utils";
 
 const router = express.Router();
