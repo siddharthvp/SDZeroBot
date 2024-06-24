@@ -1,5 +1,6 @@
 import {Redis} from "ioredis"
 import {onToolforge, readFile} from "./utils";
+import {log} from "./botbase";
 
 export const redis = new Redis({
     host: onToolforge() ? 'tools-redis' : 'localhost',
@@ -8,4 +9,9 @@ export const redis = new Redis({
     // Prefixing per https://wikitech.wikimedia.org/wiki/Help:Toolforge/Redis_for_Toolforge#Security
     // A secret prefix string is stored in redis-key-prefix.txt
     keyPrefix: readFile(__dirname + '/redis-key-prefix.txt'),
+});
+
+redis.on('error', err => {
+    log(`[E] Redis error:`);
+    log(err);
 });

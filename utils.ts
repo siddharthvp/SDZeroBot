@@ -30,6 +30,8 @@ export function createLogStream(file: string) {
 		let stringified;
 		if (typeof msg === 'string') {
 			stream.write(`[${ts}] ${msg}\n`);
+		} else if (msg instanceof Error) {
+			stream.write(`[${ts}] ${msg.stack}`)
 		} else if (stringified = stringifyObject(msg)) {
 			stream.write(`[${ts}] ${stringified}\n`);
 		} else {

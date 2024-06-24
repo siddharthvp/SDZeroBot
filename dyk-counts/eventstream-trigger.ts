@@ -59,7 +59,8 @@ export default class DykCounts extends Route {
 
 			const keyValues = queryResult.flatMap(e => [e.username, e.noms]) as string[];
 			await redis.del('dyk-counts').catch(e => this.redisError(e));
-			await redis.hmset.apply(null, ['dyk-counts'].concat(keyValues)).catch(e => this.redisError(e));
+			const redisArgs = ['dyk-counts'].concat(keyValues) as [string, ...string[]]; // TS: array with at least one element
+			await redis.hmset(...redisArgs).catch(e => this.redisError(e));
 		} catch (e) {
 			this.log(`[E] Error while running db refresh`, e);
 		}
@@ -127,6 +128,6 @@ export default class DykCounts extends Route {
 		if (err.command === 'HMSET') {
 			err.args = [err.args[0], '<snipped>']; // too big to log!
 		}
-		this.log(`[E] Redis error: `, err)
+		this.log(`[E] dyk-counts redis error: `, err)
 	}
 }
