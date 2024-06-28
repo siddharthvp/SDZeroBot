@@ -9,6 +9,7 @@ import * as cors from 'cors';
 import {bot, logFullError, Mwn} from "../botbase";
 import {humanDate} from "../../mwn/build/log";
 import {registerRoutes} from "./route-registry";
+import {MINUTE} from "../millis";
 
 const app = express();
 
@@ -37,7 +38,7 @@ app.use(express.static(path.join(__dirname, 'public'), {
 bot.getSiteInfo();
 setInterval(function () {
 	bot.getTokens();
-}, 600000);
+}, 10 * MINUTE);
 
 bot.setOptions({
 	retryPause: 2000,

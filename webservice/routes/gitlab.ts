@@ -19,6 +19,8 @@ router.use(async function(req, res, next) {
         res.type('text/css');
     } else if (req.path.endsWith('.json')) {
         res.type('application/json');
+    } else if (req.path.endsWith('.wasm')) {
+        res.type('application/wasm');
     } else {
         res.type('text/plain');
     }
