@@ -9,6 +9,10 @@ export const redis = new Redis({
     // Prefixing per https://wikitech.wikimedia.org/wiki/Help:Toolforge/Redis_for_Toolforge#Security
     // A secret prefix string is stored in redis-key-prefix.txt
     keyPrefix: readFile(__dirname + '/redis-key-prefix.txt'),
+
+    socketTimeout: 2000,
+    commandTimeout: 4000,
+    connectTimeout: 5000,
 });
 
 redis.on('error', err => {
