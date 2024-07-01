@@ -576,7 +576,7 @@ export class Query extends EventEmitter {
 					page: pageNumber && String(pageNumber),
 					num_pages: pageNumber && String(this.numPages),
 					query_runtime: this.queryRuntime,
-					last_updated: new bot.date().format('D MMMM YYYY HH:mm') + ' (UTC)',
+					last_updated: new bot.date().format('HH:mm, D MMMM YYYY') + ' (UTC)',
 				})
 			);
 	}
