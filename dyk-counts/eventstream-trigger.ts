@@ -1,7 +1,6 @@
 import {bot} from "../botbase";
 import {Route} from "../eventstream-router/app";
-import {createLocalSSHTunnel} from "../utils";
-import {ENWIKI_DB_HOST, enwikidb} from "../db";
+import {enwikidb} from "../db";
 import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
 import {Cache, CacheClass} from "memory-cache";
 import {ReplyError} from 'redis';
@@ -28,7 +27,6 @@ export default class DykCounts extends Route {
 		super.init();
 		this.log('[S] Started');
 
-		await createLocalSSHTunnel(ENWIKI_DB_HOST);
 		this.db = new enwikidb();
 
 		await this.refreshCountsFromDb();

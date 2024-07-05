@@ -3,8 +3,7 @@ import {pageFromCategoryEvent, Route} from "../eventstream-router/app";
 import {bot} from "../botbase";
 import {HybridMetadataStore} from "./HybridMetadataStore";
 import {NoMetadataStore} from "./NoMetadataStore";
-import {createLocalSSHTunnel, setDifference} from "../utils";
-import {ENWIKI_DB_HOST} from "../db";
+import {setDifference} from "../utils";
 import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
 import {Template} from "mwn/build/wikitext";
 
@@ -25,7 +24,6 @@ export default class DbTabulatorMetadata extends Route {
     async init() {
         super.init();
         this.log('[S] Started');
-        await createLocalSSHTunnel(ENWIKI_DB_HOST);
         this.subscriptions = new Set((await new bot.Category(SUBSCRIPTIONS_CATEGORY).members()).map(e => e.title));
         await metadataStore.init();
         if (metadataStore instanceof HybridMetadataStore) {
