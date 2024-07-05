@@ -25,10 +25,7 @@ export default class DbTabulatorMetadata extends Route {
     async init() {
         super.init();
         this.log('[S] Started');
-        await Promise.all([
-            bot.getSiteInfo(),
-            createLocalSSHTunnel(ENWIKI_DB_HOST),
-        ]);
+        await createLocalSSHTunnel(ENWIKI_DB_HOST);
         this.subscriptions = new Set((await new bot.Category(SUBSCRIPTIONS_CATEGORY).members()).map(e => e.title));
         await metadataStore.init();
         if (metadataStore instanceof HybridMetadataStore) {

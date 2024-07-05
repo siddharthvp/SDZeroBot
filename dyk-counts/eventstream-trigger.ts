@@ -31,9 +31,6 @@ export default class DykCounts extends Route {
 		await createLocalSSHTunnel(ENWIKI_DB_HOST);
 		this.db = new enwikidb();
 
-		bot.setOptions({ maxRetries: 0, defaultParams: { maxlag: undefined } });
-		await bot.getTokensAndSiteInfo();
-
 		await this.refreshCountsFromDb();
 		setInterval(() => this.refreshCountsFromDb(), this.dbRefreshInterval);
 	}

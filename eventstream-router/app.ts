@@ -211,7 +211,14 @@ interface StreamAppConfig {
 	healthCheckInterval?: number;
 }
 
-export function streamWithRoutes(routes: (new () => Route)[], config: StreamAppConfig = {}) {
+export async function streamWithRoutes(routes: (new () => Route)[], config: StreamAppConfig = {}) {
+	// XXX: for some routes like dyk-counts, enabling retries can cause stale data to be saved after retry sleeps
+	bot.setOptions({ maxRetries: 0, defaultParams: { maxlag: undefined } });
+	await bot.getTokensAndSiteInfo();
+	setInterval(function () {
+		bot.getTokens();
+	}, 10 * MINUTE);
+
 	let validatedRoutes = routes.map(routeCls => {
 		return new RouteValidator().validate(routeCls);
 	}).filter(route => {

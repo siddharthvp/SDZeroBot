@@ -13,7 +13,6 @@ export default class Gans extends Route {
 	async init() {
 		super.init();
 		this.log(`[S] Started`);
-		await bot.getSiteInfo();
 	}
 
 	filter(data) {
