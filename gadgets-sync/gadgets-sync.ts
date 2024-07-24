@@ -1,4 +1,5 @@
-import {argv, bot, log} from "../botbase";
+import {argv, bot, log} from "../botbase"
+import * as querystring from "querystring"
 
 const header = `
 /******************************************************************************/
@@ -11,7 +12,16 @@ const header = `
 
 const CONFIG_PAGE = 'User:SDZeroBot/Gadgets-sync-config.json'
 
-async function getConfig() {
+type Config = {
+    description: string
+    list: Array<{
+        source: string
+        page: string
+        talkPage: string
+    }>
+}
+
+async function getConfig(): Promise<Config> {
     if (argv.test) {
         return require('./test-config.json')
     }
@@ -69,14 +79,42 @@ async function getConfig() {
             const syncPageData = substitutedHeader + remote.data
             const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]] for comparison`)
 
-            const curRevId = (await new bot.Page(conf.page).history(['ids'], 1))[0].revid;
-            const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?page1=${encodeURIComponent(conf.page)}&rev1=${curRevId}&page2=${encodeURIComponent(syncPage)}&rev2=${saveResult.newrevid}`
+            const curRevId = (await new bot.Page(conf.page).history(['ids'], 1))[0].revid
+            const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?` + querystring.stringify({
+                page1: conf.page,
+                rev1: curRevId,
+                page2: syncPage,
+                rev2: saveResult.newrevid
+            })
 
             const date = new bot.Date().format('D MMMM YYYY')
             const isMatchingTalk = new bot.Page(conf.page).toText() === new bot.Title(conf.talkPage).getSubjectPage().toText()
-            await bot.newSection(conf.talkPage, `Sync request ${date}` + (isMatchingTalk ? '' : ` for ${conf.page}`),
-                `{{sudo|1=${conf.page}|answered=no}}\nPlease sync [[${conf.page}]] with [[${syncPage}]] ([${comparePagesLink} diff]). This brings it in sync with the upstream changes at [[${conf.source}]] ([[Special:PageHistory/${conf.source}|hist]]).\n\nThis edit request is raised automatically based on the configuration at [[${CONFIG_PAGE}]]. Thanks, ~~~~`)
+            const header = `Sync request ${date}` + (isMatchingTalk ? '' : ` for ${conf.page}`)
+
+            let histLink = `([[Special:PageHistory/${conf.source}|hist]])`
+            if (conf.source.startsWith('toolforge:')) {
+                histLink = ''
+            } else if (conf.source.startsWith('gitlab:')) {
+                histLink = conf.source.replace('/-/raw/', '/-/commits/')
+            }
+
+            const body = REQUEST_BODY
+                .replaceAll('LOCAL', conf.page)
+                .replaceAll('REMOTE', conf.source)
+                .replaceAll('SYNC_PAGE', syncPage)
+                .replaceAll('DIFF_LINK', comparePagesLink)
+                .replaceAll('HIST_LINK', histLink ? ' ' + histLink : '')
+                .replaceAll('CONFIG_PAGE', CONFIG_PAGE)
+                .trim()
+            await bot.newSection(conf.talkPage, header, body)
             log(`[S] Created edit request on [[${conf.talkPage}]]`)
         }
     }
 }())
+
+const REQUEST_BODY =  `
+{{sudo|1=LOCAL|answered=no}}
+Please sync [[LOCAL]] with [[SYNC_PAGE]] ([DIFF_LINK diff]). This brings it in sync with the upstream changes at [[REMOTE]]HIST_LINK.
+
+This edit request is raised automatically based on the configuration at [[CONFIG_PAGE]]. Thanks, ~~~~
+`;
