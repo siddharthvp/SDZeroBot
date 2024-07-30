@@ -1,5 +1,6 @@
 import {argv, bot, log} from "../botbase"
 import * as querystring from "querystring"
+import * as fs from "fs";
 
 const header = `
 /******************************************************************************/
@@ -64,9 +65,12 @@ async function getConfig(): Promise<Config> {
             } else throw e
         }
 
-        const substitutedHeader = header.replaceAll('$SOURCE', conf.source)
+        const substitutedHeader = header.replaceAll('$SOURCE',
+            conf.source.replace('/-/raw/', '/-/blob/'))
 
-        if (remote.data !== local.data.replace(substitutedHeader, '')) {
+        let localCode = local.data.replace(substitutedHeader, '')
+        let remoteCode = remote.data.trim()
+        if (remoteCode !== localCode) {
             const pg = await bot.read(talkTitle)
             if (!pg.missing && pg.revisions[0].content.includes(`{{sudo|1=${conf.page}|answered=no}}`)) {
                 log(`[+] Open edit request already exists on ${conf.talkPage}, skipping`)
@@ -76,7 +80,7 @@ async function getConfig(): Promise<Config> {
 
             // Copy the file locally so that a Special:ComparePages link can be generated
             const syncPage = `User:SDZeroBot/sync/${conf.page}`
-            const syncPageData = substitutedHeader + remote.data
+            const syncPageData = substitutedHeader + remoteCode
             const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]] for comparison`)
 
             const curRevId = (await new bot.Page(conf.page).history(['ids'], 1))[0].revid
@@ -95,18 +99,26 @@ async function getConfig(): Promise<Config> {
             if (conf.source.startsWith('toolforge:')) {
                 histLink = ''
             } else if (conf.source.startsWith('gitlab:')) {
-                histLink = conf.source.replace('/-/raw/', '/-/commits/')
+                histLink = `([[${conf.source.replace('/-/raw/', '/-/commits/')}|hist]])`
             }
+
+            let remotePage = conf.source
+                // for gitlab, transform URL to point to the pretty view
+                .replace('/-/raw/', '/-/blob/')
 
             const body = REQUEST_BODY
                 .replaceAll('LOCAL', conf.page)
-                .replaceAll('REMOTE', conf.source)
+                .replaceAll('REMOTE', remotePage)
                 .replaceAll('SYNC_PAGE', syncPage)
                 .replaceAll('DIFF_LINK', comparePagesLink)
                 .replaceAll('HIST_LINK', histLink ? ' ' + histLink : '')
                 .replaceAll('CONFIG_PAGE', CONFIG_PAGE)
                 .trim()
-            await bot.newSection(conf.talkPage, header, body)
+            if (argv.test) {
+                fs.appendFileSync('test-requests.txt', `=${conf.talkPage}=\n==${header}==\n${body}\n\n`)
+            } else {
+                await bot.newSection(conf.talkPage, header, body)
+            }
             log(`[S] Created edit request on [[${conf.talkPage}]]`)
         }
     }
