@@ -3,7 +3,7 @@ import {metadataStore, fetchQueriesForPage, processQueriesForPage} from "./app";
 
 /**
  * Entry point invoked in a child Node.js process for queries
- * with custom JS preprocessing enabled.
+ * with custom JS postprocessing enabled.
  */
 (async function () {
 

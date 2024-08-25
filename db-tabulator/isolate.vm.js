@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-/* global __mwApiGet, __rawReq, __dbQueryResult, preprocess */
+/* global __mwApiGet, __rawReq, __dbQueryResult, postprocess */
 (async function() {
 	const bot = {
 		async request(url) {
@@ -16,5 +16,5 @@
 
 	"${JS_CODE}";
 
-	return JSON.stringify(await preprocess(JSON.parse(__dbQueryResult)));
+	return JSON.stringify(await postprocess(JSON.parse(__dbQueryResult)));
 })

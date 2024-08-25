@@ -52,14 +52,14 @@
 		// From Query class:
 		'query-executing': data => `Query (<code>${shorten(data.args[0], 80)}</code>) submitted to database.`,
 		'query-executed': data => `Query finished running in ${data.args[0]} seconds.`,
-		'preprocessing': _ => `Started JS preprocessing on query result.`,
+		'postprocessing': _ => `Started JS postprocessing on query result.`,
     'js-logging': data => `Logging output: <pre>${safeStringify(data.args[0])}</pre>`,
-		'js-no-array': _ => error(`JS preprocess() must return an array. `) + 'Saving result without preprocessing.',
-		'js-invalid-return': _ => error(`JS preprocess() returned a value which is not transferable. `) +
-				'Saving result without preprocessing.',
-		'js-failed': data => error(`JS preprocessing failed. `) + `Error: ${data.args[0]}. Saving result without preprocessing.`,
+		'js-no-array': _ => error(`JS postprocess() must return an array. `) + 'Saving result without postprocessing.',
+		'js-invalid-return': _ => error(`JS postprocess() returned a value which is not transferable. `) +
+				'Saving result without postprocessing.',
+		'js-failed': data => error(`JS postprocessing failed. `) + `Error: ${data.args[0]}. Saving result without postprocessing.`,
 		'process-timed-out': _ => error(`Child process timed out`),
-		'preprocessing-complete': data => `Finished JS preprocessing on query result in ${data.args[0]} seconds.`,
+		'postprocessing-complete': data => `Finished JS postprocessing on query result in ${data.args[0]} seconds.`,
 		'catastrophic-error': _ => error(`Your custom JS code was force-terminated due to excessive memory or time usage.`),
 		'saving': data => `Saving ${link(data.args[0])}.`,
 		'end-not-found': _ => `[WARNING]: No {` + `{database report end}} template was found. Overwriting rest of the page.`,

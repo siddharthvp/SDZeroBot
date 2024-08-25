@@ -6,7 +6,7 @@ import {NS_CATEGORY, NS_FILE, NS_MAIN} from "../namespaces";
 import {formatSummary} from "../reports/commons";
 import {MetadataStore} from "./MetadataStore";
 import {HybridMetadataStore} from "./HybridMetadataStore";
-import {applyJsPreprocessing, processQueriesExternally} from "./preprocess";
+import {applyJsPostProcessing, processQueriesExternally} from "./postprocess";
 import {EventEmitter} from "events";
 
 export const BOT_NAME = 'SDZeroBot';
@@ -43,7 +43,7 @@ export function getQueriesFromText(text: string, title: string): Query[] {
 		return [];
 	}
 	return templates.map((template, idx) =>
-		new Query(template, title, idx + 1, !!template.getValue('preprocess_js')?.trim()));
+		new Query(template, title, idx + 1, !!template.getValue('postprocess_js')?.trim()));
 }
 
 export async function processQueries(allQueries: Record<string, Query[]>, notifier?: EventEmitter) {
@@ -134,7 +134,7 @@ export class Query extends EventEmitter {
 	/** Internal tracking: for edit summary */
 	endNotFound = false;
 
-	/** Internal tracking: for queries with JS preprocessing enabled */
+	/** Internal tracking: for queries with JS postprocessing enabled */
 	needsExternalRun = false;
 	needsForceKill = false;
 
@@ -397,12 +397,12 @@ export class Query extends EventEmitter {
 				return String(value);
 			});
 		}
-		if (this.getTemplateValue('preprocess_js')) {
-			const jsCode = stripOuterNowikis(this.getTemplateValue('preprocess_js'));
+		if (this.getTemplateValue('postprocess_js')) {
+			const jsCode = stripOuterNowikis(this.getTemplateValue('postprocess_js'));
 			try {
-				result = await applyJsPreprocessing(result, jsCode, this);
+				result = await applyJsPostProcessing(result, jsCode, this);
 			} catch (e) {
-				log(`[E] Error in applyJsPreprocessing`);
+				log(`[E] Error in applyJsPostProcessing`);
 				log(e);
 			}
 		}

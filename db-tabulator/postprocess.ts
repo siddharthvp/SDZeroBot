@@ -75,7 +75,7 @@ const apiClient = new Mwn({
 });
 apiClient.setRequestOptions({ timeout: 10000 });
 
-const preprocessCodeTemplate = fs.readFileSync(__dirname + '/isolate.vm.js')
+const postprocessCodeTemplate = fs.readFileSync(__dirname + '/isolate.vm.js')
     .toString()
     .replace(/^\/\*.*?\*\/$/m, ''); // remove linter comments /* ... */
 
@@ -130,9 +130,9 @@ async function makeSandboxedHttpRequest(url: string) {
     }
 }
 
-export async function applyJsPreprocessing(rows: Record<string, string>[], jsCode: string, query: Query): Promise<Record<string, any>[]> {
-    log(`[+] Applying JS preprocessing for ${query}`);
-    query.emit('preprocessing');
+export async function applyJsPostProcessing(rows: Record<string, string>[], jsCode: string, query: Query): Promise<Record<string, any>[]> {
+    log(`[+] Applying JS postprocessing for ${query}`);
+    query.emit('postprocessing');
     let startTime = process.hrtime.bigint();
 
     // Import dynamically as this has native dependencies
@@ -172,10 +172,10 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
 
     let result = rows;
 
-    let doPreprocessing = async () => {
+    let doPostProcessing = async () => {
         try {
-            // jsCode is expected to declare function preprocess(rows) {...}
-            let fullCode = preprocessCodeTemplate.replace('"${JS_CODE}"', jsCode);
+            // jsCode is expected to declare function postprocess(rows) {...}
+            let fullCode = postprocessCodeTemplate.replace('"${JS_CODE}"', jsCode);
             let wrapped = await context.eval(fullCode, {
                 reference: true,
                 timeout: softTimeout
@@ -190,29 +190,29 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
                     if (Array.isArray(userCodeResultParsed)) {
                         result = userCodeResultParsed;
                     } else {
-                        log(`[E] JS preprocessing for ${query} returned a non-array: ${userCodeResult.slice(0, 100)} ... Ignoring.`);
-                        query.warnings.push(`JS preprocessing didn't return an array of rows, will be ignored`);
+                        log(`[E] JS postprocessing for ${query} returned a non-array: ${userCodeResult.slice(0, 100)} ... Ignoring.`);
+                        query.warnings.push(`JS postprocessing didn't return an array of rows, will be ignored`);
                         query.emit('js-no-array');
                     }
                 } else {
-                    log(`[E] JS preprocessing for ${query} has an invalid return value: ${userCodeResult}. Ignoring.`);
-                    query.warnings.push(`JS preprocessing must have a transferable return value`);
+                    log(`[E] JS postprocessing for ${query} has an invalid return value: ${userCodeResult}. Ignoring.`);
+                    query.warnings.push(`JS postprocessing must have a transferable return value`);
                     query.emit('js-invalid-return');
                 }
             } catch (e) { // Shouldn't occur as we are the ones doing the JSON.stringify
-                log(`[E] JS preprocessing for ${query} returned a non-JSON: ${userCodeResult.slice(0, 100)}. Ignoring.`);
+                log(`[E] JS postprocessing for ${query} returned a non-JSON: ${userCodeResult.slice(0, 100)}. Ignoring.`);
             }
         } catch (e) {
-            log(`[E] JS preprocessing for ${query} failed: ${e.toString()}`);
+            log(`[E] JS postprocessing for ${query} failed: ${e.toString()}`);
             log(e);
-            query.warnings.push(`JS preprocessing failed: ${e.toString()}`);
+            query.warnings.push(`JS postprocessing failed: ${e.toString()}`);
             query.emit('js-failed', e.toString());
         }
     }
 
     await timedPromise(
         hardTimeout,
-        doPreprocessing(),
+        doPostProcessing(),
         () => {
             // In case isolated-vm timeout doesn't work
             log(`[E] Past ${hardTimeout/1000} second timeout, force-disposing isolate`);
@@ -222,8 +222,8 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
 
     let endTime = process.hrtime.bigint();
     let timeTaken = (Number(endTime - startTime) / 1e9).toFixed(3);
-    log(`[+] JS preprocessing for ${query} took ${timeTaken} seconds, cpuTime: ${isolate.cpuTime}, wallTime: ${isolate.wallTime}.`);
-    query.emit('preprocessing-complete', timeTaken);
+    log(`[+] JS postprocessing for ${query} took ${timeTaken} seconds, cpuTime: ${isolate.cpuTime}, wallTime: ${isolate.wallTime}.`);
+    query.emit('postprocessing-complete', timeTaken);
 
     return result;
 }
