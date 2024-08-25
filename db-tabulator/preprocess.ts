@@ -2,6 +2,8 @@ import {argv, AuthManager, fs, log, Mwn} from "../botbase";
 import {fork} from "child_process";
 import EventEmitter from "events";
 import type {Query} from "./app";
+import {RawRequestParams} from "../../mwn/build/core";
+import {AxiosRequestHeaders} from "axios";
 
 const softTimeout = 1500;
 const hardTimeout = 2000;
@@ -77,6 +79,57 @@ const preprocessCodeTemplate = fs.readFileSync(__dirname + '/isolate.vm.js')
     .toString()
     .replace(/^\/\*.*?\*\/$/m, ''); // remove linter comments /* ... */
 
+class SandboxedRequest {
+    headers: AxiosRequestHeaders = {
+        // Bot grant enables apihighlimit (for Action API), and helps avoid throttling for some REST APIs.
+        // It has no write access.
+        'Authorization': `Bearer ${AuthManager.get('sdzerobot-dbreports').OAuth2AccessToken}`
+    }
+    getConfig(url: string): RawRequestParams {
+        return {
+            method: 'GET',
+            url: url,
+            timeout: 10000,
+            headers: this.headers
+        }
+    }
+}
+
+class SandboxedWikidataQueryServiceRequest extends SandboxedRequest {
+    headers: AxiosRequestHeaders = {
+        'X-BIGDATA-TIMEOUT': 600,
+        'Accept': 'application/sparql-results+json'
+    };
+}
+
+const supportedDomains = [
+    { prefix: 'https://en.wikipedia.org/api/rest_v1/', req: new SandboxedRequest() },
+    { prefix: 'https://wikimedia.org/api/rest_v1/', req: new SandboxedRequest() },
+    { prefix: 'https://en.wikipedia.org/w/rest.php/', req: new SandboxedRequest() },
+    { prefix: 'https://en.wikipedia.org/w/api.php?', req: new SandboxedRequest() },
+    { prefix: 'https://api.wikimedia.org/', req: new SandboxedRequest() },
+    { prefix: 'https://query.wikidata.org/', req: new SandboxedWikidataQueryServiceRequest() },
+]
+
+async function makeSandboxedHttpRequest(url: string) {
+    let domain = supportedDomains.find(domain => url.startsWith(domain.prefix));
+    if (!domain) {
+        return JSON.stringify({ error: `Disallowed domain. Allowed domains are: ${supportedDomains.map(e => e.prefix).join(', ')}` });
+    }
+
+    try {
+        const response = await apiClient.rawRequest(domain.req.getConfig(url));
+        try {
+            return JSON.stringify(response.data);
+        } catch (e) {
+            return JSON.stringify({ error: `Non JSON response from ${url}: ${response.data}` });
+        }
+    } catch (err) {
+        let errMsg = err.statusCode ? (err.statusCode + ': ' + err.statusMessage) : err.message;
+        return JSON.stringify({ error: errMsg });
+    }
+}
+
 export async function applyJsPreprocessing(rows: Record<string, string>[], jsCode: string, query: Query): Promise<Record<string, any>[]> {
     log(`[+] Applying JS preprocessing for ${query}`);
     query.emit('preprocessing');
@@ -115,40 +168,7 @@ export async function applyJsPreprocessing(rows: Record<string, string>[], jsCod
         }
     }));
 
-    await jail.set('__rawReq', new Reference(async function (url: string) {
-        const allowedDomains = [
-            'https://en.wikipedia.org/api/rest_v1/', // Wikimedia REST API
-            'https://wikimedia.org/api/rest_v1/', // Wikimedia REST API
-            'https://en.wikipedia.org/w/rest.php/', // MediaWiki REST API
-            'https://en.wikipedia.org/w/api.php?', // Action API
-            'https://api.wikimedia.org/', // Wikimedia API gateway
-        ];
-
-        if (!allowedDomains.find(domain => url.startsWith(domain))) {
-            return JSON.stringify({ error: `Disallowed domain. Allowed domains are: ${allowedDomains.join(', ')}` });
-        }
-
-        try {
-            const response = await apiClient.rawRequest({
-                method: 'GET',
-                url: url,
-                timeout: 10000,
-                headers: {
-                    // Bot grant enables apihighlimit (for Action API), and helps avoid throttling for some REST APIs.
-                    // It has no write access.
-                    'Authorization': `Bearer ${AuthManager.get('sdzerobot-dbreports').OAuth2AccessToken}`
-                }
-            });
-            try {
-                return JSON.stringify(response.data);
-            } catch (e) {
-                return JSON.stringify({ error: `Non JSON response from ${url}: ${response.data}` });
-            }
-        } catch (err) {
-            let errMsg = err.statusCode ? (err.statusCode + ': ' + err.statusMessage) : err.message;
-            return JSON.stringify({ error: errMsg });
-        }
-    }));
+    await jail.set('__rawReq', new Reference(makeSandboxedHttpRequest));
 
     let result = rows;
 
