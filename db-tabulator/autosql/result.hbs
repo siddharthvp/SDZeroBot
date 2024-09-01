@@ -1,0 +1,17 @@
+<div style="max-width: 800px">
+  <p>The generated SQL query is given below. Mistakes are possible. Use with caution.</p>
+  <br>
+
+  <pre>{{sql}}</pre>
+
+  <a href="https://quarry.wmcloud.org/" target="_blank">
+    <button>
+      Test it in Quarry
+    </button>
+  </a>
+
+  {{#if warnOnField}}
+    <br>
+    <p>NOTE: The above SQL may need adjustments for schema normalization, as the AI does not know that <code>{{warnOnField}}</code> field is no longer available. The field needs to be replaced with use of <code>link_target</code> table. See <a href="https://phabricator.wikimedia.org/T300222">phab:T300222</a>.</p>
+  {{/if}}
+</div>
