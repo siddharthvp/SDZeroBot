@@ -30,7 +30,7 @@ router.post('/generate', async function (req, res, next) {
     })
     const sql = response.choices[0].message.content
     const logEntry = {
-        prompt: req.query.prompt,
+        prompt: req.body.prompt,
         response: sql.replace(/\s+/g, ' ')
     }
     log(`[S] AutoSQL result ${JSON.stringify(logEntry, null, 2)}`);
