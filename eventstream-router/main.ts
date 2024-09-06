@@ -11,7 +11,8 @@ import BotActivityMonitor from "../bot-monitor/eventstream-trigger";
 import DbTabulatorMetadata from "../db-tabulator/eventstream-metadata-maintainer";
 import ShutoffsMonitor from "./routes/shutoffs-monitor";
 import DykCounts from "../dyk-counts/eventstream-trigger";
-import Purger from "./routes/purger"
+import Purger from "./routes/purger";
+import GadgetsSync from "../gadgets-sync/eventstream-trigger";
 
 const routeClasses = [
     Gans,
@@ -20,6 +21,7 @@ const routeClasses = [
     DbTabulatorMetadata,
     ShutoffsMonitor,
     Purger,
+    GadgetsSync,
 ];
 
 // debugging a single route example: -r "./test"
