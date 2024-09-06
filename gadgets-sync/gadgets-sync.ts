@@ -41,35 +41,37 @@ async function getConfig(): Promise<Config> {
             continue
         }
 
-        let remote, local
+        const substitutedHeader = header.replaceAll('$SOURCE',
+            conf.source.replace('/-/raw/', '/-/blob/'))
+
+        let localCode, remoteCode
         try {
-            remote = await bot.rawRequest({
+            let remote = await bot.rawRequest({
                 url: `https://en.wikipedia.org/w/index.php?title=${conf.source}&action=raw`,
                 timeout: 5000
             })
+            remoteCode = remote.data.trim()
+            // .trim() required for non-wiki remotes
         } catch (e) {
             if (e.response?.status === 404) {
                 log(`[E] ${conf.source} does not exist. Skipping.`)
                 continue
             } else throw e
         }
+
         try {
-            local = await bot.rawRequest({
+            let local = await bot.rawRequest({
                 url: `https://en.wikipedia.org/w/index.php?title=${conf.page}&action=raw`,
                 timeout: 5000
             })
+            localCode = local.data.replace(substitutedHeader, '')
         }  catch (e) {
             if (e.response?.status === 404) {
-                log(`[E] ${conf.page} does not exist. Skipping.`)
-                continue
+                log(`[W] ${conf.page} does not exist. Treating as blank.`)
+                localCode = ''
             } else throw e
         }
 
-        const substitutedHeader = header.replaceAll('$SOURCE',
-            conf.source.replace('/-/raw/', '/-/blob/'))
-
-        let localCode = local.data.replace(substitutedHeader, '')
-        let remoteCode = remote.data.trim()
         if (remoteCode !== localCode) {
             const pg = await bot.read(talkTitle)
             if (!pg.missing && pg.revisions[0].content.includes(`{{sudo|1=${conf.page}|answered=no}}`)) {
@@ -83,10 +85,9 @@ async function getConfig(): Promise<Config> {
             const syncPageData = substitutedHeader + remoteCode
             const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]] for comparison`)
 
-            const curRevId = (await new bot.Page(conf.page).history(['ids'], 1))[0].revid
             const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?` + querystring.stringify({
                 page1: conf.page,
-                rev1: curRevId,
+                rev1: localCode === '' ? '' : (await new bot.Page(conf.page).history(['ids'], 1))[0].revid,
                 page2: syncPage,
                 rev2: saveResult.newrevid
             })
