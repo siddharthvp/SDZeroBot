@@ -1,11 +1,11 @@
 import {argv, bot, log} from "../botbase"
 import * as querystring from "querystring"
-import * as fs from "fs";
+import * as fs from "fs"
 
 const header = `
 /******************************************************************************/
-/**** THIS PAGE TRACKS [[$SOURCE]]. PLEASE AVOID EDITING DIRECTLY. 
-/**** EDITS SHOULD BE PROPOSED DIRECTLY to [[$SOURCE]].
+/**** THIS PAGE TRACKS $SOURCE. PLEASE AVOID EDITING DIRECTLY. 
+/**** EDITS SHOULD BE PROPOSED DIRECTLY to $SOURCE.
 /**** A BOT WILL RAISE AN EDIT REQUEST IF IT BECOMES DIFFERENT FROM UPSTREAM.
 /******************************************************************************/
 
@@ -30,6 +30,40 @@ async function getConfig(): Promise<Config> {
     return JSON.parse(content)
 }
 
+function parseGithubLink(link: string) {
+    const [_, parts] =  link.split(':')
+    const [org, repo, branch, path] = parts.split('/', 4)
+    return [org, repo, branch, path]
+}
+
+function getRawLink(link: string) {
+    if (link.startsWith('github:')) {
+        const [org, repo, branch, path] = parseGithubLink(link)
+        return `https://raw.githubusercontent.com/${org}/${repo}/${branch}/${path}`
+    }
+    return `https://en.wikipedia.org/w/index.php?title=${link}&action=raw`
+}
+function getHumanLink(link: string) {
+    if (link.startsWith('github:')) {
+        const [org, repo, branch, path] = parseGithubLink(link)
+        return `https://github.com/${org}/${repo}/blob/${branch}/${path}`
+    }
+    return '[[' + link.replace('/-/raw/', '/-/blob/') + ']]'
+}
+function getHistoryLink(link: string) {
+    if (link.startsWith('github:')) {
+        const [org, repo, branch, path] = parseGithubLink(link)
+        return `https://github.com/${org}/${repo}/commits/${branch}/${path}`
+    } else if (link.startsWith('gitlab:')) {
+        const path = link.replace(/^gitlab:/, '').replace('/-/raw', '/-/commits')
+        return `https://gitlab.wikimedia.org/${path}`
+    } else if (link.startsWith('toolforge:')) {
+        return ''
+    } else {
+        return `https://en.wikipedia.org/w/index.php?title=${link}&action=history`
+    }
+}
+
 (async function () {
     await bot.getTokensAndSiteInfo()
     const allConfigs = await getConfig()
@@ -41,13 +75,12 @@ async function getConfig(): Promise<Config> {
             continue
         }
 
-        const substitutedHeader = header.replaceAll('$SOURCE',
-            conf.source.replace('/-/raw/', '/-/blob/'))
+        const substitutedHeader = header.replaceAll('$SOURCE', getHumanLink(conf.source))
 
         let localCode, remoteCode
         try {
             let remote = await bot.rawRequest({
-                url: `https://en.wikipedia.org/w/index.php?title=${conf.source}&action=raw`,
+                url: getRawLink(conf.source),
                 timeout: 5000
             })
             remoteCode = remote.data.trim()
@@ -61,7 +94,7 @@ async function getConfig(): Promise<Config> {
 
         try {
             let local = await bot.rawRequest({
-                url: `https://en.wikipedia.org/w/index.php?title=${conf.page}&action=raw`,
+                url: getRawLink(conf.page),
                 timeout: 5000
             })
             localCode = local.data.replace(substitutedHeader, '')
@@ -96,23 +129,12 @@ async function getConfig(): Promise<Config> {
             const isMatchingTalk = new bot.Page(conf.page).toText() === new bot.Title(conf.talkPage).getSubjectPage().toText()
             const header = `Sync request ${date}` + (isMatchingTalk ? '' : ` for ${conf.page}`)
 
-            let histLink = `([[Special:PageHistory/${conf.source}|hist]])`
-            if (conf.source.startsWith('toolforge:')) {
-                histLink = ''
-            } else if (conf.source.startsWith('gitlab:')) {
-                histLink = `([[${conf.source.replace('/-/raw/', '/-/commits/')}|hist]])`
-            }
-
-            let remotePage = conf.source
-                // for gitlab, transform URL to point to the pretty view
-                .replace('/-/raw/', '/-/blob/')
-
+            let histLink = getHistoryLink(conf.source)
             const body = REQUEST_BODY
                 .replaceAll('LOCAL', conf.page)
-                .replaceAll('REMOTE', remotePage)
+                .replaceAll('REMOTE', getHumanLink(conf.source) + (histLink ? ` ([${histLink} hist])` : ''))
                 .replaceAll('SYNC_PAGE', syncPage)
                 .replaceAll('DIFF_LINK', comparePagesLink)
-                .replaceAll('HIST_LINK', histLink ? ' ' + histLink : '')
                 .replaceAll('CONFIG_PAGE', CONFIG_PAGE)
                 .trim()
             if (argv.test) {
@@ -127,7 +149,7 @@ async function getConfig(): Promise<Config> {
 
 const REQUEST_BODY =  `
 {{sudo|1=LOCAL|answered=no}}
-Please sync [[LOCAL]] with [[SYNC_PAGE]] ([DIFF_LINK diff]). This brings it in sync with the upstream changes at [[REMOTE]]HIST_LINK.
+Please sync [[LOCAL]] with [[SYNC_PAGE]] ([DIFF_LINK diff]). This brings it in sync with the upstream changes at REMOTE.
 
 This edit request is raised automatically based on the configuration at [[CONFIG_PAGE]]. Thanks, ~~~~
 `;
