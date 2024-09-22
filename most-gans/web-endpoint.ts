@@ -15,7 +15,7 @@ const db = new toolsdb('goodarticles_p', {
 router.get('/', async function (req, res) {
 	if (!req.query.user) {
 		// Landing page
-		res.render('most-gans/gans-landing');
+		res.render('most-gans/gans-landing', { title: 'Good articles by user' });
 		return;
 	}
 	const {user} = req.query;
@@ -28,7 +28,8 @@ router.get('/', async function (req, res) {
 
 	res.render('most-gans/gans', {
 		user,
-		dbresult: dbresult.map(row => ({ article: row.article, date: new bot.date(row.date).format('YYYY-MM-DD') }))
+		dbresult: dbresult.map(row => ({ article: row.article, date: new bot.date(row.date).format('YYYY-MM-DD') })),
+		title: 'Good articles by ' + user,
 	});
 });
 
