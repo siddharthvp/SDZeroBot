@@ -35,8 +35,8 @@ export default class TextExtractor {
 		extract = this.removeTemplatesOnNewlines(extract);
 
 		// Remove some other templates too
-		// Matches r, efn, refn, sfn, sfnp, harv, harvp, audio, and IPA.* family
-		extract = this.removeTemplates(extract, /^(r|sfn[bp]?|harvp?|r?efn|respell|IPA.*|audio)$/i);
+		// Matches r, efn, refn, sfn, sfnm, sfnp, harv, harvp, audio, and IPA.* family
+		extract = this.removeTemplates(extract, /^(r|sfn[bmp]?|harvp?|r?efn|respell|IPA.*|audio)$/i);
 
 		extract = extract
 			.replace(/<!--.*?-->/sg, '')
