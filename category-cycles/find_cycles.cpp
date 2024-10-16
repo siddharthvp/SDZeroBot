@@ -9,6 +9,10 @@
 #include<unordered_set>
 using namespace std;
 
+// Speed up I/O
+ios_base::sync_with_stdio(false);
+cin.tie(0);
+
 // globals: for the graph and DFS
 unordered_map< int, unordered_set<int> > graph;
 unordered_set<int> visited, onStack;
@@ -43,15 +47,9 @@ void dfs(int v) {
 
 int main() {
 
-    // Read inputs:
-
-    // first read in and ignore the two strings ("subcat", "parentcat")
-    // at the top of the file
-    string x; cin >> x; cin >> x;
-
     unordered_multimap<int,int> cl;
     int parent, sub;
-    while(1) {
+    while (1) {
         cin >> sub;
         if (sub == -1) { // end of input
             break;
