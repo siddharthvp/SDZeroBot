@@ -12,6 +12,14 @@ const PAGE_LEAD = `{{User:SDZeroBot/Category cycles/header}}\n`;
 
 process.chdir(__dirname);
 
+// Allow running for other wikis as well
+if (process.env.apiUrl) {
+	bot.setOptions({
+		apiUrl: process.env.API_URL,
+		OAuth2AccessToken: process.env.OAUTH2_ACCESS_TOKEN
+	});
+}
+
 // sort cycles by length as we're more interested in the smaller cycles
 let cycles = require('./cycles.json').sort((a, b) => a.length - b.length);
 

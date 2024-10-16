@@ -2,7 +2,12 @@
 
 Used to generate [User:SDZeroBot/Category_cycles](https://en.wikipedia.org/wiki/User:SDZeroBot/Category_cycles). 
 
-Run using `bash run.sh`.
+Run using `bash run.sh`. 
+
+To run for a wiki other than enwiki, pass in the environment variables:
+* DB
+* API_URL
+* OAUTH2_ACCESS_TOKEN
 
 Files:
 - get_edges.sql: Get a list of all parentcat—subcat connections through the database, with only the category page IDs for efficiency in the next step.
