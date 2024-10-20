@@ -46,7 +46,6 @@ int main() {
 	ios_base::sync_with_stdio(0);
 	cin.tie(0);
 
-    unordered_multimap<int,int> cl;
     int parent, sub;
     while (1) {
         cin >> sub;
@@ -54,15 +53,11 @@ int main() {
             break;
         }
         cin >> parent;
-        cl.insert({ parent, sub });
-    }
-    // cout << "Finished reading inputs...\n";
 
-    // Convert list of edges representation to adjacency list representation
-    for (auto p: cl) {
-        graph[p.first].insert(p.second);
+        // Build adjacency list representation
+        graph[parent].insert(sub);
     }
-    // cout << "Finished converting list of edges to adjacency list...\n";
+    // cout << "Finished generating subcategory graph...\n";
 
     cout << "[";
 
