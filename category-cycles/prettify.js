@@ -8,15 +8,19 @@ const {bot, log} = require('../botbase');
 
 const PAGE_SIZE_MAX_LIMIT = 60000;
 const MAX_PAGES = 100;
-const PAGE_LEAD = `{{User:SDZeroBot/Category cycles/header}}\n`;
+const ROOT_PAGE = process.env.ROOT_PAGE || 'User:SDZeroBot/Category cycles';
+const PAGE_LEAD = `{{${ROOT_PAGE}/header}}\n`;
 
 process.chdir(__dirname);
 
 // Allow running for other wikis as well
-if (process.env.apiUrl) {
+if (process.env.API_URL) {
 	bot.setOptions({
 		apiUrl: process.env.API_URL,
-		OAuth2AccessToken: process.env.OAUTH2_ACCESS_TOKEN
+		OAuth2AccessToken: process.env.OAUTH2_ACCESS_TOKEN,
+		defaultParams: {
+			assert: 'user'
+		}
 	});
 }
 
@@ -36,33 +40,35 @@ let cycles = require('./cycles.json').sort((a, b) => a.length - b.length);
 		}
 	}
 
-	log(`[+] Detected ${cycles.length} category cycles involving a total of ${Object.keys(map).length}`);
+	log(`[+] Detected ${cycles.length} category cycles involving a total of ${Object.keys(map).length} pages`);
 
-	// Resolve titles from page IDs, 500 at a time
+	// Resolve titles from page IDs, 50/500 at a time
+	const batchSize = bot.hasApiHighLimit ? 500 : 50;
+	const numBatches = Math.ceil(Object.keys(map).length / batchSize);
+	let batchId = 1;
 	for await (let json of bot.massQueryGen({
 		action: 'query',
 		pageids: Object.keys(map)
 	}, 'pageids')) {
-
+		log(`[+] Matching ids to titles... [${batchId++}/${numBatches}]`);
 		for (let pg of json.query.pages) {
 			map[pg.pageid] = pg.title.slice('Category:'.length);
 		}
-
 	}
 
-	const wiki_page_name = num => `User:SDZeroBot/Category cycles/${num}`
+	const wiki_page_name = num => `${ROOT_PAGE}/${num}`
 
-	let page_number = 1;
+	let pageNumber = 1;
 	let page = PAGE_LEAD;
 
 	for (let cycle of cycles) {
 		page += '*' + cycle.map(e => `[[:Category:${map[e]}|${map[e]}]]`).join(' → ') + '\n';
 		if (page.length > PAGE_SIZE_MAX_LIMIT) {
-			await bot.save(wiki_page_name(page_number), page, 'Updating category cycles')
-				.then(() => log(`[+] Saved ${wiki_page_name(page_number)}`));
-			page_number++;
+			await bot.save(wiki_page_name(pageNumber), page, 'Updating category cycles');
+			log(`[+] Saved ${wiki_page_name(pageNumber)}`);
+			pageNumber++;
 			page = PAGE_LEAD;
-			if (page_number > MAX_PAGES) {
+			if (pageNumber > MAX_PAGES) {
 				break;
 			}
 		}

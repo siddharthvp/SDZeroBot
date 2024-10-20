@@ -8,6 +8,7 @@ To run for a wiki other than enwiki, pass in the environment variables:
 * DB
 * API_URL
 * OAUTH2_ACCESS_TOKEN
+* ROOT_PAGE
 
 Files:
 - get_edges.sql: Get a list of all parentcat—subcat connections through the database, with only the category page IDs for efficiency in the next step.

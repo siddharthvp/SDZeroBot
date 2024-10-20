@@ -2,7 +2,7 @@
 
 cd "./SDZeroBot/category-cycles"
 
-cat get_edges.sql | sql "${DB:-enwiki}" --skip-column-names > edges.out
+cat get_edges.sql | sql --skip-column-names "${DB:-enwiki}" > edges.out
 echo "Got edges\n"
 
 # add a -1 at the end for the cpp program to detect end of input

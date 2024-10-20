@@ -9,10 +9,6 @@
 #include<unordered_set>
 using namespace std;
 
-// Speed up I/O
-ios_base::sync_with_stdio(false);
-cin.tie(0);
-
 // globals: for the graph and DFS
 unordered_map< int, unordered_set<int> > graph;
 unordered_set<int> visited, onStack;
@@ -46,6 +42,9 @@ void dfs(int v) {
 }
 
 int main() {
+	// Speed up I/O
+	ios_base::sync_with_stdio(0);
+	cin.tie(0);
 
     unordered_multimap<int,int> cl;
     int parent, sub;
