@@ -9,7 +9,7 @@ const {bot, log} = require('../botbase');
 const PAGE_SIZE_MAX_LIMIT = 60000;
 const MAX_PAGES = 100;
 const ROOT_PAGE = process.env.ROOT_PAGE || 'User:SDZeroBot/Category cycles';
-const PAGE_LEAD = `{{${ROOT_PAGE}/header}}\n`;
+const PAGE_LEAD = '{{' + ROOT_PAGE + '/header}}\n';
 
 process.chdir(__dirname);
 
@@ -56,16 +56,15 @@ let cycles = require('./cycles.json').sort((a, b) => a.length - b.length);
 		}
 	}
 
-	const wiki_page_name = num => `${ROOT_PAGE}/${num}`
-
 	let pageNumber = 1;
 	let page = PAGE_LEAD;
 
 	for (let cycle of cycles) {
 		page += '*' + cycle.map(e => `[[:Category:${map[e]}|${map[e]}]]`).join(' → ') + '\n';
 		if (page.length > PAGE_SIZE_MAX_LIMIT) {
-			await bot.save(wiki_page_name(pageNumber), page, 'Updating category cycles');
-			log(`[+] Saved ${wiki_page_name(pageNumber)}`);
+			const pageName = ROOT_PAGE + '/' + pageNumber;
+			await bot.save(pageName, page, 'Updating category cycles');
+			log(`[+] Saved ${pageName}`);
 			pageNumber++;
 			page = PAGE_LEAD;
 			if (pageNumber > MAX_PAGES) {

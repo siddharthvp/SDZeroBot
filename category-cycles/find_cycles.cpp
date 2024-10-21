@@ -17,28 +17,28 @@ unordered_map<int,int> edgeTo;
 bool first = true;
 
 void dfs(int v) {
-    visited.insert(v);
-    onStack.insert(v);
-    for (int i : graph[v]) {
-        if (visited.find(i) == visited.end()) { // unvisited
-            edgeTo[i] = v;
-            dfs(i);
-        } else if (onStack.find(i) != onStack.end()) {
-            if (first) {
-                cout << "[";
-                first = false;
-            } else {
-                cout << ",[";
-            }
-            int x = v;
-            while (x != i) {
-                cout << x << ",";
-                x = edgeTo[x];
-            }
-            cout << i << "]";
-        }
-    }
-    onStack.erase(onStack.find(v));
+	visited.insert(v);
+	onStack.insert(v);
+	for (int i : graph[v]) {
+		if (visited.find(i) == visited.end()) { // unvisited
+			edgeTo[i] = v;
+			dfs(i);
+		} else if (onStack.find(i) != onStack.end()) {
+			if (first) {
+				cout << "[";
+				first = false;
+			} else {
+				cout << ",[";
+			}
+			int x = v;
+			while (x != i) {
+				cout << x << ",";
+				x = edgeTo[x];
+			}
+			cout << i << "]";
+		}
+	}
+	onStack.erase(onStack.find(v));
 }
 
 int main() {
@@ -46,27 +46,27 @@ int main() {
 	ios_base::sync_with_stdio(0);
 	cin.tie(0);
 
-    int parent, sub;
-    while (1) {
-        cin >> sub;
-        if (sub == -1) { // end of input
-            break;
-        }
-        cin >> parent;
+	int parent, sub;
+	while (1) {
+		cin >> sub;
+		if (sub == -1) { // end of input
+			break;
+		}
+		cin >> parent;
 
-        // Build adjacency list representation
-        graph[parent].insert(sub);
-    }
-    // cout << "Finished generating subcategory graph...\n";
+		// Build adjacency list representation
+		graph[parent].insert(sub);
+	}
+	// cout << "Finished generating subcategory graph...\n";
 
-    cout << "[";
+	cout << "[";
 
-    // Begin DFS
-    for (auto p: graph) {
-        if (visited.find(p.first) == visited.end()) {
-            dfs(p.first);
-        }
-    }
+	// Begin DFS
+	for (auto p: graph) {
+		if (visited.find(p.first) == visited.end()) {
+			dfs(p.first);
+		}
+	}
 
-    cout << "]";
+	cout << "]";
 }
