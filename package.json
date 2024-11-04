@@ -14,7 +14,7 @@
     "url": "github.com/siddharthvp/SDZeroBot"
   },
   "dependencies": {
-    "@elastic/elasticsearch": "^7.17.14",
+    "@elastic/elasticsearch": "7.10.0",
     "@kubernetes/client-node": "^0.18.1",
     "@types/async-redis": "^1.1.1",
     "@types/cookie-parser": "^1.4.2",
