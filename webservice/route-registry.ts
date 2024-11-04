@@ -11,6 +11,7 @@ import gitsync from "./routes/gitsync";
 import botMonitorRouter from '../bot-monitor/web-endpoint'
 import gitlabRouter from './routes/gitlab';
 import autoSqlRouter from "../db-tabulator/autosql/web-endpoint";
+import categoryCountRouter from "../category-counts/web-endpoint";
 
 export function registerRoutes(app: express.Router) {
 	app.use('/', indexRouter);
@@ -25,4 +26,5 @@ export function registerRoutes(app: express.Router) {
 	app.use('/gitsync', gitsync);
 	app.use('/bot-monitor', botMonitorRouter);
 	app.use('/gitlab', gitlabRouter);
+	app.use('/category-counts', categoryCountRouter);
 }
