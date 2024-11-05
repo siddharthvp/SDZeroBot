@@ -62,4 +62,18 @@ export class ElasticDataStore {
             id: id
         });
     }
+    async dump() {
+        // XXX: Obviously there should be better ways to do this
+        const count = await elastic.search({
+            index: this.index,
+            size: 1
+        }).then(result => result.body.hits.total.value);
+
+        const hits = await elastic.search({
+            index: this.index,
+            size: count
+        }).then(result => result.body.hits.hits);
+
+        return Object.fromEntries(hits.map(hit => [hit._id, hit._source]));
+    }
 }

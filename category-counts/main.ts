@@ -1,4 +1,4 @@
-import {bot, log} from "../botbase";
+import {bot, emailOnError, log} from "../botbase";
 import {ApiQueryCategoryInfoParams} from "types-mediawiki/api_params";
 import {ElasticDataStore} from "../elasticsearch";
 import {getKey, normalizeCategory} from "./util";
@@ -40,4 +40,12 @@ import {getKey, normalizeCategory} from "./util";
             }
         }
     }
-})();
+
+    // Backup data to NFS
+    process.chdir(__dirname);
+    fs.writeFileSync(
+        `backups/category-counts-backup-${new bot.Date().format('YYYY-MM-DD', 'utc')}.json`,
+        JSON.stringify(countStore.dump(), null, 2)
+    );
+
+})().catch(err => emailOnError(err, 'cat-counts'));
