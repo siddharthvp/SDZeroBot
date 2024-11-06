@@ -1,9 +1,10 @@
-import {bot, emailOnError, log} from "../botbase";
+import {bot, emailOnError, log, fs} from "../botbase";
 import {ApiQueryCategoryInfoParams} from "types-mediawiki/api_params";
 import {ElasticDataStore} from "../elasticsearch";
 import {getKey, normalizeCategory} from "./util";
 
 (async function () {
+    log(`[i] Started`);
     const countStore = new ElasticDataStore('category-counts-enwiki');
     await bot.getTokensAndSiteInfo();
 
@@ -40,6 +41,7 @@ import {getKey, normalizeCategory} from "./util";
             }
         }
     }
+    log(`[i] Finished updating data in ElasticSearch`)
 
     // Backup data to NFS
     process.chdir(__dirname);
@@ -47,5 +49,6 @@ import {getKey, normalizeCategory} from "./util";
         `backups/category-counts-backup-${new bot.Date().format('YYYY-MM-DD', 'utc')}.json`,
         JSON.stringify(countStore.dump(), null, 2)
     );
+    log(`[i] Finished backing up counts on disk`);
 
 })().catch(err => emailOnError(err, 'cat-counts'));
