@@ -47,7 +47,7 @@ import {getKey, normalizeCategory} from "./util";
     process.chdir(__dirname);
     fs.writeFileSync(
         `backups/category-counts-backup-${new bot.Date().format('YYYY-MM-DD', 'utc')}.json`,
-        JSON.stringify(countStore.dump(), null, 2)
+        JSON.stringify(await countStore.dump(), null, 2)
     );
     log(`[i] Finished backing up counts on disk`);
 
