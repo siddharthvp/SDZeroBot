@@ -48,6 +48,8 @@ export default class TextExtractor {
 			.trimLeft()
 			// keep only the first paragraph
 			.replace(/\n\n.*/s, '')
+			// remove single newlines - they cause paragraph breaks only in tables
+			.replace(/ ?\n/g, ' ')
 			// unbold
 			.replace(/'''(.*?)'''/g, '$1')
 			// cleanup side-effects from removing IPA/audio templates
