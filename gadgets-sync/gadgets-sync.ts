@@ -11,7 +11,7 @@ const header = `
 
 `
 
-const CONFIG_PAGE = 'User:SDZeroBot/Gadgets-sync-config.json'
+const CONFIG_PAGE = 'User:SDZeroBot/Gadget sync/Config.json'
 
 type Config = {
     description: string
