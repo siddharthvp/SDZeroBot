@@ -86,6 +86,11 @@ export const bot = new Mwn({
     userAgent: 'w:en:User:SDZeroBot'
 });
 
+if (argv.ignoreLag) {
+    log(`[i] Ignoring production replica lag for this bot run`);
+    delete bot.options.defaultParams.maxlag;
+}
+
 bot.initOAuth();
 
 import TextExtractor from "./TextExtractor";
