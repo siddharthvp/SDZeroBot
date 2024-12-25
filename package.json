@@ -46,7 +46,7 @@
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
     "mwn": "2.0.2",
-    "mysql2": "^2.1.0",
+    "mysql2": "^3.9.8",
     "nodemailer": "^6.7.8",
     "object-hash": "^2.0.3",
     "openai": "^4.57.0",
