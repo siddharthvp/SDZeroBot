@@ -4,7 +4,7 @@ import * as k8s from "@kubernetes/client-node";
 const kubeConfig = new k8s.KubeConfig();
 kubeConfig.loadFromDefault();
 
-const namespace = 'tool-sdzerobot';
+const namespace = 'tool-mdanielsbot';
 
 export async function restartDeployment(name: string) {
     const api = kubeConfig.makeApiClient(k8s.AppsV1Api);

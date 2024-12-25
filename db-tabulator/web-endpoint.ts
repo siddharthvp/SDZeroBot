@@ -12,7 +12,7 @@ import {
 import {createLogStream, mapPath} from "../utils";
 import {bot} from "../botbase";
 import {EventEmitter} from "events";
-import {EnwikiWebDb} from "../db";
+import {CommonswikiWebDb} from "../db";
 import {redis} from "../redis-io";
 
 const router = express.Router();
@@ -22,7 +22,7 @@ const log = createLogStream(mapPath('~/web-dbtb.out'));
 /** Store the list of pages currently undergoing update as a redis set */
 const redisKey = 'web-db-tabulator-pages';
 
-const db = new EnwikiWebDb();
+const db = new CommonswikiWebDb();
 
 router.get('/stream', async (req, res) => {
 	const {page} = req.query as Record<string, string>;

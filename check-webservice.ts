@@ -3,7 +3,7 @@ import {emailOnError, Mwn} from './botbase';
 process.chdir(__dirname + '/webservice');
 
 new Mwn().rawRequest({
-	url: 'https://sdzerobot.toolforge.org/ping'
+	url: 'https://mdanielsbot.toolforge.org/ping'
 }).then(response => {
 	let data = response?.data;
 	if (data !== 'pong') {

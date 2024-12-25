@@ -13,7 +13,7 @@ export default class dbTabulator extends Route {
 	}
 
 	filter(data): boolean {
-		return data.wiki === 'enwiki' &&
+		return data.wiki === 'commonswiki' &&
 			data.type === 'categorize' &&
 			data.title === 'Category:' + SUBSCRIPTIONS_CATEGORY;
 	}

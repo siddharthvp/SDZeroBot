@@ -9,8 +9,8 @@ export {mysql};
 import type {MwnDate} from "../mwn";
 import {onToolforge} from "./utils";
 
-export const ENWIKI_DB_HOST = 'enwiki.analytics.db.svc.wikimedia.cloud';
-export const ENWIKI_WEB_DB_HOST = 'enwiki.web.db.svc.wikimedia.cloud';
+export const COMMONSWIKI_DB_HOST = 'commonswiki.analytics.db.svc.wikimedia.cloud';
+export const COMMONSWIKI_WEB_DB_HOST = 'commonswiki.web.db.svc.wikimedia.cloud';
 export const TOOLS_DB_HOST = 'tools.db.svc.wikimedia.cloud';
 
 const inactiveTimeouts: WeakMap<mysql.PoolConnection, NodeJS.Timeout> = new WeakMap();
@@ -21,7 +21,7 @@ export abstract class db {
 	protected constructor(customOptions: mysql.PoolOptions = {}) {
 		this.pool = mysql.createPool({
 			port: 3306,
-			...AuthManager.get('sdzerobot'),
+			...AuthManager.get('mdanielsbot'),
 			waitForConnections: true,
 			connectionLimit: 5,
 			//timezone: 'Z',
@@ -115,12 +115,12 @@ export abstract class db {
 	}
 }
 
-export class enwikidb extends db {
+export class commonswikidb extends db {
 	constructor(customOptions: mysql.PoolOptions = {}) {
 		super({
-			host: onToolforge() ? ENWIKI_DB_HOST : '127.0.0.1',
+			host: onToolforge() ? COMMONSWIKI_DB_HOST : '127.0.0.1',
 			port: onToolforge() ? 3306 : 4711,
-			database: 'enwiki_p',
+			database: 'commonswiki_p',
 			...customOptions
 		});
 	}
@@ -146,10 +146,10 @@ export class enwikidb extends db {
 	}
 }
 
-export class EnwikiWebDb extends enwikidb {
+export class CommonswikiWebDb extends commonswikidb {
 	constructor(customOptions: mysql.PoolOptions = {}) {
 		super({
-			host: onToolforge() ? ENWIKI_WEB_DB_HOST : '127.0.0.1',
+			host: onToolforge() ? COMMONSWIKI_WEB_DB_HOST : '127.0.0.1',
 			...customOptions
 		});
 	}
