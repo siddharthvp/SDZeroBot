@@ -44,6 +44,22 @@ export function createLogStream(file: string) {
 	};
 }
 
+export async function timedPromise(timeout: number, promise: Promise<void>, cleanup: () => void) {
+	let t: NodeJS.Timeout;
+	await Promise.race([
+		promise.then(() => true),
+		new Promise<boolean>((resolve) => {
+			t = setTimeout(() => resolve(false), timeout);
+		}),
+	]).then(completed => {
+		if (completed) {
+			clearTimeout(t);
+		} else {
+			cleanup();
+		}
+	});
+}
+
 let runningInToolforge;
 export function onToolforge(): boolean {
 	if (runningInToolforge !== undefined) {
