@@ -9,7 +9,7 @@ import {ApiPurgeParams} from "mwn/build/api_params";
 export default class Purger extends Route {
     readonly name = "purger";
 
-    readonly CONF_PAGE = "User:SDZeroBot/Purge list";
+    readonly CONF_PAGE = "User:MDanielsBot/Purge list";
 
     scheduledPurges: Map<PurgeEntry, NodeJS.Timeout> = new Map();
 
@@ -23,7 +23,7 @@ export default class Purger extends Route {
     }
 
     filter(data: RecentChangeStreamEvent): boolean {
-        return data.wiki === 'enwiki' && data.type === 'edit' && data.title === this.CONF_PAGE;
+        return data.wiki === 'commonswiki' && data.type === 'edit' && data.title === this.CONF_PAGE;
     }
 
     async worker(data: RecentChangeStreamEvent) {

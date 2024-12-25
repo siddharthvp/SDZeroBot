@@ -1,5 +1,5 @@
 import {argv, bot, emailOnError, log, Mwn, TextExtractor} from "../botbase";
-import {enwikidb, SQLError} from "../db";
+import {commonswikidb, SQLError} from "../db";
 import {Template} from "../../mwn/build/wikitext";
 import {arrayChunk, createLogStream, lowerFirst, readFile, stripOuterNowikis, writeFile} from "../utils";
 import {NS_CATEGORY, NS_FILE, NS_MAIN} from "../namespaces";
@@ -9,18 +9,18 @@ import {HybridMetadataStore} from "./HybridMetadataStore";
 import {applyJsPostProcessing, processQueriesExternally} from "./postprocess";
 import {EventEmitter} from "events";
 
-export const BOT_NAME = 'SDZeroBot';
+export const BOT_NAME = 'MDanielsBot';
 export const TEMPLATE = 'Database report';
 export const TEMPLATE_END = 'Database report end';
-export const SUBSCRIPTIONS_CATEGORY = 'SDZeroBot database report subscriptions';
+export const SUBSCRIPTIONS_CATEGORY = 'MDanielsBot database report subscriptions';
 export const QUERY_TIMEOUT = 600;
 export const CONCURRENCY = 5;
 export const MAX_SUBPAGES = 20;
-export const SHUTOFF_PAGE = 'User:SDZeroBot/Shutoff/Database reports';
+export const SHUTOFF_PAGE = 'User:MDanielsBot/Shutoff/Database reports';
 export const FAKE_INPUT_FILE = 'fake-configs.wikitext';
 export const FAKE_OUTPUT_FILE = 'fake-output.wikitext';
 
-const db = new enwikidb({
+const db = new commonswikidb({
 	connectionLimit: CONCURRENCY
 });
 

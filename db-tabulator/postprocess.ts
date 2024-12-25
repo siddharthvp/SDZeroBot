@@ -11,11 +11,11 @@ const hardTimeout = 2000;
 const processTimeout = 30000;
 
 const apiClient = new Mwn({
-    apiUrl: 'https://en.wikipedia.org/w/api.php',
+    apiUrl: 'https://commons.wikimedia.org/w/api.php',
     maxRetries: 0,
     silent: true,
-    userAgent: '[[w:en:Template:Database report]] via [[w:en:SDZeroBot]], node.js isolated-vm',
-    OAuth2AccessToken: AuthManager.get('sdzerobot-dbreports').OAuth2AccessToken,
+    userAgent: '[[:commons:Template:Database report]] via [[:c:User:MDanielsBot]], node.js isolated-vm',
+    OAuth2AccessToken: AuthManager.get('mdanielsbot-dbreports').OAuth2AccessToken,
     defaultParams: {
         maxlag: undefined
     }
@@ -191,7 +191,7 @@ class SandboxedRequest {
     headers: AxiosRequestHeaders = {
         // Bot grant enables apihighlimit (for Action API), and helps avoid throttling for some REST APIs.
         // It has no write access.
-        'Authorization': `Bearer ${AuthManager.get('sdzerobot-dbreports').OAuth2AccessToken}`
+        'Authorization': `Bearer ${AuthManager.get('mdanielsbot-dbreports').OAuth2AccessToken}`
     }
     getConfig(url: string): RawRequestParams {
         return {
@@ -211,10 +211,10 @@ class SandboxedWikidataQueryServiceRequest extends SandboxedRequest {
 }
 
 const supportedDomains = [
-    { prefix: 'https://en.wikipedia.org/api/rest_v1/', req: new SandboxedRequest() },
+    { prefix: 'https://commons.wikimedia.org/api/rest_v1/', req: new SandboxedRequest() },
     { prefix: 'https://wikimedia.org/api/rest_v1/', req: new SandboxedRequest() },
-    { prefix: 'https://en.wikipedia.org/w/rest.php/', req: new SandboxedRequest() },
-    { prefix: 'https://en.wikipedia.org/w/api.php?', req: new SandboxedRequest() },
+    { prefix: 'https://commons.wikimedia.org/w/rest.php/', req: new SandboxedRequest() },
+    { prefix: 'https://commons.wikimedia.org/w/api.php?', req: new SandboxedRequest() },
     { prefix: 'https://api.wikimedia.org/', req: new SandboxedRequest() },
     { prefix: 'https://query.wikidata.org/', req: new SandboxedWikidataQueryServiceRequest() },
 ];

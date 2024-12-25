@@ -11,7 +11,7 @@ const header = `
 
 `
 
-const CONFIG_PAGE = 'User:SDZeroBot/Gadget sync/Config.json'
+const CONFIG_PAGE = 'User:MDanielsBot/Gadget sync/Config.json'
 
 type Config = {
     description: string
@@ -133,7 +133,7 @@ async function getInterwikiMap() {
             log(`[+] [[${conf.page}]] does not match [[${conf.source}]]`)
 
             // Copy the file locally so that a Special:ComparePages link can be generated
-            const syncPage = `User:SDZeroBot/sync/${conf.page}`
+            const syncPage = `User:MDanielsBot/sync/${conf.page}`
             const syncPageData = substitutedHeader + remoteCode
             const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]] for comparison`)
 

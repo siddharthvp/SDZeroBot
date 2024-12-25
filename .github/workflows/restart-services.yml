@@ -11,11 +11,11 @@ jobs:
       - uses: garygrossgarten/github-action-ssh@915e492551885a89131e21d85f2e043c96abff80
         with:
           command: >-
-            become sdzerobot bash -c '
-              cd /data/project/sdzerobot/SDZeroBot/webservice && npm restart;
-              cd /data/project/sdzerobot/SDZeroBot/eventstream-router && npm restart;
+            become mdanielsbot bash -c '
+              cd /data/project/mdanielsbot/MD-SDZeroBot/webservice && npm restart;
+              cd /data/project/mdanielsbot/MD-SDZeroBot/eventstream-router && npm restart;
             '
           host: login.toolforge.org
-          username: sd
+          username: mdaniels5757
           privateKey: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
 

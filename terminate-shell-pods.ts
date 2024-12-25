@@ -5,7 +5,7 @@ import {KubeConfig, CoreV1Api} from "@kubernetes/client-node";
     const kc = new KubeConfig();
     kc.loadFromDefault();
     const k8sApi = kc.makeApiClient(CoreV1Api);
-    const namespace = 'tool-sdzerobot';
+    const namespace = 'tool-mdanielsbot';
 
     const listRequest = await k8sApi.listNamespacedPod(namespace);
     const pods = listRequest.body.items;

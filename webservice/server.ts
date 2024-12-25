@@ -6,7 +6,7 @@
 import app from "./app";
 import * as http from "http";
 import debugLogger from "debug";
-const debug = debugLogger('sdzerobotweb:server');
+const debug = debugLogger('mdanielsbot-sd-web:server');
 /**
  * Get port from environment and store in Express.
  */

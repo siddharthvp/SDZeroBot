@@ -12,7 +12,7 @@ export default class Task extends Route {
 	}
 
 	filter(data): boolean {
-		return data.wiki === 'enwiki' &&
+		return data.wiki === 'commonswiki' &&
 			data.bot === true &&
 			(data.type === "edit" || data.type === "log");
 	}

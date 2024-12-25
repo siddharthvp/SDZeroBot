@@ -44,7 +44,7 @@ table.addRow([ 'Users with 1000+ actions in the last 30 days', orz(userswithcoun
 table.addRow([ 'Users with 5000+ actions in the last 30 days', orz(userswithcount[5000]) ]);
 
 let wikitext =
-`{{hatnote|Last updated by [[User:SDZeroBot|SDZeroBot]] at ~~~~~}}
+`{{hatnote|Last updated by [[User:MDanielsBot|MDanielsBot]] at ~~~~~}}
 
 ${table.getText()}
 
@@ -52,7 +52,7 @@ ${table.getText()}
 {{reflist}}
 `
 
-await bot.save('User:SDZeroBot/Number of active editors', wikitext, 'Updating');
+await bot.save('User:MDanielsBot/Number of active editors', wikitext, 'Updating');
 
 log(`[i] Finished`);
 

@@ -10,10 +10,10 @@ export default class ShutoffsMonitor extends Route {
     }
 
     filter(data): boolean {
-        return data.wiki === 'enwiki' &&
+        return data.wiki === 'commonswiki' &&
             data.namespace === 2 &&
             data.type === 'edit' &&
-            data.title.startsWith('User:SDZeroBot/Shutoff/') &&
+            data.title.startsWith('User:MDanielsBot/Shutoff/') &&
             data.user !== 'SD0001'
     }
 

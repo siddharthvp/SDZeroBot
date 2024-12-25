@@ -11,9 +11,9 @@ export default class GadgetsSync extends Route {
     }
 
     filter(data: RecentChangeStreamEvent): boolean {
-        return data.wiki === 'enwiki' &&
+        return data.wiki === 'commonswiki' &&
             data.type === 'edit' &&
-            data.title === 'User:SDZeroBot/Gadgets-sync-config.json';
+            data.title === 'User:MDanielsBot/Gadgets-sync-config.json';
     }
 
     async worker(data: RecentChangeStreamEvent) {

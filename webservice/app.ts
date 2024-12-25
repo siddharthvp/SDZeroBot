@@ -18,7 +18,7 @@ app.set('views', path.join(__dirname, '..'));
 app.set('view engine', 'hbs');
 app.set('view options', { layout: 'webservice/views/layout' });
 hbs.registerHelper('wikilink',  (pageName, displayName) => {
-	return `<a href="https://en.wikipedia.org/wiki/${Mwn.util.wikiUrlencode(pageName)}" title="${pageName.replace(/"/g, '&#34;')}">${typeof displayName === 'string' ? displayName : pageName}</a>`;
+	return `<a href="https://commons.wikimedia.org/wiki/${Mwn.util.wikiUrlencode(pageName)}" title="${pageName.replace(/"/g, '&#34;')}">${typeof displayName === 'string' ? displayName : pageName}</a>`;
 });
 
 morgan.token('date', () => humanDate());

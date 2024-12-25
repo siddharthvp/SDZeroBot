@@ -8,7 +8,7 @@ const {bot, log} = require('../botbase');
 
 const PAGE_SIZE_MAX_LIMIT = 60000;
 const MAX_PAGES = 100;
-const ROOT_PAGE = process.env.ROOT_PAGE || 'User:SDZeroBot/Category cycles';
+const ROOT_PAGE = process.env.ROOT_PAGE || 'User:MDanielsBot/Category cycles';
 const PAGE_LEAD = '{{' + ROOT_PAGE + '/header}}\n';
 
 process.chdir(__dirname);

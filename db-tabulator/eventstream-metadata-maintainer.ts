@@ -44,7 +44,7 @@ export default class DbTabulatorMetadata extends Route {
     }
 
     filter(data: RecentChangeStreamEvent): boolean {
-        return data.wiki === 'enwiki' &&
+        return data.wiki === 'commonswiki' &&
             ((data.type === 'categorize' && data.title === 'Category:' + SUBSCRIPTIONS_CATEGORY) ||
             ((data.type === 'edit' || (data.type === 'log' && (data.log_action === 'move' || data.log_action === 'delete')))
                 && this.subscriptions.has(data.title) && data.user !== BOT_NAME));

@@ -1,6 +1,6 @@
 import {bot, fs, log, redactSecretsInError} from "./botbase";
 import {spawn} from "child_process";
-import {ENWIKI_DB_HOST, TOOLS_DB_HOST} from "./db";
+import {COMMONSWIKI_DB_HOST, TOOLS_DB_HOST} from "./db";
 import {REDIS_HOST} from "./redis";
 import {SECOND} from "./millis";
 
@@ -70,14 +70,14 @@ export function onToolforge(): boolean {
 }
 
 /**
- * Expand ~ to /data/project/sdzerobot
+ * Expand ~ to /data/project/mdanielsbot
  * or if running locally to current directory.
  * This is asymmetric!
  * @param path
  */
 export function mapPath(path: string): string {
 	if (onToolforge()) {
-		return path.replace(/^~/, '/data/project/sdzerobot');
+		return path.replace(/^~/, '/data/project/mdanielsbot');
 	} else {
 		return path.replace(/^~/, __dirname);
 	}
@@ -89,13 +89,13 @@ export async function createLocalSSHTunnel(host: string, localPort?: number, rem
 	if (!onToolforge()) {
 		log(`[i] Spawning local SSH tunnel for ${host} ...`);
 		localPort = localPort || (
-			host === ENWIKI_DB_HOST ? 4711 :
+			host === COMMONSWIKI_DB_HOST ? 4711 :
 			host === TOOLS_DB_HOST ? 4712 :
 			host === REDIS_HOST ? 4713 :
 			null
 		);
 		remotePort = remotePort || (
-			host === ENWIKI_DB_HOST ? 3306 :
+			host === COMMONSWIKI_DB_HOST ? 3306 :
 			host === TOOLS_DB_HOST ? 3306 :
 			host === REDIS_HOST ? 6379 :
 			null

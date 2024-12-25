@@ -1,8 +1,8 @@
-import {enwikidb} from "./db";
+import {commonswikidb} from "./db";
 import {expect} from "chai";
 import * as sinon from 'sinon';
 
-const testDb = new enwikidb({
+const testDb = new commonswikidb({
     host: '127.0.0.1',
     port: 3312,
     database: 'my_wiki',

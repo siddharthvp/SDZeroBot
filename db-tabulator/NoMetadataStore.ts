@@ -1,13 +1,13 @@
 import {BOT_NAME, Query, getQueriesFromText, SUBSCRIPTIONS_CATEGORY, TEMPLATE} from "./app";
-import {bot, enwikidb, log} from "../botbase";
+import {bot, commonswikidb, log} from "../botbase";
 import {MwnDate} from "../../mwn/src/date";
 import {MetadataStore} from "./MetadataStore";
 
 export class NoMetadataStore implements MetadataStore {
-    wikidb: enwikidb;
+    wikidb: commonswikidb;
 
     async init() {
-        this.wikidb = new enwikidb();
+        this.wikidb = new commonswikidb();
     }
 
     async updateMetadata(page: string, queries: Query[]) {}

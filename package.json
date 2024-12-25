@@ -1,5 +1,5 @@
 {
-  "name": "sdzerobot",
+  "name": "md-sdzerobot",
   "version": "1.0.0",
   "description": "",
   "main": "",
@@ -11,7 +11,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "github.com/siddharthvp/SDZeroBot"
+    "url": "github.com/mdaniels5757/MD-SDZeroBot"
   },
   "dependencies": {
     "@elastic/elasticsearch": "7.10.0",

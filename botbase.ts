@@ -12,8 +12,8 @@ export const mailTransporter = nodemailer.createTransport({
 });
 export async function sendMail(subject: string, body: string) {
     return mailTransporter.sendMail({
-        from: 'tools.sdzerobot@tools.wmflabs.org',
-        to: 'tools.sdzerobot@tools.wmflabs.org',
+        from: 'tools.mdanielsbot@tools.wmflabs.org',
+        to: 'tools.mdanielsbot@tools.wmflabs.org',
         subject: subject,
         text: body,
     });
@@ -75,15 +75,15 @@ export class AuthManager {
 }
 
 export const bot = new Mwn({
-    apiUrl: 'https://en.wikipedia.org/w/api.php',
-    ...AuthManager.get('SDZeroBot:oauth2'),
-    ...AuthManager.get('SDZeroBot:bp1'),
-    ...AuthManager.get('SDZeroBot:oauth1'),
+    apiUrl: 'https://commons.wikimedia.org/w/api.php',
+    ...AuthManager.get('MDanielsBot:oauth2'),
+    ...AuthManager.get('MDanielsBot:bp1'),
+    ...AuthManager.get('MDanielsBot:oauth1'),
     defaultParams: {
         assert: 'bot'
     },
     maxRetries: 7, // Nov 2020: lag on the roof
-    userAgent: 'w:en:User:SDZeroBot'
+    userAgent: ':c:User:MDanielsBot'
 });
 
 if (argv.ignoreLag) {
@@ -97,5 +97,5 @@ import TextExtractor from "./TextExtractor";
 export { TextExtractor };
 
 // Deprecated exports, import from ./db or ./utils directly
-export {mysql, db, enwikidb, toolsdb} from './db';
+export {mysql, db, commonswikidb, toolsdb} from './db';
 export * as utils from './utils';
