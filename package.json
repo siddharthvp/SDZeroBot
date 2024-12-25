@@ -41,7 +41,7 @@
     "ioredis": "^5.4.1",
     "jsdom": "^16.6.0",
     "memory-cache": "^0.2.0",
-    "minimist": "^1.2.5",
+    "minimist": "^1.2.8",
     "moment": "^2.29.1",
     "morgan": "~1.9.1",
     "multer": "^1.4.5-lts.1",
