@@ -172,47 +172,14 @@ export async function applyJsPostProcessing(rows: Record<string, string>[], jsCo
 
     let result = rows;
 
-    let doPostProcessing = async () => {
-        try {
-            // jsCode is expected to declare function postprocess(rows) {...}
-            let fullCode = postprocessCodeTemplate.replace('"${JS_CODE}"', jsCode);
-            let wrapped = await context.eval(fullCode, {
-                reference: true,
-                timeout: softTimeout
-            });
-            let userCodeResult = await wrapped.apply(undefined, [], {
-                result: { promise: true },
-                timeout: softTimeout
-            });
-            try {
-                if (typeof userCodeResult === 'string') { // returns undefined if non-transferable
-                    let userCodeResultParsed = JSON.parse(userCodeResult);
-                    if (Array.isArray(userCodeResultParsed)) {
-                        result = userCodeResultParsed;
-                    } else {
-                        log(`[E] JS postprocessing for ${query} returned a non-array: ${userCodeResult.slice(0, 100)} ... Ignoring.`);
-                        query.warnings.push(`JS postprocessing didn't return an array of rows, will be ignored`);
-                        query.emit('js-no-array');
-                    }
-                } else {
-                    log(`[E] JS postprocessing for ${query} has an invalid return value: ${userCodeResult}. Ignoring.`);
-                    query.warnings.push(`JS postprocessing must have a transferable return value`);
-                    query.emit('js-invalid-return');
-                }
-            } catch (e) { // Shouldn't occur as we are the ones doing the JSON.stringify
-                log(`[E] JS postprocessing for ${query} returned a non-JSON: ${userCodeResult.slice(0, 100)}. Ignoring.`);
-            }
-        } catch (e) {
-            log(`[E] JS postprocessing for ${query} failed: ${e.toString()}`);
-            log(e);
-            query.warnings.push(`JS postprocessing failed: ${e.toString()}`);
-            query.emit('js-failed', e.toString());
-        }
-    }
-
     await timedPromise(
         hardTimeout,
-        doPostProcessing(),
+        (async () => {
+            let processingResult = await doPostProcessing(context, jsCode, query)
+            if (processingResult) {
+                result = processingResult;
+            }
+        })(),
         () => {
             // In case isolated-vm timeout doesn't work
             log(`[E] Past ${hardTimeout/1000} second timeout, force-disposing isolate`);
@@ -226,4 +193,42 @@ export async function applyJsPostProcessing(rows: Record<string, string>[], jsCo
     query.emit('postprocessing-complete', timeTaken);
 
     return result;
+}
+
+async function doPostProcessing(context, jsCode: string, query: Query) {
+    try {
+        // jsCode is expected to declare function postprocess(rows) {...}
+        let fullCode = postprocessCodeTemplate.replace('"${JS_CODE}"', jsCode);
+        let wrapped = await context.eval(fullCode, {
+            reference: true,
+            timeout: softTimeout
+        });
+        let userCodeResult = await wrapped.apply(undefined, [], {
+            result: { promise: true },
+            timeout: softTimeout
+        });
+        try {
+            if (typeof userCodeResult === 'string') { // returns undefined if non-transferable
+                let userCodeResultParsed = JSON.parse(userCodeResult);
+                if (Array.isArray(userCodeResultParsed)) {
+                    return userCodeResultParsed;
+                } else {
+                    log(`[E] JS postprocessing for ${query} returned a non-array: ${userCodeResult.slice(0, 100)} ... Ignoring.`);
+                    query.warnings.push(`JS postprocessing didn't return an array of rows, will be ignored`);
+                    query.emit('js-no-array');
+                }
+            } else {
+                log(`[E] JS postprocessing for ${query} has an invalid return value: ${userCodeResult}. Ignoring.`);
+                query.warnings.push(`JS postprocessing must have a transferable return value`);
+                query.emit('js-invalid-return');
+            }
+        } catch (e) { // Shouldn't occur as we are the ones doing the JSON.stringify
+            log(`[E] JS postprocessing for ${query} returned a non-JSON: ${userCodeResult.slice(0, 100)}. Ignoring.`);
+        }
+    } catch (e) {
+        log(`[E] JS postprocessing for ${query} failed: ${e.toString()}`);
+        log(e);
+        query.warnings.push(`JS postprocessing failed: ${e.toString()}`);
+        query.emit('js-failed', e.toString());
+    }
 }
