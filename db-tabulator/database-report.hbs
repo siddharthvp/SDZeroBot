@@ -10,7 +10,7 @@
 		document.getElementById('report-updates').appendChild(p);
 	}
 	function link(pageName, displayName) {
-		return `<a href="https://en.wikipedia.org/w/index.php?title=${encodeURIComponent(pageName)}" title="${pageName.replace(/"/g, '&#34;')}" target="_blank">${typeof displayName === 'string' ? displayName : pageName}</a>`;
+		return `<a href="https://commons.wikimedia.org/w/index.php?title=${encodeURIComponent(pageName)}" title="${pageName.replace(/"/g, '&#34;')}" target="_blank">${typeof displayName === 'string' ? displayName : pageName}</a>`;
 	}
 	function shorten(str, length) {
 		return str.length < length ? str : str.slice(0, length) + ' ...';

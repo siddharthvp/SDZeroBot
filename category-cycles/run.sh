@@ -11,4 +11,4 @@ echo -e "\n-1" >> edges.out
 g++ find_cycles.cpp
 ./a.out < edges.out > cycles.json
 
-/data/project/mdanielsbot/bin/node prettify.js
+node prettify.js

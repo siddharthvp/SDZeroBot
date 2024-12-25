@@ -2,4 +2,4 @@
 
 export CRON=true;
 cd /data/project/mdanielsbot/MD-SDZeroBot || exit 1;
-/data/project/mdanielsbot/bin/node $@
+node $@
