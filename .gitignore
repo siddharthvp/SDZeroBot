@@ -12,3 +12,4 @@ node_modules/
 */core
 .idea/*
 build
+.auth

@@ -157,14 +157,14 @@ export class CommonswikiWebDb extends commonswikidb {
 
 export class toolsdb extends db {
 	/**
-	 * @param dbname - DB name, `s54328__` will be prepended to this
+	 * @param dbname - DB name, `s54277__` will be prepended to this
 	 * @param customOptions - extra mysql pool connection options
 	 */
 	constructor(dbname: string, customOptions: mysql.PoolOptions = {}) {
 		super({
 			host: onToolforge() ? TOOLS_DB_HOST : '127.0.0.1',
 			port: onToolforge() ? 3306 : 4712,
-			database: 's54328__' + dbname,
+			database: 's54277__' + dbname,
 			...customOptions
 		});
 	}
