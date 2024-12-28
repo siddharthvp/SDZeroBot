@@ -10,7 +10,7 @@ const client = new OpenAI({
 });
 
 router.get('/', async function (req, res) {
-    return res.render('db-tabulator/autosql/landing')
+    return res.render('db-tabulator/autosql/autosql')
 });
 
 router.post('/generate', async function (req, res, next) {
@@ -34,13 +34,13 @@ router.post('/generate', async function (req, res, next) {
         response: sql.replace(/\s+/g, ' ')
     }
     log(`[S] AutoSQL result ${JSON.stringify(logEntry, null, 2)}`);
-    return res.render('db-tabulator/autosql/result', {
+    return res.status(200).type('json').send({
         sql: sql,
         warnOnField:
             sql.includes('pl_title') ? 'pl_title' :
             sql.includes('tl_title') ? 'tl_title' :
             null
-    })
+    }).end()
 });
 
 export default router;
