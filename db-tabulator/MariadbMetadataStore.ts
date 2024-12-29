@@ -68,6 +68,7 @@ export class MariadbMetadataStore implements MetadataStore {
             WHERE intervalDays IS NOT NULL 
               AND (lastUpdate IS NULL OR lastUpdate < NOW() - INTERVAL intervalDays DAY + INTERVAL 10 MINUTE)
               AND idx != -1
+              AND page LIKE "Commons:%"
         `);
         // +10 mins helps get the reports update around the same time every day.
         // idx != -1 filters out dummy db rows indicating pages merely transcluding reports.

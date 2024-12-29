@@ -58,7 +58,11 @@ export class NoMetadataStore implements MetadataStore {
         if (isNaN(interval)) {
             log(`[+] Skipping ${query} as periodic updates are not configured`);
             return false;
+        } else if (!query.page.startsWith("Commons:")) {
+            log(`[+] Skipping ${query} as periodic updates are not allowed in namespaces other than Commons`);
+            return false;
         }
+
         if (!lastUpdate) {
             return true;
         }
