@@ -13,7 +13,7 @@ export const BOT_NAME = 'MDanielsBot';
 export const TEMPLATE = 'Database report';
 export const TEMPLATE_END = 'Database report end';
 export const SUBSCRIPTIONS_CATEGORY = 'MDanielsBot database report subscriptions';
-export const QUERY_TIMEOUT = 600;
+export const QUERY_TIMEOUT = 1500;
 export const CONCURRENCY = 5;
 export const MAX_SUBPAGES = 20;
 export const SHUTOFF_PAGE = 'User:MDanielsBot/Shutoff/Database reports';
@@ -74,7 +74,7 @@ export async function fetchQueriesForPage(page: string): Promise<Query[]> {
 // to avoid edit-conflicting with self.
 export async function processQueriesForPage(queries: Query[]) {
 	for (let query of queries) {
-		if (query.idx !== 1) log(`[+] Processing query ${query.idx} on ${query.page}`);
+		log(`[+] Processing query ${query.idx} on ${query.page}`);
 		await query.process().catch(() => {});
 	}
 }
@@ -189,7 +189,7 @@ export class Query extends EventEmitter {
 
 	// Errors in configs are reported to user through [[Module:Database report]] in Lua
 	parseQuery() {
-		this.config.interval = parseInt(this.getTemplateValue('interval'));
+		this.config.interval = parseFloat(this.getTemplateValue('interval'));
 
 		// Use of semicolons for multiple statements will be flagged as error at query runtime
 		this.config.sql = this.getSql();

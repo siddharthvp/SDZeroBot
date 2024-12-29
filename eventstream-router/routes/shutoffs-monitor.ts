@@ -14,7 +14,7 @@ export default class ShutoffsMonitor extends Route {
             data.namespace === 2 &&
             data.type === 'edit' &&
             data.title.startsWith('User:MDanielsBot/Shutoff/') &&
-            data.user !== 'SD0001'
+            data.user !== 'Mdaniels5757'
     }
 
     async worker(data) {
