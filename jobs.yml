@@ -26,4 +26,4 @@
 - {schedule: "8 16 * * *", name: "gans-list", mem: "256Mi", command: "~/SDZeroBot/job most-gans/gans-lister.js", image: "node18", emails: "onfailure"}
 - {schedule: "0 4 * * *", name: "shells", mem: "128Mi", command: "~/SDZeroBot/job terminate-shell-pods.js", image: "node18", emails: "onfailure"}
 - {schedule: "15 1 * * *", name: "cat-count", mem: "256Mi", command: "~/SDZeroBot/job category-counts/main.js", image: "node18", emails: "onfailure"}
-- {schedule: "15 4 1 1,4,7,10 *", name: "category-cycles", mem: "1536Mi", command: "~/SDZeroBot/category-cycles/run.sh", image: "node18", emails: "onfailure"}
+- {schedule: "15 4 1 1,4,7,10 *", name: "category-cycles", mem: "1536Mi", command: "~/SDZeroBot/category-cycles/run.sh", image: "node18", emails: "onfailure", "filelog-stderr": "category-cycles.out"}

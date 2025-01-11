@@ -7,7 +7,7 @@ import * as mysql from "mysql2";
 	const connection = mysql.createConnection({
 		host: `${wiki}.analytics.db.svc.wikimedia.cloud`,
 		port: 3306,
-		...AuthManager.get('db'),
+		...AuthManager.get('sdzerobot'),
 		database: `${wiki}_p`,
 	})
 
@@ -30,7 +30,8 @@ import * as mysql from "mysql2";
 			connection.end()
 		})
 		.on('error', (err) => {
-			log('[E] Error during query or writing to file:', err)
+			log('[E] Error during query or writing to file:')
+			log(err)
 			outputFile.end()
 			connection.end()
 			process.exit(1)

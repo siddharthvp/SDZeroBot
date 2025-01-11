@@ -2,7 +2,7 @@
 set -euo pipefail
 
 function log() {
-    echo -e "[$(date '+%Y-%m-%d %H:%M:%S')] $1\n"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1"
 }
 
 log "Starting"
