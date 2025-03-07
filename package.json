@@ -4,7 +4,7 @@
   "description": "",
   "main": "",
   "scripts": {
-    "update": "git pull && crontab crontab && cd ../mwn && git pull && npm run quickbuild",
+    "update": "git pull && cd ../mwn && git pull && npm run quickbuild",
     "tsc": "tsc --sourceMap false || echo"
   },
   "author": "Siddharth VP",
