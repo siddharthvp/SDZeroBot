@@ -45,15 +45,11 @@ jobs:
               npm run tsc;
               echo "Updating jobs.yml ...";
               toolforge jobs load jobs.yml;
-              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c eventstream)" -gt 0 || "$(git rev-list --format=%B --max-count=1 HEAD)" == *"!restart"* ]]; then
-                echo "Restarting eventstream-router ...";
-                cd eventstream-router && npm restart && cd -;
-              fi;
+              echo "Restarting eventstream-router ...";
+              cd eventstream-router && npm restart && cd -;
               cp webservice/www-js-package.json /data/project/mdanielsbot/www/js/package.json;
-              if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c "webservice/")" -gt 0 || "$(git diff --name-only HEAD HEAD@{1} | grep -c "web-endpoint")" -gt 0 || "$(git diff --name-only HEAD HEAD@{1} | grep -c "hbs")" -gt 0 || "$(git rev-list --format=%B --max-count=1 HEAD)" == *"!restart"* || "$(git rev-list --format=%B --max-count=1 HEAD)" == *"!web-restart"* ]]; then
-                echo "Restarting SDZeroBot webservice ...";
-                cd /data/project/mdanielsbot/MD-SDZeroBot/webservice && npm restart && cd -;
-              fi;
+              echo "Restarting SDZeroBot webservice ...";
+              cd /data/project/mdanielsbot/MD-SDZeroBot/webservice && npm restart && cd -;
               toolforge jobs restart db-tabulator;
               toolforge jobs restart shells;
             '
