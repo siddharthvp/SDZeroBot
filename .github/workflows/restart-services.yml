@@ -1,0 +1,21 @@
+name: Restart services
+
+on:
+  - workflow_dispatch
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: garygrossgarten/github-action-ssh@915e492551885a89131e21d85f2e043c96abff80
+        with:
+          command: >-
+            become mdanielsbot bash -c '
+              cd /data/project/mdanielsbot/MD-SDZeroBot/webservice && npm restart;
+              cd /data/project/mdanielsbot/MD-SDZeroBot/eventstream-router && npm restart;
+            '
+          host: login.toolforge.org
+          username: mdaniels5757
+          privateKey: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
+
