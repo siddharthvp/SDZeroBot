@@ -51,7 +51,7 @@
     "object-hash": "^2.0.3",
     "openai": "^4.57.0",
     "sqlite": "^5.1.1",
-    "sqlite3": "^5.0.0"
+    "sqlite3": "^5.1.7"
   },
   "devDependencies": {
     "@types/chai": "^4.3.16",
