@@ -1,9 +1,9 @@
 name: Toolforge
 
 on:
-#   push:
-#     branches:
-#       - master
+  push:
+    branches:
+      - master
   workflow_dispatch:
 
 concurrency:
@@ -45,13 +45,14 @@ jobs:
               npm run tsc;
               echo "Updating jobs.yml ...";
               toolforge jobs load jobs.yml;
+              toolforge jobs restart db-tabulator;
+              toolforge jobs restart shells;
               echo "Restarting eventstream-router ...";
               cd eventstream-router && npm restart && cd -;
               cp webservice/www-js-package.json /data/project/mdanielsbot/www/js/package.json;
               echo "Restarting SDZeroBot webservice ...";
               cd /data/project/mdanielsbot/MD-SDZeroBot/webservice && npm restart && cd -;
-              toolforge jobs restart db-tabulator;
-              toolforge jobs restart shells;
+              
             '
           host: login.toolforge.org
           username: mdaniels5757
