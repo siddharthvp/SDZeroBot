@@ -62,3 +62,4 @@ webservice/routes/gitsync.js
 webservice/routes/index.js
 webservice/routes/logs.js
 webservice/routes/summary.js
+db-tabulator/queries.log
