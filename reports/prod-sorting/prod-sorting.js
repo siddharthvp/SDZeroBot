@@ -31,7 +31,7 @@ process.chdir(__dirname);
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
 				var prod_template, prod_blp, prod_date, prod_concern;
-				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates({
+				var templates = new bot.Wikitext(pg.revisions[0].content).parseTemplates({
 					count: 1,
 					namePredicate: name => {
 						if (name === 'Proposed deletion/dated') {
@@ -52,7 +52,7 @@ process.chdir(__dirname);
 					if (prod_nom) {
 						prod_concern += ` ({{u|${prod_nom}}})`;
 					}
-					prod_date = new bot.date(prod_template.getValue('timestamp')).format('YYYY-MM-DD HH:mm');
+					prod_date = new bot.Date(prod_template.getValue('timestamp')).format('YYYY-MM-DD HH:mm');
 				}
 				tableInfo[pg.title] = {
 					concern: prod_concern || '[Failed to parse]',
@@ -157,7 +157,7 @@ process.chdir(__dirname);
 	var makeMainPage = function(lite) {
 		var count = Object.keys(revidsTitles).length;
 
-		var content = `{{User:SDZeroBot/PROD sorting/header|count=${count}|date={{subst:#time:j F Y}}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
+		var content = `{{User:SDZeroBot/PROD sorting/header|count=${count}|date={{subst:#time:j F Y}}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>\n`;
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic, lite);
 			content += `\n==${sectionTitle}==\n`;
@@ -165,7 +165,7 @@ process.chdir(__dirname);
 		});
 		content = TextExtractor.finalSanitise(content);
 
-		return saveWithBlacklistHandling(new bot.page('User:SDZeroBot/PROD sorting' + (lite ? '/lite' : '')), content, 'Updating report');
+		return saveWithBlacklistHandling(new bot.Page('User:SDZeroBot/PROD sorting' + (lite ? '/lite' : '')), content, 'Updating report');
 
 	}
 	await makeMainPage(); // User:SDZeroBot/PROD sorting

@@ -149,7 +149,7 @@ process.chdir(__dirname);
 	]);
 
 	var wikitext = `{{Wikipedia:User scripts/Most imported scripts/header}}\n\n` +
-		`:''Last updated on {{subst:#time:j F Y}} by [[User:SDZeroBot|SDZeroBot]]''<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
+		`:''Last updated on {{subst:#time:j F Y}} by [[User:SDZeroBot|SDZeroBot]]''<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>\n`;
 
 // 	wikitable =
 // 	`:''Last updated on {{subst:#time:j F Y}} by [[User:SDZeroBot|SDZeroBot]]

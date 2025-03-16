@@ -5,23 +5,23 @@ const {populateWikidataShortdescs} = require('./commons');
 
 await bot.getTokensAndSiteInfo();
 
-const prcat = new bot.category('Category:Requests for peer review');
+const prcat = new bot.Category('Category:Requests for peer review');
 
 const talkpages = (await prcat.pages({ cmnamespace: 1 })).map(pg => pg.title);
-const articles = talkpages.map(t => new bot.title(t).getSubjectPage().toText());
+const articles = talkpages.map(t => new bot.Title(t).getSubjectPage().toText());
 
 let data = {};
 
 await bot.read(talkpages).then(json => {
 	for (let pg of json) {
 		let text = pg.revisions[0].content;
-		let template = bot.wikitext.parseTemplates(text, {
+		let template = bot.Wikitext.parseTemplates(text, {
 			namePredicate: name => name === 'Peer review',
 			count: 1
 		})[0];
 		if (template) {
 			let num = template.getValue('archive');
-			let title = new bot.title(pg.title).getSubjectPage().toText();
+			let title = new bot.Title(pg.title).getSubjectPage().toText();
 			let prpage = `Wikipedia:Peer review/${title}/archive${num}`;
 			data[title] = {
 				prpage
@@ -56,7 +56,7 @@ await bot.batchOperation(articles, async article => {
 		return log(`[E] data['${article}'] is ${data[article]}`);
 	}
 	let prpage = data[article].prpage;
-	return new bot.page(prpage).history('timestamp|user', 'max').then(revs => {
+	return new bot.Page(prpage).history('timestamp|user', 'max').then(revs => {
 		let firstrev = revs[revs.length - 1];
 
 		let editors = revs.map(rev => rev.user).filter((u, i, arr) => arr.indexOf(u) === i).length;
@@ -92,7 +92,7 @@ for (let [title, details] of Object.entries(data)) {
 	const {startdate, description, excerpt, prpage, commenters, requestor, prmissing} = details;
 
 	table.addRow([
-		new bot.date(startdate).format('YYYY-MM-DD HH:mm'),
+		new bot.Date(startdate).format('YYYY-MM-DD HH:mm'),
 		`[[${title}]] ${description ? `(<small>${description}</small>)` : ''}`,
 		excerpt,
 		prmissing ? `<span class=error>[No PR page was created]</span>` : `data-sort-value=${commenters} | [[${prpage}|PR]]<br>(${commenters} commenters)<br>Initiated by: [[User:${requestor}|${requestor}]]`
@@ -101,7 +101,7 @@ for (let [title, details] of Object.entries(data)) {
 }
 
 let wikitext =
-`{{/header|count=${table.getNumRows()}|date=${new bot.date().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+`{{/header|count=${table.getNumRows()}|date=${new bot.Date().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>
 
 ${TextExtractor.finalSanitise(table.getText())}
 `;

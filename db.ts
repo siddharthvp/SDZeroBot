@@ -131,9 +131,9 @@ export class enwikidb extends db {
 	async getReplagHours() {
 		log('[V] Querying database lag');
 		const result = await this.query(`SELECT last_updated FROM heartbeat_p.heartbeat`);
-		const lastUpdated = new bot.date(result[0].last_updated + 'Z');
+		const lastUpdated = new bot.Date(result[0].last_updated + 'Z');
 		this.replagHours = Math.round((Date.now() - lastUpdated.getTime()) / 1000 / 60 / 60);
-		this.replagHoursCalculatedTime = new bot.date();
+		this.replagHoursCalculatedTime = new bot.Date();
 		return this.replagHours;
 	}
 	/**

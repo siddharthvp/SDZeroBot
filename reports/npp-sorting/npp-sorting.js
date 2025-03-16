@@ -68,7 +68,7 @@ process.chdir(__dirname);
 		utils.saveObject('tableInfo', tableInfo);
 	}
 
-	var accessdate = new bot.date().format('D MMMM YYYY');
+	var accessdate = new bot.Date().format('D MMMM YYYY');
 
 	/* GET DATA FROM ORES */
 
@@ -198,7 +198,7 @@ process.chdir(__dirname);
 		return bot.edit('User:SDZeroBot/NPP sorting', function(rev) {
 			var text = rev.content;
 			text = text.replace(/\{\{\/header.*\}\}.*?<\/includeonly>/,
-				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>`);
+				`{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>`);
 
 			var sorterKeys = Object.keys(sorter);
 

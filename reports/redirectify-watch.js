@@ -14,12 +14,12 @@ let json = await bot.request({
 	"action": "query",
 	"list": "recentchanges",
 	"rcstart": (function () {
-		let d = new bot.date();
+		let d = new bot.Date();
 		d.setHours(0,0,0,0);
 		return d.toISOString();
 	})(),
 	"rcend": (function () {
-		let d = new bot.date().subtract(1, 'day');
+		let d = new bot.Date().subtract(1, 'day');
 		d.setHours(0,0,0,0);
 		return d.toISOString();
 	})(),
@@ -68,7 +68,7 @@ for (let edit of actions) {
 
 	// XXX: this is bad, since we know the timestamp, we should directly fetch that
 	// revision. The description can also be fetched in the same call.
-	let page = new bot.page(edit.title),
+	let page = new bot.Page(edit.title),
 		shortdesc;
 
 	try {
@@ -96,7 +96,7 @@ for (let edit of actions) {
 	}
 
 	table.addRow([
-		new bot.date(edit.timestamp).format('YYYY-MM-DD HH:mm'),
+		new bot.Date(edit.timestamp).format('YYYY-MM-DD HH:mm'),
 		`[[${edit.title}]] ${shortdesc ? `(<small>${shortdesc}</small>)` : ''}`,
 		`[[User:${edit.user}|${edit.user}]]: <small>${formatSummary(edit.comment)} ({{history|1=${edit.title}|2=hist}})</small>`,
 		edit.excerpt || ''
@@ -104,15 +104,15 @@ for (let edit of actions) {
 
 }
 
-let report = new bot.page('User:SDZeroBot/Redirectify Watch');
+let report = new bot.Page('User:SDZeroBot/Redirectify Watch');
 let revs = await report.history('timestamp|ids', 3);
 
 let oldlinks = revs.map(rev => {
-	return `[[Special:Permalink/${rev.revid}|${new bot.date(rev.timestamp).subtract(1, 'day').format('D MMMM')}]]`;
+	return `[[Special:Permalink/${rev.revid}|${new bot.Date(rev.timestamp).subtract(1, 'day').format('D MMMM')}]]`;
 }).join(' - ') + ' - {{history|2=older}}';
 
 let wikitext =
-`{{/header|count=${count}|date=${new bot.date().subtract(1, 'day').format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+`{{/header|count=${count}|date=${new bot.Date().subtract(1, 'day').format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>
 
 ${table.getText()}
 `;

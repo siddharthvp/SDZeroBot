@@ -13,7 +13,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 	let revidsTitles = {},
 		tableInfo = {};
 
-	let talkpages = (await new bot.category('Good article nominees awaiting review').pages())
+	let talkpages = (await new bot.Category('Good article nominees awaiting review').pages())
 		.map(page => page.title);
 
 	let articles = talkpages.map(pg => pg.slice('Talk:'.length));
@@ -86,7 +86,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 			let text = pg.revisions[0].content;
 
 			const getGATemplateFromText = function(text) {
-				let wkt = new bot.wikitext(text);
+				let wkt = new bot.Wikitext(text);
 				let template = wkt.parseTemplates({
 					count: 1,
 					namePredicate: name => GANTemplateNameRegex.test(name)
@@ -116,11 +116,11 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 			tableInfo[article].date = template && template.getValue(1);
 			tableInfo[article].nominator = template && template.getValue('nominator');
 
-			let date = new bot.date(tableInfo[article].date);
-			if (date.isAfter(new bot.date().subtract(30, 'days'))) {
+			let date = new bot.Date(tableInfo[article].date);
+			if (date.isAfter(new bot.Date().subtract(30, 'days'))) {
 				tableInfo[article].class = 'new';
 				counts.new++;
-			} else if (date.isAfter(new bot.date().subtract(90, 'days'))) {
+			} else if (date.isAfter(new bot.Date().subtract(90, 'days'))) {
 				counts.recent++;
 				tableInfo[article].class = 'recent';
 			} else {
@@ -193,7 +193,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		sorter[topic].map(function (page) {
 			let tabledata = tableInfo[page.title];
 
-			let formatted_date = new bot.date(tabledata.date).format('YYYY-MM-DD HH:mm');
+			let formatted_date = new bot.Date(tabledata.date).format('YYYY-MM-DD HH:mm');
 
 			let row = [
 				{ label: formatted_date || '[Failed to parse]', class: tabledata.class },
@@ -222,10 +222,10 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 			countold: counts.old,
 			countrecent: counts.recent,
 			countnew: counts.new,
-			date: new bot.date().format('D MMMM YYYY'),
+			date: new bot.Date().format('D MMMM YYYY'),
 			ts: '~~~~~'
 		}) + '<includeonly>' +
-				`<section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate />` +
+				`<section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate />` +
 			'</includeonly>' + '\n';
 
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {

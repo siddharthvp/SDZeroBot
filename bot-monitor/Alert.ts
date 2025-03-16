@@ -20,7 +20,7 @@ export class Alert {
     }
 
     async alertTalkPage() {
-        let page = new bot.page(this.rule.alertPage);
+        let page = new bot.Page(this.rule.alertPage);
         let text = await page.text();
         let header = `== ${this.rule.bot}: ${this.rule.task} failure ==`;
         if (text.includes(header)) {
@@ -117,7 +117,7 @@ export class Alert {
     // static pingpage = 'Wikipedia:Bot activity monitor/Pings'
     // async alertPing() {
     //     let pingUser = this.rule.pingUser || await getBotOperator(this.rule.bot) || this.rule.bot;
-    //     await new bot.page(Alert.pingpage).edit((rev) => {
+    //     await new bot.Page(Alert.pingpage).edit((rev) => {
     //         return {
     //             appendtext: `{{re|${pingUser}}} ${this.rule.bot}'s task ${this.rule.task} failed: found ${this.actions} ${this.rule.action === 'edit' ? 'edits' : 'log actions'} against ${this.rule.minEdits} expected.`,
     //             summary: `Reporting [[:User:${this.rule.bot}|${this.rule.bot}]]: ${this.rule.task}`
@@ -137,7 +137,7 @@ export class Alert {
 
 export async function getBotOperator(botName: string) {
     try {
-        const userpage = await new bot.user(botName).userpage.text();
+        const userpage = await new bot.User(botName).userpage.text();
         const rgx = /\{\{[bB]ot\s*\|\s*([^|}]*)/;
         const match = rgx.exec(userpage);
         if (!match) {

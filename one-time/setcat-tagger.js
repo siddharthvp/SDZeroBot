@@ -4,12 +4,12 @@ const {argv, bot, log} = require('../botbase');
 
 	await bot.getTokensAndSiteInfo();
 
-	let cat = new bot.category('Television series by creator');
+	let cat = new bot.Category('Television series by creator');
 
 	let subcats = (await cat.subcats()).map(e => e.title);
 
 	for (let cat of subcats) {
-		let count = (await new bot.category(cat).subcats()).length;
+		let count = (await new bot.Category(cat).subcats()).length;
 		if (count > 0) {
 			log(`[i] Skip ${cat} as it has subcats`);
 			continue;

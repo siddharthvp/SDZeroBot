@@ -5,9 +5,9 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 	await bot.getTokensAndSiteInfo();
 
-	var ts1 = new bot.date().subtract(8, 'days');
+	var ts1 = new bot.Date().subtract(8, 'days');
 	ts1.setHours(0, 0, 0, 0);
-	var ts2 = new bot.date().subtract(1, 'day');
+	var ts2 = new bot.Date().subtract(1, 'day');
 	ts2.setHours(0, 0, 0, 0);
 
 	// fetch page moves
@@ -49,7 +49,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 	}, 50)) {
 		if (page.missing) {
 			// page doesn't exist, check the logs to see what happened to it
-			let pageobj = new bot.page(page.title);
+			let pageobj = new bot.Page(page.title);
 			let logtext, logentry;
 			let deletionlog = await pageobj.logs(null, 1, 'delete/delete');
 			if (deletionlog.length === 0) {
@@ -132,7 +132,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		var user = utils.arrayChunk(data.user.split(''), 14).map(e => e.join('')).join('<br>');
 
 		table.addRow([
-			data.created ? new bot.date(data.created).format('YYYY-MM-DD') : '',
+			data.created ? new bot.Date(data.created).format('YYYY-MM-DD') : '',
 			`[[${page}]] <small>(moved from [[${data.source}]])</small>`,
 			`<small>${data.excerpt || ''}</small>`,
 			`[[User:${data.user}|${user}]]`,
@@ -140,12 +140,12 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		]);
 	}
 
-	let text = `{{/header|count=${Object.keys(tableInfo).length}|date1=${ts1.format('D MMMM YYYY')}|date2=${ts2.format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>` +
+	let text = `{{/header|count=${Object.keys(tableInfo).length}|date1=${ts1.format('D MMMM YYYY')}|date2=${ts2.format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>` +
 	`\n\n` + TextExtractor.finalSanitise(maintable.getText()) +
 	`\n\n==Moved back or deleted==` +
 	`\n` + TextExtractor.finalSanitise(footertable.getText());
 
-	await saveWithBlacklistHandling(new bot.page('User:SDZeroBot/Draftify Watch'), text, 'Updating report');
+	await saveWithBlacklistHandling(new bot.Page('User:SDZeroBot/Draftify Watch'), text, 'Updating report');
 
 	log('[i] Finished');
 

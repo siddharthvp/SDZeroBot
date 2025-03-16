@@ -38,7 +38,7 @@ log('[S] Got DB query result');
 await bot.getTokensAndSiteInfo();
 
 result.forEach(row => {
-	let pagename = bot.title.makeTitle(row.page_namespace, row.page_title).toText();
+	let pagename = bot.Title.makeTitle(row.page_namespace, row.page_title).toText();
 	tableInfo[pagename] = {
 		ts: row.rev_timestamp
 	};
@@ -48,8 +48,8 @@ log(`[i] Found ${Object.keys(tableInfo).length} pages`);
 
 // Check that the last edit timestamp isn't recent, guards against database replag
 function validateTime(ts) {
-	let date = new bot.date(ts);
-	if (date.isAfter(new bot.date().subtract(2, 'months'))) { // XXX
+	let date = new bot.Date(ts);
+	if (date.isAfter(new bot.Date().subtract(2, 'months'))) { // XXX
 		return false;
 	}
 	return true;
@@ -179,10 +179,10 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 });
 
 
-let page = new bot.page('User:SDZeroBot/G13 eligible' + (argv.sandbox ? '/sandbox' : ''));
+let page = new bot.Page('User:SDZeroBot/G13 eligible' + (argv.sandbox ? '/sandbox' : ''));
 
 let wikitext =
-	`{{/header|count=${table.getNumRows()}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+	`{{/header|count=${table.getNumRows()}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 

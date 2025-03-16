@@ -89,7 +89,7 @@ export default class TextExtractor {
 	}
 
 	static removeImages(text: string) {
-		let wkt = new bot.wikitext(text);
+		let wkt = new bot.Wikitext(text);
 		wkt.parseLinks();
 		wkt.files.forEach(file => {
 			wkt.removeEntity(file);
@@ -101,7 +101,7 @@ export default class TextExtractor {
 		let templateOnNewline = /^\{\{/m; // g is omitted for a reason, the text is changing.
 		let match = templateOnNewline.exec(text);
 		while (match) {
-			let template = new bot.wikitext(text.slice(match.index)).parseTemplates({count: 1})[0];
+			let template = new bot.Wikitext(text.slice(match.index)).parseTemplates({count: 1})[0];
 			if (template) {
 				text = text.replace(template.wikitext, '');
 			} else { // just get rid of that line, otherwise we'd enter an infinite loop
@@ -113,7 +113,7 @@ export default class TextExtractor {
 	}
 
 	static removeTemplates(text: string, templateNameRegex: RegExp) {
-		let wkt = new bot.wikitext(text);
+		let wkt = new bot.Wikitext(text);
 		wkt.parseTemplates({
 			namePredicate: name => templateNameRegex.test(name)
 		});

@@ -130,7 +130,7 @@ function sortAsc(param, data1, data2) {
  */
 function AfcDraftSize(text) {
 	text = text.replace(/<!--.*?-->/sg, ''); // remove comments
-	let wkt = new bot.wikitext(text);
+	let wkt = new bot.Wikitext(text);
 	wkt.parseTemplates({
 		namePredicate: name => name.startsWith('AFC ') // AFC submission, AFC comment, etc
 	});
@@ -145,7 +145,7 @@ function AfcDraftSize(text) {
  * @returns {string}
  */
 function preprocessDraftForExtract(text) {
-	let wkt = new bot.wikitext(text);
+	let wkt = new bot.Wikitext(text);
 	wkt.parseTemplates({
 		namePredicate: name => {
 			return /(infobox|AfC submission)/i.test(name);
@@ -158,7 +158,7 @@ function preprocessDraftForExtract(text) {
 }
 
 /**
- * @param {bot.page} page
+ * @param {bot.Page} page
  * @param {string} text
  * @param {string} summary
  * @returns {Promise}

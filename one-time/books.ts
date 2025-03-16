@@ -54,7 +54,7 @@ import { createLocalSSHTunnel, readFile, saveObject, writeFile } from "../utils"
 		await bot.batchOperation(Object.keys(data), async function worker(page, idx) {
 			if (idx % 100 === 0) log(`[i] Processing page #${idx + 1}`);
 			try {
-				const viewData = await new bot.page('Book:' + page).pageViews({
+				const viewData = await new bot.Page('Book:' + page).pageViews({
 					granularity: 'monthly'
 				});
 				data[page].pageviews = viewData.reduce((accu, cur) => {

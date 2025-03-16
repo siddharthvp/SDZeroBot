@@ -8,7 +8,7 @@ log(`[i] Started`);
 
 await bot.getTokensAndSiteInfo();
 
-let report = new bot.page('User:JJMC89 bot/report/Draftifications/monthly');
+let report = new bot.Page('User:JJMC89 bot/report/Draftifications/monthly');
 
 let revisions = (await report.history('content|timestamp', 20));
 
@@ -16,14 +16,14 @@ const tmpRgx = /\{\{[dD]rafts moved from mainspace.*?\}\}/;
 
 for (let rev of revisions) {
 
-	let month = new bot.date(rev.timestamp).subtract(1, 'month').format('MMMM YYYY');
+	let month = new bot.Date(rev.timestamp).subtract(1, 'month').format('MMMM YYYY');
 
-	let moves = bot.wikitext.parseTable(rev.content.slice(rev.content.indexOf('{|'), rev.content.lastIndexOf('|}') +  2));
+	let moves = bot.Wikitext.parseTable(rev.content.slice(rev.content.indexOf('{|'), rev.content.lastIndexOf('|}') +  2));
 	log(`[+] Parsed ${moves.length} moves for ${month}`);
 
 	for (let move of moves) {
 		let draftname = move.Target.replace(/^\[\[/, '').replace(/\]\]$/, '');
-		let draft = new bot.page(draftname);
+		let draft = new bot.Page(draftname);
 		if (draft.namespace !== 118) {
 			log(`[i] Skipped ${draft} as it's not a draft`);
 			continue;

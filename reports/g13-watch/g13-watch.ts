@@ -76,7 +76,7 @@ import * as OresUtils from '../OresUtils';
 
     // for each page, fetch text, generate excerpt, save to g13db
     for (const pages of arrayChunk(result, 100)) {
-       let pagedata = await bot.read(pages.map(pg => new bot.title(pg.page_title, pg.page_namespace)), {
+       let pagedata = await bot.read(pages.map(pg => new bot.Title(pg.page_title, pg.page_namespace)), {
            "prop": "revisions|info|description|templates|categories",
            "rvprop": "content|timestamp",
            "tltemplates": [
@@ -128,7 +128,7 @@ import * as OresUtils from '../OresUtils';
            let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 
            let excerpt = TextExtractor.getExtract(text, 300, 500, preprocessDraftForExtract);
-           let lastEdited = new bot.date(pg.revisions[0].timestamp);
+           let lastEdited = new bot.Date(pg.revisions[0].timestamp);
            let size = AfcDraftSize(text);
            let title = pg.title;
            let desc = pg.description;
@@ -163,7 +163,7 @@ import * as OresUtils from '../OresUtils';
 
     // Delete data older than 1 week in g13 db
     await g13db.run(`DELETE FROM g13 WHERE ts < FROM_UNIXTIME(?)`, [
-        Math.round(new bot.date().subtract(6, 'months').subtract(7 * 24, 'hours').getTime() / 1000)
+        Math.round(new bot.Date().subtract(6, 'months').subtract(7 * 24, 'hours').getTime() / 1000)
     ]);
     log(`[i] Deleted g13 db data more than 1 week old`);
 
@@ -173,12 +173,12 @@ import * as OresUtils from '../OresUtils';
     const g13Regex = /G13/i;
 
     const lestart = (function () {
-        let d = new bot.date().subtract(24, 'hours');
+        let d = new bot.Date().subtract(24, 'hours');
         d.setUTCHours(0,0,0,0);
         return d;
     })();
     const leend = (function () {
-        let d = new bot.date();
+        let d = new bot.Date();
         d.setUTCHours(0,0,0,0);
         return d;
     })();
@@ -282,7 +282,7 @@ import * as OresUtils from '../OresUtils';
         if (details.special) notes.push('5-year');
 
         table.addRow([
-            // details.ts ? new bot.date(details.ts).format('YYYY-MM-DD HH:mm') : '',
+            // details.ts ? new bot.Date(details.ts).format('YYYY-MM-DD HH:mm') : '',
             page,
             details.excerpt ? details.excerpt :
                 (details.error ? `<span class="error">[${details.error}]</span>` : ''),
@@ -293,19 +293,19 @@ import * as OresUtils from '../OresUtils';
     });
     const wikitable = TextExtractor.finalSanitise(table.getText());
 
-    let yesterday = new bot.date().subtract(1, 'day').format('D MMMM YYYY');
+    let yesterday = new bot.Date().subtract(1, 'day').format('D MMMM YYYY');
 
-    let page = new bot.page('User:SDZeroBot/G13 Watch' + (argv.sandbox ? '/sandbox' : ''));
+    let page = new bot.Page('User:SDZeroBot/G13 Watch' + (argv.sandbox ? '/sandbox' : ''));
 
     let oldlinks = '';
     try {
         oldlinks = (await page.history(['timestamp', 'ids'], 3)).map(rev => {
-            let date = new bot.date(rev.timestamp).subtract(24, 'hours');
+            let date = new bot.Date(rev.timestamp).subtract(24, 'hours');
             return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
         }).join(' - ') + ' - {{history|2=older}}';
     } catch (e) {}
 
-    let text = `{{/header/v4|count=${numDeletions}|date=${yesterday}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>`
+    let text = `{{/header/v4|count=${numDeletions}|date=${yesterday}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>`
         + `\n\n${wikitable}`
         + `\n''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''`;
 

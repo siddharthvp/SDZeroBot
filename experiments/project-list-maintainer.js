@@ -4,7 +4,7 @@ const {bot, log} = require('../botbase');
 
 await bot.getTokensAndSiteInfo();
 
-let page = bot.page('Wikipedia:WikiProject_Articles_for_creation/WikiProject_templates.json');
+let page = bot.Page('Wikipedia:WikiProject_Articles_for_creation/WikiProject_templates.json');
 let json = JSON.parse(await page.text());
 
 let templates = Object.values(json).map(t => 'Template:' + t);

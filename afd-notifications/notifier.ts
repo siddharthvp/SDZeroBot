@@ -49,9 +49,9 @@ class Notifier {
 	}
 
 	async getConfig() {
-		let userconfig = new bot.page('User:SDZeroBot/AfD notifier');
+		let userconfig = new bot.Page('User:SDZeroBot/AfD notifier');
 		let text = await userconfig.text();
-		let wkt = new bot.wikitext(text);
+		let wkt = new bot.Wikitext(text);
 		wkt.unbind('<pre>', '</pre>');
 		wkt.unbind('<!--', '-->');
 		let sections = wkt.parseSections();
@@ -59,7 +59,7 @@ class Notifier {
 		this.config = {};
 
 		let percentCustomisations = sections[2].content;
-		let items = new bot.wikitext(percentCustomisations).parseTemplates({
+		let items = new bot.Wikitext(percentCustomisations).parseTemplates({
 			namePredicate: name => name === '/user'
 		});
 		for (let item of items) {
@@ -74,7 +74,7 @@ class Notifier {
 		}
 
 		let exclusions = sections[4].content;
-		new bot.wikitext(exclusions).parseTemplates({
+		new bot.Wikitext(exclusions).parseTemplates({
 			namePredicate: name => name === 'U'
 		}).forEach(t => {
 			let user = t.getValue(1);
@@ -91,8 +91,8 @@ class Notifier {
 	}
 
 	async getAfDs() {
-		this.date = new bot.date().subtract(1, 'day').format('YYYY MMMM D');
-		const afdlog = new bot.page(`Wikipedia:Articles for deletion/Log/${this.date}`);
+		this.date = new bot.Date().subtract(1, 'day').format('YYYY MMMM D');
+		const afdlog = new bot.Page(`Wikipedia:Articles for deletion/Log/${this.date}`);
 		const text = await afdlog.text();
 		let rgx = /\{\{(Wikipedia:Articles for deletion\/.*?)}}(?!<!--Relisted-->)/mg;
 		this.afds = {};
@@ -118,7 +118,7 @@ class Notifier {
 			return log(`[E] Failed to read a timestamp in ${afd}`);
 		}
 		let ts = tsmatch[0];
-		let date = new bot.date(ts);
+		let date = new bot.Date(ts);
 		if (date.format('YYYY MMMM D') !== this.date) {
 			// not actually from yesterday; might be a manual relist
 			log(`[W] ${afd} not from yesterday (manual relist)?`);
@@ -138,7 +138,7 @@ class Notifier {
 			articles.push(article);
 		}
 
-		let usersWhoEditedTheAfD = new Set((await new bot.page(afd).history(['user'], 100)).map(e => e.user));
+		let usersWhoEditedTheAfD = new Set((await new bot.Page(afd).history(['user'], 100)).map(e => e.user));
 
 		const knownAbortReasons = ['nobots', 'already-notified', 'blocked', 'blocked-indef', 'locked',
 			'user-bot'];
@@ -336,7 +336,7 @@ class Notifier {
 
 	// XXX: everything here can be done for multiple users at once
 	async checkWhetherToNotify(username, article, afd) {
-		let user = new bot.user(username);
+		let user = new bot.User(username);
 		if (/bot\b/i.test(username)) {
 			log(`[W] Didn't notify ${username} as user is bot?`);
 			return Promise.reject('bot-user');
@@ -368,7 +368,7 @@ class Notifier {
 					log(`[C] Not notifying ${username} as account is indef-blocked`);
 					return Promise.reject('blocked-indef');
 				}
-				if (new bot.date().add(7, 'days').isBefore(new bot.date(blockinfo.blockexpiry))) {
+				if (new bot.Date().add(7, 'days').isBefore(new bot.Date(blockinfo.blockexpiry))) {
 					log(`[C] Not notifying ${username} as account is blocked for 7+ days`);
 					return Promise.reject('blocked');
 				}

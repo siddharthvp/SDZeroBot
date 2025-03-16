@@ -18,7 +18,7 @@ async function runForDate(date: MwnDate) {
 	let tableInfo: Record<string, any> = {};
 
 	// TODO: make date class objects immutable
-	const startTs = new bot.date(date.getTime()).add(1, 'day').format('YYYYMMDDHHmmss');
+	const startTs = new bot.Date(date.getTime()).add(1, 'day').format('YYYYMMDDHHmmss');
 	const endTs = date.format('YYYYMMDDHHmmss');
 
 	const db = new enwikidb();
@@ -48,7 +48,7 @@ async function runForDate(date: MwnDate) {
 	log('[S] Got DB query result');
 
 	result.forEach(row => {
-		let pagename = bot.title.makeTitle(row.page_namespace, row.page_title).toText();
+		let pagename = bot.Title.makeTitle(row.page_namespace, row.page_title).toText();
 		tableInfo[pagename] = {
 			ts: row.rev_timestamp
 		};
@@ -174,7 +174,7 @@ async function runForDate(date: MwnDate) {
 		if (data.draftified) notes.push('draftified');
 
 		table.addRow([
-			new bot.date(data.lastedit).format('YYYY-MM-DD HH:mm'),
+			new bot.Date(data.lastedit).format('YYYY-MM-DD HH:mm'),
 			`[[${title}]] ${data.desc ? `(<small>${data.desc}</small>)` : ''}`,
 			data.extract || '',
 			data.declines ?? '',
@@ -184,11 +184,11 @@ async function runForDate(date: MwnDate) {
 	});
 
 
-	let page = new bot.page(REPORT_PAGE);
+	let page = new bot.Page(REPORT_PAGE);
 	let oldlinks = await makeOldLinks();
 
 	let wikitext =
-		`{{/header|count=${table.getNumRows()}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+		`{{/header|count=${table.getNumRows()}|oldlinks=${oldlinks}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;
@@ -199,8 +199,8 @@ ${TextExtractor.finalSanitise(table.getText())}
 
 // Check that the last edit timestamp isn't recent, guards against database replag
 function validateTime(ts) {
-	let date = new bot.date(ts);
-	return date.isBefore(new bot.date().subtract(2, 'months'));
+	let date = new bot.Date(ts);
+	return date.isBefore(new bot.Date().subtract(2, 'months'));
 }
 
 const DATE_FROM_SUMMARY_REGEX = /last edit on (\d+.*)/;
@@ -210,11 +210,11 @@ function dateFromEditSummary(editSummary: string) {
 	if (!rgxMatch) {
 		return null;
 	}
-	return new bot.date(rgxMatch[1] + ' Z');
+	return new bot.Date(rgxMatch[1] + ' Z');
 }
 
 async function getRecentEdits(limit: number) {
-	return new bot.page(REPORT_PAGE).history(['comment', 'ids'], limit, {
+	return new bot.Page(REPORT_PAGE).history(['comment', 'ids'], limit, {
 		rvuser: 'SDZeroBot'
 	});
 }
@@ -260,11 +260,11 @@ async function makeOldLinks() {
 			lastRunDate = dateFromEditSummary(lastEditSummary);
 		} catch (e) {} finally {
 			if (!lastRunDate) {
-				lastRunDate = new bot.date().subtract(1, 'day').subtract(6, 'months').add(6, 'days');
+				lastRunDate = new bot.Date().subtract(1, 'day').subtract(6, 'months').add(6, 'days');
 			}
 		}
 
-		let runTillDate = new bot.date().subtract(6, 'months').add(6, 'days');
+		let runTillDate = new bot.Date().subtract(6, 'months').add(6, 'days');
 
 		// zero out times for easy comparison
 		// and for the SQL to work out right

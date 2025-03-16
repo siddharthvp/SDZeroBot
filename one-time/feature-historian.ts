@@ -18,7 +18,7 @@ for await (let json of contQuery) {
 }
 log(`[S] Got ${pages.length} featured articles`);
 
-let talkpages = pages.map(pg => new bot.page(pg).getTalkPage().toText());
+let talkpages = pages.map(pg => new bot.Page(pg).getTalkPage().toText());
 fs.writeFileSync('./cache', JSON.stringify(talkpages));
 //talkpages = talkpages.slice(0, 500);
 
@@ -40,7 +40,7 @@ for await (let pg of reader) {
 		continue;
 	}
 	let text = pg.revisions[0].content;
-	let template = bot.wikitext.parseTemplates(text, {recursive: true}).filter(t => {
+	let template = bot.Wikitext.parseTemplates(text, {recursive: true}).filter(t => {
 		return /(T:AH|Article ?([Hh]istory|milestones))/.test(t.name as string)
 	})[0];
 	if (!template) {
@@ -63,7 +63,7 @@ for await (let pg of reader) {
 	let date;
 	let dateValue = template.getValue(`action${biggestNum}date`);
 	if (dateValue) {
-		let parsedDate = new bot.date(dateValue);
+		let parsedDate = new bot.Date(dateValue);
 		if (parsedDate.isValid()) {
 			date = parsedDate.format('YYYY-MM-DD');
 		}
@@ -73,7 +73,7 @@ for await (let pg of reader) {
 	let maindate;
 	let maindateValue = template.getValue('maindate');
 	if (maindateValue) {
-		let maindateParsed = new bot.date(maindateValue);
+		let maindateParsed = new bot.Date(maindateValue);
 		if (maindateParsed.isValid()) {
 			maindate = maindateParsed.format('YYYY-MM-DD');
 		}

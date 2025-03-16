@@ -11,7 +11,7 @@ const GANTemplateRegex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
 const GANTemplateNameRegex = /^GA ?(c(andidate)?|n(om(inee)?)?)$/i;
 
 export async function processArticle(article: string) {
-	let talkpage = new bot.page(new bot.page(article).getTalkPage());
+	let talkpage = new bot.Page(new bot.Page(article).getTalkPage());
 	let talkpageedits = talkpage.historyGen(
 		['content', 'user', 'timestamp'],
 		{ rvsection: '0', rvlimit: 100, rvslots: 'main' } // one-pass
@@ -29,7 +29,7 @@ export async function processArticle(article: string) {
 		if (!fallback_strategy) {
 			// `content &&` to protect against revdel'd/suppressed revisions.
 			// we just assume the hidden revisions don't have the GA template.
-			let template = content && bot.wikitext.parseTemplates(content, {
+			let template = content && bot.Wikitext.parseTemplates(content, {
 				namePredicate: name => GANTemplateNameRegex.test(name)
 			})[0];
 			if (template) {
@@ -37,7 +37,7 @@ export async function processArticle(article: string) {
 				let nominatorSignature = template.getValue('nominator');
 				let nom = getUsernameFromSignature(nominatorSignature);
 				if (nom) {
-					let date = new bot.date(template.getValue(1));
+					let date = new bot.Date(template.getValue(1));
 					// If no date could be extracted from template, fallback to considering the rev timestamp
 					// (not strictly correct, we want the date at which the GAN template was added, not the date of the
 					// rev preceding addition of GA template)
@@ -74,7 +74,7 @@ export async function processArticle(article: string) {
 const dbWriteFailures = createLogStream(__dirname + '/db-write-failures.out');
 
 function addToDb(article: string, nom: string, date, fallbackStrategy = false): Promise<[string, string, boolean]> {
-	let date_str = new bot.date(date).format('YYYY-MM-DD');
+	let date_str = new bot.Date(date).format('YYYY-MM-DD');
 	db.run(`REPLACE INTO ${TABLE} VALUES (?, ?, ?, UTC_DATE())`, [article, nom, date_str]).catch(err => {
 		log(`[E] Db error ${err}`);
 		log(err);
@@ -95,7 +95,7 @@ function getUsernameFromSignature(sig: string) {
 	if (typeof sig !== 'string') {
 		return;
 	}
-	let wkt = new bot.wikitext(decodeHtmlEntities(sig));
+	let wkt = new bot.Wikitext(decodeHtmlEntities(sig));
 	wkt.parseLinks();
 	let userPageLinks = [], userTalkPageLinks = [];
 	wkt.links.forEach(link => {
@@ -131,7 +131,7 @@ export async function getCurrentTitle(title: string, date: string): Promise<stri
 		"letype": "move",
 		"leprop": "timestamp|details|comment|title",
 		"letitle": title,
-		"lestart": new bot.date(date).add(10, 'seconds').toISOString(),
+		"lestart": new bot.Date(date).add(10, 'seconds').toISOString(),
 		"ledir": "newer",
 		"lelimit": "1"
 	})).query.logevents[0];
@@ -152,9 +152,9 @@ export async function getCurrentTitle(title: string, date: string): Promise<stri
  */
 export async function getCurrentUsername(username: string, date: string): Promise<string> {
 	// This is called during the stream task as well, avoid API call in such cases
-	const dateParsed = new bot.date(date);
+	const dateParsed = new bot.Date(date);
 	// if now - dateParsed < 2 minutes
-	if (new bot.date().subtract(2, 'minutes').isBefore(dateParsed)) {
+	if (new bot.Date().subtract(2, 'minutes').isBefore(dateParsed)) {
 		return username;
 	}
 	const rename = (await bot.query({

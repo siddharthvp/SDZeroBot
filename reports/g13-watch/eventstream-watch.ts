@@ -44,7 +44,7 @@ export default class g13Watch extends Route {
 		let title = page.title;
 		// data.timestamp is *seconds* since epoch
 		// This date object will be passed to db
-		let ts = data.timestamp ? new bot.date(data.timestamp * 1000) : null;
+		let ts = data.timestamp ? new bot.Date(data.timestamp * 1000) : null;
 		this.log(`[+] Page ${title} at ${ts}`);
 		let pagedata = await bot.read(title, {
 			prop: 'revisions|description',

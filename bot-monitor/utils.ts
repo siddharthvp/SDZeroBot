@@ -16,7 +16,7 @@ export function subtractFromNow(duration: string, times = 1): MwnDate {
             num *= 7;
         }
         // @ts-ignore
-        return new bot.date().subtract(num * times, unit);
+        return new bot.Date().subtract(num * times, unit);
     } catch (err) {
         throw new RuleError(`Invalid duration: ${duration}: ${err.message}`);
     }

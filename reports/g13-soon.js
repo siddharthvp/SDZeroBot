@@ -11,8 +11,8 @@ const OresUtils = require('./OresUtils');
 
 	// using a union here, the [merged query](https://quarry.wmflabs.org/query/47717)
 	// takes a lot more time
-	const fiveMonthOldTs = new bot.date().subtract(5, 'months').format('YYYYMMDDHHmmss');
-	const sixMonthOldTs = new bot.date().subtract(6, 'months').format('YYYYMMDDHHmmss');
+	const fiveMonthOldTs = new bot.Date().subtract(5, 'months').format('YYYYMMDDHHmmss');
+	const sixMonthOldTs = new bot.Date().subtract(6, 'months').format('YYYYMMDDHHmmss');
 	const sql = new enwikidb();
 	const result = await sql.query(`
 		SELECT DISTINCT page_namespace, page_title, rev_timestamp, page_latest
@@ -44,7 +44,7 @@ const OresUtils = require('./OresUtils');
 	let revidsTitles = {};
 	let tableInfo = {};
 	result.forEach(row => {
-		var pagename = bot.title.makeTitle(row.page_namespace, row.page_title).toText();
+		var pagename = bot.Title.makeTitle(row.page_namespace, row.page_title).toText();
 		revidsTitles[row.page_latest] = pagename
 		tableInfo[pagename] = {
 			ts: row.rev_timestamp
@@ -175,7 +175,7 @@ const OresUtils = require('./OresUtils');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
 	var count = Object.keys(revidsTitles).length;
-	var pagetext = `{{/header|count=${count}|date=${new bot.date().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
+	var pagetext = `{{/header|count=${count}|date=${new bot.Date().format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>\n`;
 
 	pagetext += sql.makeReplagMessage(72);
 

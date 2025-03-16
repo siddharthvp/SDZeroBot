@@ -35,12 +35,12 @@ export class NoMetadataStore implements MetadataStore {
         log(`[i] Retrieved last edits data. DB query took ${timeTaken.toFixed(2)} seconds.`);
 
         const lastEditsData = Object.fromEntries(lastEditsDb.map((row) => [
-            new bot.page(row.page_title as string, row.page_namespace as number).toText(),
-            row.last_edit && new bot.date(row.last_edit)
+            new bot.Page(row.page_title as string, row.page_namespace as number).toText(),
+            row.last_edit && new bot.Date(row.last_edit)
         ]));
 
         let allQueries: Record<string, Query[]> = {};
-        let pages = (await new bot.page('Template:' + TEMPLATE).transclusions());
+        let pages = (await new bot.Page('Template:' + TEMPLATE).transclusions());
         for await (let pg of bot.readGen(pages, {}, 50)) {
             if (pg.ns === 0) { // sanity check: don't work in mainspace
                 continue;
@@ -62,7 +62,7 @@ export class NoMetadataStore implements MetadataStore {
         if (!lastUpdate) {
             return true;
         }
-        let daysDiff = (new bot.date().getTime() - lastUpdate.getTime())/8.64e7;
+        let daysDiff = (new bot.Date().getTime() - lastUpdate.getTime())/8.64e7;
         const isUpdateDue = daysDiff >= interval - 0.5;
         if (!isUpdateDue) {
             log(`[+] Skipping ${query} as update is not due.`);

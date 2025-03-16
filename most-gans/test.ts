@@ -61,7 +61,7 @@ describe('most-gans', () => {
 		assert.strictEqual(await getCurrentUsername('Jh3rifesd9', '2018-01-01'), 'Jh3rifesd9');
 
 		let startTime = process.hrtime.bigint();
-		assert.strictEqual(await getCurrentUsername('HInBC', new bot.date().subtract(15, 'seconds').toISOString()), 'HInBC');
+		assert.strictEqual(await getCurrentUsername('HInBC', new bot.Date().subtract(15, 'seconds').toISOString()), 'HInBC');
 		let endTime = process.hrtime.bigint();
 		// API call shouldn't have taken place, so takes less time
 		assert.strictEqual(Number(endTime - startTime)/1e6 < 10, true);

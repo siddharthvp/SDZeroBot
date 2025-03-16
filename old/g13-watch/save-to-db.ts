@@ -9,12 +9,12 @@ const {preprocessDraftForExtract} = require('../../reports/commons');
 const auth = require('../../.auth');
 
 function logError(err) {
-	fs.appendFileSync('./errlog.txt', `\n[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${err.stack}`);
+	fs.appendFileSync('./errlog.txt', `\n[${new bot.Date().format('YYYY-MM-DD HH:mm:ss')}]: ${err.stack}`);
 }
 function logWarning(evt) {
 	try{
 		const stringified = JSON.stringify(evt, null, 2);
-		fs.appendFileSync('./warnlog.txt', `\n[${new bot.date().format('YYYY-MM-DD HH:mm:ss')}]: ${stringified}`);
+		fs.appendFileSync('./warnlog.txt', `\n[${new bot.Date().format('YYYY-MM-DD HH:mm:ss')}]: ${stringified}`);
 	} catch(e) { // JSON.stringify fails on circular object
 		logError(e);
 	}
@@ -50,12 +50,12 @@ async function initDb() {
 async function initEventStream(pool) {
 
 	// SELECT statement here returns a JS Date object
-	const firstrowts = new bot.date((await pool.query(`SELECT ts FROM g13 ORDER BY ts DESC LIMIT 1`))?.[0]?.[0]?.ts);
-	const tsUsable = firstrowts.isValid() && new bot.date().subtract(7, 'days').isBefore(firstrowts);
+	const firstrowts = new bot.Date((await pool.query(`SELECT ts FROM g13 ORDER BY ts DESC LIMIT 1`))?.[0]?.[0]?.ts);
+	const tsUsable = firstrowts.isValid() && new bot.Date().subtract(7, 'days').isBefore(firstrowts);
 	log(`[i] firstrow ts: ${firstrowts}: ${tsUsable}`);
 
 	let stream = new bot.stream('recentchange', {
-		since: !argv.fromNow && tsUsable ? firstrowts: new bot.date().subtract(2, 'minutes'),
+		since: !argv.fromNow && tsUsable ? firstrowts: new bot.Date().subtract(2, 'minutes'),
 		onerror: async evt => {
 			log(`[W] event source encountered error:`);
 			console.log(evt);
@@ -80,7 +80,7 @@ async function initEventStream(pool) {
 		let title = match[1];
 		// data.timestamp is *seconds* since epoch
 		// This date object will be passed to db
-		let ts = data.timestamp ? new bot.date(data.timestamp * 1000) : null;
+		let ts = data.timestamp ? new bot.Date(data.timestamp * 1000) : null;
 		log(`[+] Page ${title} at ${ts}`);
 		let pagedata = await bot.read(title, {
 			prop: 'revisions|description',

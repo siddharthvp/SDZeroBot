@@ -45,7 +45,7 @@ import {NS_DRAFT} from "../namespaces";
 	await bot.getTokensAndSiteInfo();
 
 	result.forEach(row => {
-		let pagename = bot.title.makeTitle(NS_DRAFT, row.page_title).toText();
+		let pagename = bot.Title.makeTitle(NS_DRAFT, row.page_title).toText();
 		tableInfo[pagename] = {
 			revid: row.page_latest,
 			creationDate: formatDateString(row.rev_timestamp),
@@ -185,10 +185,10 @@ import {NS_DRAFT} from "../namespaces";
 	});
 
 
-	let page = new bot.page('User:SDZeroBot/Pending AfC submissions' + (argv.sandbox ? '/sandbox' : ''));
+	let page = new bot.Page('User:SDZeroBot/Pending AfC submissions' + (argv.sandbox ? '/sandbox' : ''));
 
 	let wikitext =
-		`{{/header|count=${table.getNumRows()}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+		`{{/header|count=${table.getNumRows()}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 `;
 

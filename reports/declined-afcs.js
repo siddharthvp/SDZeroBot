@@ -8,20 +8,20 @@ const {enwikidb} = require("../db");
 log(`[i] Started`);
 await bot.getTokensAndSiteInfo();
 
-let earwigReport = new bot.page('Template:AfC statistics/declined');
-let yesterday = new bot.date().subtract(1, 'day');
+let earwigReport = new bot.Page('Template:AfC statistics/declined');
+let yesterday = new bot.Date().subtract(1, 'day');
 let tableInfo = {};
 
-bot.wikitext.parseTemplates(await earwigReport.text(), {
+bot.Wikitext.parseTemplates(await earwigReport.text(), {
 	name: name => name === '#invoke:AfC'
 }).forEach(template => {
 	let title = template.getValue('t');
 	let ts = template.getValue('sd');
-	if (!title || new bot.date(ts).getDate() !== yesterday.getDate()) {
+	if (!title || new bot.Date(ts).getDate() !== yesterday.getDate()) {
 		return;
 	}
 	tableInfo[title] = {
-		ts: new bot.date(ts),
+		ts: new bot.Date(ts),
 		copyvio: !!template.getValue('nc')
 	};
 });
@@ -163,15 +163,15 @@ Object.entries(tableInfo).filter(([_title, data]) => { // eslint-disable-line no
 	]);
 });
 
-let page = new bot.page('User:SDZeroBot/Recent AfC declines' + (argv.sandbox ? '/sandbox' : ''));
+let page = new bot.Page('User:SDZeroBot/Recent AfC declines' + (argv.sandbox ? '/sandbox' : ''));
 
 let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
-	let date = new bot.date(rev.timestamp).subtract(24, 'hours');
+	let date = new bot.Date(rev.timestamp).subtract(24, 'hours');
 	return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 }).join(' - ') + ' - {{history|2=older}}';
 
 let wikitext =
-`{{/header|count=${table.getNumRows()}|date=${yesterday.format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}${replagNote}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+`{{/header|count=${table.getNumRows()}|date=${yesterday.format('D MMMM YYYY')}|oldlinks=${oldlinks}|ts=~~~~~}}${replagNote}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>
 ${TextExtractor.finalSanitise(table.getText())}
 ''Rejected, unsourced, blank, very short or test submissions are at the bottom, more promising drafts are at the top.''
 `;

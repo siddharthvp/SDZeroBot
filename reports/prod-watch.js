@@ -4,7 +4,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 (async function() {
 
 	await bot.getTokensAndSiteInfo();
-	var grid = new bot.page('User:SDZeroBot/PROD grid');
+	var grid = new bot.Page('User:SDZeroBot/PROD grid');
 
 	var userlink = function(user) {
 		return `[[User:${user}|${user}]]`;
@@ -33,7 +33,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		}).then(revs => {
 			let rev = revs[0];
 			var wikitable = rev.content.slice(rev.content.indexOf('{|'));
-			var parsedtable = bot.wikitext.parseTable(wikitable);
+			var parsedtable = bot.Wikitext.parseTable(wikitable);
 			log(`Found ${parsedtable.length} rows in revision`);
 
 			for (let item of parsedtable) {
@@ -55,7 +55,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		var redirectRgx = /^\s*#redirect\s*\[\[(.*?)\]\]/i;
 
 		await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
-			let pageobj = new bot.page(page);
+			let pageobj = new bot.Page(page);
 
 			return pageobj.history('comment|user|content|timestamp', 50, {
 				rvsection: 0
@@ -95,7 +95,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 								let target = match[1];
 
 								// non-mainspace target (draftspace?), don't follow
-								if (bot.title.newFromText(target).namespace !== 0) {
+								if (bot.Title.newFromText(target).namespace !== 0) {
 									pages[page].note = rev.comment; // this will have full desc of what happend
 									others.add(page);
 									return;
@@ -226,7 +226,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 									let target = move.params.target_title;
 
 									// non-mainspace target, don't follow
-									if (bot.title.newFromText(target).namespace !== 0) {
+									if (bot.Title.newFromText(target).namespace !== 0) {
 										pages[page].note = `Moved to [[${target}]] by ${userlink(move.user)}: ${formatComment(move.comment)}`;
 										others.add(page);
 										return;
@@ -286,7 +286,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 		let text =
 
-		`{{User:SDZeroBot/PROD Watch/header|count=${totalcount}|date=${date.format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>
+		`{{User:SDZeroBot/PROD Watch/header|count=${totalcount}|date=${date.format('D MMMM YYYY')}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>
 		
 		==De-prods (${deprodded.size})==
 		${deprodtable}
@@ -306,15 +306,15 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		${deletedtable}
 		`.replace(/^\t\t/mg, ''); // remove tabs because of the indentation in this file
 
-		await saveWithBlacklistHandling(new bot.page(`User:SDZeroBot/PROD Watch/${subpage}`), text, 'Updating report');
+		await saveWithBlacklistHandling(new bot.Page(`User:SDZeroBot/PROD Watch/${subpage}`), text, 'Updating report');
 
 	}
 
 	// Triggers:
 
-	await main(new bot.date().subtract(7, 'days'), 'last week');
-	await main(new bot.date().subtract(14, 'days'), 'last fortnight');
-	await main(new bot.date().subtract(28, 'days'), 'last month');
+	await main(new bot.Date().subtract(7, 'days'), 'last week');
+	await main(new bot.Date().subtract(14, 'days'), 'last fortnight');
+	await main(new bot.Date().subtract(28, 'days'), 'last month');
 
 	log(`[i] Finished`);
 

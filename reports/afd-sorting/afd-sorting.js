@@ -32,18 +32,18 @@ process.chdir(__dirname);
 			var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var afd_template = new bot.wikitext(pg.revisions[0].content).parseTemplates({
+				var afd_template = new bot.Wikitext(pg.revisions[0].content).parseTemplates({
 					count: 1,
 					namePredicate: name => name === 'Article for deletion/dated' || name === 'AfDM'
 				})[0];
 				var afd_date, afd_page;
 				if (afd_template) {
 					if (afd_template.getValue('timestamp')) {
-						afd_date = new bot.date(afd_template.getValue('timestamp')).format('YYYY-MM-DD');
+						afd_date = new bot.Date(afd_template.getValue('timestamp')).format('YYYY-MM-DD');
 					} else if (afd_template.getValue('year') && afd_template.getValue('month') && afd_template.getValue('day')) {
-						afd_date = new bot.date(
+						afd_date = new bot.Date(
 							afd_template.getValue('year'),
-							bot.date.localeData.months.indexOf(afd_template.getValue('month')),
+							bot.Date.localeData.months.indexOf(afd_template.getValue('month')),
 							afd_template.getValue('day')
 						).format('YYYY-MM-DD');
 					}
@@ -111,7 +111,7 @@ process.chdir(__dirname);
 	// Temp hack as this single mass AFD is breaking the page
 	delete afd_data['Wikipedia:Articles for deletion/List of Air Nippon destinations'];
 
-	var accessdate = new bot.date().format('D MMMM YYYY');
+	var accessdate = new bot.Date().format('D MMMM YYYY');
 
 
 	/* GET DATA FROM ORES */
@@ -200,7 +200,7 @@ process.chdir(__dirname);
 
 					// over-write date with date of last relist
 					if (relists && relist_date) {
-						tabledata.afd_date = new bot.date(relist_date).format('YYYY-MM-DD');
+						tabledata.afd_date = new bot.Date(relist_date).format('YYYY-MM-DD');
 					}
 
 					// parse the date from concern it hadn't been parsed from the template earlier
@@ -208,7 +208,7 @@ process.chdir(__dirname);
 					if (!tabledata.afd_date) {
 						var datematch = concern.match(/\d{2}:\d{2} \d{1,2} \w+ \d{4} \(UTC\)/);
 						if (datematch) {
-							tabledata.afd_date = new bot.date(datematch[0]).format('YYYY-MM-DD');
+							tabledata.afd_date = new bot.Date(datematch[0]).format('YYYY-MM-DD');
 						}
 					}
 				}
@@ -230,7 +230,7 @@ process.chdir(__dirname);
 	var makeMainPage = function() {
 		var count = Object.keys(revidsTitles).length;
 
-		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
+		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>\n`;
 		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
@@ -239,7 +239,7 @@ process.chdir(__dirname);
 		content += '\n{{reflist-talk}}';
 
 		if (!argv.dry) {
-			return saveWithBlacklistHandling(new bot.page('User:SDZeroBot/AfD sorting'), content, 'Updating report');
+			return saveWithBlacklistHandling(new bot.Page('User:SDZeroBot/AfD sorting'), content, 'Updating report');
 		}
 
 	}

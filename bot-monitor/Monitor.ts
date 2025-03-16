@@ -51,11 +51,11 @@ export class Monitor {
 		log(`[V] Checking edits of ${this.rule.bot}`);
 		var ucParams: ApiQueryUserContribsParams = {
 			ucnamespace: this.rule.namespace,
-			ucend: moreRecent(new bot.date(this.lastSeenDb?.checkts), this.rule.fromDate),
+			ucend: moreRecent(new bot.Date(this.lastSeenDb?.checkts), this.rule.fromDate),
 			ucprop: ['title', 'comment', 'timestamp'],
 			uclimit: 100 // items retrieved in one API call
 		};
-		for await (let edit of new bot.user(this.rule.bot).contribsGen(ucParams)) {
+		for await (let edit of new bot.User(this.rule.bot).contribsGen(ucParams)) {
 			if (this.checkEdit(edit)) {
 				if (++this.actions >= this.rule.minEdits) {
 					await checksDb.update(this.rawRule, edit.timestamp);
@@ -72,7 +72,7 @@ export class Monitor {
 		log(`[V] Checking logs of ${this.rule.bot}`);
 		let apiParams: ApiQueryLogEventsParams = {
 			leprop: ['title', 'comment', 'timestamp'],
-			leend: moreRecent(new bot.date(this.lastSeenDb?.checkts), this.rule.fromDate),
+			leend: moreRecent(new bot.Date(this.lastSeenDb?.checkts), this.rule.fromDate),
 			lelimit: 100 // items retrieved in one API call
 		};
 		// if multiple namespaces are given, can't filter them via the API
@@ -88,7 +88,7 @@ export class Monitor {
 			apiParams.letype = this.rule.action;
 		}
 		try {
-			for await (let action of new bot.user(this.rule.bot).logsGen(apiParams)) {
+			for await (let action of new bot.User(this.rule.bot).logsGen(apiParams)) {
 				if (this.checkLogEvent(action)) {
 					if (++this.actions >= this.rule.minEdits) {
 						await checksDb.update(this.rawRule, action.timestamp);
@@ -133,7 +133,7 @@ export class Monitor {
 		let checkAction = forLogs ? this.checkLogEvent.bind(this) : this.checkEdit.bind(this);
 		for (let action of actions) {
 			if (checkAction(action)) {
-				this.lastSeen = new bot.date(action.timestamp);
+				this.lastSeen = new bot.Date(action.timestamp);
 				await checksDb.updateLastSeen(this.rawRule, action.timestamp);
 				return;
 			}
@@ -141,9 +141,9 @@ export class Monitor {
 		if (this.lastSeenDb) {
 			log(`[V] Filling in last seen from db`);
 			if (this.lastSeenDb.notseen) {
-				this.lastSeenNot = new bot.date(this.lastSeenDb.lastseents);
+				this.lastSeenNot = new bot.Date(this.lastSeenDb.lastseents);
 			} else {
-				this.lastSeen = new bot.date(this.lastSeenDb.lastseents);
+				this.lastSeen = new bot.Date(this.lastSeenDb.lastseents);
 			}
 			return;
 		}
@@ -159,7 +159,7 @@ export class Monitor {
 		}
 		log(`[V] Still getting last seen of ${this.name}: Try with time`);
 		let lastSeenNot = lastAction.timestamp;
-		for await (let action of new bot.user(this.rule.bot)[forLogs ? 'logsGen' : 'contribsGen']({
+		for await (let action of new bot.User(this.rule.bot)[forLogs ? 'logsGen' : 'contribsGen']({
 			...apiParams,
 			...listParams({
 				start: lastAction.timestamp,
@@ -167,14 +167,14 @@ export class Monitor {
 			})
 		})) {
 			if (checkAction(action)) {
-				this.lastSeen = new bot.date(action.timestamp);
+				this.lastSeen = new bot.Date(action.timestamp);
 				await checksDb.updateLastSeen(this.rawRule, action.timestamp);
 				return;
 			} else {
 				lastSeenNot = action.timestamp;
 			}
 		}
-		this.lastSeenNot = new bot.date(lastSeenNot);
+		this.lastSeenNot = new bot.Date(lastSeenNot);
 		await checksDb.updateLastSeen(this.rawRule, lastSeenNot, true);
 	}
 

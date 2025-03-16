@@ -63,7 +63,7 @@ export class Tabulator {
 		} else {
 			msg = '{{tick}} No configuration errors';
 		}
-		await new bot.page(this.rootpage + '/Errors').save(msg, `Updating ${argv.fake ? '(testing)': ''}`);
+		await new bot.Page(this.rootpage + '/Errors').save(msg, `Updating ${argv.fake ? '(testing)': ''}`);
 		log(`[V] Saved error report on-wiki`);
 	}
 
@@ -81,7 +81,7 @@ export class Tabulator {
 		if (argv.dry) {
 			return console.log(text);
 		}
-		await new bot.page(this.rootpage + '/Report').save(text, `Updating ${argv.fake ? '(testing)': ''}`);
+		await new bot.Page(this.rootpage + '/Report').save(text, `Updating ${argv.fake ? '(testing)': ''}`);
 		log(`[V] Saved report on-wiki`);
 		await Tabulator.whineAboutRuleErrors();
 	}

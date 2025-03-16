@@ -17,15 +17,15 @@ let db = new sqlite3.Database('./g13.db', (err) => {
 
 await bot.getTokensAndSiteInfo();
 
-let table = new mwn.table();
+let table = new mwn.Table();
 table.addHeaders([
 	{label: 'Date', style: 'width: 5em'},
 	{label: 'Draft', style: 'width: 18em'},
 	{label: 'Excerpt'}
 ]);
 
-let end = new bot.date().setHours(0,0,0,0);
-let start = new bot.date().subtract(24, 'hours').setHours(0,0,0,0);
+let end = new bot.Date().setHours(0,0,0,0);
+let start = new bot.Date().subtract(24, 'hours').setHours(0,0,0,0);
 
 let count = 0;
 
@@ -44,7 +44,7 @@ db.each(`
 	}
 
 	table.addRow([
-		new bot.date(row.ts * 1000).format('YYYY-MM-DD HH:mm'),
+		new bot.Date(row.ts * 1000).format('YYYY-MM-DD HH:mm'),
 		page,
 		row.excerpt || ''
 	]);
@@ -52,16 +52,16 @@ db.each(`
 }, async () => {
 
 	let wikitable = table.getText();
-	let yesterday = new bot.date().subtract(1, 'day');
+	let yesterday = new bot.Date().subtract(1, 'day');
 
-	let page = new bot.page('User:SDZeroBot/G13 Watch');
+	let page = new bot.Page('User:SDZeroBot/G13 Watch');
 
 	let oldlinks = (await page.history('timestamp|ids', 3)).map(rev => {
-		let date = new bot.date(rev.timestamp).subtract(24, 'hours');
+		let date = new bot.Date(rev.timestamp).subtract(24, 'hours');
 		return `[[Special:Permalink/${rev.revid}|${date.format('D MMMM')}]]`;
 	}).join(' - ') + ' - {{history|2=older}}';
 
-	let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>` 
+	let text = `{{/header|count=${count}|date=${yesterday.format('D MMMM YYYY')}|ts=~~~~~|oldlinks=${oldlinks}}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>` 
 		+ `\n\n${wikitable}`;
 
 	await saveWithBlacklistHandling(page, text);
@@ -71,7 +71,7 @@ db.each(`
 });
 
 // Delete data more than 3 days old:
-let ts_3days_old = Math.round(new bot.date().subtract(72, 'hours').getTime() / 1000);
+let ts_3days_old = Math.round(new bot.Date().subtract(72, 'hours').getTime() / 1000);
 
 db.run(`
 	DELETE FROM g13

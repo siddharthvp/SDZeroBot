@@ -59,7 +59,7 @@ class RedisChecksDb implements ChecksDb {
 		}
 		let cached = await this.redis.hgetall(this.getKey(rule) + '-cached');
 		return cached.rulehash === hash.sha1(rule) &&
-			new bot.date(cached.ts).isAfter(subtractFromNow(rule.duration));
+			new bot.Date(cached.ts).isAfter(subtractFromNow(rule.duration));
 	}
 
 	async getLastSeen(rule: RawRule) {
@@ -134,7 +134,7 @@ class SqliteChecksDb extends SqliteDb implements ChecksDb {
 		]); // on error, last remains undefined
 		return last &&
 			last.rulehash === hash.sha1(rule) && // check that the rule itself hasn't changed
-			new bot.date(last.ts).isAfter(subtractFromNow(rule.duration));
+			new bot.Date(last.ts).isAfter(subtractFromNow(rule.duration));
 	}
 
 
@@ -155,7 +155,7 @@ class SqliteChecksDb extends SqliteDb implements ChecksDb {
 		await this.run(`INSERT OR REPLACE INTO last_seen VALUES(?, ?, ?, ?, ?)`, [
 			this.getKey(rule),
 			hash.sha1(rule),
-			new bot.date().toISOString(),
+			new bot.Date().toISOString(),
 			ts,
 			notSeen ? 1 : 0
 		]);

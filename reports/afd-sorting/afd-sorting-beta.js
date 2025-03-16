@@ -33,7 +33,7 @@ process.chdir(__dirname);
 			var pad = num => num < 10 ? '0' + num : num;
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var templates = new bot.wikitext(pg.revisions[0].content).parseTemplates();
+				var templates = new bot.Wikitext(pg.revisions[0].content).parseTemplates();
 				var afd_template, afd_date, afd_page;
 				afd_template = templates.find(t => t.name === 'Article for deletion/dated' || t.name === 'AfDM');
 				if (afd_template) {

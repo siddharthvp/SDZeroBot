@@ -17,7 +17,7 @@ import {TOOLS_DB_HOST} from "../db";
 	await bot.batchOperation(rows, async (row, idx) => {
 		if (idx % 1000 === 0) log(`[i] Processing row #${idx + 1}`);
 		const {article, nominator, date, lastUpdate} = row;
-		const lastUpdated = new bot.date(lastUpdate || date).format('YYYY-MM-DD');
+		const lastUpdated = new bot.Date(lastUpdate || date).format('YYYY-MM-DD');
 		const newUsername = await getCurrentUsername(nominator as string, lastUpdated);
 		const newTitle = await getCurrentTitle(article as string, lastUpdated);
 		if (article !== newTitle) {

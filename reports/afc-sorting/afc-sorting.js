@@ -52,7 +52,7 @@ process.chdir(__dirname);
 		utils.saveObject('tableInfo', tableInfo);
 	}
 
-	var accessdate = new bot.date().format('D MMMM YYYY');
+	var accessdate = new bot.Date().format('D MMMM YYYY');
 
 
 
@@ -81,7 +81,7 @@ process.chdir(__dirname);
 
 	await bot.getTokensAndSiteInfo();
 
-	var UserSQLReport = await new bot.page('User:SQL/AFC-Ores').text().catch(console.log);
+	var UserSQLReport = await new bot.Page('User:SQL/AFC-Ores').text().catch(console.log);
 	fs.writeFileSync('./UserSQLReport.txt', UserSQLReport, console.log);
 
 	var entriesFound = 0;
@@ -238,7 +238,7 @@ process.chdir(__dirname);
 		} else {
 			diff = `{{Steady}} no change from last update`;
 		}
-		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.date().toISOString()}<section end=lastupdate /></includeonly>\n`;
+		var pagetext = `{{Wikipedia:AfC sorting/header|count=${count} (${diff})|date=${accessdate}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>\n`;
 
 		fs.writeFileSync('./previousRunCount.txt', String(count));
 

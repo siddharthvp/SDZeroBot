@@ -5,7 +5,7 @@ const OresUtils = require('../reports/OresUtils');
 
 await bot.getTokensAndSiteInfo()
 
-let yesterday = new bot.date().subtract(1, 'day').format('DD MMMM YYYY')
+let yesterday = new bot.Date().subtract(1, 'day').format('DD MMMM YYYY')
 
 let revidsTitles = {}
 

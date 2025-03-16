@@ -35,7 +35,7 @@ export async function fetchQueries(): Promise<Record<string, Query[]>> {
 }
 
 export function getQueriesFromText(text: string, title: string): Query[] {
-	let templates = bot.wikitext.parseTemplates(text, {
+	let templates = bot.Wikitext.parseTemplates(text, {
 		namePredicate: name => name === TEMPLATE
 	});
 	if (templates.length === 0) {
@@ -252,8 +252,8 @@ export class Query extends EventEmitter {
 
 		let outputPage = this.getTemplateValue('output_page');
 		if (outputPage && isFinite(this.config.pagination)) {
-			let thisTitle = new bot.title(this.page);
-			let outputTitle = new bot.title(this.config.outputPage);
+			let thisTitle = new bot.Title(this.page);
+			let outputTitle = new bot.Title(this.config.outputPage);
 			if (outputTitle.toText().startsWith(thisTitle.toText() + '/')) {
 				this.config.outputPage = outputPage;
 			}
@@ -419,11 +419,11 @@ export class Query extends EventEmitter {
 			const listOfPages = result.map((row) => {
 				try {
 					let cells = Object.values(row);
-					return new bot.page(
+					return new bot.Page(
 						cells[srcIndex - 1] as string,
 						nsId ?? Number(cells[nsColNumber])
 					).toText();
-				} catch (e) { return '::'; } // new bot.page() failing, use invalid page name so that
+				} catch (e) { return '::'; } // new bot.Page() failing, use invalid page name so that
 				// fetchExcerpts returns empty string extract
 			});
 			const excerpts = await this.fetchExcerpts(listOfPages, charLimit, charHardLimit);
@@ -442,11 +442,11 @@ export class Query extends EventEmitter {
 				nsColNumber = parseInt(namespace.slice(1)) - 1;
 			}
 			result = this.transformColumn(result, columnIndex, (value, rowIdx) => {
-				let title = bot.title.makeTitle(nsId ?? Number(Object.values(result[rowIdx])[nsColNumber]), value);
+				let title = bot.Title.makeTitle(nsId ?? Number(Object.values(result[rowIdx])[nsColNumber]), value);
 				if (!title) {
 					return value.replace(/_/g, ' ');
 				}
-				// title.getNamespaceId() need not be same as namespace passed to bot.title.makeTitle
+				// title.getNamespaceId() need not be same as namespace passed to bot.Title.makeTitle
 				let colon = [NS_CATEGORY, NS_FILE].includes(title.getNamespaceId()) ? ':' : '';
 				let pageName = title.toText();
 				return (showNamespace || title.getNamespaceId() === NS_MAIN) ?
@@ -560,7 +560,7 @@ export class Query extends EventEmitter {
 		// webservice or eventstream-router).
 		if (
 			db.replagHours === undefined ||
-			db.replagHoursCalculatedTime.isBefore(new bot.date().subtract(6, 'hours'))
+			db.replagHoursCalculatedTime.isBefore(new bot.Date().subtract(6, 'hours'))
 		) {
 			await db.getReplagHours();
 		}
@@ -576,7 +576,7 @@ export class Query extends EventEmitter {
 					page: pageNumber && String(pageNumber),
 					num_pages: pageNumber && String(this.numPages),
 					query_runtime: this.queryRuntime,
-					last_updated: new bot.date().format('HH:mm, D MMMM YYYY') + ' (UTC)',
+					last_updated: new bot.Date().format('HH:mm, D MMMM YYYY') + ' (UTC)',
 				})
 			);
 	}
@@ -594,7 +594,7 @@ export class Query extends EventEmitter {
 		}
 		let outputPage = this.config.outputPage || this.page;
 		this.emit('saving', outputPage);
-		let page = new bot.page(outputPage);
+		let page = new bot.Page(outputPage);
 		let firstPageResult = Array.isArray(queryResult) ? queryResult[0] : queryResult;
 		try {
 			await page.edit(rev => {
@@ -624,7 +624,7 @@ export class Query extends EventEmitter {
 			for (let [idx, resultText] of Object.entries(queryResult)) {
 				let pageNumber = parseInt(idx) + 1;
 				if (pageNumber ===  1) continue; // already saved above
-				let subpage = new bot.page(outputPage + '/' + pageNumber);
+				let subpage = new bot.Page(outputPage + '/' + pageNumber);
 				this.emit('saving', subpage.getPrefixedText());
 				await subpage.save(
 					`{{Database report/subpage|page=${pageNumber}|num_pages=${this.numPages}}}\n` +
@@ -634,7 +634,7 @@ export class Query extends EventEmitter {
 				this.emit('save-success', subpage.getPrefixedText());
 			}
 			for (let i = this.numPages + 1; i <= MAX_SUBPAGES; i++) {
-				let subpage = new bot.page(outputPage + '/' + i);
+				let subpage = new bot.Page(outputPage + '/' + i);
 				let apiPage = await bot.read(subpage.toText());
 				if (apiPage.missing) {
 					break;

@@ -47,10 +47,10 @@ export function getKey(rule: RawRule | Rule, maxLength = -1) {
 
 export async function fetchRules(): Promise<RawRule[]> {
     let text = !argv.fake ?
-        await new bot.page('Wikipedia:Bot activity monitor/Configurations').text() :
+        await new bot.Page('Wikipedia:Bot activity monitor/Configurations').text() :
         readFile(path.join(__dirname, 'fake-config.wikitext'));
 
-    let templates = new bot.wikitext(text).parseTemplates({
+    let templates = new bot.Wikitext(text).parseTemplates({
         namePredicate: name => name === '/task'
     });
     return templates.map(t => {
@@ -73,7 +73,7 @@ export function parseRule(rule: RawRule): Rule {
     if (!rule.task) {
         throw new RuleError(`No task name specified!`);
     }
-    let alertPage = rule.notify && bot.title.newFromText(rule.notify, NS_USER_TALK);
+    let alertPage = rule.notify && bot.Title.newFromText(rule.notify, NS_USER_TALK);
     if (rule.notify && (!alertPage || alertPage.namespace === 0)) {
         throw new RuleError(`Invalid alert page: ${rule.notify}`);
     }

@@ -10,7 +10,7 @@ function formatTimeStamp(ts) {
 }
 
 function parseArticleForAfD(pagetext) {
-	var templates = new bot.wikitext(pagetext).parseTemplates({
+	var templates = new bot.Wikitext(pagetext).parseTemplates({
 		namePredicate: name => name === 'AfDM' || name === 'Article for deletion/dated',
 		count: 1
 	});
@@ -25,7 +25,7 @@ function parseArticleForAfD(pagetext) {
 }
 
 function parseArticleForPROD(pagetext) {
-	var templates = new bot.wikitext(pagetext).parseTemplates({
+	var templates = new bot.Wikitext(pagetext).parseTemplates({
 		namePredicate: name => name === 'Proposed deletion/dated' || name === 'Prod blp/dated',
 		count: 1
 	});
@@ -125,7 +125,7 @@ function parseArticleForPROD(pagetext) {
 			TextExtractor.finalSanitise(table.getText());
 	};
 
-	await saveWithBlacklistHandling(new bot.page('User:SDZeroBot/AfD grid'), fnMakeTableAfD(afdtable), 'Updating');
-	await saveWithBlacklistHandling(new bot.page('User:SDZeroBot/PROD grid'), fnMakeTablePROD(prodtable), 'Updating');
+	await saveWithBlacklistHandling(new bot.Page('User:SDZeroBot/AfD grid'), fnMakeTableAfD(afdtable), 'Updating');
+	await saveWithBlacklistHandling(new bot.Page('User:SDZeroBot/PROD grid'), fnMakeTablePROD(prodtable), 'Updating');
 
 })().catch(err => emailOnError(err, 'grid-afd-prod'));

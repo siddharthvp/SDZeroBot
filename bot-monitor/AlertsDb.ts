@@ -90,7 +90,7 @@ class CassandraAlertsDb implements AlertsDb {
             'SELECT lastEmailed FROM botMonitor WHERE name = ?',
             [ getKey(rule) ]
         );
-        return new bot.date(data.rows[0].get('lastEmailed'));
+        return new bot.Date(data.rows[0].get('lastEmailed'));
     }
 
     async saveLastEmailedTime(rule: Rule) {
@@ -112,13 +112,13 @@ class FileSystemAlertsDb implements AlertsDb {
     }
 
     async getLastEmailedTime(rule: Rule): Promise<MwnDate> {
-        return new bot.date(this.data[getKey(rule)].lastEmailed);
+        return new bot.Date(this.data[getKey(rule)].lastEmailed);
     }
     async saveLastEmailedTime(rule: Rule): Promise<void> {
         if (!this.data[getKey(rule)]) {
             this.data[getKey(rule)] = {};
         }
-        this.data[getKey(rule)].lastEmailed = new bot.date().toISOString();
+        this.data[getKey(rule)].lastEmailed = new bot.Date().toISOString();
 
         // only needed on the last save, but done everytime anyway
         await fs.writeFile(this.file, JSON.stringify(this.data));
@@ -134,10 +134,10 @@ class RedisAlertsDb implements AlertsDb {
     }
 
     async getLastEmailedTime(rule: Rule) {
-        return new bot.date(await this.redis.hget('botmonitor-last-emailed', getKey(rule)));
+        return new bot.Date(await this.redis.hget('botmonitor-last-emailed', getKey(rule)));
     }
     async saveLastEmailedTime(rule: Rule) {
-        await this.redis.hset('botmonitor-last-emailed', getKey(rule), new bot.date().toISOString);
+        await this.redis.hset('botmonitor-last-emailed', getKey(rule), new bot.Date().toISOString);
     }
     async getPausedTillTime(name: string, webKey: string) { return new bot.Date(0); }
     async setPausedTillTime(bot: string, webKey: string, pauseTill: MwnDate) { return -1; }

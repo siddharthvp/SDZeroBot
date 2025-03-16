@@ -32,7 +32,7 @@ async function main() {
 	const firstrow = await db.get(`SELECT ts FROM g13 ORDER BY ts DESC`);
 
 	const lastTs = firstrow ? new Date(firstrow.ts * 1000).toISOString() :
-		(function() { var d = new bot.date(); d.setUTCHours(0, 0, 0, 0); return d.toISOString(); })();
+		(function() { var d = new bot.Date(); d.setUTCHours(0, 0, 0, 0); return d.toISOString(); })();
 
 	const stream = new EventSource('https://stream.wikimedia.org/v2/stream/recentchange?since=' + lastTs, {
 		headers: {
@@ -60,12 +60,12 @@ async function main() {
 		}
 		let title = match[1];
 		let ts = data.timestamp;
-		log(`[+] Page ${title} at ${new bot.date(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
+		log(`[+] Page ${title} at ${new bot.Date(ts * 1000).format('YYYY-MM-DD HH:mm:ss')}`);
 		let pagedata = await bot.read(title, {prop: 'revisions|description'});
 		let text = pagedata.revisions && pagedata.revisions[0] && pagedata.revisions[0].content;
 		let desc = pagedata.description;
 		let extract = text && TextExtractor.getExtract(text, 300, 550, function preprocessHook(text) {
-			let wkt = new bot.wikitext(text);
+			let wkt = new bot.Wikitext(text);
 			wkt.parseTemplates({
 				namePredicate: name => {
 					return /infobox/i.test(name) || name === 'AFC submission';
