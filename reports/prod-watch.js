@@ -261,7 +261,7 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 
 
 		var makeTable = function(header3, set) {
-			var table = new Mwn.table();
+			var table = new Mwn.Table();
 			table.addHeaders([
 				{ style: 'width: 15em;', label: `Article`},
 				{ style: 'width: 25em;', label: `Excerpt`},

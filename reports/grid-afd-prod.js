@@ -92,7 +92,7 @@ function parseArticleForPROD(pagetext) {
 	await populateWikidataShortdescs(prodtable);
 
 	var fnMakeTableAfD = function(afdtable) {
-		var table = new Mwn.table({ sortable: true });
+		var table = new Mwn.Table({ sortable: true });
 		table.addHeaders([
 			'scope="col" style="width: 5em" | Date',
 			'scope="col" style="width: 18em" | Article',
@@ -110,7 +110,7 @@ function parseArticleForPROD(pagetext) {
 			TextExtractor.finalSanitise(table.getText());
 	};
 	var fnMakeTablePROD = function(prodtable) {
-		var table = new Mwn.table({ sortable: true });
+		var table = new Mwn.Table({ sortable: true });
 		table.addHeaders([
 			'scope="col" style="width: 5em" | Date',
 			'scope="col" style="width: 18em" | Article',

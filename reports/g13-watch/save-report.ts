@@ -18,7 +18,7 @@ const { saveWithBlacklistHandling } = require('../commons');
 	const db = new toolsdb('g13watch_p');
 	log('[S] Connected to the g13 database.');
 
-	let table = new Mwn.table();
+	let table = new Mwn.Table();
 	table.addHeaders([
 		{label: 'Date', style: 'width: 5em'},
 		{label: 'Draft', style: 'width: 18em'},

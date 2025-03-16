@@ -172,7 +172,7 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new Mwn.table({
+		var table = new Mwn.Table({
 			style: 'overflow-wrap: anywhere'
 		});
 		table.addHeaders([

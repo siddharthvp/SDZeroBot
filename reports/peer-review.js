@@ -79,7 +79,7 @@ await bot.batchOperation(articles, async article => {
 log(`[S] got histories`);
 
 
-let table = new Mwn.table();
+let table = new Mwn.Table();
 table.addHeaders([
 	{label: 'Date', class: 'date-header'},
 	{label: 'Article', class: 'article-header'},

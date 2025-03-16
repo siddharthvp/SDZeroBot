@@ -238,7 +238,7 @@ import * as OresUtils from '../OresUtils';
     g13db.end();
     log(`[i] ${numDeletions} G13 deletions overall`);
 
-    let table = new Mwn.table();
+    let table = new Mwn.Table();
     table.addHeaders([
         {label: 'Draft', style: 'width: 15em'},
         {label: 'Excerpt' },

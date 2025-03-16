@@ -122,7 +122,7 @@ await populateOresQualityRatings(tableInfo);
 // Wikidata short descriptions
 await populateWikidataShortdescs(tableInfo);
 
-let table = new Mwn.table({
+let table = new Mwn.Table({
 	style: 'overflow-wrap: anywhere'
 });
 table.addHeaders([

@@ -17,7 +17,7 @@ import {TABLE} from "./model";
 	db.end();
 	log(`[S] Got query result`);
 
-	let wikitable = new Mwn.table();
+	let wikitable = new Mwn.Table();
 	wikitable.addHeaders(['Rank', 'User', 'Count']);
 
 	let rank500Count;

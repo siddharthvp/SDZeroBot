@@ -90,7 +90,7 @@ for await (let pg of reader) {
 
 }
 
-let mwntable = new Mwn.table({
+let mwntable = new Mwn.Table({
 	style: 'overflow-wrap: anywhere;'
 });
 mwntable.addHeaders([

@@ -4,7 +4,7 @@ const PercentDefault = 0.25;
 const ByteDefault = 1000;
 
 class Notifier {
-	table: InstanceType<typeof Mwn.table>
+	table: InstanceType<typeof Mwn.Table>
 	notificationScheme: Map<string, Array<string>>
 	afds: { [afdtitle: string]: string }
 	config: {
@@ -22,7 +22,7 @@ class Notifier {
 
 		await notifier.getAfDs();
 
-		notifier.table = new Mwn.table();
+		notifier.table = new Mwn.Table();
 		notifier.table.addHeaders([
 			`! scope="col" style="width: 14em" | AfD`,
 			`! scope="col" style="width: 14em" | Article`,

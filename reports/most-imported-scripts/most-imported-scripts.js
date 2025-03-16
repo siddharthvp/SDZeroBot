@@ -140,7 +140,7 @@ process.chdir(__dirname);
 
 	// Create wikitable:
 
-	var wikitable = new Mwn.table({ sortable: true, style: 'text-align: center' });
+	var wikitable = new Mwn.Table({ sortable: true, style: 'text-align: center' });
 	wikitable.addHeaders([
 		'Position',
 		'Script',

@@ -492,7 +492,7 @@ export class Query extends EventEmitter {
 		const table_class = (this.getTemplateValue('table_class') || 'wikitable sortable')
 			.split(/\s+/g).map(e => e.trim()).filter(e => e);
 
-		let table: InstanceType<typeof Mwn.table>;
+		let table: InstanceType<typeof Mwn.Table>;
 		let tableText = '';
 
 		// NOTE: header_template appears:
@@ -502,7 +502,7 @@ export class Query extends EventEmitter {
 			tableText = '{{' + header_template + '}}\n';
 		}
 		if (!skip_table) {
-			table = new Mwn.table({
+			table = new Mwn.Table({
 				style: table_style,
 				classes: table_class,
 				sortable: table_class.includes('sortable'),

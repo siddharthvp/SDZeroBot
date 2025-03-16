@@ -171,7 +171,7 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new Mwn.table({ sortable: true, multiline: true });
+		var table = new Mwn.Table({ sortable: true, multiline: true });
 		table.addHeaders([
 			`scope="col" style="width: 5em;" | AfD date`,
 			`scope="col" style="width: 19em;" | Article`,

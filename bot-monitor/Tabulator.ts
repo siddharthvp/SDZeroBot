@@ -6,11 +6,11 @@ import * as moment from "moment";
 export class Tabulator {
 	static rootpage = 'Wikipedia:Bot activity monitor' + (argv.fake ? '/sandbox' : '');
 
-	static table: InstanceType<typeof Mwn.table>;
+	static table: InstanceType<typeof Mwn.Table>;
 	static invalidRules: { task: string, reason: string }[] = []
 
 	static init() {
-		this.table = new Mwn.table();
+		this.table = new Mwn.Table();
 		this.table.addHeaders([
 			{label: 'Bot'},
 			{label: 'Task'},
@@ -52,7 +52,7 @@ export class Tabulator {
 	static async whineAboutRuleErrors() {
 		let msg;
 		if (this.invalidRules.length) {
-			let table = new Mwn.table();
+			let table = new Mwn.Table();
 			table.addHeaders([
 				'Bot and task',
 				'Configuration error'

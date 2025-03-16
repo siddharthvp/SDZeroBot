@@ -121,7 +121,7 @@ process.chdir(__dirname);
 		if (isStarred(topic)) {
 			pagetitle = meta(topic);
 		}
-		var table = new Mwn.table({ style: 'overflow-wrap: anywhere' });
+		var table = new Mwn.Table({ style: 'overflow-wrap: anywhere' });
 
 		table.addHeaders(lite ? [ // exlcude excerpt in lite mode
 			`scope="col" style="width: 7em;" | PROD date`,

@@ -117,10 +117,10 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		{ label: `Move summary` },
 	];
 
-	var maintable = new Mwn.table();
+	var maintable = new Mwn.Table();
 	maintable.addHeaders(tableHeaders);
 
-	let footertable = new Mwn.table();
+	let footertable = new Mwn.Table();
 	footertable.addHeaders(tableHeaders);
 
 	for (let [page, data] of Object.entries(tableInfo)) {

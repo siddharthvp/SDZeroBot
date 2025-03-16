@@ -85,9 +85,9 @@ for await (let json of bot.continuedQueryGen({
 log(`[S] got data from the APIs`);
 
 let tables = {
-	men: new Mwn.table(),
-	women: new Mwn.table(),
-	unknown: new Mwn.table()
+	men: new Mwn.Table(),
+	women: new Mwn.Table(),
+	unknown: new Mwn.Table()
 };
 let headers = [
 	{label: 'Article', style: 'width: 17em'},

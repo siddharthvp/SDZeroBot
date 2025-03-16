@@ -280,7 +280,7 @@ process.chdir(__dirname);
 		}
 		content += `{{Wikipedia:AfC sorting/header|count=${sorter[topic].length}|date=${accessdate}|ts=~~~~~}}\n${replagMessage}`;
 
-		var table = new Mwn.table();
+		var table = new Mwn.Table();
 		table.addHeaders([
 			`scope="col" style="width: 17em;" | Page`,
 			`Class`,

@@ -93,7 +93,7 @@ import { createLocalSSHTunnel, readFile, saveObject, writeFile } from "../utils"
 	// 	})
 	// }
 
-	let wikitable = new Mwn.table({
+	let wikitable = new Mwn.Table({
 		classes: ['plainlinks']
 	});
 	wikitable.addHeaders([
