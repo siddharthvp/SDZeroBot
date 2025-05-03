@@ -1,4 +1,4 @@
-name: Restart services
+name: Restart Toolforge services
 
 on:
   - workflow_dispatch
@@ -7,15 +7,30 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: garygrossgarten/github-action-ssh@915e492551885a89131e21d85f2e043c96abff80
-        with:
-          command: >-
-            become mdanielsbot bash -c '
+      - name: checkout repo
+        uses: actions/checkout@v4
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/toolforge.key
+          chmod 600 ~/.ssh/toolforge.key
+          cat >>~/.ssh/config <<END
+          Host toolforge
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/staging.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: mdaniels5757
+          SSH_KEY: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
+          SSH_HOST: login.toolforge.org
+
+      - name: Restart the server
+        run: >-
+            ssh toolforge become mdanielsbot bash -c '
               cd /data/project/mdanielsbot/MD-SDZeroBot/webservice && npm restart;
               cd /data/project/mdanielsbot/MD-SDZeroBot/eventstream-router && npm restart;
             '
-          host: login.toolforge.org
-          username: mdaniels5757
-          privateKey: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
-
+      - name: Cleanup SSH
+        run: rm -rf .ssh

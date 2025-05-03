@@ -14,46 +14,60 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: appleboy/ssh-action@2ead5e36573f08b82fbfce1504f1a4b05a647c6f
-        with:
-          script: >-
-            become mdanielsbot bash -c '
-              set -eo pipefail;
-              export NVM_DIR="$HOME/.nvm";
-              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
-              [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion";
-              nvm use default;
-              cd /data/project/mdanielsbot/mwn;
-              if [[ "$(git pull --ff-only | grep -c "Already up to date")" -eq 0 ]]; then
-                if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
-                  echo "Running npm install for mwn ...";
-                  npm install;
-                fi;
-                echo "Building mwn ...";
-                npm run build;
-              fi;
-              cd /data/project/mdanielsbot/MD-SDZeroBot;
-              echo "Pulling SDZeroBot ...";
-              git checkout master;
-              git pull --ff-only;
+      - name: checkout repo
+        uses: actions/checkout@v4
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/toolforge.key
+          chmod 600 ~/.ssh/toolforge.key
+          cat >>~/.ssh/config <<END
+          Host toolforge
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/staging.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: mdaniels5757
+          SSH_KEY: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
+          SSH_HOST: login.toolforge.org
+      - name: Deploy
+        run: >-
+          ssh toolforge become mdanielsbot bash -c '
+            set -eo pipefail;
+            export NVM_DIR="$HOME/.nvm";
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh";
+            [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion";
+            nvm use default;
+            cd /data/project/mdanielsbot/mwn;
+            if [[ "$(git pull --ff-only | grep -c "Already up to date")" -eq 0 ]]; then
               if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
-                echo "Running npm install for SDZeroBot ...";
+                echo "Running npm install for mwn ...";
                 npm install;
               fi;
-              echo "Building SDZeroBot ...";
-              npm run tsc;
-              echo "Updating jobs.yml ...";
-              toolforge jobs load jobs.yml;
-              toolforge jobs restart db-tabulator;
-              toolforge jobs restart shells;
-              echo "Restarting eventstream-router ...";
-              cd eventstream-router && npm restart && cd -;
-              cp webservice/www-js-package.json /data/project/mdanielsbot/www/js/package.json;
-              echo "Restarting SDZeroBot webservice ...";
-              cd /data/project/mdanielsbot/MD-SDZeroBot/webservice && npm restart && cd -;
-              
-            '
-          host: login.toolforge.org
-          username: mdaniels5757
-          key: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
+              echo "Building mwn ...";
+              npm run build;
+            fi;
+            cd /data/project/mdanielsbot/MD-SDZeroBot;
+            echo "Pulling SDZeroBot ...";
+            git checkout master;
+            git pull --ff-only;
+            if [[ "$(git diff --name-only HEAD HEAD@{1} | grep -c package.json)" -gt 0 ]]; then
+              echo "Running npm install for SDZeroBot ...";
+              npm install;
+            fi;
+            echo "Building SDZeroBot ...";
+            npm run tsc;
+            echo "Updating jobs.yml ...";
+            toolforge jobs load jobs.yml;
+            toolforge jobs restart db-tabulator;
+            toolforge jobs restart shells;
+            echo "Restarting eventstream-router ...";
+            cd eventstream-router && npm restart && cd -;
+            cp webservice/www-js-package.json /data/project/mdanielsbot/www/js/package.json;
+            echo "Restarting SDZeroBot webservice ...";
+            cd /data/project/mdanielsbot/MD-SDZeroBot/webservice && npm restart && cd -;
+          '
+      - name: Cleanup SSH
+        run: rm -rf .ssh
