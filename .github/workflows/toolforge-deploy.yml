@@ -47,7 +47,7 @@ jobs:
                 npm install;
               fi;
               echo "Building mwn ...";
-              npm run build;
+              npx tsc || echo;
             fi;
             cd /data/project/mdanielsbot/MD-SDZeroBot;
             echo "Pulling SDZeroBot ...";

@@ -50,7 +50,7 @@ function sortAsc(param, data1, data2) {
 
 
 /**
- * @param {bot.page} page
+ * @param {bot.Page} page
  * @param {string} text
  * @param {string} summary
  * @returns {Promise}

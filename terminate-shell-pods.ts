@@ -19,5 +19,5 @@ import {KubeConfig, CoreV1Api} from "@kubernetes/client-node";
 })().catch(err => emailOnError(err, 'terminate-shell-pods'));
 
 function isStale(date: Date): boolean {
-    return new bot.date().subtract(2, 'hours').isAfter(date);
+    return new bot.Date().subtract(2, 'hours').isAfter(date);
 }

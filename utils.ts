@@ -26,7 +26,7 @@ export function createLogStream(file: string) {
 		if (typeof msg === 'object') {
 			redactSecretsInError(msg);
 		}
-		let ts = new bot.date().format('YYYY-MM-DD HH:mm:ss');
+		let ts = new bot.Date().format('YYYY-MM-DD HH:mm:ss');
 		let stringified;
 		if (typeof msg === 'string') {
 			stream.write(`[${ts}] ${msg}\n`);

@@ -6,7 +6,7 @@ let timers = new Array(10);
 let nextTimer = 0;
 
 let stream = new bot.stream('recentchange', {
-	since: new bot.date().subtract(1, 'day')
+	since: new bot.Date().subtract(1, 'day')
 });
 
 stream.onopen = function() {

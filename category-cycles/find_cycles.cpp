@@ -18,6 +18,9 @@ bool first = true;
 
 void dfs(int v) {
 	visited.insert(v);
+	if (visited.size() % 100000 == 1) {
+		cerr << "Visited " << visited.size() << " nodes\n";
+	}
 	onStack.insert(v);
 	for (int i : graph[v]) {
 		if (visited.find(i) == visited.end()) { // unvisited
@@ -57,7 +60,7 @@ int main() {
 		// Build adjacency list representation
 		graph[parent].insert(sub);
 	}
-	// cout << "Finished generating subcategory graph...\n";
+	cerr << "Finished generating subcategory graph...\n";
 
 	cout << "[";
 

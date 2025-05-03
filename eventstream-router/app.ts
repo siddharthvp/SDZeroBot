@@ -107,7 +107,7 @@ class LastSeen {
 	}
 
 	get() {
-		return new bot.date(
+		return new bot.Date(
 			((typeof this.ts === 'number') ? this.ts : this.read())
 			* 1000
 		);
@@ -133,10 +133,10 @@ function run(routes: RouteValidator[], lastSeen: LastSeen) {
 	log('[S] Restarted');
 
 	const ts = lastSeen.get();
-	const tsUsable = ts.isValid() && new bot.date().subtract(7, 'days').isBefore(ts);
+	const tsUsable = ts.isValid() && new bot.Date().subtract(7, 'days').isBefore(ts);
 	log(`[i] lastSeenTs: ${ts}: ${tsUsable}`);
 
-	let since = !argv.fromNow && tsUsable ? ts : new bot.date();
+	let since = !argv.fromNow && tsUsable ? ts : new bot.Date();
 
 	if (stream) {
 		// ensure that there aren't two parallel connections

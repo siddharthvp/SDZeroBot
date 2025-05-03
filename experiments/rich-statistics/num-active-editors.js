@@ -28,7 +28,7 @@ for (let i = userswithcount.length - 1; i >= 0; i--) {
 	userswithcount[i] = orz(userswithcount[i+1]) + orz(userswithcount[i]);
 }
 
-let table = new Mwn.table();
+let table = new Mwn.Table();
 table.addHeaders([
 	{label: 'Statistic', style: 'width: 40em;'},
 	{label: 'Value', style: 'width: 20em'}
