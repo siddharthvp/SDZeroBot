@@ -25,7 +25,7 @@ jobs:
           Host toolforge
             HostName $SSH_HOST
             User $SSH_USER
-            IdentityFile ~/.ssh/staging.key
+            IdentityFile ~/.ssh/toolforge.key
             StrictHostKeyChecking no
           END
         env:
