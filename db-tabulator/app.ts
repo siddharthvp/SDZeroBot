@@ -370,7 +370,13 @@ export class Query extends EventEmitter {
 	async formatResults(result) {
 
 		if (result.length === 0) {
-			return 'No items retrieved.'; // XXX
+			return db.makeReplagMessage(2) +
+			(this.config.silent ? '' : Mwn.template('Database report/footer', {
+					count: '0',
+					query_runtime: this.queryRuntime,
+					last_updated: new bot.Date().format('HH:mm, D MMMM YYYY') + ' (UTC)',
+				})
+			);
 		}
 		if (result.length > this.config.pagination) {
 			const resultSets = arrayChunk(result, this.config.pagination).slice(0, this.config.maxPages);
