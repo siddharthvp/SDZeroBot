@@ -8,14 +8,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: garygrossgarten/github-action-ssh@915e492551885a89131e21d85f2e043c96abff80
+      - uses: appleboy/ssh-action@551964ebda1034f0b5449d74db25c42e371ca1f7
         with:
-          command: >-
+          script: >-
             become sdzerobot bash -c '
               cd /data/project/sdzerobot/SDZeroBot/webservice && npm restart;
               cd /data/project/sdzerobot/SDZeroBot/eventstream-router && npm restart;
             '
           host: login.toolforge.org
           username: sd
-          privateKey: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
+          key: ${{ secrets.TOOLFORGE_PRIVATE_KEY }}
 
