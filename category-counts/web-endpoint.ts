@@ -24,7 +24,10 @@ router.get('/raw', async (req, res) => {
 
     const result = await countStore.get(key);
 
-    return res.status(200).type('json').send(result);
+    // Reverse so that the recent dates are up at the top
+    const reversedJson = Object.fromEntries(Object.entries(result).reverse());
+
+    return res.status(200).type('json').send(reversedJson);
 });
 
 export default router;
