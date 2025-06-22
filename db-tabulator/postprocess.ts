@@ -70,6 +70,7 @@ export async function applyJsPostProcessing(rows: Record<string, string>[], jsCo
     let startTime = process.hrtime.bigint();
 
     // Import dynamically as this has native dependencies
+    // npm install isolated-vm@6.0.0
     let {Isolate, Callback, Reference} = await import('isolated-vm');
 
     const isolate = new Isolate({
