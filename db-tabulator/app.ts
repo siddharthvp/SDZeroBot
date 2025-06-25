@@ -13,6 +13,7 @@ export const BOT_NAME = 'SDZeroBot';
 export const TEMPLATE = 'Database report';
 export const TEMPLATE_END = 'Database report end';
 export const SUBSCRIPTIONS_CATEGORY = 'SDZeroBot database report subscriptions';
+export const FAILURES_CATEGORY = 'SDZeroBot database report failures';
 export const QUERY_TIMEOUT = 600;
 export const CONCURRENCY = 5;
 export const MAX_SUBPAGES = 20;
@@ -667,7 +668,7 @@ export class Query extends EventEmitter {
 	}
 
 	async saveWithError(message: string): Promise<never> {
-		await this.save(`{{error|1=[${message}]}}`, true);
+		await this.save(`{{error|1=[${message}]}}\n[[Category:${FAILURES_CATEGORY}]]`, true);
 		throw new HandledError();
 	}
 
