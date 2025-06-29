@@ -363,7 +363,7 @@ class Notifier {
 
 		if (!Mwn.util.isIPAddress(username)) { // IP blocks can't be looked up this way, TODO: handle this
 			let blockinfo = await user.info('blockinfo');
-			if (blockinfo.blockid) { // blocked
+			if (blockinfo.blockexpiry) { // blocked
 				if (blockinfo.blockexpiry === 'infinite') {
 					log(`[C] Not notifying ${username} as account is indef-blocked`);
 					return Promise.reject('blocked-indef');
