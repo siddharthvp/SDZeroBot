@@ -6,5 +6,6 @@ export interface MetadataStore {
     getAllPages(): Promise<Array<string>>;
     removeOthers(pages: Set<string>): Promise<void>;
     updateLastTimestamp(query: Query): Promise<void>;
+    recordFailure(query: Query): Promise<void>;
     getQueriesToRun(): Promise<Record<string, Query[]>>;
 }

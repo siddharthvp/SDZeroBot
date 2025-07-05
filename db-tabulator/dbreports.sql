@@ -6,3 +6,5 @@ CREATE TABLE IF NOT EXISTS dbreports(
     lastUpdate DATETIME
 );
 # TODO: database indexes and primary key
+
+ALTER TABLE dbreports ADD COLUMN failures SMALLINT UNSIGNED;

@@ -20,6 +20,8 @@ export class NoMetadataStore implements MetadataStore {
 
     async updateLastTimestamp() {}
 
+    async recordFailure() {}
+
     async getQueriesToRun(): Promise<Record<string, Query[]>> {
         // Get the date of the bot's last edit to each of the subscribed pages
         // The API doesn't have an efficient query for this, so using the DB instead

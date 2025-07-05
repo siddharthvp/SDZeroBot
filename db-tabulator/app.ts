@@ -17,6 +17,7 @@ export const FAILURES_CATEGORY = 'SDZeroBot database report failures';
 export const QUERY_TIMEOUT = 600;
 export const CONCURRENCY = 5;
 export const MAX_SUBPAGES = 20;
+export const MAX_CONSECUTIVE_FAILURES_ALLOWED = 3;
 export const SHUTOFF_PAGE = 'User:SDZeroBot/Shutoff/Database reports';
 export const FAKE_INPUT_FILE = 'fake-configs.wikitext';
 export const FAKE_OUTPUT_FILE = 'fake-output.wikitext';
@@ -166,7 +167,10 @@ export class Query extends EventEmitter {
 			await metadataStore.updateLastTimestamp(this);
 			this.emit('done-one');
 		} catch (err) {
-			if (err instanceof HandledError) return;
+			if (err instanceof HandledError) {
+				await metadataStore.recordFailure(this);
+				return;
+			}
 			emailOnError(err, 'db-tabulator');
 			throw err; // propagate error
 		}

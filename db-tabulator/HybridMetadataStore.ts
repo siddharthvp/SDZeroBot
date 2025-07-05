@@ -41,6 +41,10 @@ export class HybridMetadataStore implements MetadataStore {
         return this.activeStore.updateLastTimestamp(query);
     }
 
+    recordFailure(query: Query) {
+        return this.activeStore.recordFailure(query);
+    }
+
     updateMetadata(page: string, queries: Query[]) {
         return this.activeStore.updateMetadata(page, queries);
     }

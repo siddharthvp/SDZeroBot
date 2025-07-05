@@ -1,5 +1,5 @@
 import {toolsdb} from "../db";
-import {fetchQueriesForPage, Query} from "./app";
+import {fetchQueriesForPage, Query, MAX_CONSECUTIVE_FAILURES_ALLOWED} from "./app";
 import {MetadataStore} from "./MetadataStore";
 import {setDifference} from "../utils";
 import * as crypto from "crypto";
@@ -23,7 +23,7 @@ export class MariadbMetadataStore implements MetadataStore {
                 conn.execute('DELETE FROM dbreports WHERE page = ? AND templateMd5 = ?', [page, md5]);
             });
 
-            // Don't delete lastUpdate values of unchanged reports when updating metadata
+            // Don't delete lastUpdate and failure count of unchanged reports when updating metadata
             for (let query of queries) {
                 const md5 = this.makeMd5(query);
                 const intervalDays = isNaN(query.config.interval) ? null : query.config.interval;
@@ -34,9 +34,9 @@ export class MariadbMetadataStore implements MetadataStore {
                     `, [query.idx, intervalDays, query.page, md5]);
                 } else {
                     await conn.execute(`
-                        INSERT INTO dbreports(page, idx, templateMd5, intervalDays, lastUpdate)
-                        VALUES (?, ?, ?, ?, ?)
-                    `, [query.page, query.idx, md5, intervalDays, null]);
+                        INSERT INTO dbreports(page, idx, templateMd5, intervalDays, lastUpdate, failures)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    `, [query.page, query.idx, md5, intervalDays, null, null]);
                 }
             }
         });
@@ -87,9 +87,24 @@ export class MariadbMetadataStore implements MetadataStore {
     }
 
     async updateLastTimestamp(query: Query): Promise<void> {
-        const result = await this.db.run(
-            `UPDATE dbreports SET lastUpdate = UTC_TIMESTAMP() WHERE page = ? AND idx = ?`
-            , [query.page, query.idx]);
+        const result = await this.db.run(`
+            UPDATE dbreports 
+            SET lastUpdate = UTC_TIMESTAMP(),
+                failures = NULL
+            WHERE page = ? AND idx = ?
+        `, [query.page, query.idx]);
         // TODO: log warning if rows affected != 1
+    }
+
+    async recordFailure(query: Query): Promise<void> {
+        // Increment count of failures.
+        // Disable periodic updates if count reaches MAX_CONSECUTIVE_FAILURES_ALLOWED
+        await this.db.run(`
+            UPDATE dbreports
+            SET failures = IF(failures IS NULL, 1, failures + 1),
+                intervalDays = IF(failures >= ?, NULL, intervalDays)
+            WHERE page = ?
+              AND idx = ?
+        `, [MAX_CONSECUTIVE_FAILURES_ALLOWED, query.page, query.idx]);
     }
 }

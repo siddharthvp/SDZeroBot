@@ -19,10 +19,7 @@ import {checkShutoff, FAKE_OUTPUT_FILE, fetchQueries, processQueries, metadataSt
  * Support frequency parameter
  * Support hiding namespace number
  * Support row_template and skip_table aka Listeriabot
-
- * Pending:
  * Automatic query limiting: use LIMIT = pagination * max_pages
- * Consider sane defaults for pagination and max_pages
  * Disable auto-updates for query if it times out N number of consecutive times
  *
  */
