@@ -26,7 +26,7 @@ const initialState = {
 };
 
 const fieldHelp = {
-  sql: "The SQL query used to generate the report. This is the only required parameter.",
+  sql: "SQL query used to generate the report. This is the only required parameter.",
   row_template: "Template name to use for each row instead of default table formatting.",
   wikilinks: "Configuration for wikilinking page titles.",
   comments: "Check any columns that contain edit summaries or log comments.",
@@ -39,12 +39,12 @@ const fieldHelp = {
   pagination: "Number of results to include per page. Further results are saved to paginated subpages.",
   max_pages: "Maximum number of report pages to create when using pagination (max: 20).",
   hide: "Check any columns to hide from output (e.g. columns containing namespace numbers)",
-  row_template_named_params: "Use column names as parameters instead of numbered parameters in row_template.",
-  skip_table: "Suppress table markup completely.",
+  row_template_named_params: "Use column names as parameters instead of numbered parameters",
+  skip_table: "Suppress table markup completely",
   header_template: "Template to use for table header instead of default header.",
   footer_template: "Template to use for table footer. For use with skip_table.",
   postprocess_js: "JavaScript code for custom postprocessing of query results.",
-  silent: "Suppress visible output from the template. Only the bot-generated table will be visible."
+  silent: "Suppress visible output from the template (only the bot-generated table will be visible)"
 };
 
 // Basic SQL validation
@@ -304,7 +304,7 @@ function App() {
           {columnInfo.count > 0 && (
             <>
               <div className="dynamic-section">
-                <h4>Wikilinks</h4>
+                <label>Wikilinks</label>
                 <div className="field-help">{fieldHelp.wikilinks}</div>
                 <div className="column-grid">
                   {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
@@ -364,7 +364,7 @@ function App() {
               </div>
 
               <div className="dynamic-section">
-                <h4>Column widths</h4>
+                <label>Column widths</label>
                 <div className="field-help">{fieldHelp.widths}</div>
                 <div className="column-grid">
                   {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
@@ -384,7 +384,7 @@ function App() {
               </div>
 
               <div className="dynamic-section">
-                <h4>Comment columns</h4>
+                <label>Comment columns</label>
                 <div className="field-help">{fieldHelp.comments}</div>
                 <div className="column-grid">
                   {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
@@ -403,26 +403,7 @@ function App() {
               </div>
 
               <div className="dynamic-section">
-                <h4>Remove underscores</h4>
-                <div className="field-help">{fieldHelp.remove_underscores}</div>
-                <div className="column-grid">
-                  {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
-                    <div key={column} className="column-config">
-                      <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={state.remove_underscores.includes(column)}
-                          onChange={() => handleMultiSelectChange('remove_underscores', column)}
-                        />
-                        {columnInfo.names[column - 1] || `Column ${column}`}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="dynamic-section">
-                <h4>Hide columns</h4>
+                <label>Hide columns</label>
                 <div className="field-help">{fieldHelp.hide}</div>
                 <div className="column-grid">
                   {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
@@ -478,37 +459,41 @@ function App() {
             />
           </label>
 
-          <label>
-            Row template
-            <div className="field-help">{fieldHelp.row_template}</div>
-            <input
-                type="text"
-                name="row_template"
-                value={state.row_template}
-                onChange={handleChange}
-                placeholder="Template name"
-            />
-          </label>
+          <div className="dynamic-section">
+            <label>
+              Row template
+              <div className="field-help">{fieldHelp.row_template}</div>
+              <input
+                  type="text"
+                  name="row_template"
+                  value={state.row_template}
+                  onChange={handleChange}
+                  placeholder="Template name"
+              />
+            </label>
 
-          <label className="checkbox-label">
-            <input
-                type="checkbox"
-                name="row_template_named_params"
-                checked={state.row_template_named_params}
-                onChange={handleChange}
-            />
-            {fieldHelp.row_template_named_params}
-          </label>
+            <label className="checkbox-label">
+              <input
+                  type="checkbox"
+                  name="row_template_named_params"
+                  checked={state.row_template_named_params}
+                  onChange={handleChange}
+                  disabled={!state.row_template.trim()}
+              />
+              {fieldHelp.row_template_named_params}
+            </label>
 
-          <label className="checkbox-label">
-            <input
-                type="checkbox"
-                name="skip_table"
-                checked={state.skip_table}
-                onChange={handleChange}
-            />
-            {fieldHelp.skip_table}
-          </label>
+            <label className="checkbox-label">
+              <input
+                  type="checkbox"
+                  name="skip_table"
+                  checked={state.skip_table}
+                  onChange={handleChange}
+                  disabled={!state.row_template.trim()}
+              />
+              {fieldHelp.skip_table}
+            </label>
+          </div>
 
           <label>
             Header template
@@ -543,6 +528,25 @@ function App() {
             />
             {fieldHelp.silent}
           </label>
+
+          {columnInfo.count > 0 && <div className="dynamic-section">
+            <label>Remove underscores</label>
+            <div className="field-help">{fieldHelp.remove_underscores}</div>
+            <div className="column-grid">
+              {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
+                  <div key={column} className="column-config">
+                    <label className="checkbox-label">
+                      <input
+                          type="checkbox"
+                          checked={state.remove_underscores.includes(column)}
+                          onChange={() => handleMultiSelectChange('remove_underscores', column)}
+                      />
+                      {columnInfo.names[column - 1] || `Column ${column}`}
+                    </label>
+                  </div>
+              ))}
+            </div>
+          </div>}
           
           <label>
             Excerpts

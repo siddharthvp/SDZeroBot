@@ -127,6 +127,21 @@
   height: 16px;
 }
 
+.form-section input[type="checkbox"]:disabled,
+.form-section input[type="text"]:disabled,
+.form-section input[type="number"]:disabled,
+.form-section textarea:disabled,
+.form-section select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+.form-section label.checkbox-label:has(input:disabled) {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
 .sql-editor {
   display: flex;
   flex-direction: column;
