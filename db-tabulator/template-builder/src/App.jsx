@@ -14,6 +14,7 @@ const initialState = {
   excerpts: "",
   remove_underscores: [],
   interval: "",
+  use_pagination: false,
   pagination: "",
   max_pages: "",
   hide: [],
@@ -36,8 +37,8 @@ const fieldHelp = {
   excerpts: "Configuration for showing article excerpts. Format: srcColumn:destColumn:namespace:charLimit:charHardLimit",
   remove_underscores: "Check any columns in which underscores should be replaced with spaces. (Done automatically for wikilinked columns)",
   interval: "Number of days to wait between automatic updates (minimum: 1).",
-  pagination: "Number of results to include per page. Further results are saved to paginated subpages.",
-  max_pages: "Maximum number of report pages to create when using pagination (max: 20).",
+  pagination: "Results per page",
+  max_pages: "Maximum number of pages to create (max: 20)",
   hide: "Check any columns to hide from output (e.g. columns containing namespace numbers)",
   row_template_named_params: "Use column names as parameters instead of numbered parameters",
   skip_table: "Suppress table markup completely",
@@ -142,27 +143,33 @@ function formatWidths(widths) {
 function buildWikitext(state) {
   let lines = ["{{Database report"];
   // Required
-  lines.push(`|sql=\n${state.sql}`);
+  lines.push(`|sql = ${('\n' + state.sql)
+      .replace(/\n/g, '\n  ')}`);
   // Optional fields
   const wikilinksStr = formatWikilinks(state.wikilinks);
-  if (wikilinksStr) lines.push(`|wikilinks=${wikilinksStr}`);
-  if (state.comments.length > 0) lines.push(`|comments=${state.comments.join(',')}`);
+  if (wikilinksStr) lines.push(`|wikilinks = ${wikilinksStr}`);
+  if (state.comments.length > 0) lines.push(`|comments = ${state.comments.join(',')}`);
   const widthsStr = formatWidths(state.widths);
-  if (widthsStr) lines.push(`|widths=${widthsStr}`);
-  if (state.table_style) lines.push(`|table_style=${state.table_style}`);
-  if (state.table_class) lines.push(`|table_class=${state.table_class}`);
-  if (state.excerpts) lines.push(`|excerpts=${state.excerpts}`);
-  if (state.remove_underscores.length > 0) lines.push(`|remove_underscores=${state.remove_underscores.join(',')}`);
-  if (state.interval) lines.push(`|interval=${state.interval}`);
-  if (state.pagination) lines.push(`|pagination=${state.pagination}`);
-  if (state.max_pages) lines.push(`|max_pages=${state.max_pages}`);
-  if (state.hide.length > 0) lines.push(`|hide=${state.hide.join(',')}`);
-  if (state.row_template) lines.push(`|row_template=${state.row_template}`);
-  if (state.row_template_named_params) lines.push(`|row_template_named_params=1`);
-  if (state.skip_table) lines.push(`|skip_table=1`);
-  if (state.header_template) lines.push(`|header_template=${state.header_template}`);
-  if (state.footer_template) lines.push(`|footer_template=${state.footer_template}`);
-  if (state.postprocess_js) lines.push(`|postprocess_js=\n${state.postprocess_js}`);
+  if (widthsStr) lines.push(`|widths = ${widthsStr}`);
+  if (state.table_style) lines.push(`|table_style = ${state.table_style}`);
+  if (state.table_class) lines.push(`|table_class = ${state.table_class}`);
+  if (state.excerpts) lines.push(`|excerpts = ${state.excerpts}`);
+  if (state.remove_underscores.length > 0) lines.push(`|remove_underscores = ${state.remove_underscores.join(',')}`);
+  if (state.interval) lines.push(`|interval = ${state.interval}`);
+  if (state.use_pagination) {
+    if (state.pagination) lines.push(`|pagination = ${state.pagination}`);
+    if (state.max_pages) lines.push(`|max_pages = ${state.max_pages}`);
+  }
+  if (state.hide.length > 0) lines.push(`|hide = ${state.hide.join(',')}`);
+  if (state.row_template) {
+    lines.push(`|row_template = ${state.row_template}`);
+    if (state.row_template_named_params) lines.push(`|row_template_named_params=1`);
+    if (state.skip_table) lines.push(`|skip_table=1`);
+  }
+  if (state.header_template) lines.push(`|header_template = ${state.header_template}`);
+  if (state.footer_template) lines.push(`|footer_template = ${state.footer_template}`);
+  if (state.postprocess_js) lines.push(`|postprocess_js = ${('\n' + state.postprocess_js)
+      .replace(/\n/g, '\n  ')}`);
   if (state.silent) lines.push(`|silent=1`);
   lines.push("}}\n{{Database report end}}");
   return lines.join("\n");
@@ -401,25 +408,6 @@ function App() {
                   ))}
                 </div>
               </div>
-
-              <div className="dynamic-section">
-                <label>Hide columns</label>
-                <div className="field-help">{fieldHelp.hide}</div>
-                <div className="column-grid">
-                  {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
-                    <div key={column} className="column-config">
-                      <label className="checkbox-label">
-                        <input
-                          type="checkbox"
-                          checked={state.hide.includes(column)}
-                          onChange={() => handleMultiSelectChange('hide', column)}
-                        />
-                        {columnInfo.names[column - 1] || `Column ${column}`}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </>
           )}
 
@@ -529,24 +517,44 @@ function App() {
             {fieldHelp.silent}
           </label>
 
-          {columnInfo.count > 0 && <div className="dynamic-section">
-            <label>Remove underscores</label>
-            <div className="field-help">{fieldHelp.remove_underscores}</div>
-            <div className="column-grid">
-              {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
-                  <div key={column} className="column-config">
-                    <label className="checkbox-label">
-                      <input
-                          type="checkbox"
-                          checked={state.remove_underscores.includes(column)}
-                          onChange={() => handleMultiSelectChange('remove_underscores', column)}
-                      />
-                      {columnInfo.names[column - 1] || `Column ${column}`}
-                    </label>
-                  </div>
-              ))}
+          {columnInfo.count > 0 && <>
+            <div className="dynamic-section">
+              <label>Remove underscores</label>
+              <div className="field-help">{fieldHelp.remove_underscores}</div>
+              <div className="column-grid">
+                {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
+                    <div key={column} className="column-config">
+                      <label className="checkbox-label">
+                        <input
+                            type="checkbox"
+                            checked={state.remove_underscores.includes(column)}
+                            onChange={() => handleMultiSelectChange('remove_underscores', column)}
+                        />
+                        {columnInfo.names[column - 1] || `Column ${column}`}
+                      </label>
+                    </div>
+                ))}
+              </div>
             </div>
-          </div>}
+            <div className="dynamic-section">
+              <label>Hide columns</label>
+              <div className="field-help">{fieldHelp.hide}</div>
+              <div className="column-grid">
+                {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(column => (
+                    <div key={column} className="column-config">
+                      <label className="checkbox-label">
+                        <input
+                            type="checkbox"
+                            checked={state.hide.includes(column)}
+                            onChange={() => handleMultiSelectChange('hide', column)}
+                        />
+                        {columnInfo.names[column - 1] || `Column ${column}`}
+                      </label>
+                    </div>
+                ))}
+              </div>
+            </div>
+          </>}
           
           <label>
             Excerpts
@@ -559,31 +567,42 @@ function App() {
               placeholder="Excerpt config"
             />
           </label>
-          
-          <label>
-            Pagination (results per page)
-            <div className="field-help">{fieldHelp.pagination}</div>
-            <input
-              type="number"
-              name="pagination"
-              value={state.pagination}
-              onChange={handleChange}
-              min="1"
-            />
-          </label>
-          
-          <label>
-            Max pages
-            <div className="field-help">{fieldHelp.max_pages}</div>
-            <input
-              type="number"
-              name="max_pages"
-              value={state.max_pages}
-              onChange={handleChange}
-              min="1"
-              max="20"
-            />
-          </label>
+
+          <div className="dynamic-section">
+            <label className="checkbox-label">
+              <input
+                type="checkbox"
+                name="use_pagination"
+                checked={state.use_pagination}
+                onChange={handleChange}
+              />
+              Use pagination
+            </label>
+            <label>
+              {fieldHelp.pagination}
+              <input
+                  type="number"
+                  name="pagination"
+                  value={state.pagination}
+                  onChange={handleChange}
+                  min="1"
+                  disabled={!state.use_pagination}
+              />
+            </label>
+
+            <label>
+              {fieldHelp.max_pages}
+              <input
+                  type="number"
+                  name="max_pages"
+                  value={state.max_pages}
+                  onChange={handleChange}
+                  min="1"
+                  max="20"
+                  disabled={!state.use_pagination}
+              />
+            </label>
+          </div>
           
           <label>
             Postprocess JS
