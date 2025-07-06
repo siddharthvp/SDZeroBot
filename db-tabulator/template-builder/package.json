@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && mv ../../webservice/public/database-report/template-builder/database-report/template-builder/* ../../webservice/public/database-report/template-builder/",
     "lint": "eslint .",
     "preview": "vite preview"
   },
