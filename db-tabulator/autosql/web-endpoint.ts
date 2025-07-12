@@ -19,16 +19,15 @@ router.post('/generate', async function (req, res, next) {
             text: 'Bad request: required parameter "prompt" missing'
         })
     }
-    const response = await client.chat.completions.create({
-        messages: [{
-            role: 'user',
-            content:
-                'Using MediaWiki\'s db schema outlined at https://www.mediawiki.org/wiki/Manual:Database_layout, write an SQL query to perform the below-mentioned. Respond only with the SQL query.\n\n' +
-                req.body.prompt
-        }],
-        model: 'gpt-3.5-turbo',
+    const response = await client.responses.create({
+        model: 'gpt-4o',
+        instructions: 'Using MediaWiki\'s db schema outlined at https://www.mediawiki.org/wiki/Manual:Database_layout, write an SQL SELECT query to retrieve information per the prompt. Respond only with the SQL query, with no formatting.',
+        input: req.body.prompt,
     })
-    const sql = response.choices[0].message.content
+    let sql = response.output_text
+    if (sql.startsWith('```sql\n') && sql.endsWith('\n```')) {
+        sql = sql.substring('```sql\n'.length, sql.length - '\n```'.length);
+    }
     const logEntry = {
         prompt: req.body.prompt,
         response: sql.replace(/\s+/g, ' ')
