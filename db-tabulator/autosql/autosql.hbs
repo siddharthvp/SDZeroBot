@@ -1,91 +1,95 @@
 <h2>AutoSQL</h2>
 <div id="prompt-container">
-  <div>
-    <label for="prompt-english">
-      Enter your query in English to get the corresponding SQL:
-    </label>
-  </div>
-  <textarea id="prompt-english" name="prompt" rows="4" cols="100"></textarea>
-  <div>
-    <button id="prompt-submit" class="sd-button">Generate SQL</button>
-  </div>
+    <div>
+        <label for="prompt-english">
+            Enter your query in English to get the corresponding SQL:
+        </label>
+    </div>
+    <textarea id="prompt-english" name="prompt" rows="4" cols="100"></textarea>
+    <div>
+        <button id="prompt-submit" class="sd-button">Generate SQL</button>
+    </div>
 </div>
 
 <div id="result-container" style="display: none">
-  <p>The generated SQL query is given below. Mistakes are possible. Use with caution.</p>
-  <pre id="result-sql"></pre>
-  <button id="result-copy">
-    Copy
-  </button>
-  <a href="https://quarry.wmcloud.org/" target="_blank">
-    <button>
-      Test it in Quarry
+    <p>The generated SQL query is given below. Mistakes are possible. Use with caution.</p>
+    <pre id="result-sql"></pre>
+    <button id="result-copy">
+        Copy
     </button>
-  </a>
-  <div id="result-warning"></div>
+    <a href="https://quarry.wmcloud.org/" target="_blank">
+        <button>
+            Test it in Quarry
+        </button>
+    </a>
+    <div id="result-warning"></div>
 </div>
 
 <style>
-  button {
-    padding: 5px;
-  }
-  #prompt-english {
-    max-width: 100%;
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-  #result-container {
-    margin-top: 30px;
-    width: 825px;
-    max-width: 100%;
-  }
-  #result-sql {
-    padding: 2px;
-    border: solid 1px grey;
-    min-height: 40px;
-  }
-  #result-warning {
-    margin-top: 10px;
-  }
+    button {
+        padding: 5px;
+    }
+
+    #prompt-english {
+        max-width: 100%;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }
+
+    #result-container {
+        margin-top: 30px;
+        width: 825px;
+        max-width: 100%;
+    }
+
+    #result-sql {
+        padding: 2px;
+        border: solid 1px grey;
+        min-height: 40px;
+    }
+
+    #result-warning {
+        margin-top: 10px;
+    }
 </style>
 
 <script>
-  document.getElementById('prompt-submit').addEventListener('click', async function(e) {
-	  e.preventDefault();
+    document.getElementById('prompt-submit').addEventListener('click', async function (e) {
+        e.preventDefault();
 
-	  const submitButton = document.getElementById('prompt-submit');
-	  submitButton.disabled = true;
-	  submitButton.textContent = 'Generating ...';
+        const submitButton = document.getElementById('prompt-submit');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Generating ...';
 
-	  const response = await fetch('/autosql/generate', {
-		  method: 'POST',
-      headers: {
-			  'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt: document.getElementById('prompt-english').value,
-      })
+        const response = await fetch('/autosql/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                prompt: document.getElementById('prompt-english').value,
+            })
+        });
+        const json = await response.json();
+
+        submitButton.disabled = false;
+        submitButton.textContent = 'Generate SQL';
+        document.getElementById('result-sql').textContent = json.sql;
+        document.getElementById('result-container').style.display = 'block';
+
+        if (json.warnOnField) {
+            const warningDiv = document.getElementById('result-warning');
+            warningDiv.innerHTML = `NOTE: The above SQL may need adjustments for schema normalization, as the AI does not know that <code>${json.warnOnField}</code> field is no longer available. The field needs to be replaced with use of <code>linktarget</code> table. See <a href="https://phabricator.wikimedia.org/T300222" target="_blank">phab:T300222</a>.`;
+        }
     });
-	  const json = await response.json();
 
-	  submitButton.disabled = false;
-	  submitButton.textContent = 'Generate SQL';
-    document.getElementById('result-sql').textContent = json.sql;
-    document.getElementById('result-container').style.display = 'block';
-
-	  if (json.warnOnField) {
-      const warningDiv = document.getElementById('result-warning');
-	    warningDiv.innerHTML = `NOTE: The above SQL may need adjustments for schema normalization, as the AI does not know that <code>${json.warnOnField}</code> field is no longer available. The field needs to be replaced with use of <code>link_target</code> table. See <a href="https://phabricator.wikimedia.org/T300222" target="_blank">phab:T300222</a>.`;
-    }
-  });
-
-  document.getElementById('result-copy').addEventListener('click', function(e) {
-    let sql = document.getElementById('result-sql').textContent;
-    navigator.clipboard.writeText(sql).then(() => {
-      this.textContent = 'Copied!';
-      setTimeout(() => {
-        this.textContent = 'Copy';
-      }, 2000);
+    document.getElementById('result-copy').addEventListener('click', function (e) {
+        let sql = document.getElementById('result-sql').textContent;
+        navigator.clipboard.writeText(sql).then(() => {
+            this.textContent = 'Copied!';
+            setTimeout(() => {
+                this.textContent = 'Copy';
+            }, 2000);
+        });
     });
-  });
 </script>
