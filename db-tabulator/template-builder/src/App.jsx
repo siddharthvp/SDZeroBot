@@ -330,30 +330,33 @@ function App() {
                             value={state.wikilinks[column]?.namespace || ''}
                             onChange={(e) => handleWikilinkChange(column, 'namespace', e.target.value)}
                           >
-                            <option value="">Select namespace...</option>
-                            <option value="0">0 (Main namespace)</option>
-                            <option value="1">1 (Talk)</option>
-                            <option value="2">2 (User)</option>
-                            <option value="3">3 (User talk)</option>
-                            <option value="4">4 (Wikipedia)</option>
-                            <option value="5">5 (Wikipedia talk)</option>
-                            <option value="6">6 (File)</option>
-                            <option value="7">7 (File talk)</option>
-                            <option value="8">8 (MediaWiki)</option>
-                            <option value="9">9 (MediaWiki talk)</option>
-                            <option value="10">10 (Template)</option>
-                            <option value="11">11 (Template talk)</option>
-                            <option value="12">12 (Help)</option>
-                            <option value="13">13 (Help talk)</option>
-                            <option value="14">14 (Category)</option>
-                            <option value="15">15 (Category talk)</option>
-                            <option value="118">118 (Draft)</option>
-                            <option value="119">119 (Draft talk)</option>
-                            {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(col => (
-                              <option key={col} value={`c${col}`}>
-                                c{col} (Column {col}: {columnInfo.names[col - 1] || `Column ${col}`})
-                              </option>
-                            ))}
+                            <optgroup label="Fixed namespace">
+                              <option value="0">0 (Main namespace)</option>
+                              <option value="1">1 (Talk)</option>
+                              <option value="2">2 (User)</option>
+                              <option value="3">3 (User talk)</option>
+                              <option value="4">4 (Wikipedia)</option>
+                              <option value="5">5 (Wikipedia talk)</option>
+                              <option value="6">6 (File)</option>
+                              <option value="7">7 (File talk)</option>
+                              <option value="8">8 (MediaWiki)</option>
+                              <option value="9">9 (MediaWiki talk)</option>
+                              <option value="10">10 (Template)</option>
+                              <option value="11">11 (Template talk)</option>
+                              <option value="12">12 (Help)</option>
+                              <option value="13">13 (Help talk)</option>
+                              <option value="14">14 (Category)</option>
+                              <option value="15">15 (Category talk)</option>
+                              <option value="118">118 (Draft)</option>
+                              <option value="119">119 (Draft talk)</option>
+                            </optgroup>
+                            <optgroup label="Use value from other columns">
+                              {Array.from({ length: columnInfo.count }, (_, i) => i + 1).map(col => (
+                                  <option key={col} value={`c${col}`}>
+                                    c{col} (Column {col}: {columnInfo.names[col - 1] || `Column ${col}`})
+                                  </option>
+                              ))}
+                            </optgroup>
                           </select>
                           <label className="checkbox-label">
                             <input
@@ -605,7 +608,7 @@ function App() {
           </div>
           
           <label>
-            Postprocess JS
+            JS postprocessing (Experimental)
             <div className="field-help">{fieldHelp.postprocess_js}</div>
             <textarea
               name="postprocess_js"
