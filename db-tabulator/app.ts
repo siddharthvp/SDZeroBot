@@ -568,7 +568,7 @@ export class Query extends EventEmitter {
 		}
 
 		// Get DB replag, but no need to do this any more than once in 6 hours (when triggered via
-		// webservice or eventstream-router).
+		// webservice).
 		if (
 			db.replagHours === undefined ||
 			db.replagHoursCalculatedTime.isBefore(new bot.Date().subtract(6, 'hours'))
@@ -663,8 +663,7 @@ export class Query extends EventEmitter {
 		const updateMode =
 			this.context === 'web' ? 'web triggered' :
 				this.context === 'cron' ? 'periodic update' :
-					this.context === 'eventstream' ? 'new transclusion' :
-						'manual';
+					'manual';
 		const endNotFoundNote = this.endNotFound ?
 			', overwriting rest of page as end template not found' : '';
 		return (isError ? 'Encountered error in updating database report' : 'Updating database report')
