@@ -21,10 +21,10 @@
 	function safeStringify(obj) {
 		try {
 			return JSON.stringify(obj, undefined, 2);
-    } catch (e) {
+        } catch (e) {
 			return '<Circular object>';
+        }
     }
-  }
 
 	let params = new Map(new URLSearchParams(location.search));
 	let page = params.get('page');
@@ -53,7 +53,7 @@
 		'query-executing': data => `Query (<code>${shorten(data.args[0], 80)}</code>) submitted to database.`,
 		'query-executed': data => `Query finished running in ${data.args[0]} seconds.`,
 		'postprocessing': _ => `Started JS postprocessing on query result.`,
-    'js-logging': data => `Logging output: <pre>${safeStringify(data.args[0])}</pre>`,
+		'js-logging': data => `Logging output: <pre>${safeStringify(data.args[0])}</pre>`,
 		'js-no-array': _ => error(`JS postprocess() must return an array. `) + 'Saving result without postprocessing.',
 		'js-invalid-return': _ => error(`JS postprocess() returned a value which is not transferable. `) +
 				'Saving result without postprocessing.',
