@@ -2,7 +2,8 @@ import {argv, bot, emailOnError, log, Mwn, TextExtractor} from "../botbase";
 import {enwikidb, SQLError} from "../db";
 import {Template} from "../../mwn/build/wikitext";
 import {arrayChunk, createLogStream, lowerFirst, readFile, stripOuterNowikis, writeFile} from "../utils";
-import {NS_CATEGORY, NS_FILE, NS_MAIN} from "../namespaces";
+import {NS_CATEGORY, NS_FILE, NS_MAIN, NS_MODULE} from "../namespaces";
+import type {ApiExpandTemplatesParams} from "types-mediawiki/api_params";
 import {formatSummary} from "../reports/commons";
 import {MetadataStore} from "./MetadataStore";
 import {HybridMetadataStore} from "./HybridMetadataStore";
@@ -107,6 +108,9 @@ export class Query extends EventEmitter {
 	/** Represents the {{database report}} template placed on the page */
 	template: Template;
 
+	/** For module-based reports, the name of the module containing the report configuration */
+	luaSource: string;
+
 	/** Configurations parsed from the template */
 	config: {
 		sql?: string;
@@ -160,7 +164,7 @@ export class Query extends EventEmitter {
 
 	async process() {
 		try {
-			this.parseQuery();
+			await this.parseQuery();
 			const result = await this.runQuery();
 			const resultText = await this.formatResults(result);
 			await this.save(resultText);
@@ -193,13 +197,54 @@ export class Query extends EventEmitter {
 	}
 
 	// Errors in configs are reported to user through [[Module:Database report]] in Lua
-	parseQuery() {
+	async parseQuery() {
+
+		// Special case: if this is a Lua-based database report
+		this.luaSource = this.getTemplateValue('lua_source');
+		if (this.luaSource) {
+			const moduleTitle = bot.Title.newFromText(this.luaSource, NS_MODULE);
+			if (!moduleTitle) {
+				this.isValid = false;
+				return;
+			}
+			const moduleName = moduleTitle.getMain();
+			const luaFunction = this.getTemplateValue('lua_function') || 'main';
+			const luaParams = this.template.parameters
+				.filter(p => p.name.toString().startsWith('lua_arg_'))
+				.map(p => {
+					const key = p.name.toString().slice('lua_arg_'.length);
+					const value = p.value.trim();
+					return `|${key}=${value}`;
+				})
+				.join('');
+
+			// Execute the Lua code to obtain the report configuration.
+			this.emit('executing-lua', moduleName, luaFunction, luaParams);
+			const moduleOutput = await bot.request({
+				action: 'expandtemplates',
+				title: this.page,
+				text: `{{#invoke:${moduleName}|${luaFunction}${luaParams}}}`,
+				prop: 'wikitext',
+			} as ApiExpandTemplatesParams).then(result => result.expandtemplates);
+
+			const templates = bot.Wikitext.parseTemplates(moduleOutput, {
+				namePredicate: name => name === TEMPLATE
+			});
+			if (templates.length === 0) {
+				// The on-wiki template propagates the error to the user
+				this.isValid = false;
+				return;
+			}
+			this.template = templates[0];
+		}
+
 		this.config.interval = parseInt(this.getTemplateValue('interval'));
 
 		// Use of semicolons for multiple statements will be flagged as error at query runtime
 		this.config.sql = this.getSql();
 
 		if (!this.config.sql) {
+			// On-wiki template reports the error
 			this.isValid = false;
 			return;
 		}
@@ -265,8 +310,6 @@ export class Query extends EventEmitter {
 		}
 
 		this.config.silent = !!this.getTemplateValue('silent');
-
-		return this;
 	}
 
 	async runQuery() {

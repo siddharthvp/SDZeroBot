@@ -72,4 +72,12 @@ export class NoMetadataStore implements MetadataStore {
         return isUpdateDue;
     }
 
+
+    async getAllLuaSources(): Promise<Array<string>> {
+        return [];
+    }
+
+    async getPagesWithLuaSource(luaSource: string): Promise<Array<string>> {
+        return [];
+    }
 }

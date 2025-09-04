@@ -48,4 +48,12 @@ export class HybridMetadataStore implements MetadataStore {
     updateMetadata(page: string, queries: Query[]) {
         return this.activeStore.updateMetadata(page, queries);
     }
+
+    getAllLuaSources(): Promise<Array<string>> {
+        return this.activeStore.getAllLuaSources();
+    }
+
+    getPagesWithLuaSource(luaSource: string): Promise<Array<string>> {
+        return this.activeStore.getPagesWithLuaSource(luaSource);
+    }
 }

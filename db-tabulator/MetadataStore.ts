@@ -8,4 +8,6 @@ export interface MetadataStore {
     updateLastTimestamp(query: Query): Promise<void>;
     recordFailure(query: Query): Promise<void>;
     getQueriesToRun(): Promise<Record<string, Query[]>>;
+    getAllLuaSources(): Promise<Array<string>>;
+    getPagesWithLuaSource(luaSource: string): Promise<Array<string>>;
 }

@@ -1,6 +1,7 @@
 import {BOT_NAME, fetchQueriesForPage, SUBSCRIPTIONS_CATEGORY, metadataStore, Query} from "./app";
 import {pageFromCategoryEvent, Route} from "../eventstream-router/app";
 import {bot} from "../botbase";
+import {NS_MODULE} from "../namespaces";
 import {HybridMetadataStore} from "./HybridMetadataStore";
 import {NoMetadataStore} from "./NoMetadataStore";
 import {setDifference} from "../utils";
@@ -18,6 +19,7 @@ export default class DbTabulatorMetadata extends Route {
     name = "db-tabulator-metadata";
 
     subscriptions: Set<string>;
+    luaSources: Set<string>;
 
      // Store metadata along with last update
 
@@ -26,6 +28,7 @@ export default class DbTabulatorMetadata extends Route {
         this.log('[S] Started');
         this.subscriptions = new Set((await new bot.Category(SUBSCRIPTIONS_CATEGORY).members()).map(e => e.title));
         await metadataStore.init();
+        this.luaSources = new Set(await metadataStore.getAllLuaSources());
         if (metadataStore instanceof HybridMetadataStore) {
             if (metadataStore.activeStore instanceof NoMetadataStore) {
                 this.log("[E] Active store is NoMetadataStore, which cannot be used for collecting metadata");
@@ -45,9 +48,17 @@ export default class DbTabulatorMetadata extends Route {
 
     filter(data: RecentChangeStreamEvent): boolean {
         return data.wiki === 'enwiki' &&
-            ((data.type === 'categorize' && data.title === 'Category:' + SUBSCRIPTIONS_CATEGORY) ||
-            ((data.type === 'edit' || (data.type === 'log' && (data.log_action === 'move' || data.log_action === 'delete')))
-                && this.subscriptions.has(data.title) && data.user !== BOT_NAME));
+            (
+                (data.type === 'categorize' && data.title === 'Category:' + SUBSCRIPTIONS_CATEGORY) ||
+                (
+                    (
+                        data.type === 'edit' ||
+                        (data.type === 'log' && (data.log_action === 'move' || data.log_action === 'delete'))
+                    )
+                    && (this.subscriptions.has(data.title) || this.luaSources.has(data.title))
+                    && data.user !== BOT_NAME
+                )
+            );
     }
 
     async worker(data: RecentChangeStreamEvent) {
@@ -62,24 +73,40 @@ export default class DbTabulatorMetadata extends Route {
             }
 
         } else if (data.log_action === 'move') {
-            this.updateMetadata(data.title);
-            this.subscriptions.delete(data.title);
-            this.updateMetadata(data.log_params.target);
-            this.subscriptions.add(data.log_params.target);
-
+            if (data.namespace !== NS_MODULE) {
+                this.updateMetadata(data.title);
+                this.subscriptions.delete(data.title);
+                this.updateMetadata(data.log_params.target);
+                this.subscriptions.add(data.log_params.target);
+            } else {
+                this.luaSources.delete(data.title);
+                this.luaSources.add(data.log_params.target);
+                (await metadataStore.getPagesWithLuaSource(data.title))
+                    .forEach(page => this.updateMetadata(page));
+            }
         } else if (data.log_action === 'delete') {
-            this.updateMetadata(data.title);
-            this.subscriptions.delete(data.title);
+            if (data.namespace !== NS_MODULE) {
+                this.updateMetadata(data.title);
+                this.subscriptions.delete(data.title);
+            } else {
+                this.luaSources.delete(data.title);
+                (await metadataStore.getPagesWithLuaSource(data.title))
+                    .forEach(page => this.updateMetadata(page));
+            }
 
         } else { // edit
-            this.updateMetadata(data.title);
+            const affectedPages = data.namespace === NS_MODULE ?
+                await metadataStore.getPagesWithLuaSource(data.title) : [data.title];
+            affectedPages.forEach(page => this.updateMetadata(page));
         }
     }
 
     async updateMetadata(page: string, recordIfNone = false) {
         this.log(`[+] Updating metadata for ${page}`);
         const queries = await fetchQueriesForPage(page);
-        queries.forEach(q => q.parseQuery());
+        for (const q of queries) {
+            await q.parseQuery();
+        }
         let validQueries = queries.filter(q => q.isValid);
         if (validQueries.length === 0 && recordIfNone) {
             // This deals with pages that transclude pages with reports - they are in the category but have no template.

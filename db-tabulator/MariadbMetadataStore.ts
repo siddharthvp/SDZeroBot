@@ -29,14 +29,14 @@ export class MariadbMetadataStore implements MetadataStore {
                 const intervalDays = isNaN(query.config.interval) ? null : query.config.interval;
                 if (existingQueryMd5s.has(md5)) {
                     await conn.execute(`
-                        UPDATE dbreports SET idx = ?, intervalDays = ?
+                        UPDATE dbreports SET idx = ?, intervalDays = ?, luaSource = ?
                         WHERE page = ? AND templateMd5 = ?
-                    `, [query.idx, intervalDays, query.page, md5]);
+                    `, [query.idx, intervalDays, query.luaSource, query.page, md5]);
                 } else {
                     await conn.execute(`
-                        INSERT INTO dbreports(page, idx, templateMd5, intervalDays, lastUpdate, failures)
-                        VALUES (?, ?, ?, ?, ?, ?)
-                    `, [query.page, query.idx, md5, intervalDays, null, null]);
+                        INSERT INTO dbreports(page, idx, templateMd5, intervalDays, luaSource, lastUpdate, failures)
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    `, [query.page, query.idx, md5, intervalDays, query.luaSource, null, null]);
                 }
             }
         });
@@ -106,5 +106,17 @@ export class MariadbMetadataStore implements MetadataStore {
             WHERE page = ?
               AND idx = ?
         `, [MAX_CONSECUTIVE_FAILURES_ALLOWED, query.page, query.idx]);
+    }
+
+    async getAllLuaSources() {
+        const rows = await this.db.query(`SELECT DISTINCT luaSource FROM dbreports`);
+        return rows.map(row => row.luaSource) as string[];
+    }
+
+    async getPagesWithLuaSource(luaSource: string) {
+        const rows = await this.db.query(`
+            SELECT DISTINCT page FROM dbreports WHERE luaSource = ?
+        `, [luaSource]);
+        return rows.map(row => row.page) as string[];
     }
 }

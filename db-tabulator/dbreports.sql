@@ -8,3 +8,4 @@ CREATE TABLE IF NOT EXISTS dbreports(
 # TODO: database indexes and primary key
 
 ALTER TABLE dbreports ADD COLUMN failures SMALLINT UNSIGNED;
+ALTER TABLE dbreports ADD COLUMN luaSource VARCHAR(255);
