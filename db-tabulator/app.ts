@@ -108,8 +108,14 @@ export class Query extends EventEmitter {
 	/** Represents the {{database report}} template placed on the page */
 	template: Template;
 
-	/** For module-based reports, the name of the module containing the report configuration */
+	/** For Lua-based reports, the name of the module containing the report configuration */
 	luaSource: string;
+
+	/**
+	 * For Lua-based reports, represents the original template that exists on the page.
+	 * For other reports, same as {@link template}.
+	 */
+	originalTemplate: Template;
 
 	/** Configurations parsed from the template */
 	config: {
@@ -148,6 +154,7 @@ export class Query extends EventEmitter {
 		super();
 		this.page = page;
 		this.template = template;
+		this.originalTemplate = template;
 		this.idx = idxOnPage;
 		this.needsExternalRun = external;
 		this.context = getContext();
@@ -225,7 +232,7 @@ export class Query extends EventEmitter {
 				title: this.page,
 				text: `{{#invoke:${moduleName}|${luaFunction}${luaParams}}}`,
 				prop: 'wikitext',
-			} as ApiExpandTemplatesParams).then(result => result.expandtemplates);
+			} as ApiExpandTemplatesParams).then(result => result.expandtemplates.wikitext);
 
 			const templates = bot.Wikitext.parseTemplates(moduleOutput, {
 				namePredicate: name => name === TEMPLATE
@@ -723,11 +730,11 @@ export class Query extends EventEmitter {
 			return queryResult;
 		}
 		// Does not support the case of two template usages with very same wikitext
-		let beginTemplateStartIdx = text.indexOf(this.template.wikitext);
+		let beginTemplateStartIdx = text.indexOf(this.originalTemplate.wikitext);
 		if (beginTemplateStartIdx === -1) {
 			throw new Error(`Failed to find template in wikitext on page ${this.page}`);
 		}
-		let beginTemplateEndIdx = beginTemplateStartIdx + this.template.wikitext.length;
+		let beginTemplateEndIdx = beginTemplateStartIdx + this.originalTemplate.wikitext.length;
 		let endTemplateStartIdx = text.indexOf(`{{${TEMPLATE_END}}}`, beginTemplateEndIdx);
 		if (endTemplateStartIdx === -1) { // caps, XXX
 			endTemplateStartIdx = text.indexOf(`{{${lowerFirst(TEMPLATE_END)}}}`, beginTemplateEndIdx);
