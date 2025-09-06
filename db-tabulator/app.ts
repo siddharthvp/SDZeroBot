@@ -226,19 +226,21 @@ export class Query extends EventEmitter {
 				.join('');
 
 			// Execute the Lua code to obtain the report configuration.
-			this.emit('executing-lua', moduleName, luaFunction, luaParams);
+			this.emit('lua-executing', moduleName, luaFunction, luaParams);
 			const moduleOutput = await bot.request({
 				action: 'expandtemplates',
 				title: this.page,
 				text: `{{#invoke:${moduleName}|${luaFunction}${luaParams}}}`,
 				prop: 'wikitext',
 			} as ApiExpandTemplatesParams).then(result => result.expandtemplates.wikitext);
+			this.emit('lua-executed', moduleOutput);
 
 			const templates = bot.Wikitext.parseTemplates(moduleOutput, {
 				namePredicate: name => name === TEMPLATE
 			});
 			if (templates.length === 0) {
 				// The on-wiki template propagates the error to the user
+				this.emit('lua-no-template');
 				this.isValid = false;
 				return;
 			}
@@ -252,6 +254,7 @@ export class Query extends EventEmitter {
 
 		if (!this.config.sql) {
 			// On-wiki template reports the error
+			this.emit('no-sql');
 			this.isValid = false;
 			return;
 		}

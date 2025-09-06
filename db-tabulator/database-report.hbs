@@ -50,7 +50,10 @@
 				`{${link('Template:Database report', 'database report')}}} on ${link(page)}.`,
 
 		// From Query class:
-        'executing-lua': data => `Executing ${link('Module:' + data.args[0])}, function ${data.args[1]} ${data.args[2] ? 'with params ' + data.args[2] : 'without any params.'}`,
+        'lua-executing': data => `Executing ${link('Module:' + data.args[0])}, function <code>${data.args[1]}</code> ${data.args[2] ? 'with params ' + data.args[2] : 'without any params.'}`,
+        'lua-executed': data => `Lua module output: <pre>${data.args[0]}</pre>`,
+        'lua-no-template': 'No <code>{{database report}}</code> template found in Lua module output',
+        'no-sql': 'No <code>|sql=</code> parameter found in {{database report}}',
 		'query-executing': data => `Query (<code>${shorten(data.args[0], 80)}</code>) submitted to database.`,
 		'query-executed': data => `Query finished running in ${data.args[0]} seconds.`,
 		'postprocessing': _ => `Started JS postprocessing on query result.`,
