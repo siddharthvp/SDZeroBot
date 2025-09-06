@@ -172,6 +172,10 @@ export class Query extends EventEmitter {
 	async process() {
 		try {
 			await this.parseQuery();
+			if (!this.isValid) {
+				log(`[W] Skipping run of invalid query ${this}`);
+				return;
+			}
 			const result = await this.runQuery();
 			const resultText = await this.formatResults(result);
 			await this.save(resultText);
