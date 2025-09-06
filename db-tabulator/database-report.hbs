@@ -61,7 +61,7 @@
 		'js-no-array': _ => error(`JS postprocess() must return an array. `) + 'Saving result without postprocessing.',
 		'js-invalid-return': _ => error(`JS postprocess() returned a value which is not transferable. `) +
 				'Saving result without postprocessing.',
-		'js-failed': data => error(`JS postprocessing failed. `) + `Error: ${data.args[0]}. Saving result without postprocessing.`,
+		'js-failed': data => error(`JS postprocessing failed. `) + `Error: ${data.args[0]}. <br><br>Saving result without postprocessing.`,
 		'process-timed-out': _ => error(`Child process timed out`),
 		'postprocessing-complete': data => `Finished JS postprocessing on query result in ${data.args[0]} seconds.`,
 		'catastrophic-error': _ => error(`Your custom JS code was force-terminated due to excessive memory or time usage.`),

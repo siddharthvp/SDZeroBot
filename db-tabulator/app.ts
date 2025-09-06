@@ -469,7 +469,19 @@ export class Query extends EventEmitter {
 			const jsCode = stripOuterNowikis(this.getTemplateValue('postprocess_js'));
 			try {
 				result = await applyJsPostProcessing(result, jsCode, this);
+				// FIXME: Ideally, postprocessing should be done once on the full result
+				// postprocess_js + pagination is currently a bit messy.
+				if (result.length === 0) {
+					return db.makeReplagMessage(2) +
+						(this.config.silent ? '' : Mwn.template('Database report/footer', {
+								count: '0',
+								query_runtime: this.queryRuntime,
+								last_updated: new bot.Date().format('HH:mm, D MMMM YYYY') + ' (UTC)',
+							})
+						);
+				}
 			} catch (e) {
+				this.emit('js-failed', e.toString());
 				log(`[E] Error in applyJsPostProcessing`);
 				log(e);
 			}
