@@ -312,7 +312,13 @@ ${replagMessage}
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
 
-	await bot.batchOperation(Object.keys(sorter), createSubpage, 1);
+	const result = await bot.batchOperation(Object.keys(sorter), createSubpage, 1);
+	if (Object.keys(result.failures).length) {
+		for (const [topic, err] of Object.entries(result.failures)) {
+			log(`[E] Failed to create subpage for ${topic}`);
+			emailOnError(err, 'npp-sorting (non-fatal)', false);
+		}
+	}
 
 	log(`[i] Finished`);
 	closeTunnels();
