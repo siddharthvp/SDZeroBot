@@ -1,3 +1,4 @@
+import {log} from "../botbase";
 import {toolsdb} from "../db";
 import {fetchQueriesForPage, Query, MAX_CONSECUTIVE_FAILURES_ALLOWED} from "./app";
 import {MetadataStore} from "./MetadataStore";
@@ -33,10 +34,20 @@ export class MariadbMetadataStore implements MetadataStore {
                         WHERE page = ? AND templateMd5 = ?
                     `, [query.idx, intervalDays, query.luaSource, query.page, md5]);
                 } else {
+                    // Debugging: find cause of "Bind parameters must not contain undefined. To pass SQL NULL specify JS null"
+                    const params = [query.page, query.idx, md5, intervalDays, query.luaSource, null, null];
+                    const bindParams = params
+                        .map(e => {
+                            if (e === undefined) {
+                                log(`[E] Found undefined in params: ${params.join(', ')}`);
+                                return null;
+                            }
+                            return e;
+                        });
                     await conn.execute(`
                         INSERT INTO dbreports(page, idx, templateMd5, intervalDays, luaSource, lastUpdate, failures)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
-                    `, [query.page, query.idx, md5, intervalDays, query.luaSource, null, null]);
+                    `, bindParams);
                 }
             }
         });
