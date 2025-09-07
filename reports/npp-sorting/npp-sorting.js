@@ -109,6 +109,7 @@ process.chdir(__dirname);
 			continue;
 		}
 		tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
+		tableInfo[page.title].shortExtract = TextExtractor.getExtract(text, 100, 250);
 		// NOTE: additional processing of extracts at the end of createSubpage() function
 		if (tableInfo[page.title].extract === '') { // empty extract is suspicious
 			if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
@@ -298,7 +299,7 @@ ${replagMessage}
 			content += `|-
 | ${tabledata.creation_date}
 | ${articleString}
-| ${tabledata.extract || ''}
+| ${(pagetitle === 'Culture/Biography' ? tabledata.shortExtract : tabledata.extract) || ''}
 | ${classString}
 | ${editorString}
 | ${page.issues}
