@@ -32,22 +32,12 @@ export class MariadbMetadataStore implements MetadataStore {
                     await conn.execute(`
                         UPDATE dbreports SET idx = ?, intervalDays = ?, luaSource = ?
                         WHERE page = ? AND templateMd5 = ?
-                    `, [query.idx, intervalDays, query.luaSource, query.page, md5]);
+                    `, this.castBindParams([query.idx, intervalDays, query.luaSource, query.page, md5]));
                 } else {
-                    // Debugging: find cause of "Bind parameters must not contain undefined. To pass SQL NULL specify JS null"
-                    const params = [query.page, query.idx, md5, intervalDays, query.luaSource, null, null];
-                    const bindParams = params
-                        .map(e => {
-                            if (e === undefined) {
-                                log(`[E] Found undefined in params: ${params.join(', ')}`);
-                                return null;
-                            }
-                            return e;
-                        });
                     await conn.execute(`
                         INSERT INTO dbreports(page, idx, templateMd5, intervalDays, luaSource, lastUpdate, failures)
                         VALUES (?, ?, ?, ?, ?, ?, ?)
-                    `, bindParams);
+                    `, this.castBindParams([query.page, query.idx, md5, intervalDays, query.luaSource, null, null]));
                 }
             }
         });
@@ -129,5 +119,17 @@ export class MariadbMetadataStore implements MetadataStore {
             SELECT DISTINCT page FROM dbreports WHERE luaSource = ?
         `, [luaSource]);
         return rows.map(row => row.page) as string[];
+    }
+
+    // Debugging: find cause of "Bind parameters must not contain undefined. To pass SQL NULL specify JS null"
+    private castBindParams(params: Array<string | number | null | undefined>) {
+        return params
+            .map((e, i) => {
+                if (e === undefined) {
+                    log(`[E] Found undefined in params array (index ${i}): ${params.join(', ')}`);
+                    return null;
+                }
+                return e;
+            });
     }
 }
