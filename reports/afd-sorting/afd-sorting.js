@@ -22,17 +22,19 @@ process.chdir(__dirname);
 			"prop": "revisions|description",
 			"generator": "categorymembers",
 			"rvprop": "ids|content",
+			"rvsection": "0",
+			"rvslots": "main",
 			"gcmtitle": "Category:Articles for deletion",
 			"gcmnamespace": "0",
 			"gcmtype": "page",
-			"gcmlimit": "500"
+			"gcmlimit": "100"
 		}).then(jsons => {
 			revidsTitles = {};
 			tableInfo = {};
 			var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 			pages.forEach(pg => {
 				revidsTitles[pg.revisions[0].revid] = pg.title;
-				var afd_template = new bot.Wikitext(pg.revisions[0].content).parseTemplates({
+				var afd_template = new bot.Wikitext(pg.revisions[0].slots.main.content).parseTemplates({
 					count: 1,
 					namePredicate: name => name === 'Article for deletion/dated' || name === 'AfDM'
 				})[0];
@@ -74,12 +76,13 @@ process.chdir(__dirname);
 		gcmlimit: '500',
 		gcmtype: 'page',
 		prop: 'revisions',
-		rvprop: 'content'
+		rvprop: 'content',
+		rvslots: 'main',
 	}).then(jsons => {
 		var pages = jsons.reduce((pages, json) => pages.concat(json.query.pages), []);
 		pages.forEach(pg => {
 			if (pg.missing) return; // should never happen
-			var text = pg.revisions[0].content;
+			var text = pg.revisions[0].slots.main.content;
 			var concern = text.replace(/^\s*[:*#{}|!=<].*$/mg, '').replace(/^\s*$/mg, '').trim();
 
 			// cut at the first newline coming after the first timestamp
