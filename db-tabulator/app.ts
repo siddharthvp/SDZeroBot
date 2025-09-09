@@ -109,7 +109,7 @@ export class Query extends EventEmitter {
 	template: Template;
 
 	/** For Lua-based reports, the name of the module containing the report configuration */
-	luaSource: string;
+	luaSource: string = null;
 
 	/**
 	 * For Lua-based reports, represents the original template that exists on the page.
