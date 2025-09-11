@@ -1,4 +1,4 @@
-import {bot, fs, log, redactSecretsInError} from "./botbase";
+import {bot, fs, log} from "./botbase";
 import {spawn} from "child_process";
 import {ENWIKI_DB_HOST, TOOLS_DB_HOST} from "./db";
 import {REDIS_HOST} from "./redis";
@@ -23,9 +23,6 @@ export function createLogStream(file: string) {
 	});
 
 	var logger = function (msg) {
-		if (typeof msg === 'object') {
-			redactSecretsInError(msg);
-		}
 		let ts = new bot.Date().format('YYYY-MM-DD HH:mm:ss');
 		let stringified;
 		if (typeof msg === 'string') {
