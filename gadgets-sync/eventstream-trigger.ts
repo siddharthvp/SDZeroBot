@@ -13,7 +13,7 @@ export default class GadgetsSync extends Route {
     filter(data: RecentChangeStreamEvent): boolean {
         return data.wiki === 'enwiki' &&
             data.type === 'edit' &&
-            data.title === 'User:SDZeroBot/Gadgets-sync-config.json';
+            data.title === 'User:SDZeroBot/Gadget sync/Config.json';
     }
 
     async worker(data: RecentChangeStreamEvent) {
