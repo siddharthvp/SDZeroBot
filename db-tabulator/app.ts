@@ -249,6 +249,23 @@ export class Query extends EventEmitter {
 				return;
 			}
 			this.template = templates[0];
+
+			// Merge in configs provided in wikitext
+			let templateOverrides = [];
+			for (let origParam of this.originalTemplate.parameters) {
+				if (origParam.value && !origParam.name.toString().startsWith('lua_')) {
+					const param = this.template.parameters.find(p => p.name === origParam.name)
+					if (param) {
+						param.value = origParam.value;
+					} else {
+						this.template.parameters.push(origParam);
+					}
+					templateOverrides.push(origParam.name);
+				}
+			}
+			if (templateOverrides.length > 0) {
+				this.emit('lua-wikitext-overrides', templateOverrides.join(', '));
+			}
 		}
 
 		this.config.interval = parseInt(this.getTemplateValue('interval'));
