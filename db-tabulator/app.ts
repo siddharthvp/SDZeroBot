@@ -214,7 +214,7 @@ export class Query extends EventEmitter {
 		this.luaSource = this.getTemplateValue('lua_source');
 		if (this.luaSource) {
 			const moduleTitle = bot.Title.newFromText(this.luaSource, NS_MODULE);
-			if (!moduleTitle) {
+			if (!moduleTitle || moduleTitle.getNamespaceId() !== NS_MODULE) {
 				this.isValid = false;
 				return;
 			}
