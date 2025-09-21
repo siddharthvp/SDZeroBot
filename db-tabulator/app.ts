@@ -42,7 +42,7 @@ export function getQueriesFromText(text: string, title: string): Query[] {
 		namePredicate: name => name === TEMPLATE
 	});
 	if (templates.length === 0) {
-		log(`[E] Failed to find template on ${title}`);
+		log(`[W] Failed to find template on ${title}`);
 		return [];
 	}
 	return templates.map((template, idx) =>
