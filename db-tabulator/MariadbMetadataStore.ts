@@ -1,4 +1,3 @@
-import {log} from "../botbase";
 import {toolsdb} from "../db";
 import {fetchQueriesForPage, Query, MAX_CONSECUTIVE_FAILURES_ALLOWED} from "./app";
 import {MetadataStore} from "./MetadataStore";
@@ -121,15 +120,7 @@ export class MariadbMetadataStore implements MetadataStore {
         return rows.map(row => row.page) as string[];
     }
 
-    // Debugging: find cause of "Bind parameters must not contain undefined. To pass SQL NULL specify JS null"
     private castBindParams(params: Array<string | number | null | undefined>) {
-        return params
-            .map((e, i) => {
-                if (e === undefined) {
-                    log(`[E] Found undefined in params array (index ${i}): ${params.join(', ')}`);
-                    return null;
-                }
-                return e;
-            });
+        return params.map(e => e === undefined ? null : e);
     }
 }
