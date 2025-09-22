@@ -45,12 +45,12 @@ export function getQueriesFromText(text: string, title: string): Query[] {
 		log(`[W] Failed to find template on ${title}`);
 		return [];
 	}
-	return templates.map((template, idx) =>
-		new Query(template, title, idx + 1, !!template.getValue('postprocess_js')?.trim()));
+	return templates.map((template, idx) => new Query(template, title, idx + 1));
 }
 
 export async function processQueries(allQueries: Record<string, Query[]>, notifier?: EventEmitter) {
 	await bot.batchOperation(Object.entries(allQueries), async ([page, queries]) => {
+		await Promise.all(queries.map(query => query.parseQuery()));
 		if (queries.filter(q => q.needsExternalRun).length > 0) {
 			// Needs an external process for security
 			log(`[+] Processing page ${page} using child process`);
@@ -164,13 +164,12 @@ export class Query extends EventEmitter {
 	needsExternalRun = false;
 	needsForceKill = false;
 
-	constructor(template: Template, page: string, idxOnPage: number, external?: boolean) {
+	constructor(template: Template, page: string, idxOnPage: number) {
 		super();
 		this.page = page;
 		this.template = template;
 		this.originalTemplate = template;
 		this.idx = idxOnPage;
-		this.needsExternalRun = external;
 		this.context = getContext();
 	}
 
@@ -185,11 +184,12 @@ export class Query extends EventEmitter {
 
 	async process() {
 		try {
-			await this.parseQuery();
+			// parseQuery() has already been called by the time we reach here.
 			if (!this.isValid) {
 				log(`[W] Skipping run of invalid query ${this}`);
 				return;
 			}
+			this.parseFormattingConfig();
 			const result = await this.runQuery();
 			const resultText = await this.formatResults(result);
 			await this.save(resultText);
@@ -221,9 +221,7 @@ export class Query extends EventEmitter {
 		}
 	}
 
-	// Errors in configs are reported to user through [[Module:Database report]] in Lua
 	async parseQuery() {
-
 		// Special case: if this is a Lua-based database report
 		this.luaSource = this.getTemplateValue('lua_source');
 		if (this.luaSource) {
@@ -288,11 +286,19 @@ export class Query extends EventEmitter {
 		this.config.sql = this.getSql();
 
 		if (!this.config.sql) {
-			// On-wiki template reports the error
+			// On-wiki template also reports the error
 			this.emit('no-sql');
 			this.isValid = false;
 			return;
 		}
+
+		if (this.getTemplateValue('postprocess_js')) {
+			this.needsExternalRun = true;
+		}
+	}
+
+	// Errors in configs are reported to user through [[Module:Database report]] in Lua
+	parseFormattingConfig() {
 
 		this.config.wikilinks = this.getTemplateValue('wikilinks')
 			?.split(',')

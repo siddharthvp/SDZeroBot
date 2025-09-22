@@ -26,6 +26,7 @@ import {metadataStore, fetchQueriesForPage, processQueriesForPage} from "./app";
         });
     }
 
+    await Promise.all(queries.map(q => q.parseQuery()));
     await processQueriesForPage(queries);
 
     if (queries.filter(q => q.needsForceKill).length > 0) {
