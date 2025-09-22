@@ -82,6 +82,20 @@ export async function processQueriesForPage(queries: Query[]) {
 	}
 }
 
+export async function updateMetadata(page: string, recordIfNone = false) {
+	const queries = await fetchQueriesForPage(page);
+	for (const q of queries) {
+		await q.parseQuery();
+	}
+	let validQueries = queries.filter(q => q.isValid);
+	if (validQueries.length === 0 && recordIfNone) {
+		// This deals with pages that transclude pages with reports - they are in the category but have no template.
+		// Add a dummy query to the database.
+		validQueries = [ new Query(new Template('{{}}'), page, 0) ];
+	}
+	await metadataStore.updateMetadata(page, validQueries);
+}
+
 export async function checkShutoff() {
 	let text = (await bot.read(SHUTOFF_PAGE))?.revisions?.[0]?.content;
 	return text?.trim();

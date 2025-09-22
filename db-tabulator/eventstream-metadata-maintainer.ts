@@ -1,4 +1,4 @@
-import {BOT_NAME, fetchQueriesForPage, SUBSCRIPTIONS_CATEGORY, metadataStore, Query} from "./app";
+import {BOT_NAME, SUBSCRIPTIONS_CATEGORY, metadataStore, updateMetadata} from "./app";
 import {pageFromCategoryEvent, Route} from "../eventstream-router/app";
 import {bot} from "../botbase";
 import {NS_MODULE} from "../namespaces";
@@ -6,7 +6,6 @@ import {HybridMetadataStore} from "./HybridMetadataStore";
 import {NoMetadataStore} from "./NoMetadataStore";
 import {setDifference} from "../utils";
 import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
-import {Template} from "mwn/build/wikitext";
 
 /**
  * If there are a large number of reports, we want to identify which reports need updating without reading in the pages.
@@ -103,17 +102,7 @@ export default class DbTabulatorMetadata extends Route {
 
     async updateMetadata(page: string, recordIfNone = false) {
         this.log(`[+] Updating metadata for ${page}`);
-        const queries = await fetchQueriesForPage(page);
-        for (const q of queries) {
-            await q.parseQuery();
-        }
-        let validQueries = queries.filter(q => q.isValid);
-        if (validQueries.length === 0 && recordIfNone) {
-            // This deals with pages that transclude pages with reports - they are in the category but have no template.
-            // Add a dummy query to the database.
-            validQueries = [ new Query(new Template('{{}}'), page, 0) ];
-        }
-        await metadataStore.updateMetadata(page, validQueries);
+        await updateMetadata(page, recordIfNone);
     }
 
     /**
