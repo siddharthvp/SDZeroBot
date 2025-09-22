@@ -29,9 +29,12 @@ export class MariadbMetadataStore implements MetadataStore {
                 const intervalDays = isNaN(query.config.interval) ? null : query.config.interval;
                 if (existingQueryMd5s.has(md5)) {
                     await conn.execute(`
-                        UPDATE dbreports SET idx = ?, intervalDays = ?, luaSource = ?
+                        UPDATE dbreports 
+                        SET idx = ?, 
+                            luaSource = ?, 
+                            intervalDays = IF(failures >= ?, NULL, ?)
                         WHERE page = ? AND templateMd5 = ?
-                    `, this.castBindParams([query.idx, intervalDays, query.luaSource, query.page, md5]));
+                    `, this.castBindParams([query.idx, query.luaSource, MAX_CONSECUTIVE_FAILURES_ALLOWED, intervalDays, query.page, md5]));
                 } else {
                     await conn.execute(`
                         INSERT INTO dbreports(page, idx, templateMd5, intervalDays, luaSource, lastUpdate, failures)
