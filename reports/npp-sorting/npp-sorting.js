@@ -109,7 +109,8 @@ process.chdir(__dirname);
 			continue;
 		}
 		tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
-		tableInfo[page.title].shortExtract = TextExtractor.getExtract(text, 100, 250);
+		// Set low charLimit for shortExtract so that there's only a single sentence.
+		tableInfo[page.title].shortExtract = TextExtractor.getExtract(text, 10, 200);
 		// NOTE: additional processing of extracts at the end of createSubpage() function
 		if (tableInfo[page.title].extract === '') { // empty extract is suspicious
 			if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
@@ -309,6 +310,11 @@ ${replagMessage}
 		content += `|}\n<span style="font-style: italic; font-size: 85%;">Last updated by [[User:SDZeroBot|SDZeroBot]] <sup>''[[User:SD0001|operator]] / [[User talk:SD0001|talk]]''</sup> at ~~~~~</span>`;
 
 		content = TextExtractor.finalSanitise(content);
+
+		// preempt contenttoobig error from API (occurs if wikitext is over 2 MB)
+		if (content.length > 2_097_152) {
+			return Promise.reject('Page size too large for ' + pagetitle + ' (' + content.length + ' bytes, max 2 MB allowed.')
+		}
 
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
 	};
