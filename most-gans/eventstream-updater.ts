@@ -87,7 +87,7 @@ export default class Gans extends Route {
 			UPDATE ${TABLE} 
 			SET nominator = ?, lastUpdate = UTC_TIMESTAMP()
 			WHERE nominator = ?
-		`, [oldUsername, newUsername]).then(result => {
+		`, [newUsername, oldUsername]).then(result => {
 			const affectedRows = (result?.[0] as ResultSetHeader)?.affectedRows;
 			this.log(`[+] ${oldUsername} renamed to ${newUsername}. Updated ${affectedRows} row(s).`);
 		}).catch(err => {
