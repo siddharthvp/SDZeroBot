@@ -719,7 +719,8 @@ export class Query extends EventEmitter {
 				let newText = this.insertResultIntoPageText(text, firstPageResult);
 				return {
 					text: newText,
-					summary: this.generateEditSummary(isError)
+					summary: this.generateEditSummary(isError),
+					nocreate: !this.config.outputPage,
 				};
 			});
 			this.emit('save-success', outputPage);

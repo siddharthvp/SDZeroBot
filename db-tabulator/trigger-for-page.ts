@@ -1,5 +1,5 @@
 import {EventEmitter} from "events";
-import {argv, log} from "../botbase";
+import {argv, log, bot} from "../botbase";
 import {fetchQueriesForPage, checkShutoff, metadataStore, processQueries} from "./app";
 
 /**
@@ -14,6 +14,7 @@ import {fetchQueriesForPage, checkShutoff, metadataStore, processQueries} from "
 		checkShutoff(),
 		fetchQueriesForPage(page),
 		metadataStore.init(),
+		bot.getTokensAndSiteInfo(),
 	]);
 
 	if (shutoffText) {

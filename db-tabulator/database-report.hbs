@@ -69,7 +69,7 @@
 		'saving': data => `Saving ${link(data.args[0])}.`,
 		'end-not-found': _ => `[WARNING]: No {` + `{database report end}} template was found. Overwriting rest of the page.`,
 		'save-success': data => `Successfully saved page ${link(data.args[0])}.`,
-		'save-failure': data => `Failed to save page ${link(data.args[0])}. Error: ${data.args[1]}`,
+		'save-failed': data => `Failed to save page ${link(data.args[0])}. Error: ${data.args[1]}`,
 		'done-one': _ => `<br>`,
 		'completed': _ => `<span style="font-weight: bold">Updates completed.</span>`,
 	};
