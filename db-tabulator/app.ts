@@ -714,15 +714,18 @@ export class Query extends EventEmitter {
 		let page = new bot.Page(outputPage);
 		let firstPageResult = Array.isArray(queryResult) ? queryResult[0] : queryResult;
 		try {
-			await page.edit(rev => {
-				let text = rev.content;
-				let newText = this.insertResultIntoPageText(text, firstPageResult);
-				return {
-					text: newText,
-					summary: this.generateEditSummary(isError),
-					nocreate: !this.config.outputPage,
-				};
-			});
+			if (this.config.outputPage) {
+				await page.save(firstPageResult, this.generateEditSummary(isError));
+			} else {
+				await page.edit(rev => {
+					let text = rev.content;
+					let newText = this.insertResultIntoPageText(text, firstPageResult);
+					return {
+						text: newText,
+						summary: this.generateEditSummary(isError)
+					};
+				});
+			}
 			this.emit('save-success', outputPage);
 		} catch (err) {
 			if (isError) { // error on an error logging attempt, just throw now
@@ -783,9 +786,6 @@ export class Query extends EventEmitter {
 	}
 
 	insertResultIntoPageText(text: string, queryResult: string) {
-		if (this.config.outputPage) {
-			return queryResult;
-		}
 		// Does not support the case of two template usages with very same wikitext
 		let beginTemplateStartIdx = text.indexOf(this.originalTemplate.wikitext);
 		if (beginTemplateStartIdx === -1) {
