@@ -352,7 +352,7 @@ export class Query extends EventEmitter {
 		);
 
 		let outputPage = this.getTemplateValue('output_page');
-		if (outputPage && isFinite(this.config.pagination)) {
+		if (outputPage && (!isFinite(this.config.pagination) || this.config.maxPages === 1)) {
 			let thisTitle = new bot.Title(this.page);
 			let outputTitle = new bot.Title(outputPage);
 			if (outputTitle.toText().startsWith(thisTitle.toText() + '/')) {
