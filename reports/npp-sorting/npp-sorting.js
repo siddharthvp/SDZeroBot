@@ -313,7 +313,8 @@ ${replagMessage}
 
 		// preempt contenttoobig error from API (occurs if wikitext is over 2 MB)
 		if (content.length > 2_097_152) {
-			return Promise.reject('Page size too large for ' + pagetitle + ' (' + content.length + ' bytes, max 2 MB allowed.')
+			let err = new Error('Page size too large for ' + pagetitle + ' (' + content.length + ') bytes, max 2 MB allowed.');
+			return Promise.reject(err);
 		}
 
 		return bot.save('User:SDZeroBot/NPP sorting/' + pagetitle, content, 'Updating report');
