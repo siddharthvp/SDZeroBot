@@ -469,7 +469,7 @@ export class Query extends EventEmitter {
 	async formatResults(result) {
 
 		if (result.length === 0) {
-			return db.makeReplagMessage(2) +
+			return (this.config.silent ? '' : db.makeReplagMessage(2)) +
 			(this.config.silent ? '' : Mwn.template('Database report/footer', {
 					count: '0',
 					query_runtime: this.queryRuntime,
@@ -509,7 +509,7 @@ export class Query extends EventEmitter {
 				// FIXME: Ideally, postprocessing should be done once on the full result
 				// postprocess_js + pagination is currently a bit messy.
 				if (result.length === 0) {
-					return db.makeReplagMessage(2) +
+					return (this.config.silent ? '' : db.makeReplagMessage(2)) +
 						(this.config.silent ? '' : Mwn.template('Database report/footer', {
 								count: '0',
 								query_runtime: this.queryRuntime,
@@ -685,7 +685,7 @@ export class Query extends EventEmitter {
 		let warningsText = this.warnings.map(text => `[WARN: ${text}]\n\n`).join('');
 
 		return (pageNumber <= 1 ? warningsText : '') +
-			db.makeReplagMessage(2) +
+			(this.config.silent ? '' : db.makeReplagMessage(2)) +
 			tableText + '\n' +
 			(this.config.silent ? '' : '----\n' +
 				Mwn.template('Database report/footer', {
