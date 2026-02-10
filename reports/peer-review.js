@@ -1,5 +1,6 @@
 const {bot, Mwn, log, emailOnError, TextExtractor} = require('../botbase');
 const {populateWikidataShortdescs} = require('./commons');
+const {NS_TALK} = require("../namespaces");
 
 (async function() {
 
@@ -7,7 +8,7 @@ await bot.getTokensAndSiteInfo();
 
 const prcat = new bot.Category('Category:Requests for peer review');
 
-const talkpages = (await prcat.pages({ cmnamespace: 1 })).map(pg => pg.title);
+const talkpages = (await prcat.pages({ cmnamespace: NS_TALK })).map(pg => pg.title);
 const articles = talkpages.map(t => new bot.Title(t).getSubjectPage().toText());
 
 let data = {};
@@ -42,7 +43,9 @@ await bot.read(articles, {
 		}
 		Object.assign(data[pg.title], {
 			description: pg.description,
-			excerpt: TextExtractor.getExtract(pg.revisions[0].content, 250, 500),
+			excerpt: pg.missing ?
+				'[Failed to generate]' :
+				TextExtractor.getExtract(pg.revisions[0].content, 250, 500),
 		});
 	}
 });
