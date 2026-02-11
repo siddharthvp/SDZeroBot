@@ -55,7 +55,15 @@ const {formatSummary, saveWithBlacklistHandling} = require('./commons');
 		var redirectRgx = /^\s*#redirect\s*\[\[(.*?)\]\]/i;
 
 		await bot.batchOperation(Object.keys(pages), function pageWorker(page) {
-			let pageobj = new bot.Page(page);
+			let pageobj;
+			try {
+				pageobj = new bot.Page(page);
+			} catch (e) {
+				log(`[E] Failed to parse page title ${page}: ${e.message}`);
+				pages[page].note = `[Failed to parse page title]`;
+				others.add(page);
+				return;
+			}
 
 			return pageobj.history('comment|user|content|timestamp', 50, {
 				rvsection: 0
