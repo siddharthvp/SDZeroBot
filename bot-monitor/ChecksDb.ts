@@ -5,7 +5,7 @@ import {RawRule, subtractFromNow} from './index'
 import * as sqlite from "sqlite";
 import * as sqlite3 from "sqlite3";
 import * as hash from 'object-hash';
-import {getRedisInstance} from "../redis";
+import {redis} from "../redis-io";
 
 class SqliteDb {
 	db: sqlite.Database;
@@ -37,10 +37,8 @@ interface ChecksDb {
  *
  */
 class RedisChecksDb implements ChecksDb {
-	redis = getRedisInstance();
-
 	async connect() {
-		await this.redis.ping();
+		await redis.ping();
 	}
 
 	getKey(rule: RawRule) {
@@ -48,7 +46,7 @@ class RedisChecksDb implements ChecksDb {
 	}
 
 	async update(rule: RawRule, ts: string) {
-		await this.redis.hset(this.getKey(rule) + '-cached',
+		await redis.hset(this.getKey(rule) + '-cached',
 			'rulehash', hash.sha1(rule),
 			'ts', ts);
 	}
@@ -57,7 +55,7 @@ class RedisChecksDb implements ChecksDb {
 		if (argv.nocache) {
 			return false;
 		}
-		let cached = await this.redis.hgetall(this.getKey(rule) + '-cached');
+		let cached = await redis.hgetall(this.getKey(rule) + '-cached');
 		return cached.rulehash === hash.sha1(rule) &&
 			new bot.Date(cached.ts).isAfter(subtractFromNow(rule.duration));
 	}
@@ -66,7 +64,7 @@ class RedisChecksDb implements ChecksDb {
 		if (argv.nocache) {
 			return;
 		}
-		let lastseen = await this.redis.hgetall(this.getKey(rule) + '-seen');
+		let lastseen = await redis.hgetall(this.getKey(rule) + '-seen');
 		if (lastseen && lastseen.rulehash === hash.sha1(rule)) {
 			return lastseen;
 		} // else return undefined
@@ -80,7 +78,7 @@ class RedisChecksDb implements ChecksDb {
 		if (notSeen) {
 			props.notseen = '1';
 		}
-		await this.redis.hset(this.getKey(rule) + '-seen', ...Object.entries(props).flat());
+		await redis.hset(this.getKey(rule) + '-seen', ...Object.entries(props).flat());
 	}
 
 }

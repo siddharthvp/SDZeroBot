@@ -1,9 +1,6 @@
-import {Cassandra} from "../cassandra";
 import {MwnDate} from "mwn";
 import {getKey, Rule} from "./Rule";
 import {bot, toolsdb} from "../botbase";
-import * as fs from "fs/promises";
-import {getRedisInstance, Redis} from "../redis";
 import {ResultSetHeader} from "mysql2";
 import {CustomError} from "../utils";
 
@@ -78,6 +75,11 @@ class MariadbAlertsDb implements AlertsDb {
 
 /*
 UNMAINTAINED IMPLEMENTATIONS:
+
+import {Cassandra} from "../cassandra";
+import * as fs from "fs/promises";
+import {redis} from "../redis-io";
+
 class CassandraAlertsDb implements AlertsDb {
     cs: Cassandra = new Cassandra();
 
@@ -128,16 +130,14 @@ class FileSystemAlertsDb implements AlertsDb {
 }
 
 class RedisAlertsDb implements AlertsDb {
-    redis: Redis;
     async connect() {
-        this.redis = getRedisInstance();
     }
 
     async getLastEmailedTime(rule: Rule) {
-        return new bot.Date(await this.redis.hget('botmonitor-last-emailed', getKey(rule)));
+        return new bot.Date(await redis.hget('botmonitor-last-emailed', getKey(rule)));
     }
     async saveLastEmailedTime(rule: Rule) {
-        await this.redis.hset('botmonitor-last-emailed', getKey(rule), new bot.Date().toISOString);
+        await redis.hset('botmonitor-last-emailed', getKey(rule), new bot.Date().toISOString);
     }
     async getPausedTillTime(name: string, webKey: string) { return new bot.Date(0); }
     async setPausedTillTime(bot: string, webKey: string, pauseTill: MwnDate) { return -1; }

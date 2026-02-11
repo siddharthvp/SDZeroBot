@@ -3,6 +3,11 @@ import * as asyncRedis from "async-redis";
 import { onToolforge, readFile } from "./utils";
 import { log } from "./botbase";
 
+/**
+ * @deprecated
+ * Use redis-io.ts instead
+ */
+
 // Source: https://github.com/moaxaca/async-redis (MIT)
 // for some reason the Promisified type that we need isn't exported from there
 // so we copy-paste that type definition here
@@ -28,6 +33,8 @@ let instance: Redis;
  * 	let item = await redis.get('key');
  * 	await redis.set('key', 'value');
  * 	...
+ *
+ * @deprecated Use redis-io.ts instead
  */
 export function createRedisClient(config: redis.ClientOpts = {}): Redis {
 	return asyncRedis.createClient(getRedisConfig(config));
@@ -50,6 +57,7 @@ export function getRedisConfig(config: redis.ClientOpts = {}): redis.ClientOpts 
  * For typical usage with the default options.
  * Note: this triggers a network request even though it doesn't take a callback or return a
  * promise.
+ * @deprecated Use redis-io.ts instead
  */
 export function getRedisInstance(): Redis {
 	if (!instance) {
