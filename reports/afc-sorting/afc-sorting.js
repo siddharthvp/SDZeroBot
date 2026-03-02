@@ -25,7 +25,7 @@ process.chdir(__dirname);
 			JOIN revision ON page_id = rev_page AND rev_parent_id = 0
 			JOIN actor_revision ON rev_actor = actor_id
 			LEFT JOIN user ON user_id = actor_user
-			WHERE cl_to = 'Pending_AfC_submissions'
+			WHERE cl_target_id = (SELECT lt_id FROM linktarget WHERE lt_namespace = 14 AND lt_title = 'Pending_AfC_submissions')
 			AND page_namespace = 118;
 		`);
 		sql.end();

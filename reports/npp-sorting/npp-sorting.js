@@ -33,7 +33,9 @@ process.chdir(__dirname);
 					WHERE page_namespace = 4
 					AND page_title = CONCAT('Articles_for_deletion/', p.page_title)
 					 -- exclude current AfDs
-					AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'AfD_debates')
+					AND page_id NOT IN (SELECT cl_from FROM categorylinks 
+						WHERE cl_target_id = (SELECT lt_id FROM linktarget 
+							WHERE lt_namespace = 14 AND lt_title = 'AfD_debates'))
 			   ) AS afd
 			FROM pagetriage_page
 			 JOIN page p on page_id = ptrp_page_id
@@ -43,7 +45,9 @@ process.chdir(__dirname);
 			WHERE page_namespace = 0
 			  AND page_is_redirect = 0
 			  AND ptrp_reviewed = 0
-			  AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'All_redirects_for_discussion')
+			  AND page_id NOT IN (SELECT cl_from FROM categorylinks 
+				  WHERE cl_target_id = (SELECT lt_id FROM linktarget 
+					  WHERE lt_namespace = 14 AND lt_title = 'All_redirects_for_discussion'))
 		`);
 		sql.end();
 		log('[S] Got DB query result');

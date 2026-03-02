@@ -84,7 +84,7 @@ router.get('/stream', async (req, res) => {
 				AND (lt_namespace, lt_title) IN (
 					SELECT page_namespace, page_title FROM categorylinks
 					JOIN page ON page_id = cl_from
-					WHERE cl_to = ?
+					WHERE cl_target_id = (SELECT lt_id FROM linktarget WHERE lt_namespace = 14 AND lt_title = ?)
 				)
 			`, [title.getNamespaceId(), title.getMain(), SUBSCRIPTIONS_CATEGORY.replace(/ /g, '_')])
 			for (let row of transcludedReportPages) {

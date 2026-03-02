@@ -25,7 +25,7 @@ import {NS_DRAFT} from "../namespaces";
                   AND afds.page_title = CONCAT('Articles_for_deletion/', p.page_title)
                   AND afds.page_id NOT IN  (
                     SELECT cl_from FROM categorylinks
-                    WHERE cl_to = 'AfD_debates'
+                    WHERE cl_target_id = (SELECT lt_id FROM linktarget WHERE lt_namespace = 14 AND lt_title = 'AfD_debates')
                 )
                ) AS prior_afd
         FROM page p
@@ -33,7 +33,7 @@ import {NS_DRAFT} from "../namespaces";
 		JOIN revision ON page_id = rev_page AND rev_parent_id = 0
 		JOIN actor_revision ON rev_actor = actor_id
 		LEFT JOIN user ON user_id = actor_user
-        WHERE cl_to = 'Pending_AfC_submissions'
+        WHERE cl_target_id = (SELECT lt_id FROM linktarget WHERE lt_namespace = 14 AND lt_title = 'Pending_AfC_submissions')
         AND page_namespace = 118;
 	`) as Array<{page_title: string, page_latest: number, cl_sortkey_prefix: string,
 		actor_name: string, rev_timestamp: string, user_editcount: number, prior_afd: string}>;

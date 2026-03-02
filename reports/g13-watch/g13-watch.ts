@@ -68,7 +68,8 @@ import * as OresUtils from '../OresUtils';
         SELECT page_namespace, page_title
         FROM page
         JOIN categorylinks ON cl_from = page_id
-        WHERE cl_to = 'Candidates_for_speedy_deletion_as_abandoned_drafts_or_AfC_submissions'
+        WHERE cl_target_id = (SELECT lt_id FROM linktarget 
+            WHERE lt_namespace = 14 AND lt_title = 'Candidates_for_speedy_deletion_as_abandoned_drafts_or_AfC_submissions')
     `) as Array<{page_title: string, page_namespace: number, rev_timestamp: string}>;
 
     wikidb.end();

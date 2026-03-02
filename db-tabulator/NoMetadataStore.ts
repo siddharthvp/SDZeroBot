@@ -32,7 +32,8 @@ export class NoMetadataStore implements MetadataStore {
                  WHERE rc_namespace = page_namespace AND rc_title = page_title
                 ) AS last_edit
             FROM page 
-            JOIN categorylinks ON cl_from = page_id AND cl_to = ?
+            JOIN categorylinks ON cl_from = page_id AND cl_target_id = (SELECT lt_id FROM linktarget 
+                WHERE lt_namespace = 14 AND lt_title = ?)
         `, [BOT_NAME, SUBSCRIPTIONS_CATEGORY.replace(/ /g, '_')]);
         log(`[i] Retrieved last edits data. DB query took ${timeTaken.toFixed(2)} seconds.`);
 

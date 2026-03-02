@@ -16,7 +16,10 @@ const result = argv.nodb ? JSON.parse(fs.readFileSync(__dirname + '/g13-eligible
 	WHERE page_namespace = 118
 	AND page_is_redirect = 0
 	AND rev_timestamp < DATE_FORMAT(UTC_DATE() - INTERVAL 6 MONTH, '%Y%m%d%H%i%S')
-	AND page_id NOT IN (SELECT cl_from FROM categorylinks WHERE cl_to = 'All_drafts_subject_to_special_procedures')
+	AND page_id NOT IN (
+		SELECT cl_from FROM categorylinks 
+		WHERE cl_target_id = (SELECT lt_id FROM linktarget 
+			WHERE lt_namespace = 14 AND lt_title ='All_drafts_subject_to_special_procedures'))
 
 	UNION
 	
