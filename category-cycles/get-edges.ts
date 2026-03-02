@@ -16,7 +16,8 @@ import * as mysql from "mysql2";
 	const query = connection.query(`
 		SELECT cl_from AS subcat, page_id AS parentcat
 		FROM categorylinks
-		JOIN page ON page_namespace = 14 AND page_title = cl_to
+        JOIN linktarget ON lt_id = cl_target_id
+		JOIN page ON page_namespace = 14 AND page_title = lt_title
 		WHERE cl_type = 'subcat'
 	`)
 
