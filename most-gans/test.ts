@@ -14,6 +14,12 @@ describe('most-gans', () => {
 		if (dateExpected) assert.strictEqual(date, dateExpected);
 	}
 
+	it('Cho Ren Sha 68K', async function() {
+		await processArticleTest('Cho Ren Sha 68K', 'KGRAMR', '2025-06-23');
+	});
+	it('Iron Soldier', async function() {
+		await processArticleTest('Iron Soldier', 'KGRAMR', '2024-09-03');
+	})
 	it('1896 Michigan Wolverines football team', async function() {
 		await processArticleTest('1896 Michigan Wolverines football team', 'Wizardman', '2010-12-21');
 	})
