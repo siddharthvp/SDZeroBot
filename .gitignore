@@ -10,5 +10,6 @@ fake-*.wikitext
 node_modules/
 .auth.js
 */core
-.idea/*
-
+.idea
+.vscode
+dist
