@@ -20,9 +20,10 @@ router.post('/generate', async function (req, res, next) {
         })
     }
     const response = await client.responses.create({
-        model: 'gpt-4o',
+        model: 'gpt-5.4-mini',
         instructions: 'Using MediaWiki\'s db schema outlined at https://www.mediawiki.org/wiki/Manual:Database_layout, write an SQL SELECT query to retrieve information per the prompt. Respond only with the SQL query, with no formatting.',
         input: req.body.prompt,
+        store: false,
     })
     let sql = response.output_text
     if (sql.startsWith('```sql\n') && sql.endsWith('\n```')) {
