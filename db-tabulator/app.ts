@@ -3,7 +3,7 @@ import {enwikidb, SQLError} from "../db";
 import {Template} from "../../mwn/build/wikitext";
 import {arrayChunk, createLogStream, lowerFirst, readFile, stripOuterNowikis, writeFile} from "../utils";
 import {NS_CATEGORY, NS_FILE, NS_MAIN, NS_MODULE} from "../namespaces";
-import type {ApiExpandTemplatesParams} from "types-mediawiki/api_params";
+import type {ApiExpandTemplatesParams} from "types-mediawiki-api";
 import {formatSummary} from "../reports/commons";
 import {MetadataStore} from "./MetadataStore";
 import {HybridMetadataStore} from "./HybridMetadataStore";

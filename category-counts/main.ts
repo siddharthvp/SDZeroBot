@@ -1,5 +1,5 @@
 import {bot, emailOnError, log, fs} from "../botbase";
-import {ApiQueryCategoryInfoParams} from "types-mediawiki/api_params";
+import {ApiQueryCategoryInfoParams} from "types-mediawiki-api";
 import {ElasticDataStore} from "../elasticsearch";
 import {getKey, normalizeCategory} from "./util";
 
