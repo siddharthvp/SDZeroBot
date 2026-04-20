@@ -4,7 +4,8 @@
   "description": "",
   "main": "",
   "scripts": {
-    "tsc": "tsc --sourceMap false || echo"
+    "tsc": "tsc --sourceMap false || echo",
+    "tunnels": "ssh -N -L 4711:enwiki.analytics.db.svc.wikimedia.cloud:3306 -L 4712:tools.db.svc.wikimedia.cloud:3306 -L 4713:tools-redis:6379 -L 9200:elasticsearch.svc.tools.eqiad1.wikimedia.cloud:80 toolforge"
   },
   "author": "Siddharth VP",
   "license": "MIT",
