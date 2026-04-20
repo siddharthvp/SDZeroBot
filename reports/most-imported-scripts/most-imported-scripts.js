@@ -11,6 +11,13 @@ process.chdir(__dirname);
 	if (argv.noactiveusers) {
 		activeusers = require('./active-users');
 	} else {
+		// TODO: consider using the db instead:
+		// 		SELECT DISTINCT(actor_name) AS name
+		// 		FROM recentchanges
+		// 		JOIN actor_recentchanges ON rc_actor = actor_id
+		// 		-- edits and log actions only, skip categorize and wikidata
+		// 		WHERE rc_source IN ('mw.edit', 'mw.log')
+		// 		AND actor_user IS NOT NULL
 		await bot.continuedQuery({
 			"action": "query",
 			"assert": "bot",
