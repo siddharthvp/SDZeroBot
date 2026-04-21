@@ -1,8 +1,8 @@
-import {argv, bot, log} from "../botbase"
+import {argv, bot, emailOnError, log} from "../botbase"
 import * as querystring from "querystring"
 import * as fs from "fs"
 
-const header = `
+const HEADER = `
 /******************************************************************************/
 /**** THIS PAGE TRACKS $SOURCE. PLEASE AVOID EDITING DIRECTLY. 
 /**** EDITS SHOULD BE PROPOSED DIRECTLY to $SOURCE.
@@ -13,13 +13,27 @@ const header = `
 
 const CONFIG_PAGE = 'User:SDZeroBot/Gadget sync/Config.json'
 
-type Config = {
-    description: string
+interface Config {
+    description: string;
     list: Array<{
-        source: string
-        page: string
-        talkPage: string
+        talkPage: string;
+        pages: Array<{
+            remote: string;
+            local: string;
+        }>
+    }> | Array<{
+        talkPage: string;
+        remote: string;
+        local: string;
     }>
+}
+
+interface Request {
+    localPage: string
+    remotePage: string
+    syncPage: string
+    comparePagesLink: string
+    histLink: string
 }
 
 async function getConfig(): Promise<Config> {
@@ -93,82 +107,129 @@ async function getInterwikiMap() {
             log(`[E] Invalid talkPage: ${conf.talkPage}`)
             continue
         }
+        let pages = 'pages' in conf ? conf.pages : [ { remote: conf.remote, local: conf.local } ]
+        const requests: Array<Request> = [];
 
-        const substitutedHeader = header.replaceAll('$SOURCE', getHumanLink(conf.source))
+        for (const {remote: remotePage, local: localPage} of pages) {
+            let localCode, remoteCode
+            try {
+                let remote = await bot.rawRequest({
+                    url: getRawLink(remotePage, interWikis),
+                    timeout: 5000
+                })
+                remoteCode = remote.data.trim()
+                // .trim() required for non-wiki remotes
+            } catch (e) {
+                if (e.response?.status === 404) {
+                    log(`[E] ${remotePage} does not exist. Skipping.`)
+                    continue
+                } else throw e
+            }
 
-        let localCode, remoteCode
-        try {
-            let remote = await bot.rawRequest({
-                url: getRawLink(conf.source, interWikis),
-                timeout: 5000
-            })
-            remoteCode = remote.data.trim()
-            // .trim() required for non-wiki remotes
-        } catch (e) {
-            if (e.response?.status === 404) {
-                log(`[E] ${conf.source} does not exist. Skipping.`)
-                continue
-            } else throw e
+            const substitutedHeader = HEADER.replaceAll('$SOURCE', getHumanLink(remotePage))
+            try {
+                let local = await bot.rawRequest({
+                    url: getRawLink(localPage, interWikis),
+                    timeout: 5000
+                })
+                localCode = local.data.replace(substitutedHeader, '')
+            }  catch (e) {
+                if (e.response?.status === 404) {
+                    log(`[W] ${localPage} does not exist. Treating as blank.`)
+                    localCode = ''
+                } else throw e
+            }
+
+            if (remoteCode !== localCode) {
+                // Copy the file locally so that a Special:ComparePages link can be generated
+                const syncPage = `User:SDZeroBot/sync/${localPage}`
+                const syncPageData = substitutedHeader + remoteCode
+                const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${remotePage}]] for comparison`)
+
+                const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?` + querystring.stringify({
+                    page1: localPage,
+                    rev1: localCode === '' ? '' : (await new bot.Page(localPage).history(['ids'], 1))[0].revid,
+                    page2: syncPage,
+                    rev2: saveResult.newrevid
+                })
+
+                let histLink = getHistoryLink(remotePage, interWikis)
+                requests.push({
+                    localPage,
+                    remotePage,
+                    syncPage,
+                    comparePagesLink,
+                    histLink: histLink ? ` ([${histLink} hist])` : ''
+                })
+            }
         }
 
-        try {
-            let local = await bot.rawRequest({
-                url: getRawLink(conf.page, interWikis),
-                timeout: 5000
-            })
-            localCode = local.data.replace(substitutedHeader, '')
-        }  catch (e) {
-            if (e.response?.status === 404) {
-                log(`[W] ${conf.page} does not exist. Treating as blank.`)
-                localCode = ''
-            } else throw e
-        }
+        const pg = await bot.read(talkTitle)
+        const date = new bot.Date().format('D MMMM YYYY')
 
-        if (remoteCode !== localCode) {
-            const pg = await bot.read(talkTitle)
-            if (!pg.missing && pg.revisions[0].content.includes(`{{sudo|1=${conf.page}|answered=no}}`)) {
+        if (requests.length === 1) {
+            const r = requests[0]
+            if (!pg.missing && pg.revisions[0].content.includes(`{{sudo|1=${r.localPage}|answered=no}}`)) {
                 log(`[+] Open edit request already exists on ${conf.talkPage}, skipping`)
                 continue
             }
-            log(`[+] [[${conf.page}]] does not match [[${conf.source}]]`)
 
-            // Copy the file locally so that a Special:ComparePages link can be generated
-            const syncPage = `User:SDZeroBot/sync/${conf.page}`
-            const syncPageData = substitutedHeader + remoteCode
-            const saveResult = await bot.save(syncPage, syncPageData, `Copying from [[${conf.source}]] for comparison`)
-
-            const comparePagesLink = `https://en.wikipedia.org/wiki/Special:ComparePages?` + querystring.stringify({
-                page1: conf.page,
-                rev1: localCode === '' ? '' : (await new bot.Page(conf.page).history(['ids'], 1))[0].revid,
-                page2: syncPage,
-                rev2: saveResult.newrevid
-            })
-
-            const date = new bot.Date().format('D MMMM YYYY')
-            const isMatchingTalk = new bot.Page(conf.page).toText() === new bot.Title(conf.talkPage).getSubjectPage().toText()
-            const header = `Sync request ${date}` + (isMatchingTalk ? '' : ` for ${conf.page}`)
-
-            let histLink = getHistoryLink(conf.source, interWikis)
-            const body = REQUEST_BODY
-                .replaceAll('LOCAL', conf.page)
-                .replaceAll('REMOTE', getHumanLink(conf.source) + (histLink ? ` ([${histLink} hist])` : ''))
-                .replaceAll('SYNC_PAGE', syncPage)
-                .replaceAll('DIFF_LINK', comparePagesLink)
+            const body = SINGLE_REQUEST_BODY
+                .replaceAll('LOCAL', r.localPage)
+                .replaceAll('REMOTE', getHumanLink(r.remotePage) + r.histLink)
+                .replaceAll('SYNC_PAGE', r.syncPage)
+                .replaceAll('DIFF_LINK', r.comparePagesLink)
                 .replaceAll('CONFIG_PAGE', CONFIG_PAGE)
                 .trim()
+
+            const isMatchingTalk = new bot.Page(r.localPage).toText() === new bot.Title(conf.talkPage).getSubjectPage().toText()
+            const heading = `Sync request ${date}` + (isMatchingTalk ? '' : ` for ${r.localPage}`)
+
             if (argv.test) {
-                fs.appendFileSync('test-requests.txt', `=${conf.talkPage}=\n==${header}==\n${body}\n\n`)
+                fs.appendFileSync('test-requests.txt', `=${conf.talkPage}=\n==${heading}==\n${body}\n\n`)
             } else {
-                await bot.newSection(conf.talkPage, header, body)
+                await bot.newSection(conf.talkPage, heading, body)
+            }
+            log(`[S] Created edit request on [[${conf.talkPage}]]`)
+
+        } else if (requests.length > 1) {
+
+            const PAGES = requests.map((r, idx) => `${idx + 1}=${r.localPage}`).join('|')
+            if (!pg.missing && pg.revisions[0].content.includes(`{{sudo|${PAGES}|answered=no}}`)) {
+                log(`[+] Open edit request already exists on ${conf.talkPage}, skipping`)
+                continue
+            }
+            const REQUESTS = requests.map((r) => {
+                return `* [[${r.localPage}]] ←— [[${r.syncPage}]], based on [[${r.remotePage}]]${r.histLink}`
+            }).join('\n')
+            const body = MULTI_REQUEST_BODY
+                .replace('PAGES', PAGES)
+                .replace('REQUESTS', REQUESTS)
+                .replace('CONFIG_PAGE', CONFIG_PAGE)
+                .trim()
+            const heading = `Sync request ${date}`
+
+            if (argv.test) {
+                fs.appendFileSync('test-requests.txt', `=${conf.talkPage}=\n==${heading}==\n${body}\n\n`)
+            } else {
+                await bot.newSection(conf.talkPage, heading, body)
             }
             log(`[S] Created edit request on [[${conf.talkPage}]]`)
         }
     }
-}())
+})().catch(e => emailOnError(e, 'gadgets-sync'))
 
-const REQUEST_BODY =  `
+const SINGLE_REQUEST_BODY =  `
 {{sudo|1=LOCAL|answered=no}}
 Please sync [[LOCAL]] with [[SYNC_PAGE]] ([DIFF_LINK diff]). This brings it in sync with the upstream changes at REMOTE.
 
 This edit request is raised automatically based on the configuration at [[CONFIG_PAGE]]. Thanks, ~~~~
 `;
+
+const MULTI_REQUEST_BODY = `
+{{sudo|PAGES|answered=no}}
+Please sync the following pages:
+REQUESTS
+
+This edit request is raised automatically based on the configuration at [[CONFIG_PAGE]]. Thanks, ~~~~
+`
