@@ -1,9 +1,10 @@
-import {bot, emailOnError, argv} from "../botbase";
+import { bot, emailOnError, log } from "../botbase";
 import {fetchRules, Monitor, Tabulator, checksDb, alertsDb} from './index';
 import {closeTunnels} from "../utils";
 
 (async function () {
 
+    log('[i] Started');
     process.chdir(__dirname);
 
     await Promise.all([
@@ -21,6 +22,7 @@ import {closeTunnels} from "../utils";
     }
 
     await Tabulator.postResults();
+    log('[i] Finished');
 
     closeTunnels();
 
