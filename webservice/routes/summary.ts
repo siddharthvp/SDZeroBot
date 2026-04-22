@@ -5,13 +5,13 @@ import {bot, TextExtractor} from '../../botbase';
 const router = express.Router();
 
 router.get('/', async (req, res, next) => {
-	let {page, charLimit, charHardLimit} = req.query;
+	let {page, charLimit, charHardLimit} = req.query as Record<string, string>;
 	let apiPage = await bot.read(page);
 	let output;
 	if (apiPage.missing) {
 		 output = 'MISSING PAGE!';
 	} else {
-		output = TextExtractor.getExtract(apiPage.revisions[0].content, charLimit || 250, charHardLimit || 500);
+		output = TextExtractor.getExtract(apiPage.revisions[0].content, Number(charLimit || 250), Number(charHardLimit || 500));
 	}
 	res.type('txt').end(output);
 });

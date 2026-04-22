@@ -3,7 +3,7 @@ import {fork} from "child_process";
 import EventEmitter from "events";
 import type {Query} from "./app";
 import {RawRequestParams} from "../../mwn/build/core";
-import {AxiosRequestHeaders} from "axios";
+import {RawAxiosRequestHeaders} from "axios";
 import {timedPromise} from "../utils";
 
 const softTimeout = 1500;
@@ -189,7 +189,7 @@ async function makeSandboxedHttpRequest(url: string) {
 }
 
 class SandboxedRequest {
-    headers: AxiosRequestHeaders = {
+    headers: RawAxiosRequestHeaders = {
         // Bot grant enables apihighlimit (for Action API), and helps avoid throttling for some REST APIs.
         // It has no write access.
         'Authorization': `Bearer ${AuthManager.get('sdzerobot-dbreports').OAuth2AccessToken}`
@@ -205,7 +205,7 @@ class SandboxedRequest {
 }
 
 class SandboxedWikidataQueryServiceRequest extends SandboxedRequest {
-    headers: AxiosRequestHeaders = {
+    headers: RawAxiosRequestHeaders = {
         'X-BIGDATA-TIMEOUT': 600,
         'Accept': 'application/sparql-results+json'
     };

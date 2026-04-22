@@ -14,7 +14,7 @@ import {NS_DRAFT} from "../namespaces";
 
 	log(`[i] Started`);
 
-	let tableInfo = {};
+	let tableInfo: Record<string, any> = {};
 
 	const db = new enwikidb();
 	await createLocalSSHTunnel(ENWIKI_DB_HOST);

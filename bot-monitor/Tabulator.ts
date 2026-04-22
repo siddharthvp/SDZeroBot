@@ -1,5 +1,5 @@
 import {bot, Mwn, log, argv, enwikidb} from "../botbase";
-import {Monitor} from './index';
+import { Monitor, type Rule } from './index';
 
 import * as moment from "moment";
 
@@ -23,7 +23,7 @@ export class Tabulator {
 			actions = monitor.actions,
 			msg;
 		if (!success) {
-			msg = `${actions} action${s(actions)} in last ${rule.duration}, expected at least ${rule.minEdits}. `;
+			msg = `${actions} action${s(actions)} in last ${rule.duration}, expected at least ${(rule as Rule).minEdits}. `;
 			if (monitor.lastSeen) {
 				msg += `Last seen ${monitor.lastSeen.format('D MMMM YYYY')}`;
 			} else if (monitor.lastSeenNot) {

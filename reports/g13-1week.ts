@@ -52,7 +52,7 @@ async function runForDate(date: MwnDate) {
 	log('[S] Got DB query result');
 
 	result.forEach(row => {
-		let pagename = bot.Title.makeTitle(row.page_namespace, row.page_title).toText();
+		let pagename = bot.Title.makeTitle(row.page_namespace as number, row.page_title as string).toText();
 		tableInfo[pagename] = {
 			ts: row.rev_timestamp
 		};

@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import { Route } from "../app";
 
 export default class Task extends Route {
+    name = 'bots';
+
 	async init() {
 		super.init();
 		this.log('[S] Started');

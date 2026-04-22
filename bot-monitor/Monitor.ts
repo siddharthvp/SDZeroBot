@@ -1,7 +1,7 @@
 import {bot, emailOnError, log, logFullError} from '../botbase';
 import {MwnDate} from "../../mwn";
-import type {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "../../mwn/src/api_params";
-import type {LogEvent, UserContribution} from "../../mwn/src/api_response_types";
+import type {ApiQueryLogEventsParams, ApiQueryUserContribsParams} from "types-mediawiki-api";
+import type {LogEvent, UserContribution} from "../../mwn";
 import {Alert, checksDb, subtractFromNow, parseRule, RawRule, Rule, RuleError, Tabulator} from './index'
 
 export class Monitor {

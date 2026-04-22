@@ -4,7 +4,7 @@ import {bot} from "../../botbase";
 import {arrayChunk, setDifference} from "../../utils";
 import {Template} from "mwn/build/wikitext";
 import {ActionQueue, BufferedQueue} from "../../queue";
-import {ApiPurgeParams} from "mwn/build/api_params";
+import {ApiPurgeParams} from "types-mediawiki-api";
 
 export default class Purger extends Route {
     readonly name = "purger";

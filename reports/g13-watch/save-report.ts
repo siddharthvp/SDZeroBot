@@ -54,8 +54,8 @@ const { saveWithBlacklistHandling } = require('../commons');
 		table.addRow([
 			new bot.Date(row.ts).format('YYYY-MM-DD HH:mm'),
 			page,
-			row.excerpt || '',
-			row.size || ''
+			row.excerpt as string || '',
+			row.size as string || ''
 		]);
 	});
 

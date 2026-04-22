@@ -21,7 +21,7 @@ import * as mysql from "mysql2";
 		WHERE cl_type = 'subcat'
 	`)
 
-	query.stream()
+	query.stream({})
 		.on('data', row => {
 			outputFile.write(`${row.subcat}\t${row.parentcat}\n`)
 		})

@@ -1,6 +1,6 @@
 import {BOT_NAME, Query, getQueriesFromText, SUBSCRIPTIONS_CATEGORY, TEMPLATE} from "./app";
 import {bot, enwikidb, log} from "../botbase";
-import {MwnDate} from "../../mwn/src/date";
+import {MwnDate} from "../../mwn";
 import {MetadataStore} from "./MetadataStore";
 
 export class NoMetadataStore implements MetadataStore {
