@@ -11,3 +11,5 @@ REPLACE INTO nominators VALUES('Serious Sam: The First Encounter', 'IceWelder', 
 REPLACE INTO nominators VALUES('The Wing of Madoola', 'KGRAMR', '2023-12-28', '2024-04-24');
 REPLACE INTO nominators VALUES('Iron Soldier', 'KGRAMR', '2024-09-03', '2024-09-28');
 REPLACE INTO nominators VALUES('Cho Ren Sha 68K', 'KGRAMR', '2025-06-23', '2025-06-23');
+
+UPDATE nominators SET nominator = 'Akaza' WHERE nominator = 'Akaza (usurped)';
