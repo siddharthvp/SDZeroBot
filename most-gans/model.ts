@@ -7,8 +7,9 @@ import {JSDOM} from 'jsdom';
 export const db = new toolsdb('goodarticles_p');
 export const TABLE = 'nominators';
 
-const GANTemplateRegex = /\{\{GA ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
-const GANTemplateNameRegex = /^GA ?(c(andidate)?|n(om(inee)?)?)$/i;
+// Matches the following template names: GAcandidate, GAnom, GAnominee, GANominee, GA nominee, Good article nominee
+const GANTemplateRegex = /\{\{(GA|Good article) ?(c(andidate)?|n(om(inee)?)?)\s*(\||\}\})/i;
+const GANTemplateNameRegex = /^(GA|Good article) ?(c(andidate)?|n(om(inee)?)?)$/i;
 
 export async function processArticle(article: string) {
 	let talkpage = new bot.Page(new bot.Page(article).getTalkPage());
