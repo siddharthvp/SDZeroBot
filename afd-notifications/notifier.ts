@@ -348,7 +348,7 @@ class Notifier {
 				return Promise.reject('nobots');
 			}
 
-			let rgx = new RegExp(`== ?Nomination of \\[\\[:?${Mwn.util.escapeRegExp(article)}\\]\\] for deletion ?==`);
+			let rgx = new RegExp(`== ?Nomination of \\[\\[:?${Mwn.util.escapeRegExp(article)}\\]\\] for (deletion|merging)`);
 			let nppRgx = new RegExp(`== ?Deletion discussion about \\[\\[:?${Mwn.util.escapeRegExp(article)}\\]\\] ?==`);
 			if (rgx.test(text) || nppRgx.test(text)) {
 				log(`[C] ${username} was already notified of ${article}`);
