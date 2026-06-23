@@ -44,8 +44,8 @@ export default class TextExtractor {
 			.replace(/<ref.*?(?:\/>|<\/ref>)/sgi, '')
 			// the magic
 			.replace(/^\s*[-{|}=*#:<!].*$/mg, '')
-			// trim left to prepare for next step
-			.trimLeft()
+			// trim start to prepare for next step
+			.trimStart()
 			// keep only the first paragraph
 			.replace(/\n\n.*/s, '')
 			// remove single newlines - they cause paragraph breaks only in tables
@@ -145,6 +145,9 @@ export default class TextExtractor {
 			// Openings of any unclosed ref tags
 			.replace(/<ref[^<]*?(>|(?=\n))/gi, '')
 			// remove categories added via {{post-nomials}}
-			.replace(/(\|country=[A-Z]{3})-cats/g, '$1');
+			.replace(/(\|country=[A-Z]{3})-cats/g, '$1')
+			// Remove AfC submission templates to avoid reports getting tagged for G13.
+			// Fully removing is risky at this stage, so replace them with the void template.
+			.replace(/\{\{AfC submission\|/ig, '{{void|');
 	}
 }
