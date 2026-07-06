@@ -1,5 +1,5 @@
 const {fs, bot, log, TextExtractor, enwikidb, emailOnError, Mwn, utils, argv} = require('../botbase');
-const {AfcDraftSize, populateWikidataShortdescs, populateOresQualityRatings, comparators, preprocessDraftForExtract, saveWithBlacklistHandling} = require('./commons');
+const {AfcDraftSize, populateWikidataShortdescs, populateOresQualityRatings, comparators, saveWithBlacklistHandling} = require('./commons');
 
 (async function() {
 
@@ -89,7 +89,7 @@ await bot.seriesBatchOperation(utils.arrayChunk(Object.keys(tableInfo), 100), as
 			continue;
 		}
 		let text = rev.content;
-		let excerpt = TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract);
+		let excerpt = TextExtractor.getExtract(text, 250, 500);
 		if (excerpt === '') { // empty extract is suspicious
 			if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
 				// the db query should omit redirects, this happens only because of db lag

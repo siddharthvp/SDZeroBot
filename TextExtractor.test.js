@@ -1,6 +1,5 @@
 const assert = require('assert');
 const {bot, TextExtractor} = require('./botbase');
-const {preprocessDraftForExtract} = require('./reports/commons')
 
 describe('TextExtractor', () => {
 	before(function() {
@@ -38,9 +37,17 @@ Arthur was an fine tailor.
 	
 ==References==`;
 
-		let extract = TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract);
+		let extract = TextExtractor.getExtract(text, 250, 500);
 
 		assert.strictEqual(extract, `[[User:Example]] 21:09, 30 May 2020 (UTC)`);
+	});
+
+	it('strips infobox template even if not on new line', () => {
+		let text = `
+		This is an article.{{infobox website|url=https://google.com}}
+		`;
+		let extract = TextExtractor.getExtract(text);
+		assert.strictEqual(extract.includes('infobox'), false);
 	});
 
 });

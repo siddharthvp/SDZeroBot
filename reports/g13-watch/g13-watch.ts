@@ -2,7 +2,7 @@ import {argv, bot, emailOnError, enwikidb, log, Mwn} from "../../botbase";
 import {toolsdb, TOOLS_DB_HOST, ENWIKI_DB_HOST} from "../../db";
 import {arrayChunk, createLocalSSHTunnel, closeTunnels} from "../../utils";
 import TextExtractor from "../../TextExtractor";
-import {preprocessDraftForExtract, saveWithBlacklistHandling, comparators, AfcDraftSize} from '../commons';
+import {saveWithBlacklistHandling, comparators, AfcDraftSize} from '../commons';
 import * as OresUtils from '../OresUtils';
 
 /**
@@ -128,7 +128,7 @@ import * as OresUtils from '../OresUtils';
            let templates = pg.templates?.map(e => e.title.slice('Template:'.length)) || [];
            let categories = pg.categories?.map(e => e.title.slice('Category:'.length)) || [];
 
-           let excerpt = TextExtractor.getExtract(text, 300, 500, preprocessDraftForExtract);
+           let excerpt = TextExtractor.getExtract(text, 300, 500);
            let lastEdited = new bot.Date(pg.revisions[0].timestamp);
            let size = AfcDraftSize(text);
            let title = pg.title;

@@ -5,7 +5,6 @@ import { bot, TextExtractor } from '../../botbase';
 import { toolsdb, TOOLS_DB_HOST } from "../../db";
 import { createLocalSSHTunnel } from "../../utils";
 import { pageFromCategoryEvent, Route } from "../../eventstream-router/app";
-import { preprocessDraftForExtract } from '../commons';
 
 export default class g13Watch extends Route {
 	name = "g13-watch";
@@ -56,7 +55,7 @@ export default class g13Watch extends Route {
 		if (desc && desc.size > 255) {
 			desc = desc.slice(0, 250) + ' ...';
 		}
-		let extract = TextExtractor.getExtract(text, 300, 550, preprocessDraftForExtract);
+		let extract = TextExtractor.getExtract(text, 300, 550);
 
 		try {
 			await this.db.run(`INSERT INTO g13 VALUES(?, ?, ?, ?, ?)`, [title, desc, extract, size, ts]);

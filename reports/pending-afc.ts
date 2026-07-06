@@ -4,7 +4,7 @@ import {
 	comparators,
 	populateOresQualityRatings,
 	populateWikidataShortdescs,
-	preprocessDraftForExtract, saveWithBlacklistHandling
+	saveWithBlacklistHandling
 } from "./commons";
 import {createLocalSSHTunnel, arrayChunk, len} from "../utils";
 import {ENWIKI_DB_HOST} from "../db";
@@ -86,7 +86,7 @@ import {NS_DRAFT} from "../namespaces";
 				continue;
 			}
 			let text = rev.content;
-			let excerpt = TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract);
+			let excerpt = TextExtractor.getExtract(text, 250, 500);
 			if (excerpt === '') { // empty extract is suspicious
 				if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
 					// the db query should omit redirects, this happens only because of db lag

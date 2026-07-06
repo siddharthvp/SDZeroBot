@@ -35,8 +35,9 @@ export default class TextExtractor {
 		extract = this.removeTemplatesOnNewlines(extract);
 
 		// Remove some other templates too
-		// Matches r, efn, refn, sfn, sfnm, sfnp, harv, harvp, audio, and IPA.* family
-		extract = this.removeTemplates(extract, /^(r|sfn[bmp]?|harvp?|r?efn|respell|IPA.*|audio)$/i);
+		// Inline templates: r, efn, refn, sfn, sfnm, sfnp, harv, harvp, audio, and IPA.* family
+		// Templates that are usually on a new line, but cause problems if not: AfC submission, Infobox family
+		extract = this.removeTemplates(extract, /^(r|sfn[bmp]?|harvp?|r?efn|respell|IPA.*|audio|Infobox.*|AfC submission)$/i);
 
 		extract = extract
 			.replace(/<!--.*?-->/sg, '')
@@ -145,9 +146,6 @@ export default class TextExtractor {
 			// Openings of any unclosed ref tags
 			.replace(/<ref[^<]*?(>|(?=\n))/gi, '')
 			// remove categories added via {{post-nomials}}
-			.replace(/(\|country=[A-Z]{3})-cats/g, '$1')
-			// Remove AfC submission templates to avoid reports getting tagged for G13.
-			// Fully removing is risky at this stage, so replace them with the void template.
-			.replace(/\{\{AfC submission\|/ig, '{{void|');
+			.replace(/(\|country=[A-Z]{3})-cats/g, '$1');
 	}
 }

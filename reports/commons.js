@@ -141,23 +141,6 @@ function AfcDraftSize(text) {
 }
 
 /**
- * @param {string} text
- * @returns {string}
- */
-function preprocessDraftForExtract(text) {
-	let wkt = new bot.Wikitext(text);
-	wkt.parseTemplates({
-		namePredicate: name => {
-			return /(infobox|AfC submission)/i.test(name);
-		}
-	});
-	for (let template of wkt.templates) {
-		wkt.removeEntity(template);
-	}
-	return wkt.getText();
-}
-
-/**
  * @param {bot.Page} page
  * @param {string} text
  * @param {string} summary
@@ -213,7 +196,6 @@ module.exports = {
 	populateOresQualityRatings,
 	comparators: {promote, demote, sortAsc, sortDesc},
 	AfcDraftSize,
-	preprocessDraftForExtract,
 	saveWithBlacklistHandling,
 	formatSummary,
 	escapeForTableCell

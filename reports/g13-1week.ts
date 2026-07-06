@@ -5,7 +5,6 @@ import {
 	comparators,
 	populateOresQualityRatings,
 	populateWikidataShortdescs,
-	preprocessDraftForExtract,
 	saveWithBlacklistHandling
 } from "./commons";
 import {arrayChunk, createLocalSSHTunnel} from "../utils";
@@ -92,7 +91,7 @@ async function runForDate(date: MwnDate) {
 				continue;
 			}
 			let text = rev.content;
-			let excerpt = TextExtractor.getExtract(text, 250, 500, preprocessDraftForExtract);
+			let excerpt = TextExtractor.getExtract(text, 250, 500);
 			if (excerpt === '') { // empty extract is suspicious
 				if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
 					// the db query should omit redirects, this happens only because of db lag
