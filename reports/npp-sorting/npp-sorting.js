@@ -113,8 +113,6 @@ process.chdir(__dirname);
 			continue;
 		}
 		tableInfo[page.title].extract = TextExtractor.getExtract(text, 250, 500);
-		// Set low charLimit for shortExtract so that there's only a single sentence.
-		tableInfo[page.title].shortExtract = TextExtractor.getExtract(text, 10, 200);
 		// NOTE: additional processing of extracts at the end of createSubpage() function
 		if (tableInfo[page.title].extract === '') { // empty extract is suspicious
 			if (/^\s*#redirect/i.test(text)) { // check if it's a redirect
@@ -304,7 +302,7 @@ ${replagMessage}
 			content += `|-
 | ${tabledata.creation_date}
 | ${articleString}
-| ${(pagetitle === 'Culture/Biography' ? tabledata.shortExtract : tabledata.extract) || ''}
+| ${(['Culture/Biography', 'Culture/Sports'].includes(pagetitle) && tabledata.extract) || ''}
 | ${classString}
 | ${editorString}
 | ${page.issues}
