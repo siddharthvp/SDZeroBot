@@ -302,7 +302,7 @@ ${replagMessage}
 			content += `|-
 | ${tabledata.creation_date}
 | ${articleString}
-| ${(['Culture/Biography', 'Culture/Sports'].includes(pagetitle) && tabledata.extract) || ''}
+| ${['Culture/Biography', 'Culture/Sports'].includes(pagetitle) ? '' : tabledata.extract || ''}
 | ${classString}
 | ${editorString}
 | ${page.issues}
