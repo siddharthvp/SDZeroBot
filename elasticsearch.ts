@@ -4,7 +4,7 @@ import {AuthManager} from "./botbase";
 import * as RequestParams from "@elastic/elasticsearch/api/requestParams";
 
 export const elastic = new Client({
-    node: onToolforge() ? 'http://elasticsearch.svc.tools.eqiad1.wikimedia.cloud:80' : 'http://localhost:9200/',
+    node: onToolforge() ? 'http://opensearch.svc.tools.eqiad1.wikimedia.cloud:80' : 'http://localhost:9200/',
     auth: onToolforge() ? AuthManager.get('elasticsearch') : {},
 });
 
