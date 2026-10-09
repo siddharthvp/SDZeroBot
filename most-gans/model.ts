@@ -43,6 +43,12 @@ export async function processArticle(article: string) {
 					// (not strictly correct, we want the date at which the GAN template was added, not the date of the
 					// rev preceding addition of GA template)
 					nom = await getCurrentUsername(nom, date.isValid() ? date.toISOString() : rev.timestamp);
+					if (GA_date === null) {
+						// First revision of the page has {{GA nominee}}; it has not yet been removed.
+						// Happens in eventstream handler if article is tagged GA before updating talk page.
+						// Current date is the promotion date in this case.
+						GA_date = Date.now();
+					}
 					return addToDb(article, nom, GA_date);
 				} else {
 					log(`[W] Couldn't parse signature, will use fallback strategy. Sig: ${nominatorSignature}`);
