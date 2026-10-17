@@ -47,7 +47,11 @@ process.chdir(__dirname);
 				});
 				prod_template = templates[0];
 				if (prod_template) {
-					prod_concern = prod_blp ? '[BLP]' : ((prod_llm ? '[LLM] ' : '') + prod_template.getValue('concern'));
+					// Temporarily don't show LLM PROD rationale due to page size issues
+					prod_concern =
+						prod_blp ? '[BLP]' :
+						prod_llm ? '[LLM] ' :
+						prod_template.getValue('concern');
 					if (prod_concern === '') {
 						prod_concern = '<span class=error>[No reason given]</span>';
 					}
