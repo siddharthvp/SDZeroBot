@@ -64,7 +64,7 @@ process.chdir(__dirname);
 				tableInfo[pg.title] = {
 					concern: prod_concern || '[Failed to parse]',
 					prod_date: prod_date || '[Failed to parse]',
-					extract: TextExtractor.getExtract(pg.revisions[0].content, 250, 500),
+					extract: TextExtractor.getExtract(pg.revisions[0].content, 150, 300),
 					shortdesc: normaliseShortdesc(pg.description)
 				};
 			});
