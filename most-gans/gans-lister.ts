@@ -38,7 +38,8 @@ import {TABLE} from "./model";
 	await bot.getTokensAndSiteInfo();
 	await bot.save(
 		'Wikipedia:List of Wikipedians by good article nominations' + (argv.sandbox ? '/sandbox' : ''),
-		'{{/header}}\n\n' + wikitable.getText()
+		'{{/header}}\n\n' + wikitable.getText(),
+		'Updating'
 	);
 	log(`[S] Saved`);
 
