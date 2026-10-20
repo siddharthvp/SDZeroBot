@@ -70,10 +70,8 @@ export class MariadbMetadataStore implements MetadataStore {
             SELECT page, idx FROM dbreports
             WHERE intervalDays IS NOT NULL 
               AND (lastUpdate IS NULL OR lastUpdate < NOW() - INTERVAL intervalDays DAY + INTERVAL 10 MINUTE)
-              AND idx != -1
         `);
         // +10 mins helps get the reports update around the same time every day.
-        // idx != -1 filters out dummy db rows indicating pages merely transcluding reports.
         let pages: Record<string, Set<number>> = {};
         data.forEach(row => {
             if (!pages[row.page]) {
