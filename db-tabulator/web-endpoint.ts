@@ -18,6 +18,7 @@ import {redis} from "../redis-io";
 const router = express.Router();
 
 const log = createLogStream(mapPath('~/web-dbtb.out'));
+const activityLog = createLogStream(mapPath('~/web-dbtb-activity.out'));
 
 /** Store the list of pages currently undergoing update as a redis set */
 const redisKey = 'web-db-tabulator-pages';
@@ -69,7 +70,7 @@ router.get('/stream', async (req, res) => {
 		stream('already-in-progress', { page, revId });
 		return endStream();
 	}
-	redis.sadd(redisKey, pgKey).catch(handleRedisError);
+	redis.sadd(redisKey, pgKey).then(logActivePages).catch(handleRedisError);
 
 	// If no queries found, link clicked was probably from a transcluded report.
 	// Check if any transclusion(s) are in SUBSCRIPTION_CATEGORY and update them.
@@ -117,7 +118,7 @@ router.get('/stream', async (req, res) => {
 	try {
 		await processQueries({[page]: queries}, notifier);
 	} finally {
-		redis.srem(redisKey, pgKey).catch(handleRedisError);
+		redis.srem(redisKey, pgKey).then(logActivePages).catch(handleRedisError);
 	}
 	log(`Finished processing ${page}`);
 	stream('completed');
@@ -145,6 +146,12 @@ async function getLastNonBotRevId(page: string) {
 		throw new CustomError(404, `The page ${page} does not exist.`);
 	}
 	return pg.revisions[0].revid;
+}
+
+function logActivePages() {
+	redis.smembers(redisKey)
+		.then(pages => activityLog(`${pages.length}: {${pages.join(',')}}`))
+		.catch(handleRedisError);
 }
 
 function handleRedisError(e: Error) {
