@@ -1,0 +1,26 @@
+name: redirectify-watch
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Write credentials
+        run: echo "${{ secrets.BOT_AUTH }}" > "${{ github.workspace }}/.auth.js"
+
+      - name: Run task
+        run: node ${{ github.workspace }}/reports/redirectify-watch.js
+
+      - name: Cleanup credentials
+        if: always()
+        run: rm -f ${{ github.workspace }}/.auth.js
