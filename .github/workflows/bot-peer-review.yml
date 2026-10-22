@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
+  task:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -14,7 +14,7 @@ jobs:
           node-version: '24'
           cache: 'npm'
       - run: npm ci
-      - run: npm run build
+      - run: npm run tsc
       - name: Write credentials
         run: echo "${{ secrets.BOT_AUTH }}" > "${{ github.workspace }}/.auth.js"
 
