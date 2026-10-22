@@ -18,7 +18,7 @@ jobs:
           cd ${{ github.workspace }}/.. 
           git clone https://github.com/siddharthvp/mwn.git 
           cd mwn
-          npm install
+          npm ci
           npm run build
       - run: npm ci
       - run: npm run tsc
