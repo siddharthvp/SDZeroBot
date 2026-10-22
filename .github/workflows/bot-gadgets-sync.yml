@@ -22,12 +22,8 @@ jobs:
           npm run build
       - run: npm ci
       - run: npm run tsc
-      - name: Write credentials
-        run: echo "${{ secrets.BOT_AUTH }}" > "${{ github.workspace }}/.auth.js"
 
       - name: Run task
         run: node ${{ github.workspace }}/gadgets-sync/gadgets-sync.js
-
-      - name: Cleanup credentials
-        if: always()
-        run: rm -f ${{ github.workspace }}/.auth.js
+        env:
+          AUTH: ${{ secrets.BOT_AUTH }}

@@ -58,7 +58,7 @@ updateLoggingConfig({
 });
 
 /** bot account and database access credentials */
-const auth = require('./.auth');
+const auth = process.env.AUTH ? JSON.parse(process.env.AUTH) : require('./.auth');
 export class AuthManager {
     static get(account: string) {
         return auth[account];
