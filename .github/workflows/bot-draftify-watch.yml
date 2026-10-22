@@ -13,6 +13,13 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
+      - name: Install mwn
+        run: |
+          cd ${{ github.workspace }}/.. 
+          git clone https://github.com/siddharthvp/mwn.git 
+          cd mwn
+          npm install
+          npm run build
       - run: npm ci
       - run: npm run tsc
       - name: Write credentials
