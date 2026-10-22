@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as child_process from 'child_process';
 import * as nodemailer from 'nodemailer';
+import { onToolforge } from './utils';
 export {fs, path, child_process};
 
 export const mailTransporter = nodemailer.createTransport({
@@ -11,6 +12,9 @@ export const mailTransporter = nodemailer.createTransport({
     port: 465,
 });
 export async function sendMail(subject: string, body: string) {
+    if (!onToolforge()) {
+        return;
+    }
     return mailTransporter.sendMail({
         from: 'tools.sdzerobot@tools.wmflabs.org',
         to: 'tools.sdzerobot@tools.wmflabs.org',
