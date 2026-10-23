@@ -15,7 +15,8 @@ const secretKeys = [
 	'accessSecret',
 	'OAuth2AccessToken',
 	'clientSecret',
-	'key'
+	'key',
+	'keyPrefix',
 ];
 
 function flattenJSON(obj: Record<string, any> = {}, res: Record<string, string> = {}, extraKey = '') {
