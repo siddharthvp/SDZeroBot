@@ -1,4 +1,6 @@
 import { bot, utils, log } from '../botbase';
+import { localRedis } from '../local-redis.js';
+import { DAY, SECOND } from '../millis.js';
 
 /**
  * Common ORES-related utilities used across bot's
@@ -23,10 +25,27 @@ import { bot, utils, log } from '../botbase';
  * 	}
  * }
  */
-export function oresQueryRevisions(models, revids, errors) {
-	var oresdata = {};
-	var requestsLimit = Math.floor(20 / models.length);
-	var sets = utils.arrayChunk(revids, requestsLimit);
+export async function oresQueryRevisions(models: string[], revids: number[], errors?: number[]) {
+	log(`[i] Fetching ORES inferences for ${revids.length} articles for models: ${models.join(', ')}`);
+	let oresData = {};
+
+	let uncachedRevidsSet = new Set();
+	for (let revid of revids) {
+		await Promise.all(models.map(async model => {
+			const cachedResult = await localRedis.get(`ores:${model}:${revid}`);
+			if (cachedResult) {
+				oresData[revid] = oresData[revid] || {};
+				oresData[revid][model] = JSON.parse(cachedResult);
+			} else {
+				uncachedRevidsSet.add(revid);
+			}
+		}));
+	}
+	let uncachedRevids = Array.from(uncachedRevidsSet);
+	log(`[i] ${revids.length - uncachedRevids.length} resolved from Redis cache, ${uncachedRevids.length} to be fetched`);
+
+	const requestsLimit = Math.floor(20 / models.length);
+	const sets = utils.arrayChunk(uncachedRevids, requestsLimit);
 	return bot.seriesBatchOperation(sets, (set, i) => {
 		return bot.rawRequest({
 			method: 'get',
@@ -40,13 +59,14 @@ export function oresQueryRevisions(models, revids, errors) {
 			let json = response.data;
 			log(`[+][${i+1}/${sets.length}] Ores API call ${i+1} succeeded.`);
 			Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
-				oresdata[revid] = {};
-				models.forEach(model => {
+				oresData[revid] = {};
+				models.forEach(async model => {
 					if (data[model].error) {
 						log(`[E] ORES response-level error (revid=${revid}, model=${model}): ${JSON.stringify(data[model].error)}`);
 						if (errors) errors.push(revid);
 					} else {
-						oresdata[revid][model] = data[model].score.prediction;
+						oresData[revid][model] = data[model].score.prediction;
+						await localRedis.set(`ores:${model}:${revid}`, JSON.stringify(data[model].score.prediction), 'EX', 3 * DAY / SECOND);
 					}
 				});
 			});
@@ -61,7 +81,7 @@ export function oresQueryRevisions(models, revids, errors) {
 			log(`[E] ${numFailing} ORES calls failed.`);
 			throw Object.values(failures)[0];
 		}
-		return oresdata;
+		return oresData;
 	});
 }
 
