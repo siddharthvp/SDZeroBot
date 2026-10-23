@@ -1,5 +1,5 @@
 const {Mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
-const OresUtils = require('../OresUtils');
+const {queryRevisions, processTopicsForPage, sortTopics} = require('../ores-utils');
 
 process.chdir(__dirname);
 
@@ -120,7 +120,7 @@ process.chdir(__dirname);
 	if (argv.noores) {
 		oresdata = require('./oresdata');
 	} else {
-		oresdata = await OresUtils.queryRevisions(['drafttopic'], pagelist);
+		oresdata = await queryRevisions(['drafttopic'], pagelist);
 		utils.saveObject('oresdata', oresdata);
 	}
 
@@ -133,7 +133,7 @@ process.chdir(__dirname);
 	 * 	title: 'title of the page ,
 	 *	revid: '972384329',
 	 * }
-	 * Populated through OresUtils.processTopicsForPage
+	 * Populated through processTopicsForPage
 	 */
 	var sorter = {
 		"Unsorted/Unsorted*": []
@@ -149,7 +149,7 @@ process.chdir(__dirname);
 		var topics = ores.drafttopic; // Array of topics
 		var toInsert = { title, revid };
 
-		OresUtils.processTopicsForPage(topics, sorter, toInsert);
+		processTopicsForPage(topics, sorter, toInsert);
 
 	});
 
@@ -235,7 +235,7 @@ process.chdir(__dirname);
 		var count = Object.keys(revidsTitles).length;
 
 		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
-		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
+		Object.keys(sorter).sort(sortTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';

@@ -1,5 +1,5 @@
 const {Mwn, bot, log, argv, TextExtractor, emailOnError} = require('../botbase');
-const OresUtils = require('./OresUtils');
+const {queryRevisions, processTopicsForPage, sortTopics} = require('./ores-utils');
 const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 
 (async function () {
@@ -140,7 +140,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		pagelist = pagelist.slice(0, argv.size);
 	}
 
-	let oresdata = await OresUtils.queryRevisions(['drafttopic'], pagelist);
+	let oresdata = await queryRevisions(['drafttopic'], pagelist);
 
 
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
@@ -152,7 +152,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 	 * 	title: 'title of the page ,
 	 *	revid: '972384329',
 	 * }
-	 * Populated through OresUtils.processTopicsForPage
+	 * Populated through processTopicsForPage
 	 */
 	let sorter = {
 		"Unsorted/Unsorted*": []
@@ -168,7 +168,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		let topics = ores.drafttopic; // Array of topics
 		let toInsert = { title, revid };
 
-		OresUtils.processTopicsForPage(topics, sorter, toInsert);
+		processTopicsForPage(topics, sorter, toInsert);
 
 	});
 
@@ -228,7 +228,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 				`<section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate />` +
 			'</includeonly>' + '\n';
 
-		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
+		Object.keys(sorter).sort(sortTopics).forEach(topic => {
 			let [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';

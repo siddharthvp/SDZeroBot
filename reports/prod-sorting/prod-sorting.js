@@ -1,5 +1,5 @@
 const {bot, TextExtractor, Mwn, log, argv, utils, emailOnError} = require('../../botbase');
-const OresUtils = require('../OresUtils');
+const {queryRevisions, processTopicsForPage, sortTopics} = require('../ores-utils');
 const {populateWikidataShortdescs, normaliseShortdesc, saveWithBlacklistHandling} = require('../commons');
 
 process.chdir(__dirname);
@@ -81,7 +81,7 @@ process.chdir(__dirname);
 	/* GET DATA FROM ORES */
 
 	var pagelist = Object.keys(revidsTitles);
-	var oresdata = await OresUtils.queryRevisions(['drafttopic'], pagelist);
+	var oresdata = await queryRevisions(['drafttopic'], pagelist);
 	utils.saveObject('oresdata', oresdata);
 
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
@@ -93,7 +93,7 @@ process.chdir(__dirname);
 	 * 	title: 'title of the page ,
 	 *	revid: '972384329',
 	 * }
-	 * Populated through OresUtils.processTopicsForPage
+	 * Populated through processTopicsForPage
 	 */
 	var sorter = {
 		"Unsorted/Unsorted*": []
@@ -109,7 +109,7 @@ process.chdir(__dirname);
 		var topics = ores.drafttopic; // Array of topics
 		var toInsert = { title, revid };
 
-		OresUtils.processTopicsForPage(topics, sorter, toInsert);
+		processTopicsForPage(topics, sorter, toInsert);
 
 	});
 
@@ -165,7 +165,7 @@ process.chdir(__dirname);
 		var count = Object.keys(revidsTitles).length;
 
 		var content = `{{User:SDZeroBot/PROD sorting/header|count=${count}|date={{subst:#time:j F Y}}|ts=~~~~~}}<includeonly><section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate /></includeonly>\n`;
-		Object.keys(sorter).sort(OresUtils.sortTopics).forEach(topic => {
+		Object.keys(sorter).sort(sortTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic, lite);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';
