@@ -1,5 +1,5 @@
 const {bot, Mwn, log, emailOnError} = require('../botbase');
-const {queryRevisions} = require('./ores-utils');
+const {oresQueryRevisions} = require('./ores-utils');
 
 /**
  * @param {Object} tableInfo
@@ -58,7 +58,7 @@ async function populateOresQualityRatings(tableInfo) {
 		}
 		return map;
 	}, {});
-	await queryRevisions(['articlequality', 'draftquality'], Object.keys(revidTitleMap))
+	await oresQueryRevisions(['articlequality', 'draftquality'], Object.keys(revidTitleMap))
 		.then(data => {
 			for (let [revid, {articlequality, draftquality}] of Object.entries(data)) {
 				Object.assign(tableInfo[revidTitleMap[revid]], {

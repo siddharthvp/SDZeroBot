@@ -23,7 +23,7 @@ import { bot, utils, log } from '../botbase';
  * 	}
  * }
  */
-export function queryRevisions(models, revids, errors) {
+export function oresQueryRevisions(models, revids, errors) {
 	var oresdata = {};
 	var requestsLimit = Math.floor(20 / models.length);
 	var sets = utils.arrayChunk(revids, requestsLimit);
@@ -70,7 +70,7 @@ export function queryRevisions(models, revids, errors) {
  * array of topics.
  * eg. topicsList.sort(sortTopics);
  */
-export function sortTopics(a, b) {
+export function sortOresTopics(a, b) {
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
@@ -100,7 +100,7 @@ export function sortTopics(a, b) {
  * pagedata objects. This is modified in-place.
  * @param {Object} pagedata - a {title, revid, issues, quality} object
  */
-export function processTopicsForPage(topics, sorter, pagedata) {
+export function processOresTopicsForPage(topics, sorter, pagedata) {
 	if (topics && topics.length) {
 		topics = topics.map(t => t.replace(/\./g, '/'));
 		topics.forEach(function(topic) {

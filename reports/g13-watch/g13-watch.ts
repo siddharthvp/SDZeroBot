@@ -3,7 +3,7 @@ import {toolsdb, TOOLS_DB_HOST, ENWIKI_DB_HOST} from "../../db";
 import {arrayChunk, createLocalSSHTunnel, closeTunnels} from "../../utils";
 import TextExtractor from "../../TextExtractor";
 import {saveWithBlacklistHandling, comparators, AfcDraftSize} from '../commons';
-import {queryRevisions} from '../ores-utils';
+import {oresQueryRevisions} from '../ores-utils';
 
 /**
  * Query pages becoming eligible for G13 within the next 24 hours, along with currently eligible pages if any.
@@ -100,7 +100,7 @@ import {queryRevisions} from '../ores-utils';
        let revIdTitleMap = Object.fromEntries(pagedata.filter(pg => !pg.missing).map(pg => [pg.lastrevid, pg.title]));
        let rawOresData = {};
        try {
-           rawOresData = await queryRevisions(
+           rawOresData = await oresQueryRevisions(
                ['articlequality', 'draftquality'],
                Object.keys(revIdTitleMap),
                []

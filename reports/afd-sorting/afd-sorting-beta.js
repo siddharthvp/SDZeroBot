@@ -1,5 +1,5 @@
 const {Mwn, bot, log, argv, utils, emailOnError} = require('../../botbase');
-const {queryRevisions, processTopicsForPage, sortTopics} = require('../ores-utils');
+const {oresQueryRevisions, processOresTopicsForPage, sortOresTopics} = require('../ores-utils');
 
 process.chdir(__dirname);
 
@@ -120,7 +120,7 @@ process.chdir(__dirname);
 	if (argv.noores) {
 		oresdata = require('./oresdata');
 	} else {
-		oresdata = await queryRevisions(['drafttopic'], pagelist);
+		oresdata = await oresQueryRevisions(['drafttopic'], pagelist);
 		utils.saveObject('oresdata', oresdata);
 	}
 
@@ -149,7 +149,7 @@ process.chdir(__dirname);
 		var topics = ores.drafttopic; // Array of topics
 		var toInsert = { title, revid };
 
-		processTopicsForPage(topics, sorter, toInsert);
+		processOresTopicsForPage(topics, sorter, toInsert);
 
 	});
 
@@ -235,7 +235,7 @@ process.chdir(__dirname);
 		var count = Object.keys(revidsTitles).length;
 
 		var content = `{{/header|count=${count}|date=${accessdate}|ts=~~~~~}}\n`;
-		Object.keys(sorter).sort(sortTopics).forEach(topic => {
+		Object.keys(sorter).sort(sortOresTopics).forEach(topic => {
 			var [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';

@@ -1,5 +1,5 @@
 const {log, argv, TextExtractor, Mwn, bot, enwikidb, utils, emailOnError} = require('../../botbase');
-const {queryRevisions} = require('../ores-utils');
+const {oresQueryRevisions} = require('../ores-utils');
 const {populateWikidataShortdescs, normaliseShortdesc} = require('../commons');
 const {createLocalSSHTunnel, closeTunnels} = require("../../utils");
 const {ENWIKI_DB_HOST} = require("../../db");
@@ -86,7 +86,7 @@ process.chdir(__dirname);
 		oresdata = require('./oresdata');
 	} else {
 		var errors = [];
-		oresdata = await queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
+		oresdata = await oresQueryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
 
 		utils.saveObject('oresdata', oresdata);
 		utils.saveObject('errors', errors);

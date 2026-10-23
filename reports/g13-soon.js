@@ -1,5 +1,5 @@
 const {bot, enwikidb, argv, log, emailOnError} = require('../botbase');
-const {queryRevisions, processTopicsForPage, sortTopics} = require('./ores-utils');
+const {oresQueryRevisions, processOresTopicsForPage, sortOresTopics} = require('./ores-utils');
 
 (async function() {
 
@@ -62,7 +62,7 @@ const {queryRevisions, processTopicsForPage, sortTopics} = require('./ores-utils
 	}
 
 	let errors = [];
-	let oresdata = await queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
+	let oresdata = await oresQueryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
 
 
 	/* GET DATA FOR COI/UPE TAGS */
@@ -166,7 +166,7 @@ const {queryRevisions, processTopicsForPage, sortTopics} = require('./ores-utils
 
 		var toInsert = { title, revid, quality, issues };
 
-		processTopicsForPage(topics, sorter, toInsert);
+		processOresTopicsForPage(topics, sorter, toInsert);
 	});
 
 
@@ -181,7 +181,7 @@ const {queryRevisions, processTopicsForPage, sortTopics} = require('./ores-utils
 
 	pagetext += sql.makeReplagMessage(72);
 
-	Object.keys(sorter).sort(sortTopics).forEach(function(topic) {
+	Object.keys(sorter).sort(sortOresTopics).forEach(function(topic) {
 
 		var rawtopic = topic;
 		if (isStarred(topic)) {

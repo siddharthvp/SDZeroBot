@@ -1,5 +1,5 @@
 const {Mwn, bot, log, argv, TextExtractor, emailOnError} = require('../botbase');
-const {queryRevisions, processTopicsForPage, sortTopics} = require('./ores-utils');
+const {oresQueryRevisions, processOresTopicsForPage, sortOresTopics} = require('./ores-utils');
 const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 
 (async function () {
@@ -140,7 +140,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		pagelist = pagelist.slice(0, argv.size);
 	}
 
-	let oresdata = await queryRevisions(['drafttopic'], pagelist);
+	let oresdata = await oresQueryRevisions(['drafttopic'], pagelist);
 
 
 	/* PROCESS ORES DATA, SORT PAGES INTO TOPICS */
@@ -168,7 +168,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 		let topics = ores.drafttopic; // Array of topics
 		let toInsert = { title, revid };
 
-		processTopicsForPage(topics, sorter, toInsert);
+		processOresTopicsForPage(topics, sorter, toInsert);
 
 	});
 
@@ -228,7 +228,7 @@ const {populateWikidataShortdescs, normaliseShortdesc} = require('./commons');
 				`<section begin=lastupdate />${new bot.Date().toISOString()}<section end=lastupdate />` +
 			'</includeonly>' + '\n';
 
-		Object.keys(sorter).sort(sortTopics).forEach(topic => {
+		Object.keys(sorter).sort(sortOresTopics).forEach(topic => {
 			let [sectionTitle, sectionText] = createSection(topic);
 			content += `\n==${sectionTitle}==\n`;
 			content += sectionText + '\n';

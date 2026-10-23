@@ -1,5 +1,5 @@
 const {fs, Mwn, bot, enwikidb, utils, argv, log, emailOnError} = require('../../botbase');
-const {queryRevisions, processTopicsForPage, sortTopics} = require('../ores-utils');
+const {oresQueryRevisions, processOresTopicsForPage, sortOresTopics} = require('../ores-utils');
 const {createLocalSSHTunnel, closeTunnels} = require("../../utils");
 const {ENWIKI_DB_HOST} = require("../../db");
 process.chdir(__dirname);
@@ -68,7 +68,7 @@ process.chdir(__dirname);
 		oresdata = require('./oresdata');
 	} else {
 		var errors = [];
-		oresdata = await queryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
+		oresdata = await oresQueryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
 
 		utils.saveObject('oresdata', oresdata);
 		utils.saveObject('errors', errors);
@@ -210,7 +210,7 @@ process.chdir(__dirname);
 
 		var toInsert = { title, revid, quality, issues };
 
-		processTopicsForPage(topics, sorter, toInsert);
+		processOresTopicsForPage(topics, sorter, toInsert);
 	});
 
 	// sorter: object mapping topic names to array of objects with page name and other ORES data
@@ -242,7 +242,7 @@ process.chdir(__dirname);
 
 		fs.writeFileSync('./previousRunCount.txt', String(count));
 
-		Object.keys(sorter).sort(sortTopics).forEach(function(topic) {
+		Object.keys(sorter).sort(sortOresTopics).forEach(function(topic) {
 
 			var rawtopic = topic;
 			if (isStarred(topic)) {

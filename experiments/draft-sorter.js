@@ -1,5 +1,5 @@
 const {bot, argv, log, utils, emailOnError} = require('../botbase');
-const {queryRevisions} = require('../reports/ores-utils');
+const {oresQueryRevisions} = require('../reports/ores-utils');
 
 (async function() {
 
@@ -35,7 +35,7 @@ if (argv.noores) {
 	oresdata = require('./oresdata')
 } else {
 	let errors = [];
-	oresdata = await queryRevisions(['drafttopic'], pagelist, errors)
+	oresdata = await oresQueryRevisions(['drafttopic'], pagelist, errors)
 
 	utils.saveObject('oresdata', oresdata)
 	utils.saveObject('errors', errors)
