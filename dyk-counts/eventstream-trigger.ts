@@ -3,7 +3,6 @@ import {Route} from "../eventstream-router/app";
 import {enwikidb} from "../db";
 import {RecentChangeStreamEvent} from "../eventstream-router/RecentChangeStreamEvent";
 import {Cache, CacheClass} from "memory-cache";
-import {ReplyError} from 'redis';
 import {DAY, SECOND} from "../millis";
 import {redis} from "../redis-io";
 
@@ -119,9 +118,9 @@ export default class DykCounts extends Route {
 		}
 	}
 
-	redisError(err: ReplyError) {
-		if (err.command === 'HMSET') {
-			err.args = [err.args[0], '<snipped>']; // too big to log!
+	redisError(err) {
+		if (err.command.name === 'hmset') {
+			err.command.args = [err.command.args[0], '<snipped>']; // too big to log!
 		}
 		this.log(`[E] dyk-counts redis error: `, err)
 	}
