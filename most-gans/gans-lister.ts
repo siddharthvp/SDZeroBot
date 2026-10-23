@@ -1,4 +1,4 @@
-import {argv, bot, log, Mwn} from '../botbase';
+import {argv, bot, log, Mwn, emailOnError} from '../botbase';
 import {TOOLS_DB_HOST, toolsdb} from '../db';
 import {closeTunnels, createLocalSSHTunnel, withIndices} from "../utils";
 import {TABLE} from "./model";
@@ -45,4 +45,4 @@ import {TABLE} from "./model";
 
 	closeTunnels();
 
-})();
+})().catch(err => emailOnError(err, 'gans-lister'));
