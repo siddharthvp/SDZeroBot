@@ -3,7 +3,7 @@
     "start": "env WEB=true node server.js",
     "test": "nodemon server.ts --watch .. --ext ts,js,hbs",
     "debug": "node --require ts-node/register server.js",
-    "restart": "webservice --backend kubernetes node18 restart",
+    "restart": "webservice node20 restart",
     "logs": "kubectl logs deployment/sdzerobot"
   }
 }
