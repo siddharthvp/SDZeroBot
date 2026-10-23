@@ -1,7 +1,6 @@
 import {bot, fs, log} from "./botbase";
 import {spawn} from "child_process";
 import {ENWIKI_DB_HOST, TOOLS_DB_HOST} from "./db";
-import {REDIS_HOST} from "./redis";
 import {SECOND} from "./millis";
 
 export function readFile(file: string) {
@@ -88,13 +87,11 @@ export async function createLocalSSHTunnel(host: string, localPort?: number, rem
 		localPort = localPort || (
 			host === ENWIKI_DB_HOST ? 4711 :
 			host === TOOLS_DB_HOST ? 4712 :
-			host === REDIS_HOST ? 4713 :
 			null
 		);
 		remotePort = remotePort || (
 			host === ENWIKI_DB_HOST ? 3306 :
 			host === TOOLS_DB_HOST ? 3306 :
-			host === REDIS_HOST ? 6379 :
 			null
 		);
 		// relies on "ssh toolforge" command connecting successfully
