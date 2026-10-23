@@ -2,6 +2,8 @@ import {argv, bot, emailOnError, log} from "../botbase"
 import * as querystring from "querystring"
 import * as fs from "fs"
 
+const CONFIG_PAGE = 'User:SDZeroBot/Gadget sync/Config.json'
+
 const HEADER = `
 /******************************************************************************/
 /**** THIS PAGE TRACKS $SOURCE. PLEASE AVOID EDITING DIRECTLY. 
@@ -10,8 +12,20 @@ const HEADER = `
 /******************************************************************************/
 
 `
+const SINGLE_REQUEST_BODY =  `
+{{sudo|1=LOCAL|answered=no}}
+Please sync [[LOCAL]] with [[SYNC_PAGE]] ([DIFF_LINK diff]). This brings it in sync with the upstream changes at REMOTE.
 
-const CONFIG_PAGE = 'User:SDZeroBot/Gadget sync/Config.json'
+This edit request is raised automatically based on the configuration at [[CONFIG_PAGE]]. Thanks, ~~~~
+`
+
+const MULTI_REQUEST_BODY = `
+{{sudo|PAGES|answered=no}}
+Please sync the following pages:
+REQUESTS
+
+This edit request is raised automatically based on the configuration at [[CONFIG_PAGE]]. Thanks, ~~~~
+`
 
 interface Config {
     description: string;
@@ -95,6 +109,7 @@ async function getInterwikiMap() {
 }
 
 (async function () {
+    log(`[i] Started`);
     await bot.getTokensAndSiteInfo()
     const [interWikis, allConfigs] = await Promise.all([
         getInterwikiMap(),
@@ -217,19 +232,5 @@ async function getInterwikiMap() {
             log(`[S] Created edit request on [[${conf.talkPage}]]`)
         }
     }
+    log(`[i] Finished`);
 })().catch(e => emailOnError(e, 'gadgets-sync'))
-
-const SINGLE_REQUEST_BODY =  `
-{{sudo|1=LOCAL|answered=no}}
-Please sync [[LOCAL]] with [[SYNC_PAGE]] ([DIFF_LINK diff]). This brings it in sync with the upstream changes at REMOTE.
-
-This edit request is raised automatically based on the configuration at [[CONFIG_PAGE]]. Thanks, ~~~~
-`;
-
-const MULTI_REQUEST_BODY = `
-{{sudo|PAGES|answered=no}}
-Please sync the following pages:
-REQUESTS
-
-This edit request is raised automatically based on the configuration at [[CONFIG_PAGE]]. Thanks, ~~~~
-`
