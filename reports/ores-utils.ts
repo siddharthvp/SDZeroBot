@@ -1,17 +1,52 @@
 import { bot, utils, log } from '../botbase';
 import { createLocalRedisConnection } from '../local-redis.js';
-import { DAY, SECOND } from '../millis.js';
+import { DAY } from '../millis.js';
 
 /**
  * Common ORES-related utilities used across bot's
  * sortlist tasks.
  */
 
+type Model = {
+	articletopic: string[];
+	drafttopic: string[];
+	articlequality: string;
+	draftquality: string;
+	damaging: boolean;
+	goodfaith: boolean;
+};
+
+// Example: https://ores.wikimedia.org/v3/scores/enwiki?models=articlequality|draftquality|drafttopic&revids=1363354766|2363354766
+type OresResponse<T extends keyof Model> = {
+	enwiki: {
+		models: {
+			[model in T]: {
+				version: string;
+			}
+		}
+		scores: {
+			[revid: number]: {
+				[model in T]: {
+					error?: {
+						message: string;
+						type: string;
+					};
+					score: {
+						prediction: Model[T];
+						probability: Record<string, number>;
+					}
+				}
+			}
+		}
+	}
+};
+
+export type OresResult<T extends keyof Model> = Record<number, Record<T, Model[T]>>;
+
 /**
  *
- * @param {String[]} models - Array of model names, such as
- * drafttopic, articlequality, etc
- * @param {Array} revids - Array of revision IDs
+ * @param models - Array of model names
+ * @param revids - Array of revision IDs
  * @returns {Promise<Object>}
  * {
  * 	"34242343": {
@@ -24,7 +59,10 @@ import { DAY, SECOND } from '../millis.js';
  * 	}
  * }
  */
-export async function oresQueryRevisions(models: string[], revids: number[]) {
+export async function oresQueryRevisions<T extends keyof Model>(
+	models: T[],
+	revids: (number|string)[]
+): Promise<OresResult<T>> {
 	log(`[i] Fetching ORES inferences for ${revids.length} articles for models: ${models.join(', ')}`);
 	let oresData = {};
 
@@ -33,6 +71,7 @@ export async function oresQueryRevisions(models: string[], revids: number[]) {
 	for (let revid of revids) {
 		await Promise.all(models.map(async model => {
 			const cachedResult = await redis.get(`ores:${model}:${revid}`);
+			// TODO: reset expiry on cache hit, and then reduce expiry to 1.5 days
 			if (cachedResult) {
 				oresData[revid] = oresData[revid] || {};
 				oresData[revid][model] = JSON.parse(cachedResult);
@@ -56,7 +95,7 @@ export async function oresQueryRevisions(models: string[], revids: number[]) {
 			},
 			responseType: 'json'
 		}).then(function(response) {
-			let json = response.data;
+			let json: OresResponse<T> = response.data;
 			log(`[+][${i+1}/${sets.length}] Ores API call ${i+1} succeeded.`);
 			Object.entries(json.enwiki.scores).forEach(([revid, data]) => {
 				oresData[revid] = {};
@@ -65,7 +104,7 @@ export async function oresQueryRevisions(models: string[], revids: number[]) {
 						log(`[E] ORES response-level error (revid=${revid}, model=${model}): ${JSON.stringify(data[model].error)}`);
 					} else {
 						oresData[revid][model] = data[model].score.prediction;
-						await redis.set(`ores:${model}:${revid}`, JSON.stringify(data[model].score.prediction), 'EX', 3 * DAY / SECOND);
+						await redis.set(`ores:${model}:${revid}`, JSON.stringify(data[model].score.prediction), 'PX', 3 * DAY);
 					}
 				});
 			});
@@ -89,7 +128,7 @@ export async function oresQueryRevisions(models: string[], revids: number[]) {
  * array of topics.
  * eg. topicsList.sort(sortTopics);
  */
-export function sortOresTopics(a, b) {
+export function sortOresTopics(a: string, b: string) {
 	var isStarred = x => x.endsWith('*');
 	var meta = x => x.split('/').slice(0, -1).join('/');
 
@@ -119,7 +158,7 @@ export function sortOresTopics(a, b) {
  * pagedata objects. This is modified in-place.
  * @param {Object} pagedata - a {title, revid, issues, quality} object
  */
-export function processOresTopicsForPage(topics, sorter, pagedata) {
+export function processOresTopicsForPage(topics: string[], sorter, pagedata) {
 	if (topics && topics.length) {
 		topics = topics.map(t => t.replace(/\./g, '/'));
 		topics.forEach(function(topic) {
