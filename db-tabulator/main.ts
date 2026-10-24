@@ -49,5 +49,6 @@ import {checkShutoff, FAKE_OUTPUT_FILE, fetchQueries, processQueries, metadataSt
 	log(`[S] Fetched queries`);
 
 	await processQueries(queries);
+	log(`[i] Finished`);
 
 })().catch(e => emailOnError(e, 'db-tabulator'));
