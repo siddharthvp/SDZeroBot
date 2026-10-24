@@ -12,7 +12,6 @@ import { DAY, SECOND } from '../millis.js';
  * @param {String[]} models - Array of model names, such as
  * drafttopic, articlequality, etc
  * @param {Array} revids - Array of revision IDs
- * @param {Array} errors - list of errors, modified in-place
  * @returns {Promise<Object>}
  * {
  * 	"34242343": {
@@ -25,7 +24,7 @@ import { DAY, SECOND } from '../millis.js';
  * 	}
  * }
  */
-export async function oresQueryRevisions(models: string[], revids: number[], errors?: number[]) {
+export async function oresQueryRevisions(models: string[], revids: number[]) {
 	log(`[i] Fetching ORES inferences for ${revids.length} articles for models: ${models.join(', ')}`);
 	let oresData = {};
 
@@ -63,7 +62,6 @@ export async function oresQueryRevisions(models: string[], revids: number[], err
 				models.forEach(async model => {
 					if (data[model].error) {
 						log(`[E] ORES response-level error (revid=${revid}, model=${model}): ${JSON.stringify(data[model].error)}`);
-						if (errors) errors.push(revid);
 					} else {
 						oresData[revid][model] = data[model].score.prediction;
 						await localRedis.set(`ores:${model}:${revid}`, JSON.stringify(data[model].score.prediction), 'EX', 3 * DAY / SECOND);

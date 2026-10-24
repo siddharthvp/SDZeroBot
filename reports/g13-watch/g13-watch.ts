@@ -102,8 +102,7 @@ import {oresQueryRevisions} from '../ores-utils';
        try {
            rawOresData = await oresQueryRevisions(
                ['articlequality', 'draftquality'],
-               Object.keys(revIdTitleMap),
-               []
+               Object.keys(revIdTitleMap)
            );
        } catch (e) {
            log(`[E] Failed to fetch ORES data`);

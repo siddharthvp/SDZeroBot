@@ -34,11 +34,9 @@ let oresdata = {}
 if (argv.noores) {
 	oresdata = require('./oresdata')
 } else {
-	let errors = [];
-	oresdata = await oresQueryRevisions(['drafttopic'], pagelist, errors)
+	oresdata = await oresQueryRevisions(['drafttopic'], pagelist)
 
 	utils.saveObject('oresdata', oresdata)
-	utils.saveObject('errors', errors)
 }
 
 

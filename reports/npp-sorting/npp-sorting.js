@@ -85,11 +85,9 @@ process.chdir(__dirname);
 	if (argv.noores) {
 		oresdata = require('./oresdata');
 	} else {
-		var errors = [];
-		oresdata = await oresQueryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
+		oresdata = await oresQueryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist);
 
 		utils.saveObject('oresdata', oresdata);
-		utils.saveObject('errors', errors);
 	}
 	log(`[S] Finished fetching ORES data`);
 

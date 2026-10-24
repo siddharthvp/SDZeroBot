@@ -61,8 +61,7 @@ const {oresQueryRevisions, processOresTopicsForPage, sortOresTopics} = require('
 		pagelist = pagelist.slice(0, argv.size);
 	}
 
-	let errors = [];
-	let oresdata = await oresQueryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist, errors);
+	let oresdata = await oresQueryRevisions(['articlequality', 'draftquality', 'drafttopic'], pagelist);
 
 
 	/* GET DATA FOR COI/UPE TAGS */
