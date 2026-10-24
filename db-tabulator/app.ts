@@ -187,6 +187,7 @@ export class Query extends EventEmitter {
 			// parseQuery() has already been called by the time we reach here.
 			if (!this.isValid) {
 				log(`[W] Skipping run of invalid query ${this}`);
+				await metadataStore.recordFailure(this);
 				return;
 			}
 			this.parseFormattingConfig();
