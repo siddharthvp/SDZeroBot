@@ -1,5 +1,5 @@
 import { bot, utils, log } from '../botbase';
-import { localRedis } from '../local-redis.js';
+import { createLocalRedisConnection } from '../local-redis.js';
 import { DAY, SECOND } from '../millis.js';
 
 /**
@@ -28,10 +28,11 @@ export async function oresQueryRevisions(models: string[], revids: number[]) {
 	log(`[i] Fetching ORES inferences for ${revids.length} articles for models: ${models.join(', ')}`);
 	let oresData = {};
 
+	const redis = createLocalRedisConnection();
 	let uncachedRevidsSet = new Set();
 	for (let revid of revids) {
 		await Promise.all(models.map(async model => {
-			const cachedResult = await localRedis.get(`ores:${model}:${revid}`);
+			const cachedResult = await redis.get(`ores:${model}:${revid}`);
 			if (cachedResult) {
 				oresData[revid] = oresData[revid] || {};
 				oresData[revid][model] = JSON.parse(cachedResult);
@@ -64,7 +65,7 @@ export async function oresQueryRevisions(models: string[], revids: number[]) {
 						log(`[E] ORES response-level error (revid=${revid}, model=${model}): ${JSON.stringify(data[model].error)}`);
 					} else {
 						oresData[revid][model] = data[model].score.prediction;
-						await localRedis.set(`ores:${model}:${revid}`, JSON.stringify(data[model].score.prediction), 'EX', 3 * DAY / SECOND);
+						await redis.set(`ores:${model}:${revid}`, JSON.stringify(data[model].score.prediction), 'EX', 3 * DAY / SECOND);
 					}
 				});
 			});
@@ -80,7 +81,7 @@ export async function oresQueryRevisions(models: string[], revids: number[]) {
 			throw Object.values(failures)[0];
 		}
 		return oresData;
-	});
+	}).finally(() => redis.quit());
 }
 
 /**
