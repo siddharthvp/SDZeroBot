@@ -3,6 +3,28 @@ import {bot, log, emailOnError, Mwn, argv} from '../botbase';
 const PercentDefault = 0.25;
 const ByteDefault = 1000;
 
+type WikiWhoResponse = {
+	article_title: string;
+	page_id: number;
+	success: true;
+	message: null;
+	revisions: Array<Record<number, {
+		editor: string;
+		time: string;
+		tokens: Array<{
+			str: string;
+			editor: string;
+		}>
+	}>>
+};
+
+type UserData = {
+	bytes: number;
+	refBytes: number;
+	name?: string;
+	percent?: number;
+};
+
 class Notifier {
 	table: InstanceType<typeof Mwn.Table>
 	notificationScheme: Map<string, Array<string>>
@@ -208,7 +230,7 @@ class Notifier {
 	 * @returns {{totalBytes: number, users: ({id: number, name: string, bytes: number, percent: number})[]}}
 	 */
 	async queryAuthors(title) {
-		let json;
+		let json: WikiWhoResponse;
 		try {
 			json = await bot.rawRequest({
 				url: `https://wikiwho.wmflabs.org/en/api/v1.0.0-beta/latest_rev_content/${encodeURIComponent(title)}/?editor=true`
@@ -222,7 +244,8 @@ class Notifier {
 		let data = {
 			totalBytes: 0,
 			users: []
-		}, userdata = {};
+		};
+		let userdata: Record<number, UserData> = {};
 
 		function checkCoalesce(tokens, i, j, value) {
 			return tokens.slice(i, j).map(t => t.str).join('') === value;
