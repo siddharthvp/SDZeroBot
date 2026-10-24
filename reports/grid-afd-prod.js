@@ -1,4 +1,4 @@
-const {Mwn, bot, TextExtractor, emailOnError} = require('../botbase');
+const {Mwn, bot, TextExtractor, emailOnError, log} = require('../botbase');
 const {populateWikidataShortdescs, normaliseShortdesc, saveWithBlacklistHandling} = require('./commons');
 
 const months = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -38,6 +38,7 @@ function parseArticleForPROD(pagetext) {
 }
 
 (async function() {
+	log('[i] Started');
 
 	var afdtable = {}, prodtable = {};
 
@@ -127,5 +128,6 @@ function parseArticleForPROD(pagetext) {
 
 	await saveWithBlacklistHandling(new bot.Page('User:SDZeroBot/AfD grid'), fnMakeTableAfD(afdtable), 'Updating');
 	await saveWithBlacklistHandling(new bot.Page('User:SDZeroBot/PROD grid'), fnMakeTablePROD(prodtable), 'Updating');
+	log('[i] Finished');
 
 })().catch(err => emailOnError(err, 'grid-afd-prod'));
