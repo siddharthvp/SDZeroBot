@@ -232,11 +232,11 @@ export async function streamWithRoutes(routes: (new () => Route)[], config: Stre
 	start(validatedRoutes, lastSeen);
 
 	setInterval(() => {
-		if (lastSeen.get().add(2, 'minutes').isBefore(new Date())) {
+		if (lastSeen.get().add(15, 'minutes').isBefore(new Date())) {
 			log(`[E] Restarting as no events seen in last two minutes`);
 			start(validatedRoutes, lastSeen);
 		}
-	}, config.healthCheckInterval || 2 * MINUTE);
+	}, config.healthCheckInterval || 5 * MINUTE);
 
 }
 
