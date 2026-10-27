@@ -21,7 +21,7 @@
 - {schedule: "30 3 * * 2", name: "job-peer", mem: "256Mi", command: "~/SDZeroBot/job reports/peer-review.js", image: "node20", emails: "onfailure"}
 - {schedule: "0 6 * * *", name: "job-unref", mem: "256Mi", command: "~/SDZeroBot/job reports/unreferenced-blps.js", image: "node20", emails: "onfailure"}
 - {schedule: "5 0 * * *", name: "job-g13watch", mem: "256Mi", command: "~/SDZeroBot/job reports/g13-watch/g13-watch.js", image: "node20", emails: "onfailure"}
-# - {schedule: "15,45 * * * *", name: "stream-check", mem: "128Mi", command: "~/SDZeroBot/job eventstream-router/check.js", image: "node20", emails: "onfailure"}
+- {schedule: "15,45 * * * *", name: "stream-check", mem: "128Mi", command: "~/SDZeroBot/job eventstream-router/check.js", image: "node20", emails: "onfailure"}
 - {schedule: "20 * * * *", name: "bot-monitor", mem: "256Mi", command: "~/SDZeroBot/job bot-monitor/main.js", image: "node20", emails: "onfailure"}
 - {schedule: "25 * * * *", name: "db-tabulator", mem: "512Mi", command: "~/SDZeroBot/job db-tabulator/main.js", image: "node20", emails: "onfailure"}
 - {schedule: "8 16 * * *", name: "gans-list", mem: "256Mi", command: "~/SDZeroBot/job most-gans/gans-lister.js", image: "node20", emails: "onfailure"}
