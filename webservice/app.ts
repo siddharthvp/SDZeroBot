@@ -22,9 +22,10 @@ hbs.registerHelper('wikilink',  (pageName, displayName) => {
 });
 
 morgan.token('date', () => humanDate());
-app.use(morgan('[:date] :method :url :status :response-time ms'));
-app.use(express.json());
-app.use(express.urlencoded({extended: false}));
+// Bridge older Express types (optional res.req) and Node types (required res.req).
+app.use(morgan('[:date] :method :url :status :response-time ms') as express.RequestHandler);
+app.use(express.json() as express.RequestHandler);
+app.use(express.urlencoded({extended: false}) as express.RequestHandler);
 app.use(cookieParser());
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));

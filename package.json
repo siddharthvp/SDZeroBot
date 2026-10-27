@@ -17,6 +17,7 @@
     "@elastic/elasticsearch": "7.10.0",
     "@kubernetes/client-node": "^0.18.1",
     "@types/cookie-parser": "^1.4.2",
+    "@types/cors": "^2.8.19",
     "@types/express": "^4.17.11",
     "@types/express-redis-cache": "^1.1.1",
     "@types/hbs": "^4.0.1",
