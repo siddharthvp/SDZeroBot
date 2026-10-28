@@ -19,7 +19,11 @@ export default class Gans extends Route {
 		return data.wiki === 'enwiki' &&
 			(
 				(data.type === 'categorize' && data.title === 'Category:Good articles') ||
-				(data.type === 'log' && (data.log_type === 'move' || data.log_type === 'renameuser'))
+				(data.type === 'log' && (
+					data.log_type === 'move' ||
+					data.log_type === 'renameuser' ||
+					(data.log_type === 'delete' && data.log_action === 'delete')
+				))
 			);
 	}
 
@@ -41,6 +45,10 @@ export default class Gans extends Route {
 			const oldUsername = data.log_params.olduser;
 			const newUsername = data.log_params.newuser;
 			this.processRename(oldUsername, newUsername);
+
+		} else if (data.log_type === 'delete') {
+			const title = data.title;
+			this.processDeletion(title);
 		}
 	}
 
@@ -92,6 +100,18 @@ export default class Gans extends Route {
 			this.log(`[+] ${oldUsername} renamed to ${newUsername}. Updated ${affectedRows} row(s).`);
 		}).catch(err => {
 			this.log(`[E] Failed processing user rename: [[User:${oldUsername}]] to [[User:${newUsername}]]`);
+			this.log(err);
+		});
+	}
+
+	async processDeletion(title: string) {
+		db.run(`DELETE FROM ${TABLE} WHERE article = ?`, [title]).then(result => {
+			const affectedRows = (result?.[0] as ResultSetHeader)?.affectedRows;
+			if (affectedRows > 0) {
+				this.log(`[+] Removed deleted GA [[${title}]]. Updated ${affectedRows} row(s).`);
+			}
+		}).catch(err => {
+			this.log(`[E] Failed processing page deletion: title: [[${title}]]`);
 			this.log(err);
 		});
 	}
