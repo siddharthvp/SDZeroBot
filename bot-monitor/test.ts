@@ -31,10 +31,20 @@ describe('ChecksDb', async function () {
     });
 
     it('undefined on non-existent access', async function () {
-        const last = await checksDb.db.get(`SELECT * FROM checks WHERE name = ?`, [
-            `SDZeroBot: NPPSot`
-        ]);
-        expect(last).to.eq(undefined);
+        expect(await checksDb.checkCached({
+            bot: 'SDZeroBot',
+            task: 'non-existent',
+            action: 'edit',
+            namespace: '0',
+            title: '',
+            title_regex: '',
+            summary: '',
+            summary_regex: '',
+            min_edits: '1',
+            duration: '1 day',
+            notify: '',
+            email: ''
+        })).to.equal(undefined);
     });
 
 

@@ -8,7 +8,7 @@ describe('most-gans', () => {
 	})
 
 	async function processArticleTest(article: string, nomExpected: string, dateExpected?: string) {
-		db.run = () => Promise.resolve(); // stub it out
+		db.run = () => Promise.resolve([[], []]); // stub it out
 		const [nom, date] = await processArticle(article);
 		assert.strictEqual(nom, nomExpected);
 		if (dateExpected) assert.strictEqual(date, dateExpected);
