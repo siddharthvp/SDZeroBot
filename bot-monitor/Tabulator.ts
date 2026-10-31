@@ -40,7 +40,7 @@ export class Tabulator {
 		]);
 	}
 
-	static addError(monitor: Monitor, err: Error) {
+	static addError(monitor: Monitor, err: any) {
 		let rule = monitor.rule || monitor.rawRule;
 		this.table.addRow([
 			`[[User:${rule.bot}|${rule.bot}]]`,
