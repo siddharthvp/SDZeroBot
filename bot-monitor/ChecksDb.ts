@@ -1,4 +1,5 @@
 import {argv, bot, emailOnError, log} from "../botbase";
+import {createLocalRedisConnection} from '../local-redis.js';
 import {RawRule, subtractFromNow} from './index'
 
 // Only a small amount of data is stored. Probably not worth using ToolsDB.
@@ -40,17 +41,16 @@ class RedisChecksDb implements ChecksDb {
 	redis: Redis;
 
 	async connect() {
-		// Importing the file causes a connection, hence import dynamically
-		this.redis = (await import('../redis-io')).redis;
+		this.redis = createLocalRedisConnection();
 		await this.redis.ping();
 	}
 
-	getKey(rule: RawRule) {
-		return `botmonitor-${rule.bot}: ${rule.task}`;
+	getKey(rule: RawRule, type: "cached" | "seen") {
+		return `botmonitor:${type}:${rule.bot}:${rule.task}`;
 	}
 
 	async update(rule: RawRule, ts: string) {
-		await this.redis.hset(this.getKey(rule) + '-cached',
+		await this.redis.hset(this.getKey(rule, 'cached'),
 			'rulehash', hash.sha1(rule),
 			'ts', ts);
 	}
@@ -59,18 +59,21 @@ class RedisChecksDb implements ChecksDb {
 		if (argv.nocache) {
 			return false;
 		}
-		let cached = await this.redis.hgetall(this.getKey(rule) + '-cached');
-		return cached.rulehash === hash.sha1(rule) &&
-			new bot.Date(cached.ts).isAfter(subtractFromNow(rule.duration));
+		let last = await this.redis.hgetall(this.getKey(rule, 'cached'))
+			.catch(() => undefined);
+		return last &&
+			last.rulehash === hash.sha1(rule) && // check that the rule itself hasn't changed
+			new bot.Date(last.ts).isAfter(subtractFromNow(rule.duration));
 	}
 
 	async getLastSeen(rule: RawRule) {
 		if (argv.nocache) {
 			return;
 		}
-		let lastseen = await this.redis.hgetall(this.getKey(rule) + '-seen');
-		if (lastseen && lastseen.rulehash === hash.sha1(rule)) {
-			return lastseen;
+		let lastSeen = await this.redis.hgetall(this.getKey(rule, 'seen'))
+			.catch(() => undefined);
+		if (lastSeen && lastSeen.rulehash === hash.sha1(rule)) {
+			return lastSeen;
 		} // else return undefined
 	}
 
@@ -82,7 +85,7 @@ class RedisChecksDb implements ChecksDb {
 		if (notSeen) {
 			props.notseen = '1';
 		}
-		await this.redis.hset(this.getKey(rule) + '-seen', ...Object.entries(props).flat());
+		await this.redis.hset(this.getKey(rule, 'seen'), ...Object.entries(props).flat());
 	}
 
 }
