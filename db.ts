@@ -64,9 +64,9 @@ export abstract class db {
 	/**
 	 * @returns array of objects - each object represents a row
 	 */
-	async query(...args: any[]): Promise<Array<Record<string, string | number | null>>> {
+	async query(sql: string, values?: any[]): Promise<Array<Record<string, string | number | null>>> {
 		let conn = await this.getConnection();
-		const result = await conn.query(...args).finally(() => {
+		const result = await conn.query<mysql.RowDataPacket[]>(sql, values).finally(() => {
 			conn.release();
 		});
 		return result[0].map(row => {
@@ -79,21 +79,21 @@ export abstract class db {
 		});
 	}
 
-	async timedQuery(...args: any[]): Promise<[number, Array<Record<string, string | number | null>>]> {
+	async timedQuery(sql: string, values?: any[]): Promise<[number, Array<Record<string, string | number | null>>]> {
 		let startTime = process.hrtime.bigint();
-		let queryResult = await this.query(...args);
+		let queryResult = await this.query(sql, values);
 		let endTime = process.hrtime.bigint();
 		let timeTaken = Number(endTime - startTime) / 1e9;
 		return [timeTaken, queryResult];
 	}
 
-	async run(...args: any[]) {
+	async run(sql: string, values?: any[]) {
 		// convert `undefined`s in bind parameters to null
-		if (args[1] instanceof Array) {
-			args[1] = args[1].map(item => item === undefined ? null : item);
+		if (values instanceof Array) {
+			values = values.map(item => item === undefined ? null : item);
 		}
 		let conn = await this.getConnection();
-		return await conn.execute(...args).finally(() => {
+		return await conn.execute(sql, values).finally(() => {
 			conn.release();
 		});
 	}
