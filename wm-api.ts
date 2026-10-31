@@ -1,5 +1,5 @@
 import {AuthManager, bot} from "./botbase";
-import * as FormData from 'form-data';
+import FormData from 'form-data';
 import {MwnDate} from "../mwn";
 
 const creds = AuthManager.get('wm-api-gateway');

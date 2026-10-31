@@ -1,10 +1,10 @@
-import * as createError from "http-errors";
-import * as express from "express";
-import * as path from "path";
-import * as cookieParser from "cookie-parser";
-import * as morgan from "morgan";
-import * as hbs from 'hbs';
-import * as cors from 'cors';
+import createError from "http-errors";
+import express from "express";
+import path from "path";
+import cookieParser from "cookie-parser";
+import morgan from "morgan";
+import hbs from 'hbs';
+import cors from 'cors';
 
 import {bot, logFullError, Mwn} from "../botbase";
 import {humanDate} from "../../mwn/build/log";

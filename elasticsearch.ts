@@ -1,7 +1,6 @@
-import {Client} from "@elastic/elasticsearch";
+import {Client, type RequestParams} from "@elastic/elasticsearch";
 import {onToolforge} from "./utils";
 import {AuthManager} from "./botbase";
-import * as RequestParams from "@elastic/elasticsearch/api/requestParams";
 
 export const elastic = new Client({
     node: onToolforge() ? 'http://opensearch.svc.tools.eqiad1.wikimedia.cloud:80' : 'http://localhost:9200/',

@@ -1,7 +1,7 @@
 import {bot, Mwn, log, argv, enwikidb} from "../botbase";
 import { Monitor, type Rule } from './index';
 
-import * as moment from "moment";
+import moment from "moment";
 
 export class Tabulator {
 	static rootpage = 'Wikipedia:Bot activity monitor' + (argv.fake ? '/sandbox' : '');

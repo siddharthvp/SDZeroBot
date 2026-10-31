@@ -1,11 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ES2023",
+    "target": "es2025",
     "lib": [
       "esnext"
     ],
     "module": "CommonJS",
     "types": ["node", "mocha"],
+    "strict": false,
     "sourceMap": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
