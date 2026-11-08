@@ -70,7 +70,7 @@ export async function applyJsPostProcessing(rows: Record<string, string>[], jsCo
 
     // Import dynamically as this has native dependencies
     // npm install isolated-vm@7.0.1
-    let {Isolate, Callback, Reference} = await import('isolated-vm');
+    let {Isolate, Callback, Reference} = (await import('isolated-vm')).default;
 
     const isolate = new Isolate({
         memoryLimit: 16,
