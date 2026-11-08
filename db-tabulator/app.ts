@@ -716,7 +716,7 @@ export class Query extends EventEmitter {
 		let firstPageResult = Array.isArray(queryResult) ? queryResult[0] : queryResult;
 		try {
 			if (this.config.outputPage) {
-				await page.save(firstPageResult, this.generateEditSummary(isError));
+				await page.save(firstPageResult, this.generateEditSummary(isError, this.page));
 			} else {
 				await page.edit(rev => {
 					let text = rev.content;
@@ -770,7 +770,8 @@ export class Query extends EventEmitter {
 		}
 	}
 
-	generateEditSummary(isError: boolean) {
+	generateEditSummary(isError: boolean, queryPage?: string) {
+		const sourcePageNote = queryPage ? ` based on query in [[${queryPage}]]` : '';
 		const updateMode =
 			this.context === 'web' ? 'web triggered' :
 				this.context === 'cron' ? 'periodic update' :
@@ -778,7 +779,7 @@ export class Query extends EventEmitter {
 		const endNotFoundNote = this.endNotFound ?
 			', overwriting rest of page as end template not found' : '';
 		return (isError ? 'Encountered error in updating database report' : 'Updating database report')
-			+ ': ' + updateMode + endNotFoundNote;
+			+ sourcePageNote + ': ' + updateMode + endNotFoundNote;
 	}
 
 	async saveWithError(message: string): Promise<never> {
